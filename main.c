@@ -13,6 +13,7 @@ int SCREEN_HEIGHT = 480;
 char game_running = 0;					// 1 if game is running, 0 if not
 SDL_Window *win = NULL;					// Pointer to the window-struct
 SDL_Renderer *ren = NULL;				// Pointer to the renderer-struct
+XSDL_Button button;
 
 // === Prototypes ===
 void processInput();
@@ -25,8 +26,8 @@ int main(int argc, char** args) {
     SDL_Surface* screenSurface = NULL;
 
 	// Create a button
-	SDL_Rect button_body = {10, 10, 100, 30};
-	XSDL_Button button = {button_body, &demoprint};
+	//SDL_Rect button_body = {10, 10, 100, 30};
+	//button = {button_body, &demoprint};
 
     // Initialize SDL
     if(SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -65,7 +66,7 @@ int main(int argc, char** args) {
 		SDL_RenderClear(ren);
 
 		// Render a button
-		XSDL_RenderButton(ren, &button);
+		// XSDL_RenderButton(ren, &button);
 		// Render all elements in the active scene
 		SDL_RenderPresent(ren);
 	}
@@ -104,9 +105,9 @@ void processInput() {
 					case(1):
 						SDL_GetMouseState(&x, &y);
 						Vec2 pos = {x, y};
-						if(inRect(&button, &pos)) {
-							printf("x: %d, y: %d\n", x, y);
-						}
+						//if(inRect(&button, &pos)) {
+						//	printf("x: %d, y: %d\n", x, y);
+						//}
 						break;
 
 					// Right mouse-button

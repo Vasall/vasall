@@ -1,6 +1,6 @@
 #include <math.h>
 #include <SDL.h>
-#include "xmath.h"
+#include "vector.h"
 
 /*
  * Check, whether a specified position is inside of a rectangle. If the

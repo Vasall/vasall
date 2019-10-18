@@ -3,7 +3,7 @@
 #include <stdio.h>
 // Include custom headers
 #include "./incl/xsdl.h"
-#include "./incl/xmath.h"
+#include "./incl/vector.h"
 
 // Screen dimension
 int SCREEN_WIDTH = 640;
@@ -14,6 +14,7 @@ char game_running = 0;					// 1 if game is running, 0 if not
 SDL_Window *win = NULL;					// Pointer to the window-struct
 SDL_Renderer *ren = NULL;				// Pointer to the renderer-struct
 XSDL_Button button;
+XSDL_Scene *scene;
 
 /* === Prototypes === */
 void process_input();
@@ -51,10 +52,18 @@ int main(int argc, char** args)
 	XSDL_SetWindowIcon(win);
 
 	// Create renderer
-	ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
-	if(ren == NULL) {
+	if((ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED)) == NULL) {
 		printf("[!] Renderer could not be created! (%s)\n", SDL_GetError());
+		goto closewindow;
 	}
+
+	// Initialize the first scene
+	if((scene = XSDL_CreateScene()) == NULL) {
+		printf("[!] Could not create scene.\n");
+		goto closewindow;
+	}
+
+	printf("Scene-Count: %d\n", scene->count);
 
 	SDL_Color clr = {0x18, 0x18, 0x18};
 

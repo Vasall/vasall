@@ -53,23 +53,17 @@ void XSDL_SetWindowIcon(SDL_Window *window)
 /*
  * Create a new scene, by allocating memory for
  * the scene-struct and resettig the counter to 0.
- * If the scene coulnd't be created, print the error.
  *
- * @scn: A pointer to write the struct to
- *
- * Returns: 1 on success, 0 if an error occurred
+ * Returns: A pointer to the created scene or NULL
 */
-int XSDL_CreateScene(XSDL_Scene *scn) 
+XSDL_Scene *XSDL_CreateScene() 
 {
 	int len = sizeof(XSDL_Scene);
-	if((scn = (XSDL_Scene *)malloc(len)) == NULL) {
-		perror("[!] Failed to create scene: ");
-		return(0);
-	}
+	XSDL_Scene *ptr = (XSDL_Scene *)malloc(len);
+	if(ptr == NULL) return (NULL);
 
-	scn->count = 0;
-
-	return(1);
+	ptr->count = 0;
+	return(ptr);
 }
 
 /*

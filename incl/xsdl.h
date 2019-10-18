@@ -3,8 +3,9 @@
 
 #include <SDL.h>
 
+#define PTR_SIZE 8
 #define MAX_ELE_COUNT 15
-#define ELE_BUF_LEN	120
+#define ELE_BUF_LEN	(MAX_ELE_COUNT * PTR_SIZE)
 
 /*
  * A simple button-function.
@@ -22,7 +23,7 @@ typedef struct XSDL_Input {
 
 
 typedef struct XSDL_Scene {
-	short count;					// The amount of elements in the scene
+	unsigned short count;			// The amount of elements in the scene
 	char elements[ELE_BUF_LEN];		// A buffer containing all element-pointers
 } XSDL_Scene;
 
@@ -32,7 +33,7 @@ typedef struct XSDL_Scene {
 void XSDL_SetWindowIcon();
 
 // Functions to manage a scene and create scene-elements
-int XSDL_CreateScene(XSDL_Scene *scn);
+XSDL_Scene *XSDL_CreateScene();
 void XSDL_DeleteScene(XSDL_Scene *scn);
 int XSDL_CreateButton(XSDL_Scene *scn, int x, int y, int w, int h, void (*ptr)());
 

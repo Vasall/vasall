@@ -1,5 +1,5 @@
-#ifndef _XMATH_H_
-#define _XMATH_H_
+#ifndef _VECTOR_H_
+#define _VECTOR_H_
 
 /*
  * A simple 2d-Vector struct used the

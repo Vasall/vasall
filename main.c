@@ -16,12 +16,11 @@ SDL_Renderer *ren = NULL;				// Pointer to the renderer-struct
 XSDL_Button button;
 
 /* === Prototypes === */
-void processInput();
-void run();
+void process_input();
 void demoprint() { printf("TEST"); }
 
-
-int main(int argc, char** args) {
+int main(int argc, char** args) 
+{
     // The surface contained by the window
     SDL_Surface* screenSurface = NULL;
 
@@ -43,7 +42,7 @@ int main(int argc, char** args) {
     if((win = SDL_CreateWindow("TinyKindom", 
 			SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
 			SCREEN_WIDTH, SCREEN_HEIGHT, 
-			SDL_WINDOW_RESIZABLE)) == NULL) {
+			SDL_WINDOW_SHOWN)) == NULL) {
 		printf("[!] Window could not be created! (%s)\n", SDL_GetError());
 		goto closewindow;
 	}
@@ -64,7 +63,7 @@ int main(int argc, char** args) {
 
 	// Run the game
 	while(game_running) {
-		processInput();
+		process_input();
 
 		SDL_SetRenderDrawColor(ren, 0, 0, 0, 255 );
 
@@ -93,7 +92,8 @@ exit:
  * possible inputs, like closing the window, pressing a
  * key or pressing a mouse-button. 
 */
-void processInput() {
+void process_input() 
+{
 	SDL_Event event;
 	int x, y;
 
@@ -117,7 +117,7 @@ void processInput() {
 						//printf("x: %d, y: %d\n", x, y);
 						//}
 						
-						if(inRect(&button.body, &pos)) {
+						if(in_rect(&button.body, &pos)) {
 							printf("x: %d, y: %d\n", x, y);
 						}
 						break;

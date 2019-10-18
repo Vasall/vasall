@@ -2,7 +2,8 @@
 #include <SDL.h>
 #include "xsdl.h"
 
-void XSDL_SetWindowIcon(SDL_Window *window) {
+void XSDL_SetWindowIcon(SDL_Window *window) 
+{
 	// Declare an SDL_Surface to be filled in with pixel data from an image file
 	SDL_Surface *surface;
 
@@ -55,10 +56,8 @@ void XSDL_SetWindowIcon(SDL_Window *window) {
  * @render: The renderer used to display the button
  * @btn: The button-struct to display
  */
-void XSDL_RenderButton(SDL_Renderer *renderer, XSDL_Button *btn) {
+void XSDL_RenderButton(SDL_Renderer *renderer, XSDL_Button *btn) 
+{
 	SDL_SetRenderDrawColor(renderer, 0xff, 0x00, 0x00, 0xff);
 	SDL_RenderFillRect(renderer, &btn->body);
 }
-
-
-

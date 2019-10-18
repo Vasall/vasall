@@ -19,7 +19,7 @@ typedef struct XSDL_Input {
 
 
 typedef struct XSDL_Scene {
-	short count;
+	short count;					// The amount of elements in the scene
 } XSDL_Scene;
 
 

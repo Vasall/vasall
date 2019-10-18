@@ -8,7 +8,8 @@
  * @mid: The middle, splitting arr into two subarrays
  * @right: The right border of the second subarray
  */
-void merge(int *arr, int left, int mid, int right) {
+void merge(int *arr, int left, int mid, int right) 
+{
     int n1 = mid - left + 1;
     int n2 = right - mid;
 
@@ -55,7 +56,8 @@ void merge(int *arr, int left, int mid, int right) {
  * @left: left index of subarray to be sorted (inclusive)
  * @right: Right index of subarray to be sorted (inclusive)
  */
-void merge_sort(int *arr, int left, int right) {
+void merge_sort(int *arr, int left, int right) 
+{
     if (left < right) {
         // Find the middle of our subarray
         int mid = (left + right) >> 1;
@@ -78,7 +80,8 @@ void merge_sort(int *arr, int left, int right) {
  * @dstOff: The offset from start of destination array
  * @len: The length of subarray to copy
  */
-void array_copy(int *src, int srcOff, int *dst, int dstOff, int len) {
+void array_copy(int *src, int srcOff, int *dst, int dstOff, int len) 
+{
 	for (int i = 0; i < len; i++) {
         dst[dstOff + i * sizeof(int)] = src[srcOff + i * sizeof(int)];
     }

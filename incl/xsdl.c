@@ -90,6 +90,7 @@ void XSDL_DeleteScene(XSDL_Scene *scn)
 */
 int XSDL_CreateButton(XSDL_Scene *scn, int x, int y, int w, int h, void (*ptr)()) 
 {
+	if(scn->count >= MAX_ELE_COUNT) return (0);
 	return(1);
 }
 

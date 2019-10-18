@@ -1,5 +1,6 @@
 #ifndef _XSDL_H_
 #define _XSDL_H_
+
 #include <SDL.h>
 
 /*
@@ -23,6 +24,13 @@ typedef struct XSDL_Scene {
 
 
 /* ==== DEFINE PROTOTYPES ==== */
+// Functions used to initialize the window
+void XSDL_SetWindowIcon();
+
+// Functions to create scene-elements
+int XSDL_CreateButton();
+
+// Functions used to display scene-elements
 void XSDL_RenderButton(SDL_Renderer *render, XSDL_Button *btn);
 
 #endif

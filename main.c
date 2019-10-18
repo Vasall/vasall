@@ -39,15 +39,17 @@ int main(int argc, char** args) {
 		goto exit;
     }
 
-	// Create window
-    win = SDL_CreateWindow("TinyKindom", 
+	// Create and initialize the window
+    if((win = SDL_CreateWindow("TinyKindom", 
 			SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
 			SCREEN_WIDTH, SCREEN_HEIGHT, 
-			SDL_WINDOW_RESIZABLE);
-    if(win == NULL) {
+			SDL_WINDOW_RESIZABLE)) == NULL) {
 		printf("[!] Window could not be created! (%s)\n", SDL_GetError());
 		goto closewindow;
 	}
+
+	// Set the window-icon
+	XSDL_SetWindowIcon(win);
 
 	// Create renderer
 	ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
@@ -62,7 +64,6 @@ int main(int argc, char** args) {
 
 	// Run the game
 	while(game_running) {
-
 		processInput();
 
 		SDL_SetRenderDrawColor(ren, 0, 0, 0, 255 );

@@ -4,6 +4,6 @@
 *.swp
 *.swo
 # Ignore the executable
-./game
+#./game
 
 /dev

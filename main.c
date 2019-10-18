@@ -9,13 +9,13 @@
 int SCREEN_WIDTH = 640;
 int SCREEN_HEIGHT = 480;
 
-// === Global variables ===
+/* === Global variables === */
 char game_running = 0;					// 1 if game is running, 0 if not
 SDL_Window *win = NULL;					// Pointer to the window-struct
 SDL_Renderer *ren = NULL;				// Pointer to the renderer-struct
 XSDL_Button button;
 
-// === Prototypes ===
+/* === Prototypes === */
 void processInput();
 void run();
 void demoprint() { printf("TEST"); }
@@ -105,7 +105,7 @@ void processInput() {
 					case(1):
 						SDL_GetMouseState(&x, &y);
 						Vec2 pos = {x, y};
-						//if(inRect(&button, &pos)) {
+						//if(in_rect(&button, &pos)) {
 						//	printf("x: %d, y: %d\n", x, y);
 						//}
 						break;

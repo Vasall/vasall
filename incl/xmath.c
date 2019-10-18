@@ -4,9 +4,11 @@
 
 /*
  * Check if a specified position is inside of a rectangle.
- * The function returns 1 if the position is inside of the 
- * rectangle, and 0 if not.
  * 
+ * @rect: The rectangle to check if the point is in
+ * @pos: The position to check if is in the rect
+ *
+ * Return: Either 1 if the point is in the rect, or 0 if not
 */
 char inRect(SDL_Rect *rect, Vec2 *pos){
 	if(pos->x >= rect->x && pos->x <= rect->x + rect->w && 

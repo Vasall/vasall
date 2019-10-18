@@ -2,8 +2,8 @@
 #include <SDL.h>
 #include <stdio.h>
 // Include custom headers
-#include "incl/xsdl.h"
-#include "incl/xmath.h"
+#include "./incl/xsdl.h"
+#include "./incl/xmath.h"
 
 // Screen dimension
 int SCREEN_WIDTH = 640;
@@ -26,8 +26,12 @@ int main(int argc, char** args) {
     SDL_Surface* screenSurface = NULL;
 
 	// Create a button
-	//SDL_Rect button_body = {10, 10, 100, 30};
-	//button = {button_body, &demoprint};
+	SDL_Rect button_body = {10, 10, 100, 30};
+	button.body.x = button_body.x;
+	button.body.y = button_body.y;
+	button.body.w = button_body.w;
+	button.body.h = button_body.h;
+	button.ptr = &demoprint;
 
     // Initialize SDL
     if(SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -66,7 +70,7 @@ int main(int argc, char** args) {
 		SDL_RenderClear(ren);
 
 		// Render a button
-		// XSDL_RenderButton(ren, &button);
+		XSDL_RenderButton(ren, &button);
 		// Render all elements in the active scene
 		SDL_RenderPresent(ren);
 	}
@@ -84,7 +88,9 @@ exit:
 }
 
 /**
- * 
+ * Process a user-input. This function processes all 
+ * possible inputs, like closing the window, pressing a
+ * key or pressing a mouse-button. 
 */
 void processInput() {
 	SDL_Event event;
@@ -105,9 +111,9 @@ void processInput() {
 					case(1):
 						SDL_GetMouseState(&x, &y);
 						Vec2 pos = {x, y};
-						//if(inRect(&button, &pos)) {
-						//	printf("x: %d, y: %d\n", x, y);
-						//}
+						if(inRect(&button.body, &pos)) {
+							printf("x: %d, y: %d\n", x, y);
+						}
 						break;
 
 					// Right mouse-button

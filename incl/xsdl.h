@@ -22,7 +22,7 @@ typedef struct XSDL_Scene {
 } XSDL_Scene;
 
 
-// ==== DEFINE PROTOTYPES ====
+/* ==== DEFINE PROTOTYPES ==== */
 void XSDL_RenderButton(SDL_Renderer *render, XSDL_Button *btn);
 
 #endif

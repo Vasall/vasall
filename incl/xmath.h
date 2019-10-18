@@ -3,7 +3,7 @@
 
 /*
  * A simple 2d-Vector struct used the
- * same as CORD, but with 32-bit numbers
+ * same as COORD, but with 32-bit numbers
  * instead of 16.
 */
 typedef struct Vec2 {
@@ -12,6 +12,7 @@ typedef struct Vec2 {
 } Vec2;
 
 /* ==== DEFINE PROTOTYPES ==== */
-char inRect(SDL_Rect *rect, Vec2 *pos);
+char in_rect(SDL_Rect *rect, Vec2 *pos);
+void add_vecs(Vec2 *dst, Vec2 *val);
 
 #endif

@@ -1,0 +1,9 @@
+# Ignore object-files used when compiling
+*.o
+# I'm using vim, therefore ignore files used by vim
+*.swp
+*.swo
+# Ignore the executable
+rawsock
+
+/dev

@@ -2,12 +2,13 @@
 
 /**
  * Helper Method to merge the two sorted subarrays together.
- * @param {arr} the array to merge, consisting of two already sorted subarrays
- * @param {left} the left border of the first subarray
- * @param {mid} the middle, splitting arr into two subarrays
- * @param {right} the right border of the second subarray
+ *
+ * @arr: The array to merge, consisting of two already sorted subarrays
+ * @left: The left border of the first subarray
+ * @mid: The middle, splitting arr into two subarrays
+ * @right: The right border of the second subarray
  */
-void merge(int arr[], int left, int mid, int right) {  
+void merge(int *arr, int left, int mid, int right) {  
     int n1 = mid - left + 1; 
     int n2 =  right - mid; 
   
@@ -34,14 +35,14 @@ void merge(int arr[], int left, int mid, int right) {
         k++;
     } 
   
-    // Copy the remaining elements of L[], if there are any
+    // Copy the remaining elements of l[], if there are any
     while (i < n1) {
         arr[k] = l[i]; 
         i++;
         k++;
     } 
   
-    // Copy the remaining elements of R[], if there are any
+    // Copy the remaining elements of r[], if there are any
     while (j < n2) {
         arr[k] = r[j]; 
         j++;
@@ -50,12 +51,13 @@ void merge(int arr[], int left, int mid, int right) {
 } 
   
 /**
- * Sorts the subarray of arr with mergesort
- * @param {arr} the input array
- * @param {left} left index of subarray to be sorted (inclusive)
- * @param {right} right index of subarray to be sorted (inclusive)
+ * Sorts subarray of an array with mergesort.
+ *
+ * @arr: the input array
+ * @left: left index of subarray to be sorted (inclusive)
+ * @right: Right index of subarray to be sorted (inclusive)
  */
-void mergeSort(int arr[], int left, int right) {
+void merge_sort(int *arr, int left, int right) {
     if (left < right) {
         // Find the middle of our subarray
         int mid = (left + right) >> 1;
@@ -63,8 +65,23 @@ void mergeSort(int arr[], int left, int right) {
         // Sort first and second halves 
         mergeSort(arr, left, mid); 
         mergeSort(arr, mid + 1, right); 
-  	
-	// Merge them together
+
+		// Merge them together
         merge(arr, left, mid, right); 
     } 
 } 
+
+/**
+ * Copys part of one array to somewhere in another array.
+ *
+ * @src: The source array
+ * @srcOff: The offset from start of source array
+ * @dst: The destination array
+ * @dstOff: The offset from start of destination array
+ * @len: The length of subarray to copy
+ */
+void array_copy(int *src, int srcOff, int *dst, int dstOff, int len) {
+	for(int i = 0; i < len; i++) {
+		dst[dstOff + i * sizeof(int)] = src[srcOff + i * sizeof(int)];
+	}
+}

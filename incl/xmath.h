@@ -11,13 +11,8 @@ typedef struct Vec2 {
 	int y;
 } Vec2;
 
-<<<<<<< HEAD
 // ==== DEFINE PROTOTYPES ====
 char in_rect(SDL_Rect *rect, Vec2 *pos);
 void add_vecs(Vec2 *dst, Vec2 *val);
-=======
-/* ==== DEFINE PROTOTYPES ==== */
-char inRect(SDL_Rect *rect, Vec2 *pos);
->>>>>>> 6106ffb2df3e5cb70069372742b569ba5267e90f
 
 #endif

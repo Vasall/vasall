@@ -111,15 +111,14 @@ void processInput() {
 					case(1):
 						SDL_GetMouseState(&x, &y);
 						Vec2 pos = {x, y};
-<<<<<<< HEAD
+
 						//if(in_rect(&button, &pos)) {
-						//	printf("x: %d, y: %d\n", x, y);
+						//printf("x: %d, y: %d\n", x, y);
 						//}
-=======
+						
 						if(inRect(&button.body, &pos)) {
 							printf("x: %d, y: %d\n", x, y);
 						}
->>>>>>> 6106ffb2df3e5cb70069372742b569ba5267e90f
 						break;
 
 					// Right mouse-button

@@ -4,6 +4,6 @@
 *.swp
 *.swo
 # Ignore the executable
-rawsock
+game.exe
 
 /dev

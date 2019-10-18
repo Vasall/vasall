@@ -1,0 +1,9 @@
+CC=gcc
+DEPS = ./incl/xsdl.h
+OBJ = main.o ./incl/xsdl.o 
+
+%.o: %.c $(DEPS)
+	$(CC) -c -o $@ $< $(pkg-config --cflags --libs sdl2 -I.)
+
+main: $(OBJ)
+	$(CC) -o $@ $^ $(pkg-config --cflags --libs sdl2 -I.)

@@ -2,7 +2,8 @@
 #include <SDL.h>
 #include <stdio.h>
 // Include custom headers
-#include "./incl/xsdl.h"
+#include "incl/xsdl.h"
+#include "incl/xmath.h"
 
 // Screen dimension
 int SCREEN_WIDTH = 640;
@@ -64,7 +65,7 @@ int main(int argc, char** args) {
 		SDL_RenderClear(ren);
 
 		// Render a button
-		renderButton(&button);
+		XSDL_RenderButton(ren, &button);
 		// Render all elements in the active scene
 		SDL_RenderPresent(ren);
 	}
@@ -86,6 +87,7 @@ exit:
 */
 void processInput() {
 	SDL_Event event;
+	int x, y;
 
 	/* Poll for events. SDL_PollEvent() returns 0 when there are no  */
 	/* more events on the event queue, our while loop will exit when */
@@ -94,6 +96,23 @@ void processInput() {
 		switch(event.type) {
 			case(SDL_QUIT):
 				game_running = 0;
+				break;
+
+			case(SDL_MOUSEBUTTONDOWN):
+				switch(event.button.button) {
+					// Left mouse-button
+					case(1):
+						SDL_GetMouseState(&x, &y);
+						Vec2 pos = {x, y};
+						if(inRect(&button, &pos)) {
+							printf("x: %d, y: %d\n", x, y);
+						}
+						break;
+
+					// Right mouse-button
+					case(3):
+						break;
+				}
 				break;
 		}
 	}

@@ -1,15 +1,6 @@
 #ifndef _XSDL_H_
 #define _XSDL_H_
-
-/*
- * A simple 2d-Vector struct used the
- * same as CORD, but with 32-bit numbers
- * instead of 16.
-*/
-typedef struct Vec2 {
-	int x;
-	int y;
-} Vec2;
+#include <SDL.h>
 
 /*
  * A simple button-function.
@@ -29,5 +20,9 @@ typedef struct XSDL_Input {
 typedef struct XSDL_Scene {
 	short count;
 } XSDL_Scene;
+
+
+// ==== DEFINE PROTOTYPES ====
+void XSDL_RenderButton(SDL_Renderer *render, XSDL_Button *btn);
 
 #endif

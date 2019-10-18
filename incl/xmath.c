@@ -3,13 +3,14 @@
 #include "xmath.h"
 
 /*
- * Check, whether a specified position is inside of a rectangle.
+ * Check, whether a specified position is inside of a rectangle. If the
+ * point is just on the border, it will still be considered inside of the
+ * rectangle.
  * 
- * @param rect: The rectanlge
- * @param pos: The position
+ * @rect: The rectanlge
+ * @pos: The position
  *
- * Returns: 1 if position is inside of rectangle, 0 if it is outside.
- * 			Points on border are considered to be inside.
+ * Returns: 1 if position is inside of rectangle, 0 if it is outside
  */
 char in_rect(SDL_Rect *rect, Vec2 *pos) 
 {
@@ -23,8 +24,8 @@ char in_rect(SDL_Rect *rect, Vec2 *pos)
 /**
  * Adds two vectors together.
  *
- * @param dst: The destination vector. val will be add to this vector
- * @param val: The vector to add to dst
+ * @dst: The destination vector. val will be add to this vector
+ * @val: The vector to add to dst
  */
 void add_vecs(Vec2 *dst, Vec2 *val) 
 {

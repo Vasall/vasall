@@ -51,6 +51,55 @@ void XSDL_SetWindowIcon(SDL_Window *window)
 }
 
 /*
+ * Create a new scene, by allocating memory for
+ * the scene-struct and resettig the counter to 0.
+ * If the scene coulnd't be created, print the error.
+ *
+ * @scn: A pointer to write the struct to
+ *
+ * Returns: 1 on success, 0 if an error occurred
+*/
+int XSDL_CreateScene(XSDL_Scene *scn) 
+{
+	int len = sizeof(XSDL_Scene);
+	if((scn = (XSDL_Scene *)malloc(len)) == NULL) {
+		perror("[!] Failed to create scene: ");
+		return(0);
+	}
+
+	scn->count = 0;
+
+	return(1);
+}
+
+/*
+ * Delete a scene-struct and free the reserved memory.
+ *
+ * @scn: A pointer to the scene to delete
+*/
+void XSDL_DeleteScene(XSDL_Scene *scn) 
+{
+	free(scn);
+}
+
+/*
+ * Create a new button and attach it to the specified scene.
+ *
+ * @scn: A pointer to the scene, to attach the button to
+ * @x: The x-position of the button
+ * @y: The y-position of the button
+ * @w: The width of the button
+ * @h: The height of the button
+ * @ptr: The callback-function, for when the button is pressed
+ *
+ * Returns: 1 on success and 0 if some error occurred
+*/
+int XSDL_CreateButton(XSDL_Scene *scn, int x, int y, int w, int h, void (*ptr)()) 
+{
+	return(1);
+}
+
+/*
  * Render a button on the screen.
  *
  * @render: The renderer used to display the button

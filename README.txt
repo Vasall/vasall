@@ -1,3 +1,5 @@
+IMPORTANT: You can only build and run this project on Linux.
+
 /* =-=-=-=-=-=-=-=-=-=-=-=-= */
 /* BUILD AND RUN THE PROJECT */
 /* =-=-=-=-=-=-=-=-=-=-=-=-= */

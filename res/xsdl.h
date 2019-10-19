@@ -40,11 +40,12 @@ void XSDL_SetWindowIcon();
 // Functions to manage a scene and create scene-elements
 XSDL_Scene *XSDL_CreateScene();
 void XSDL_DeleteScene(XSDL_Scene *scn);
-void XSDL_AddElement(XSDL_Scene *scn, int type, void *ptr);
 int XSDL_CreateButton(XSDL_Scene *scn, int x, int y, int w, int h, void (*ptr)());
 
 // Functions used to display the scene and scene-elements
 void XSDL_RenderScene(SDL_Renderer *render, XSDL_Scene *scn);
 void XSDL_RenderButton(SDL_Renderer *render, XSDL_Button *btn);
+
+void XSDL_AddElement(XSDL_Scene *scn, int type, void* ptr);
 
 #endif

@@ -69,6 +69,9 @@ int main(int argc, char** args)
 		goto closewindow;
 	}
 
+	// XSDL_Add();
+	XSDL_AddElement(scene, 1, &button);
+
 	printf("Scene-Count: %d\n", scene->count);
 
 	// Mark game running

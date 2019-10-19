@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <SDL.h>
 #include "xsdl.h"
 
@@ -62,7 +64,9 @@ XSDL_Scene *XSDL_CreateScene()
 	XSDL_Scene *ptr = (XSDL_Scene *)malloc(len);
 	if(ptr == NULL) return (NULL);
 
+	memset(&ptr->elements, 0,  ELE_BUF_LEN);
 	ptr->count = 0;
+
 	return(ptr);
 }
 
@@ -75,6 +79,45 @@ void XSDL_DeleteScene(XSDL_Scene *scn)
 {
 	free(scn);
 }
+
+/*
+ * Attach a new element to the scpeified scene. To do
+ * so a new element with a type and a pointer to the
+ * element is pushed into the element-buffer of the 
+ * specified scene.
+ *
+ *
+*/
+void XSDL_Add()
+{
+	/*
+	if(scn->count >= MAX_ELE_COUNT)
+		goto addfailed;
+
+	// Find a free space in element-buffer
+	XSDL_Scene_Element *addr = (XSDL_Scene_Element *)&scn->elements;
+	for(XSDL_Scene_Element *ele = addr; ele < addr + MAX_ELE_COUNT; ele++) {
+		// Memory-space as empty
+		if(ele->type == 0) {
+			printf("Added element");
+			scn->count += 1;
+			ele->type = type;
+			ele->ptr = ptr;
+			goto addsuccess;
+		}
+	}
+
+addfailed:
+	return;
+
+addsuccess:
+	return;
+	*/
+}
+
+void XSDL_AddElement(XSDL_Scene *scn, int type, void* ptr) {
+}
+
 
 /*
  * Create a new button and attach it to the specified scene.
@@ -96,7 +139,7 @@ int XSDL_CreateButton(XSDL_Scene *scn, int x, int y, int w, int h, void (*ptr)()
 
 void XSDL_RenderScene(SDL_Renderer *render, XSDL_Scene *scn) 
 {
-	int len = 
+	int len = 0;
 }
 
 /*

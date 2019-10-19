@@ -1,9 +1,13 @@
-# Ignore object-files used when compiling
-*.o
 # I'm using vim, therefore ignore files used by vim
 *.swp
 *.swo
-# Ignore the executable
-/build
 
+# Ignore directories created while building the project
+/build
+/objects
+
+# Just to be save, ignore all object-files
+*.o
+
+# Additional ignores
 /dev

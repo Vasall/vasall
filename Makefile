@@ -1,5 +1,5 @@
 CC=gcc
-OUT=game
+OUT=./build/game
 
 game: ./objects/main.o ./objects/vector.o ./objects/xmath.o
 	$(CC) -o $(OUT) ./objects/main.o ./objects/xsdl.o ./objects/vector.o $(shell pkg-config --cflags --libs sdl2)

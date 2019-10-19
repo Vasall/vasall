@@ -94,6 +94,11 @@ int XSDL_CreateButton(XSDL_Scene *scn, int x, int y, int w, int h, void (*ptr)()
 	return(1);
 }
 
+void XSDL_RenderScene(SDL_Renderer *render, XSDL_Scene *scn) 
+{
+	int len = 
+}
+
 /*
  * Render a button on the screen.
  *

@@ -15,10 +15,16 @@ SDL_Window *win = NULL;					// Pointer to the window-struct
 SDL_Renderer *ren = NULL;				// Pointer to the renderer-struct
 XSDL_Button button;
 XSDL_Scene *scene;
+SDL_Color clr = {0x18, 0x18, 0x18, 0xff};
 
 /* === Prototypes === */
 void process_input();
-void demoprint() { printf("TEST"); }
+void demofunc() 
+{
+	clr.r = floor(rand() % 255);
+	clr.g = floor(rand() % 255);
+	clr.b = floor(rand() % 255);
+}
 
 int main(int argc, char** args) 
 {
@@ -31,7 +37,7 @@ int main(int argc, char** args)
 	button.body.y = button_body.y;
 	button.body.w = button_body.w;
 	button.body.h = button_body.h;
-	button.ptr = &demoprint;
+	button.ptr = &demofunc;
 
     // Initialize SDL
     if(SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -65,8 +71,6 @@ int main(int argc, char** args)
 
 	printf("Scene-Count: %d\n", scene->count);
 
-	SDL_Color clr = {0x18, 0x18, 0x18};
-
 	// Mark game running
 	game_running = 1;
 
@@ -74,7 +78,7 @@ int main(int argc, char** args)
 	while(game_running) {
 		process_input();
 
-		SDL_SetRenderDrawColor(ren, 0, 0, 0, 255 );
+		SDL_SetRenderDrawColor(ren, clr.r, clr.g, clr.b, clr.a );
 
 		SDL_RenderClear(ren);
 
@@ -85,6 +89,7 @@ int main(int argc, char** args)
 	}
 
 closewindow:
+	XSDL_DeleteScene(scene);
 	// Destory renderer
 	SDL_DestroyRenderer(ren);
 	// Destroy window
@@ -127,7 +132,7 @@ void process_input()
 						//}
 						
 						if(in_rect(&button.body, &pos)) {
-							printf("x: %d, y: %d\n", x, y);
+							button.ptr();
 						}
 						break;
 

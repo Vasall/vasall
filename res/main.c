@@ -2,8 +2,8 @@
 #include <SDL.h>
 #include <stdio.h>
 // Include custom headers
-#include "./incl/xsdl.h"
-#include "./incl/vector.h"
+#include "xsdl.h"
+#include "vector.h"
 
 // Screen dimension
 int SCREEN_WIDTH = 640;

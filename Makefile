@@ -2,7 +2,7 @@ CC=gcc
 OUT=./build/game
 FLAGS=-Wall
 
-game: ./objects/main.o ./objects/xsdl.o ./objects/vector.o ./objects/vector.o
+$(OUT): ./objects/main.o ./objects/xsdl.o ./objects/vector.o ./objects/vector.o
 	$(CC) -o $(OUT) ./objects/main.o ./objects/xsdl.o ./objects/vector.o $(shell pkg-config --cflags --libs sdl2) -Wall
 
 ./objects/main.o: ./res/main.c

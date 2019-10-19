@@ -3,7 +3,7 @@
 #include <stdio.h>
 // Include custom headers
 #include "xsdl.h"
-#include "vector.h"
+#include "../shared/vector.h"
 
 // Screen dimension
 int SCREEN_WIDTH = 640;

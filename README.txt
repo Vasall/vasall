@@ -4,18 +4,19 @@ IMPORTANT: You can only build and run this project on Linux.
 /* BUILD AND RUN THE PROJECT */
 /* =-=-=-=-=-=-=-=-=-=-=-=-= */
 
-First clone the reposity into the current folder,
-and change into the newly created folder by running:
-
-$ git clone https://github.com/Vasall/vasall-client.git
-$ cd ./vasall-client
-
-But before you can actually compile and run this project, you 
+Before you can actually compile and run this project, you 
 first have to install the required dependencies using the
 following commands:
 
 $ sudo apt update && sudo apt upgrade
 $ sudo apt install make git pkg-config libsdl2-dev
+
+To get the source-code, you have to clone the 
+reposity into a folder, and change into the newly 
+created folder by running:
+
+$ git clone https://github.com/Vasall/vasall-client.git
+$ cd ./vasall-client
 
 Additionally, the XSDL-extension is needed,
 which can be obtained, by cloning the 

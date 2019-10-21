@@ -37,7 +37,7 @@ int main(int argc, char** args)
     }
 
 	// Create and initialize the window
-    if((win = SDL_CreateWindow("TinyKindom", 
+    if((win = SDL_CreateWindow("Vasall", 
 			SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
 			SCREEN_WIDTH, SCREEN_HEIGHT, 
 			SDL_WINDOW_SHOWN)) == NULL) {
@@ -121,14 +121,6 @@ void process_input()
 					case(1):
 						SDL_GetMouseState(&x, &y);
 						Vec2 pos = {x, y};
-
-						//if(in_rect(&button, &pos)) {
-						//printf("x: %d, y: %d\n", x, y);
-						//}
-						
-						//if(in_rect(&button.body, &pos)) {
-						//	button.ptr();
-						//}
 						break;
 
 					// Right mouse-button

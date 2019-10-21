@@ -13,8 +13,11 @@ int SCREEN_HEIGHT = 480;
 char game_running = 0;					/* 1 if game is running, 0 if not */
 SDL_Window *win = NULL;					/* Pointer to the window-struct */
 SDL_Renderer *ren = NULL;				/* Pointer to the renderer-struct */
-XSDL_Node *context;
+XSDL_Node *context;						/* Pointer to the super-node */
+XSDL_Pipe *pipe;						/* Pointer to the render-pipe */
 SDL_Color clr = {0x18, 0x18, 0x18, 0xff};
+
+int hovered = -1;						/* Pointer to the hovered element */
 
 /* === Prototypes === */
 void process_input();
@@ -39,7 +42,7 @@ int main(int argc, char** args)
 			SCREEN_WIDTH, SCREEN_HEIGHT, 
 			SDL_WINDOW_SHOWN)) == NULL) {
 		printf("[!] Window could not be created! (%s)\n", SDL_GetError());
-		goto cleanup;
+		goto cleanup_sdl;
 	}
 
 	/* Set the window-icon */
@@ -48,18 +51,26 @@ int main(int argc, char** args)
 	/* Create renderer */
 	if((ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED)) == NULL) {
 		printf("[!] Renderer could not be created! (%s)\n", SDL_GetError());
-		goto cleanup;
+		goto cleanup_window;
 	}
 
 	/* Initialize the first context */
 	if((context = XSDL_CreateContext(0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)) == NULL) {
 		printf("[!] Could not create context.\n");
-		goto cleanup;
+		goto cleanup_renderer;
+	}
+
+	/* Initialize the render-pipe */
+	if((pipe = XSDL_CreatePipe()) == NULL) {
+		printf("[!] Could not create pipe.\n");
+		goto cleanup_pipe;
 	}
 
 	/* Attach a button to the context on the first level */
 	XSDL_CreateButton(context, 20, 40, 120, 30, &demofunc);
 	XSDL_CreateButton(context, 220, 40, 120, 30, &demofunc);
+
+	XSDL_BuildPipe(pipe, context);
 
 	/* Mark game running */
 	game_running = 1;
@@ -73,23 +84,25 @@ int main(int argc, char** args)
 		SDL_RenderClear(ren);
 
 		/* Render the current context */
-		XSDL_RenderNodes(ren, context);
+		XSDL_RenderPipe(ren, pipe);
 		
-
 		/* Render all elements in the active scene */
 		SDL_RenderPresent(ren);
 	}
 
-cleanup:
+cleanup_pipe:
+	/* Destroy context */
 	XSDL_DeleteContext(context);
+cleanup_renderer:
 	/* Destory renderer */
 	SDL_DestroyRenderer(ren);
+cleanup_window:
 	/* Destroy window */
     SDL_DestroyWindow(win);
-
-exit:
+cleanup_sdl:
     /* Quit SDL subsystems */
     SDL_Quit();
+exit:
     return (0);
 }
 
@@ -111,13 +124,18 @@ void process_input()
 			case(SDL_QUIT):
 				game_running = 0;
 				break;
+	
+			case(SDL_MOUSEMOTION):
+				SDL_GetMouseState(&x, &y);
+				Vec2 pos = {x, y};
+
+
+				break;
 
 			case(SDL_MOUSEBUTTONDOWN):
 				switch(event.button.button) {
 					/* Left mouse-button */
 					case(1):
-						SDL_GetMouseState(&x, &y);
-						Vec2 pos = {x, y};
 						break;
 
 					/* Right mouse-button */

@@ -7,7 +7,7 @@
  * point is just on the border, it will still be considered inside of the
  * rectangle.
  * 
- * @rect: The rectanlge
+ * @rect: The rectangle
  * @pos: The position
  *
  * Returns: 1 if position is inside of rectangle, 0 if it is outside
@@ -29,6 +29,6 @@ char in_rect(SDL_Rect *rect, Vec2 *pos)
  */
 void add_vecs(Vec2 *dst, Vec2 *val) 
 {
-	//dst.x += val.x;
-	//dst.y += val.y;
+	/* dst.x += val.x; */
+	/* dst.y += val.y; */
 }

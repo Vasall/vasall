@@ -1,6 +1,6 @@
 CC=gcc
 OUT=./build/game
-CFLAGS=-Wall -std=c99 -pedantic
+CFLAGS=-Wall -ansi
 LDFLAGS=$(shell pkg-config --cflags --libs sdl2)
 
 $(OUT): ./objects/main.o ./objects/vector.o

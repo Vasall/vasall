@@ -1,18 +1,18 @@
-// Using SDL and standard IO
+/* Using SDL and standard IO */
 #include <SDL2/SDL.h>
 #include <stdio.h>
-// Include custom headers
+/* Include custom headers */
 #include "../XSDL/xsdl.h"
 #include "vector.h"
 
-// Screen dimension
+/* Screen dimension */
 int SCREEN_WIDTH = 640;
 int SCREEN_HEIGHT = 480;
 
 /* === Global variables === */
-char game_running = 0;					// 1 if game is running, 0 if not
-SDL_Window *win = NULL;					// Pointer to the window-struct
-SDL_Renderer *ren = NULL;				// Pointer to the renderer-struct
+char game_running = 0;					/* 1 if game is running, 0 if not */
+SDL_Window *win = NULL;					/* Pointer to the window-struct */
+SDL_Renderer *ren = NULL;				/* Pointer to the renderer-struct */
 XSDL_Node *context;
 SDL_Color clr = {0x18, 0x18, 0x18, 0xff};
 
@@ -27,16 +27,16 @@ void demofunc()
 
 int main(int argc, char** args) 
 {
-    // The surface contained by the window
+    /* The surface contained by the window */
     SDL_Surface* screenSurface = NULL;
 
-    // Initialize SDL
+    /* Initialize SDL */
     if(SDL_Init(SDL_INIT_VIDEO) < 0) {
         printf("[!] SDL could not initialize! (%s)\n", SDL_GetError());
 		goto exit;
     }
 
-	// Create and initialize the window
+	/* Create and initialize the window */
     if((win = SDL_CreateWindow("Vasall", 
 			SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
 			SCREEN_WIDTH, SCREEN_HEIGHT, 
@@ -45,29 +45,29 @@ int main(int argc, char** args)
 		goto cleanup;
 	}
 
-	// Set the window-icon
+	/* Set the window-icon */
 	XSDL_SetWindowIcon(win);
 
-	// Create renderer
+	/* Create renderer */
 	if((ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED)) == NULL) {
 		printf("[!] Renderer could not be created! (%s)\n", SDL_GetError());
 		goto cleanup;
 	}
 
-	// Initialize the first context
+	/* Initialize the first context */
 	if((context = XSDL_CreateContext(0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)) == NULL) {
 		printf("[!] Could not create context.\n");
 		goto cleanup;
 	}
 
-	// Attach a button to the context on the first level
+	/* Attach a button to the context on the first level */
 	XSDL_CreateButton(context, 20, 40, 120, 30, &demofunc);
 	XSDL_CreateButton(context, 220, 40, 120, 30, &demofunc);
 
-	// Mark game running
+	/* Mark game running */
 	game_running = 1;
 
-	// Run the game
+	/* Run the game */
 	while(game_running) {
 		process_input();
 
@@ -75,23 +75,23 @@ int main(int argc, char** args)
 
 		SDL_RenderClear(ren);
 
-		// Render the current context
+		/* Render the current context */
 		XSDL_RenderNodes(ren, context);
 		
 
-		// Render all elements in the active scene
+		/* Render all elements in the active scene */
 		SDL_RenderPresent(ren);
 	}
 
 cleanup:
 	XSDL_DeleteContext(context);
-	// Destory renderer
+	/* Destory renderer */
 	SDL_DestroyRenderer(ren);
-	// Destroy window
+	/* Destroy window */
     SDL_DestroyWindow(win);
 
 exit:
-    // Quit SDL subsystems
+    /* Quit SDL subsystems */
     SDL_Quit();
     return (0);
 }
@@ -117,13 +117,13 @@ void process_input()
 
 			case(SDL_MOUSEBUTTONDOWN):
 				switch(event.button.button) {
-					// Left mouse-button
+					/* Left mouse-button */
 					case(1):
 						SDL_GetMouseState(&x, &y);
 						Vec2 pos = {x, y};
 						break;
 
-					// Right mouse-button
+					/* Right mouse-button */
 					case(3):
 						break;
 				}

@@ -1,6 +1,6 @@
 CC=gcc
 OUT=./build/game
-CFLAGS=-Wall
+CFLAGS=-Wall -std=c99 -pedantic
 LDFLAGS=$(shell pkg-config --cflags --libs sdl2)
 
 $(OUT): ./objects/main.o ./objects/vector.o
@@ -11,6 +11,3 @@ $(OUT): ./objects/main.o ./objects/vector.o
 
 ./objects/vector.o: ./src/vector.c
 	$(CC) -c ./src/vector.c -o ./objects/vector.o $(LDFLAGS) $(CFLAGS)
-
-#./objects/arrayutils.o: ./shared/arrayutils.c
-#	$(CC) -c ./shared/arrayutils.c -o ./objects/arrayutils.o $(LDFLAGS) $(CFLAGS)

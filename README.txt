@@ -22,7 +22,7 @@ Additionally, the XSDL-extension is needed,
 which can be obtained, by cloning the 
 XSDL-repository into the project-folder:
 
-$ git clone https://github.com/unrealguthrie/XSDL.git
+$ git clone https://github.com/Vasall/XSDL.git
 
 After this is done, you're now able to build the 
 project yourself using this command:

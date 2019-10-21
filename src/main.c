@@ -1,9 +1,9 @@
 // Using SDL and standard IO
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include <stdio.h>
 // Include custom headers
-#include "xsdl.h"
-#include "../shared/vector.h"
+#include "../XSDL/xsdl.h"
+#include "vector.h"
 
 // Screen dimension
 int SCREEN_WIDTH = 640;
@@ -13,8 +13,7 @@ int SCREEN_HEIGHT = 480;
 char game_running = 0;					// 1 if game is running, 0 if not
 SDL_Window *win = NULL;					// Pointer to the window-struct
 SDL_Renderer *ren = NULL;				// Pointer to the renderer-struct
-XSDL_Button button;
-XSDL_Scene *scene;
+XSDL_Node *context;
 SDL_Color clr = {0x18, 0x18, 0x18, 0xff};
 
 /* === Prototypes === */
@@ -31,14 +30,6 @@ int main(int argc, char** args)
     // The surface contained by the window
     SDL_Surface* screenSurface = NULL;
 
-	// Create a button
-	SDL_Rect button_body = {10, 10, 100, 30};
-	button.body.x = button_body.x;
-	button.body.y = button_body.y;
-	button.body.w = button_body.w;
-	button.body.h = button_body.h;
-	button.ptr = &demofunc;
-
     // Initialize SDL
     if(SDL_Init(SDL_INIT_VIDEO) < 0) {
         printf("[!] SDL could not initialize! (%s)\n", SDL_GetError());
@@ -51,7 +42,7 @@ int main(int argc, char** args)
 			SCREEN_WIDTH, SCREEN_HEIGHT, 
 			SDL_WINDOW_SHOWN)) == NULL) {
 		printf("[!] Window could not be created! (%s)\n", SDL_GetError());
-		goto closewindow;
+		goto cleanup;
 	}
 
 	// Set the window-icon
@@ -60,19 +51,18 @@ int main(int argc, char** args)
 	// Create renderer
 	if((ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED)) == NULL) {
 		printf("[!] Renderer could not be created! (%s)\n", SDL_GetError());
-		goto closewindow;
+		goto cleanup;
 	}
 
-	// Initialize the first scene
-	if((scene = XSDL_CreateScene()) == NULL) {
-		printf("[!] Could not create scene.\n");
-		goto closewindow;
+	// Initialize the first context
+	if((context = XSDL_CreateContext(0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)) == NULL) {
+		printf("[!] Could not create context.\n");
+		goto cleanup;
 	}
 
-	// XSDL_Add();
-	XSDL_AddElement(scene, 1, &button);
-
-	printf("Scene-Count: %d\n", scene->count);
+	// Attach a button to the context on the first level
+	XSDL_CreateButton(context, 20, 40, 120, 30, &demofunc);
+	XSDL_CreateButton(context, 220, 40, 120, 30, &demofunc);
 
 	// Mark game running
 	game_running = 1;
@@ -85,14 +75,16 @@ int main(int argc, char** args)
 
 		SDL_RenderClear(ren);
 
-		// Render a button
-		XSDL_RenderButton(ren, &button);
+		// Render the current context
+		XSDL_RenderNodes(ren, context);
+		
+
 		// Render all elements in the active scene
 		SDL_RenderPresent(ren);
 	}
 
-closewindow:
-	XSDL_DeleteScene(scene);
+cleanup:
+	XSDL_DeleteContext(context);
 	// Destory renderer
 	SDL_DestroyRenderer(ren);
 	// Destroy window
@@ -134,9 +126,9 @@ void process_input()
 						//printf("x: %d, y: %d\n", x, y);
 						//}
 						
-						if(in_rect(&button.body, &pos)) {
-							button.ptr();
-						}
+						//if(in_rect(&button.body, &pos)) {
+						//	button.ptr();
+						//}
 						break;
 
 					// Right mouse-button

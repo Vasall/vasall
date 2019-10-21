@@ -23,6 +23,6 @@ else
 fi
 
 echo "Compile files."
-make
+make -B
 
 echo "Finished building."

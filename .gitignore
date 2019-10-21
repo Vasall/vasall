@@ -9,6 +9,9 @@
 # Just to be save, ignore all object-files
 *.o
 
+# Ignore the XSDL-dependecy-directory
+/XSDL
+
 # Additional ignores
 /dev
 /tools

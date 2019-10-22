@@ -11,10 +11,9 @@ int SCREEN_HEIGHT = 480;
 
 /* === Global variables === */
 char game_running = 0;					/* 1 if game is running, 0 if not */
-SDL_Window *win = NULL;					/* Pointer to the window-struct */
-SDL_Renderer *ren = NULL;				/* Pointer to the renderer-struct */
-XSDL_Node *scene;					/* Pointer to the super-node */
-XSDL_Pipe *pipe;					/* Pointer to the render-pipe */
+SDL_Window *win;					/* Pointer to the window-struct */
+SDL_Renderer *ren;					/* Pointer to the renderer-struct */
+XSDL_Context *ctx;					/* The GUI-context */
 SDL_Color clr = {0x18, 0x18, 0x18, 0xff};
 
 XSDL_Node *hovered;					/* Pointer to the hovered element */
@@ -39,7 +38,7 @@ void demofunc2()
 int main(int argc, char** args) 
 {
     /* Initialize SDL */
-    if(SDL_Init(SDL_INIT_VIDEO) < 0) {
+    if(XSDL_Init(SDL_INIT_VIDEO) < 0) {
         printf("[!] SDL could not initialize! (%s)\n", SDL_GetError());
 		goto exit;
     }
@@ -62,23 +61,17 @@ int main(int argc, char** args)
 		goto cleanup_window;
 	}
 
-	/* Initialize the first scene */
-	if((scene = XSDL_CreateScene(0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)) == NULL) {
-		printf("[!] Could not create context.\n");
+	/* Create the GUI-context */
+	if((ctx = XSDL_CreateContext(SCREEN_WIDTH, SCREEN_HEIGHT)) == NULL) {
+		printf("[!] Context could not be created!\n");
 		goto cleanup_renderer;
 	}
 
-	/* Initialize the render-pipe */
-	if((pipe = XSDL_CreatePipe()) == NULL) {
-		printf("[!] Could not create pipe.\n");
-		goto cleanup_pipe;
-	}
-
 	/* Attach a button to the context on the first level */
-	XSDL_CreateButton(scene, 20, 40, 120, 30, &demofunc);
-	XSDL_CreateButton(scene, 220, 40, 120, 30, &demofunc2);
+	XSDL_CreateButton(ctx->root, 20, 40, 120, 30, &demofunc);
+	XSDL_CreateButton(ctx->root, 220, 40, 120, 30, &demofunc2);
 
-	XSDL_BuildPipe(pipe, scene);
+	XSDL_BuildPipe(ctx->pipe, ctx->root);
 
 	/* Mark game running */
 	game_running = 1;
@@ -92,15 +85,15 @@ int main(int argc, char** args)
 		SDL_RenderClear(ren);
 
 		/* Render the current context */
-		XSDL_RenderPipe(ren, pipe);
+		XSDL_RenderPipe(ren, ctx->pipe);
 		
 		/* Render all elements in the active scene */
 		SDL_RenderPresent(ren);
 	}
 
-cleanup_pipe:
-	/* Destroy scene */
-	XSDL_DeleteScene(scene);
+	/* Destroy context */
+	XSDL_DeleteContext(ctx);
+
 cleanup_renderer:
 	/* Destory renderer */
 	SDL_DestroyRenderer(ren);
@@ -137,7 +130,7 @@ void process_input()
 				SDL_GetMouseState(&x, &y);
 				XSDL_Pos pos = {x, y};
 					
-				hovered = XSDL_CheckHover(pipe, &pos);
+				hovered = XSDL_CheckHover(ctx->pipe, &pos);
 				break;
 
 			case(SDL_MOUSEBUTTONDOWN):

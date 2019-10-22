@@ -13,11 +13,11 @@ int SCREEN_HEIGHT = 480;
 char game_running = 0;					/* 1 if game is running, 0 if not */
 SDL_Window *win = NULL;					/* Pointer to the window-struct */
 SDL_Renderer *ren = NULL;				/* Pointer to the renderer-struct */
-XSDL_Node *context;						/* Pointer to the super-node */
-XSDL_Pipe *pipe;						/* Pointer to the render-pipe */
+XSDL_Node *scene;					/* Pointer to the super-node */
+XSDL_Pipe *pipe;					/* Pointer to the render-pipe */
 SDL_Color clr = {0x18, 0x18, 0x18, 0xff};
 
-int hovered = -1;						/* Pointer to the hovered element */
+XSDL_Node *hovered;					/* Pointer to the hovered element */
 
 /* === Prototypes === */
 void process_input();
@@ -26,6 +26,14 @@ void demofunc()
 	clr.r = floor(rand() % 255);
 	clr.g = floor(rand() % 255);
 	clr.b = floor(rand() % 255);
+}
+
+void demofunc2()
+{
+	clr.r = 0x18;
+	clr.g = 0x18;
+	clr.b = 0x18;
+
 }
 
 int main(int argc, char** args) 
@@ -54,8 +62,8 @@ int main(int argc, char** args)
 		goto cleanup_window;
 	}
 
-	/* Initialize the first context */
-	if((context = XSDL_CreateContext(0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)) == NULL) {
+	/* Initialize the first scene */
+	if((scene = XSDL_CreateScene(0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)) == NULL) {
 		printf("[!] Could not create context.\n");
 		goto cleanup_renderer;
 	}
@@ -67,10 +75,10 @@ int main(int argc, char** args)
 	}
 
 	/* Attach a button to the context on the first level */
-	XSDL_CreateButton(context, 20, 40, 120, 30, &demofunc);
-	XSDL_CreateButton(context, 220, 40, 120, 30, &demofunc);
+	XSDL_CreateButton(scene, 20, 40, 120, 30, &demofunc);
+	XSDL_CreateButton(scene, 220, 40, 120, 30, &demofunc2);
 
-	XSDL_BuildPipe(pipe, context);
+	XSDL_BuildPipe(pipe, scene);
 
 	/* Mark game running */
 	game_running = 1;
@@ -91,19 +99,19 @@ int main(int argc, char** args)
 	}
 
 cleanup_pipe:
-	/* Destroy context */
-	XSDL_DeleteContext(context);
+	/* Destroy scene */
+	XSDL_DeleteScene(scene);
 cleanup_renderer:
 	/* Destory renderer */
 	SDL_DestroyRenderer(ren);
 cleanup_window:
 	/* Destroy window */
-    SDL_DestroyWindow(win);
+    	SDL_DestroyWindow(win);
 cleanup_sdl:
-    /* Quit SDL subsystems */
-    SDL_Quit();
+    	/* Quit SDL subsystems */
+    	SDL_Quit();
 exit:
-    return (0);
+    	return (0);
 }
 
 /**
@@ -127,15 +135,20 @@ void process_input()
 	
 			case(SDL_MOUSEMOTION):
 				SDL_GetMouseState(&x, &y);
-				Vec2 pos = {x, y};
-
-
+				XSDL_Pos pos = {x, y};
+					
+				hovered = XSDL_CheckHover(pipe, &pos);
 				break;
 
 			case(SDL_MOUSEBUTTONDOWN):
 				switch(event.button.button) {
 					/* Left mouse-button */
 					case(1):
+						if(hovered != NULL && hovered->element != NULL && 
+							hovered->tag == XSDL_BUTTON) {
+							XSDL_Button *btn = hovered->element;
+							btn->ptr();
+						}
 						break;
 
 					/* Right mouse-button */

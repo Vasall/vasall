@@ -13,7 +13,7 @@ $ sudo apt install make git pkg-config libsdl2-dev
 
 To get the source-code, you have to clone the 
 reposity into a folder, and change into the newly 
-created folder by running:
+created directory by running:
 
 $ git clone https://github.com/Vasall/vasall-client.git
 $ cd ./vasall-client

@@ -5,7 +5,7 @@
  * A simple 2d-Vector struct used the
  * same as COORD, but with 32-bit numbers
  * instead of 16.
-*/
+ */
 typedef struct Vec2 {
 	int x;
 	int y;

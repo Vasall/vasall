@@ -205,8 +205,7 @@ void vec_nrm(Vec2 *vec)
  *
  * @vec: The input vector
  *
- * Returns: A new vector, that is the input vector scaled
- * 			to a magnitude of 1
+ * Returns: A new vector, that is the input vector scaled to a magnitude of 1
  */
 Vec2 vec_nrm_ret(Vec2 *vec)
 {
@@ -219,6 +218,35 @@ Vec2 vec_nrm_ret(Vec2 *vec)
 	return (*vec);
 }
 
+/*
+ * Multiplies a vector by a matrix given by the rest of the arguments
+ *
+ * @vec: The input vector
+ * @m11: The first row and first column of the matrix
+ * @m21: The first row and second column of the matrix
+ * @m12: The second row and first column of the matrix
+ * @m22: The second row and second column of the matrix
+ * 
+ */
+void vec_matmul(Vec2 *vec, float m11, float m21, float m12, float m22)
+{
+	float r1 = (m11 * vec->x) + (m21 * vec->y);
+	float r2 = (m12 * vec->x) + (m22 * vec->y);
+	vec_set(vec, r1, r2);
+}
+
+/*
+ * Multiplies the input vector by a matrix given by the rest of the arguments.
+ * Then returns a new vector.
+ *
+ * @vec: The input vector
+ * @m11: The first row and first column of the matrix
+ * @m21: The first row and second column of the matrix
+ * @m12: The second row and first column of the matrix
+ * @m22: The second row and second column of the matrix
+ *
+ * Returns: A new vector, that is the input vector multiplied by the matrix
+ */
 Vec2 vec_matmul_ret(Vec2 *vec, float m11, float m21, float m21, float m22)
 {
 	float r1 = (m11 * vec->x) + (m21 * vec->y);
@@ -230,18 +258,51 @@ Vec2 vec_matmul_ret(Vec2 *vec, float m11, float m21, float m21, float m22)
 /*
  * Rotates the input vector by an angle in radians and returns it.
  *
+ * @vec: The input vector
+ * @rad: The angle to rotate by in radians
+ *
+ * Returns: A new vector, that is the input vector rotated by the angle rad
  */
-Vec2 vec_rot_rad_ret(Vec2 *vec, int rad)
+Vec2 vec_rot_ret(Vec2 *vec, float rad)
 {
-	return (vec_matmul_ret(vec, cos((double) rad), -sin((double) rad), sin((double) rad), cos((double) rad)));
+	return (vec_matmul_ret(vec, cos((double) rad), -sin((double) rad),
+				sin((double) rad), cos((double) rad)));
+}
+
+/*
+ * Rotates a vector by an angle in radians.
+ *
+ * @vec: The vector to rotate
+ * @rad: The angle to rotate by in radians
+ */
+void vec_rot(Vec2 *vec, float rad)
+{
+	vec_matmul(vec, cos((double) rad), -sin((double) rad),
+			sin((double) rad), cos((double) rad));
 }
 
 /*
  * Rotates the input vector by an angle in degrees and returns it.
  *
+ * @vec: The input vector
+ * @deg: The angle to rotate by in degrees
+ *
+ * Returns: A new vector, that is the input vector rotated by the angle deg
  */
 Vec2 vec_rot_deg_ret(Vec2 *vec, int deg)
 {
 	float rad = deg / 180 * M_PI;
 	return vec_rot_rad_ret(vec, rad);
+}
+
+/*
+ * Rotates a vector by an angle in degrees
+ *
+ * @vec: The vector to rotate
+ * @deg: The angle to rotate by in degrees
+ */
+void vec_rot_deg(Vec2 *vec, int deg)
+{
+	float rad = deg / 180 * M_PI;
+	vec_rot(vec, rad);
 }

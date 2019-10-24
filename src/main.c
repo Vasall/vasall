@@ -15,12 +15,21 @@ SDL_Window *win;					/* Pointer to window-struct */
 SDL_Renderer *ren;					/* Pointer to renderer-struct */
 XSDL_Context *ctx;					/* The GUI-context */
 
-XSDL_Node *hovered;					/* Pointer to hovered element */
-
 SDL_Color clr = {0x18, 0x18, 0x18, 0xff};		/* Clear-color */
 
 /* === Prototypes === */
 void process_input();
+
+void demofunc(XSDL_Node *node)
+{
+	SDL_Color newc = {
+		rand() % 255,
+		rand() % 255,
+		rand() % 255,
+		0xff
+	};
+	XSDL_ModStyle(node, STY_BCK_COL, &newc);
+}
 
 int main(int argc, char** args) 
 {
@@ -61,8 +70,10 @@ int main(int argc, char** args)
 	XSDL_CreateButton(ctx->root, "button0", 20, 40, 120, 30, NULL);
 	XSDL_CreateButton(ctx->root, "button1", 220, 40, 120, 30, NULL);
 
-	SDL_Color bck_col1 = { 0xff, 0xff, 0x00, 0xff };
-	XSDL_ModStyle(XSDL_Get(ctx->root, "button1"), XSDL_STYLE_BCK_COL, &bck_col1);
+	SDL_Color c = {0xff, 0x00, 0x00, 0xff};
+	XSDL_ModStyle(XSDL_Get(ctx->root, "button0"), STY_BCK_COL, &c);
+
+	XSDL_BindEvent(XSDL_Get(ctx->root, "button1"), EVT_MOUSEDOWN, &demofunc);
 
 	/* Build render-pipe */
 	XSDL_BuildPipe(ctx->pipe, ctx->root);
@@ -76,7 +87,8 @@ int main(int argc, char** args)
 		process_input();
 
 		/* Clear the screen */
-		SDL_SetRenderDrawColor(ren, clr.r, clr.g, clr.b, clr.a );
+		SDL_SetRenderDrawColor(ren, clr.r, clr.g, clr.b, 
+				clr.a );
 		SDL_RenderClear(ren);
 
 		/* Render the current context */
@@ -110,34 +122,28 @@ exit:
 void process_input() 
 {
 	SDL_Event event;
-	int x, y;
 
 	/* Poll for events. SDL_PollEvent() returns 0 when there are no  */
 	/* more events on the event queue, our while loop will exit when */
 	/* that occurs.                                                  */
 	while(SDL_PollEvent(&event)) {
+		if(event.type == SDL_QUIT) {
+			running = 0;
+			continue;
+		}
+
+		/* Process interactions with the UI */
+		if(XSDL_ProcEvent(ctx, &event) < 0)
+			continue;
+
 		switch(event.type) {
-			case(SDL_QUIT):
-				running = 0;
-				break;
-
 			case(SDL_MOUSEMOTION):
-				SDL_GetMouseState(&x, &y);
-				XSDL_Pos pos = {x, y};
-
-				hovered = XSDL_CheckHover(ctx->pipe, &pos);
 				break;
 
 			case(SDL_MOUSEBUTTONDOWN):
 				switch(event.button.button) {
 					/* Left mouse-button */
 					case(1):
-						if(hovered != NULL && hovered->element != NULL && 
-								hovered->tag == XSDL_BUTTON) {
-							XSDL_Button *btn = hovered->element;
-							if(btn->ptr != NULL)
-								btn->ptr();
-						}
 						break;
 
 						/* Right mouse-button */

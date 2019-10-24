@@ -26,7 +26,7 @@ float util_max(float a, float b)
  *
  * Returns: A new SDL_Color made from the input hsv
  */
-SDL_Color getRGB(float hue, float sat, float value)
+SDL_Color hsv_to_rgb(float hue, float sat, float value)
 {
 	int i = floor((hue * 6.0) % 6);
 	float f = hue * 6.0 - i;

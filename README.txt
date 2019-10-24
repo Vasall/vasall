@@ -18,11 +18,10 @@ created directory by running:
 $ git clone https://github.com/Vasall/vasall-client.git
 $ cd ./vasall-client
 
-Additionally, the XSDL-extension is needed,
-which can be obtained, by cloning the 
-XSDL-repository into the project-folder:
+Additionally some other libraries are needed:
 
 $ git clone https://github.com/Vasall/XSDL.git
+$ git clone https://github.com/grimfang4/SDL_FontCache.git
 
 After this is done, you're now able to build the 
 project yourself using this command:

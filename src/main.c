@@ -1,6 +1,8 @@
 /* Using SDL and standard IO */
-#include <SDL2/SDL.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <SDL2/SDL.h>
 /* Include custom headers */
 #include "../XSDL/xsdl.h"
 #include "vector.h"
@@ -28,7 +30,7 @@ void demofunc(XSDL_Node *node)
 		rand() % 255,
 		0xff
 	};
-	XSDL_ModStyle(node, STY_BCK_COL, &newc);
+	XSDL_ModStyle(node, XSDL_STY_BCK_COL, &newc);
 }
 
 int main(int argc, char** args) 
@@ -52,8 +54,8 @@ int main(int argc, char** args)
 	/* Set the window-icon */
 	XSDL_SetWindowIcon(win);
 
-	/* Create renderer */
-	ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
+	/* Create renderer, NOTE: ENABLE VSYNC AND HARDWARE_ACCELERATION */
+	ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	if(ren == NULL) {
 		printf("[!] Renderer could not be created! (%s)\n", SDL_GetError());
 		goto cleanup_window;
@@ -65,15 +67,18 @@ int main(int argc, char** args)
 		printf("[!] Context could not be created!\n");
 		goto cleanup_renderer;
 	}
+	
+	/* Create the menu-sceen */
+	XSDL_CreateWrapper(ctx->root, "menu", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);	
 
-	/* Attach a button to the context on the first level */
-	XSDL_CreateButton(ctx->root, "button0", 20, 40, 120, 30, NULL);
-	XSDL_CreateButton(ctx->root, "button1", 220, 40, 120, 30, NULL);
+	/* Attach a button menu on the first level */
+	XSDL_CreateButton(XSDL_Get(ctx->root, "menu"), "button0", 20, 40, 120, 30, NULL);
+	XSDL_CreateButton(XSDL_Get(ctx->root, "menu"), "button1", 220, 40, 120, 30, NULL);
 
 	SDL_Color c = {0xff, 0x00, 0x00, 0xff};
-	XSDL_ModStyle(XSDL_Get(ctx->root, "button0"), STY_BCK_COL, &c);
+	XSDL_ModStyle(XSDL_Get(ctx->root, "button0"), XSDL_STY_BCK_COL, &c);
 
-	XSDL_BindEvent(XSDL_Get(ctx->root, "button1"), EVT_MOUSEDOWN, &demofunc);
+	XSDL_BindEvent(XSDL_Get(ctx->root, "button1"), XSDL_EVT_MOUSEDOWN, &demofunc);
 
 	/* Build render-pipe */
 	XSDL_BuildPipe(ctx->pipe, ctx->root);
@@ -81,14 +86,20 @@ int main(int argc, char** args)
 	/* Mark game running */
 	running = 1;
 
+	/* Count fps */
+	int frc = 0;
+	time_t starttime;
+	time_t rawtime;	
+	time_t del;
+	time (&starttime);	
+
 	/* Run the game */
 	while(running) {
 		/* Process user-input */
 		process_input();
 
 		/* Clear the screen */
-		SDL_SetRenderDrawColor(ren, clr.r, clr.g, clr.b, 
-				clr.a );
+		SDL_SetRenderDrawColor(ren, clr.r, clr.g, clr.b, clr.a );
 		SDL_RenderClear(ren);
 
 		/* Render the current context */
@@ -96,6 +107,11 @@ int main(int argc, char** args)
 
 		/* Render all elements in the active scene */
 		SDL_RenderPresent(ren);
+
+		/* Update the framecounter */
+		frc++;
+		time(&rawtime);
+		del = rawtime - starttime;
 	}
 
 	/* Destroy context */
@@ -136,6 +152,7 @@ void process_input()
 		if(XSDL_ProcEvent(ctx, &event) < 0)
 			continue;
 
+		/* If user didn't interact with UI */
 		switch(event.type) {
 			case(SDL_MOUSEMOTION):
 				break;

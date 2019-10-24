@@ -1,25 +1,5 @@
 #include <math.h>
-#include <SDL.h>
 #include "vector.h"
-
-/*
- * Check, whether a specified position is inside of a rectangle. If the
- * point is just on the border, it will still be considered inside of the
- * rectangle.
- * 
- * @rect: The rectangle
- * @pos: The position
- *
- * Returns: 1 if position is inside of rectangle, 0 if it is outside
- */
-char in_rect(SDL_Rect *rect, Vec2 *pos) 
-{
-	if(pos->x >= rect->x && pos->x <= rect->x + rect->w && 
-			pos->y >= rect->y && pos->y <= rect->y + rect->h) {
-		return (1);
-	}
-	return (0);
-}
 
 /*
  * Adds two vectors together.
@@ -235,25 +215,33 @@ Vec2 vec_nrm_ret(Vec2 *vec)
 		float fac = 1.0 / mag;
 		Vec2 normed = vec_scl_ret(vec, fac);
 		return normed;
-	} else {
-		return *vec;
 	}
+	return (*vec);
+}
+
+Vec2 vec_matmul_ret(Vec2 *vec, float m11, float m21, float m21, float m22)
+{
+	float r1 = (m11 * vec->x) + (m21 * vec->y);
+	float r2 = (m12 * vec->x) + (m22 * vec->y);
+	Vec2 retVal = {r1, r2};
+	return (retVal);
 }
 
 /*
- * Not yet implemented!
+ * Rotates the input vector by an angle in radians and returns it.
  *
  */
-void vec_rot(Vec2 *vec, int deg)
+Vec2 vec_rot_rad_ret(Vec2 *vec, int rad)
 {
-	/* TODO */
+	return (vec_matmul_ret(vec, cos((double) rad), -sin((double) rad), sin((double) rad), cos((double) rad)));
 }
 
 /*
- * Not yet implemented!
+ * Rotates the input vector by an angle in degrees and returns it.
  *
  */
-Vec2 vec_rot_ret(Vec2 *vec, int deg)
+Vec2 vec_rot_deg_ret(Vec2 *vec, int deg)
 {
-	/* TODO */
+	float rad = deg / 180 * M_PI;
+	return vec_rot_rad_ret(vec, rad);
 }

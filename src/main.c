@@ -16,7 +16,7 @@ char running = 0;					/* 1 if game is running, 0 if not */
 SDL_Window *win;					/* Pointer to window-struct */
 SDL_Renderer *ren;					/* Pointer to renderer-struct */
 XSDL_Context *ctx;					/* The GUI-context */
-
+XSDL_Node *root;					/* Pointer to the root node */
 SDL_Color clr = {0x18, 0x18, 0x18, 0xff};		/* Clear-color */
 
 /* === Prototypes === */
@@ -36,7 +36,7 @@ void demofunc(XSDL_Node *node)
 int main(int argc, char** args) 
 {
 	/* Initialize SDL */
-	if(XSDL_Init(SDL_INIT_VIDEO) < 0) {
+	if(XSDL_Init(SDL_INIT_EVERYTHING) < 0) {
 		printf("[!] SDL could not initialize! (%s)\n", SDL_GetError());
 		goto exit;
 	}
@@ -67,21 +67,24 @@ int main(int argc, char** args)
 		printf("[!] Context could not be created!\n");
 		goto cleanup_renderer;
 	}
+	root = ctx->root;
 	
 	/* Create the menu-sceen */
-	XSDL_CreateWrapper(ctx->root, "menu", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);	
+	XSDL_CreateWrapper(root, "menu", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);	
 
 	/* Attach a button menu on the first level */
-	XSDL_CreateButton(XSDL_Get(ctx->root, "menu"), "button0", 20, 40, 120, 30, NULL);
-	XSDL_CreateButton(XSDL_Get(ctx->root, "menu"), "button1", 220, 40, 120, 30, NULL);
+	XSDL_CreateButton(XSDL_Get(root, "menu"), "button0", 20, 40, 120, 30, NULL);
+	XSDL_CreateButton(XSDL_Get(root, "menu"), "button1", 220, 40, 120, 30, NULL);
+	XSDL_CreateInput(XSDL_Get(root, "menu"), "input0", 220, 120, 120, 30, "");
 
 	SDL_Color c = {0xff, 0x00, 0x00, 0xff};
-	XSDL_ModStyle(XSDL_Get(ctx->root, "button0"), XSDL_STY_BCK_COL, &c);
+	XSDL_ModStyle(XSDL_Get(root, "input0"), XSDL_STY_BCK_COL, &c);
 
+	XSDL_BindEvent(XSDL_Get(ctx->root, "button0"), XSDL_EVT_HOVER, &demofunc);
 	XSDL_BindEvent(XSDL_Get(ctx->root, "button1"), XSDL_EVT_MOUSEDOWN, &demofunc);
 
 	/* Build render-pipe */
-	XSDL_BuildPipe(ctx->pipe, ctx->root);
+	XSDL_BuildPipe(ctx->pipe, root);
 
 	/* Mark game running */
 	running = 1;
@@ -145,11 +148,11 @@ void process_input()
 	while(SDL_PollEvent(&event)) {
 		if(event.type == SDL_QUIT) {
 			running = 0;
-			continue;
+			return;
 		}
 
 		/* Process interactions with the UI */
-		if(XSDL_ProcEvent(ctx, &event) < 0)
+		if(XSDL_ProcEvent(ctx, &event) > -1)
 			continue;
 
 		/* If user didn't interact with UI */
@@ -163,8 +166,16 @@ void process_input()
 					case(1):
 						break;
 
-						/* Right mouse-button */
+					/* Right mouse-button */
 					case(3):
+						break;
+				}
+				break;
+
+			case(SDL_KEYDOWN):
+				switch(event.key.keysym.sym) {
+					case(SDLK_ESCAPE):
+						running = 0;
 						break;
 				}
 				break;

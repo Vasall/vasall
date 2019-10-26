@@ -7,94 +7,60 @@
 #include "../XSDL/xsdl.h"
 #include "vector.h"
 
-/* Screen dimension */
-int SCREEN_WIDTH = 640;
-int SCREEN_HEIGHT = 480;
+/* Window setting */
+int SCREEN_WIDTH = 640;					/* Screen width */
+int SCREEN_HEIGHT = 480;				/* Screen height */
+SDL_Color CLEAR_COLOR = {0x18, 0x18, 0x18};		/* Clear-color */
 
 /* === Global variables === */
 char running = 0;					/* 1 if game is running, 0 if not */
-SDL_Window *win;					/* Pointer to window-struct */
-SDL_Renderer *ren;					/* Pointer to renderer-struct */
-XSDL_Context *ctx;					/* The GUI-context */
+SDL_Window *window;					/* Pointer to window-struct */
+SDL_Renderer *renderer;					/* Pointer to renderer-struct */
+XSDL_Context *context;					/* The GUI-context */
 XSDL_Node *root;					/* Pointer to the root node */
-SDL_Color clr = {0x18, 0x18, 0x18, 0xff};		/* Clear-color */
 
 /* === Prototypes === */
+SDL_Window *init_window();
+SDL_Renderer *init_renderer(SDL_Window *win);
 void process_input();
-
-void demofunc(XSDL_Node *node)
-{
-	SDL_Color newc = {
-		rand() % 255,
-		rand() % 255,
-		rand() % 255,
-		0xff
-	};
-	XSDL_ModStyle(node, XSDL_STY_BCK_COL, &newc);
-}
 
 int main(int argc, char** args) 
 {
-	/* Initialize SDL */
 	if(XSDL_Init(SDL_INIT_EVERYTHING) < 0) {
 		printf("[!] SDL could not initialize! (%s)\n", SDL_GetError());
 		goto exit;
 	}
 
-	/* Create and initialize the window */
-	win = SDL_CreateWindow("Vasall", 
-			SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
-			SCREEN_WIDTH, SCREEN_HEIGHT, 
-			SDL_WINDOW_SHOWN);
-	if(win == NULL) {
+	if((window = init_window()) == NULL) {
 		printf("[!] Window could not be created! (%s)\n", SDL_GetError());
 		goto cleanup_sdl;
 	}
 
-	/* Set the window-icon */
-	XSDL_SetWindowIcon(win);
-
-	/* Create renderer, NOTE: ENABLE VSYNC AND HARDWARE_ACCELERATION */
-	ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-	if(ren == NULL) {
+	if((renderer = init_renderer(window)) == NULL) {
 		printf("[!] Renderer could not be created! (%s)\n", SDL_GetError());
 		goto cleanup_window;
 	}
 
-	/* Create the GUI-context */
-	ctx = XSDL_CreateContext(SCREEN_WIDTH, SCREEN_HEIGHT);
-	if(ctx == NULL) {
+	if((context = XSDL_CreateContext(SCREEN_WIDTH, SCREEN_HEIGHT)) == NULL) {
 		printf("[!] Context could not be created!\n");
 		goto cleanup_renderer;
 	}
-	root = ctx->root;
-	
+	root = context->root;
+
 	/* Create the menu-sceen */
 	XSDL_CreateWrapper(root, "menu", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);	
-
-	/* Attach a button menu on the first level */
-	XSDL_CreateButton(XSDL_Get(root, "menu"), "button0", 20, 40, 120, 30, NULL);
-	XSDL_CreateButton(XSDL_Get(root, "menu"), "button1", 220, 40, 120, 30, NULL);
-	XSDL_CreateInput(XSDL_Get(root, "menu"), "input0", 220, 120, 120, 30, "");
-
-	SDL_Color c = {0xff, 0x00, 0x00, 0xff};
-	XSDL_ModStyle(XSDL_Get(root, "input0"), XSDL_STY_BCK_COL, &c);
-
-	XSDL_BindEvent(XSDL_Get(ctx->root, "button0"), XSDL_EVT_HOVER, &demofunc);
-	XSDL_BindEvent(XSDL_Get(ctx->root, "button1"), XSDL_EVT_MOUSEDOWN, &demofunc);
+	XSDL_CreateInput(XSDL_Get(root, "menu"), "mns_user", 
+			190, 160, 260, 40, "");
+	XSDL_CreateInput(XSDL_Get(root, "menu"), "mns_pswd", 
+			190, 210, 260, 40, "");
+	XSDL_CreateButton(XSDL_Get(root, "menu"), "mns_login", 
+			210, 270, 220, 35, NULL);
 
 	/* Build render-pipe */
-	XSDL_BuildPipe(ctx->pipe, root);
+	XSDL_BuildPipe(context->pipe, root);
 
 	/* Mark game running */
-	running = 1;
-
-	/* Count fps */
-	int frc = 0;
-	time_t starttime;
-	time_t rawtime;	
-	time_t del;
-	time (&starttime);	
+	running = 1;	
 
 	/* Run the game */
 	while(running) {
@@ -102,35 +68,74 @@ int main(int argc, char** args)
 		process_input();
 
 		/* Clear the screen */
-		SDL_SetRenderDrawColor(ren, clr.r, clr.g, clr.b, clr.a );
-		SDL_RenderClear(ren);
+		SDL_SetRenderDrawColor(renderer, CLEAR_COLOR.r, CLEAR_COLOR.g,
+				CLEAR_COLOR.b, CLEAR_COLOR.a);
+		SDL_RenderClear(renderer);
 
 		/* Render the current context */
-		XSDL_RenderPipe(ren, ctx->pipe);
+		XSDL_RenderPipe(renderer, context->pipe);
 
 		/* Render all elements in the active scene */
-		SDL_RenderPresent(ren);
-
-		/* Update the framecounter */
-		frc++;
-		time(&rawtime);
-		del = rawtime - starttime;
+		SDL_RenderPresent(renderer);
 	}
 
 	/* Destroy context */
-	XSDL_DeleteContext(ctx);
+	XSDL_DeleteContext(context);
 
 cleanup_renderer:
 	/* Destory renderer */
-	SDL_DestroyRenderer(ren);
+	SDL_DestroyRenderer(renderer);
 cleanup_window:
 	/* Destroy window */
-	SDL_DestroyWindow(win);
+	SDL_DestroyWindow(window);
 cleanup_sdl:
-	/* Quit SDL subsystems */
-	SDL_Quit();
+	/* Quit XSDL subsystems */
+	XSDL_Quit();
 exit:
 	return (0);
+}
+
+/*
+ * Initialize the window and configure
+ * basic settings like the title, minimal
+ * window size and window-icon.
+ *
+ * Returns: Window-Pointer or NULL if an error occurred
+ */
+SDL_Window *init_window()
+{
+	/* Create and initialize the window */
+	SDL_Window *win = SDL_CreateWindow("Vasall", 
+			SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
+			SCREEN_WIDTH, SCREEN_HEIGHT, 
+			SDL_WINDOW_SHOWN);
+
+	if(win == NULL) return (NULL);
+
+	/* Set the window-icon */
+	XSDL_SetWindowIcon(win);
+
+	return(win);
+}
+
+/*
+ * This function will initialize the SDL-renderer
+ * and set the render-flags. Note that it's very important
+ * to enable VSync, or otherwise the either the Framerate
+ * or performance will be off.
+ *
+ * @win: Pointer to underlying window
+ *
+ * Returns: Renderer-pointer or NULL if an error occurred
+ */
+SDL_Renderer *init_renderer(SDL_Window *win)
+{
+	uint32_t flg = SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC;
+
+	/* Create and initialize the renderer*/
+	SDL_Renderer *ren = SDL_CreateRenderer(win, -1, flg);
+
+	return(ren);
 }
 
 /**
@@ -152,7 +157,7 @@ void process_input()
 		}
 
 		/* Process interactions with the UI */
-		if(XSDL_ProcEvent(ctx, &event) > -1)
+		if(XSDL_ProcEvent(context, &event) > -1)
 			continue;
 
 		/* If user didn't interact with UI */
@@ -166,7 +171,7 @@ void process_input()
 					case(1):
 						break;
 
-					/* Right mouse-button */
+						/* Right mouse-button */
 					case(3):
 						break;
 				}

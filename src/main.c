@@ -22,6 +22,7 @@ XSDL_Node *root;					/* Pointer to the root node */
 /* === Prototypes === */
 SDL_Window *init_window();
 SDL_Renderer *init_renderer(SDL_Window *win);
+void display_nodes();
 void process_input();
 
 int main(int argc, char** args) 
@@ -136,6 +137,17 @@ SDL_Renderer *init_renderer(SDL_Window *win)
 	SDL_Renderer *ren = SDL_CreateRenderer(win, -1, flg);
 
 	return(ren);
+}
+
+
+static void show_node(XSDL_Node *node, void *data)
+{
+	printf("%s, Id: %d\n", node->strid, node->id);
+}
+
+void display_nodes()
+{
+	XSDL_GoDown(root, &show_node, NULL, 0);
 }
 
 /**

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <SDL2/SDL.h>
+#include <unistd.h>
 /* Include custom headers */
 #include "../XSDL/xsdl.h"
 #include "vector.h"
@@ -22,13 +23,14 @@ XSDL_Node *root;					/* Pointer to the root node */
 /* === Prototypes === */
 SDL_Window *init_window();
 SDL_Renderer *init_renderer(SDL_Window *win);
-void display_nodes();
+int init_resources();
+void display_nodes(XSDL_Context *ctx);
 void process_input();
 
 int main(int argc, char** args) 
 {
 	if(XSDL_Init(SDL_INIT_EVERYTHING) < 0) {
-		printf("[!] SDL could not initialize! (%s)\n", SDL_GetError());
+		printf("[!] SDL could not initialize! (%s)\n", XSDL_GetError());
 		goto exit;
 	}
 
@@ -48,20 +50,34 @@ int main(int argc, char** args)
 	}
 	root = context->root;
 
+	/* Load all necessary resources */
+	if(init_resources() < 0) {
+		printf("[!] Couldn't load all resources!\n");
+		goto cleanup_renderer;
+	}
+
 	/* Create the menu-sceen */
-	XSDL_CreateWrapper(root, "menu", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);	
+	XSDL_CreateWrapper(root, "menu", 
+			0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);	
+
 	XSDL_CreateInput(XSDL_Get(root, "menu"), "mns_user", 
 			190, 160, 260, 40, "");
 	XSDL_CreateInput(XSDL_Get(root, "menu"), "mns_pswd", 
 			190, 210, 260, 40, "");
 	XSDL_CreateButton(XSDL_Get(root, "menu"), "mns_login", 
-			210, 270, 220, 35, NULL);
+			210, 270, 220, 40, NULL);
+
+	display_nodes(context);
 
 	/* Build render-pipe */
 	XSDL_BuildPipe(context->pipe, root);
 
 	/* Mark game running */
 	running = 1;	
+
+	
+	SDL_Rect rect = {100, 40, 100, 100};
+	SDL_Color col = {0xff, 0xff, 0xff, 0xff};
 
 	/* Run the game */
 	while(running) {
@@ -75,6 +91,10 @@ int main(int argc, char** args)
 
 		/* Render the current context */
 		XSDL_RenderPipe(renderer, context->pipe);
+
+		XSDL_RenderText(renderer, &rect, &col, 
+				0, "Hello world", 0);
+	
 
 		/* Render all elements in the active scene */
 		SDL_RenderPresent(renderer);
@@ -139,15 +159,39 @@ SDL_Renderer *init_renderer(SDL_Window *win)
 	return(ren);
 }
 
+/*
+ * Load all necessary resources, like fonts, sprites
+ * and more.
+ *
+ * Returns: 0 on success and -1 if an error occurred
+*/
+int init_resources()
+{
+	char cwd[256];
+	readlink("/proc/self/exe", cwd, 256);	
+
+	char path[512];
+	sprintf(path, "%s/%s", cwd, "mecha.ttf");	
+	if(XSDL_LoadFont("/home/juke/code/c/vasall-client/res/mecha.ttf", 12) < 0)
+		return (-1);
+
+	return(0);
+}
+
 
 static void show_node(XSDL_Node *node, void *data)
 {
-	printf("%s, Id: %d\n", node->strid, node->id);
+	printf(" ");
+	int i;
+	for(i = 0; i < node->layer; i++) printf("  ");
+	printf("%s:%d (0x%02x)", node->strid, node->id, node->tag);
+	printf("\n");
 }
 
-void display_nodes()
+void display_nodes(XSDL_Context *ctx)
 {
-	XSDL_GoDown(root, &show_node, NULL, 0);
+	printf("\nNODE-TREE:\n");
+	XSDL_GoDown(ctx->root, &show_node, NULL, 0);
 }
 
 /**

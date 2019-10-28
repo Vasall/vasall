@@ -9,8 +9,8 @@
 #include "vector.h"
 
 /* Window setting */
-int SCREEN_WIDTH = 640;					/* Screen width */
-int SCREEN_HEIGHT = 480;				/* Screen height */
+int SCREEN_WIDTH = 800;					/* Screen width */
+int SCREEN_HEIGHT = 600;				/* Screen height */
 SDL_Color CLEAR_COLOR = {0x18, 0x18, 0x18};		/* Clear-color */
 
 /* === Global variables === */
@@ -63,14 +63,23 @@ int main(int argc, char** args)
 
 	/* Create the menu-sceen */
 	XSDL_CreateWrapper(root, "menu", 
-			0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);	
-	XSDL_CreateInput(XSDL_Get(root, "menu"), "mns_user", 
-			190, 160, 260, 40, "");
-	XSDL_CreateInput(XSDL_Get(root, "menu"), "mns_pswd", 
-			190, 210, 260, 40, "");
-	XSDL_CreateButton(XSDL_Get(root, "menu"), "mns_login", 
-			210, 270, 220, 40, NULL);
+			0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+	XSDL_CreateWrapper(XSDL_Get(root, "menu"), "mns_form",
+			200, 125, 400, 350);
+	XSDL_CreateInput(XSDL_Get(root, "mns_form"), "mns_user", 
+			270, 260, 260, 40, "");
+	XSDL_CreateInput(XSDL_Get(root, "mns_form"), "mns_pswd", 
+			270, 310, 260, 40, "");
+	XSDL_CreateButton(XSDL_Get(root, "mns_form"), "mns_login", 
+			290, 370, 220, 40, "Login");
 
+	uint8_t vis = 1;
+	uint8_t bck = 1;
+	SDL_Color bck_col = {0xff, 0x00, 0x00};
+	XSDL_ModStyle(XSDL_Get(root, "mns_form"), XSDL_STY_VIS, &vis);
+	XSDL_ModStyle(XSDL_Get(root, "mns_form"), XSDL_STY_BCK, &bck);
+	XSDL_ModStyle(XSDL_Get(root, "mns_form"), XSDL_STY_BCK_COL, &bck_col);
+		
 	/* Display nodes in the console */
 	display_nodes(context);
 
@@ -169,7 +178,7 @@ int init_resources()
 
 	char path[512];
 	sprintf(path, "%s/%s", cwd, "mecha.ttf");	
-	if(XSDL_LoadFont("/home/juke/code/c/vasall-client/res/mecha.ttf", 28) < 0)
+	if(XSDL_LoadFont("/home/juke/code/c/vasall-client/res/bitter.ttf", 24) < 0)
 		return (-1);
 
 	return(0);

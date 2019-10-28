@@ -27,6 +27,11 @@ int init_resources();
 void display_nodes(XSDL_Context *ctx);
 void process_input();
 
+Uint32 ColourToUint(int R, int G, int B)
+{
+	return (Uint32)((R << 16) + (G << 8) + (B << 0));
+}
+
 int main(int argc, char** args) 
 {
 	if(XSDL_Init(SDL_INIT_EVERYTHING) < 0) {
@@ -59,7 +64,6 @@ int main(int argc, char** args)
 	/* Create the menu-sceen */
 	XSDL_CreateWrapper(root, "menu", 
 			0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);	
-
 	XSDL_CreateInput(XSDL_Get(root, "menu"), "mns_user", 
 			190, 160, 260, 40, "");
 	XSDL_CreateInput(XSDL_Get(root, "menu"), "mns_pswd", 
@@ -67,17 +71,14 @@ int main(int argc, char** args)
 	XSDL_CreateButton(XSDL_Get(root, "menu"), "mns_login", 
 			210, 270, 220, 40, NULL);
 
+	/* Display nodes in the console */
 	display_nodes(context);
 
 	/* Build render-pipe */
 	XSDL_BuildPipe(context->pipe, root);
 
-	/* Mark game running */
+	/* Mark game as running */
 	running = 1;	
-
-	
-	SDL_Rect rect = {100, 40, 100, 100};
-	SDL_Color col = {0xff, 0xff, 0xff, 0xff};
 
 	/* Run the game */
 	while(running) {
@@ -89,12 +90,8 @@ int main(int argc, char** args)
 				CLEAR_COLOR.b, CLEAR_COLOR.a);
 		SDL_RenderClear(renderer);
 
-		/* Render the current context */
+		/* Render the current UI-context */
 		XSDL_RenderPipe(renderer, context->pipe);
-
-		XSDL_RenderText(renderer, &rect, &col, 
-				0, "Hello world", 0);
-	
 
 		/* Render all elements in the active scene */
 		SDL_RenderPresent(renderer);
@@ -172,13 +169,22 @@ int init_resources()
 
 	char path[512];
 	sprintf(path, "%s/%s", cwd, "mecha.ttf");	
-	if(XSDL_LoadFont("/home/juke/code/c/vasall-client/res/mecha.ttf", 12) < 0)
+	if(XSDL_LoadFont("/home/juke/code/c/vasall-client/res/mecha.ttf", 28) < 0)
 		return (-1);
 
 	return(0);
 }
 
 
+/*
+ * Show a single node in the node-tree. This
+ * function is a callback-function, therefore
+ * the data-parameter has to be defined, despite
+ * it not being used.
+ *
+ * @node: The node to display
+ * @data: Data-pointer
+*/
 static void show_node(XSDL_Node *node, void *data)
 {
 	printf(" ");
@@ -188,6 +194,11 @@ static void show_node(XSDL_Node *node, void *data)
 	printf("\n");
 }
 
+/*
+ * Display all nodes in a node tree.
+ *
+ * @ctx: The context containing the node-tree 
+*/
 void display_nodes(XSDL_Context *ctx)
 {
 	printf("\nNODE-TREE:\n");

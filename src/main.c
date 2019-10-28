@@ -66,12 +66,24 @@ int main(int argc, char** args)
 			0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 	XSDL_CreateWrapper(XSDL_Get(root, "menu"), "mns_form",
 			200, 125, 400, 350);
+
+	
+	SDL_Rect body1 = {250, 206, 300, 24};
+	SDL_Color col1 = {0xff, 0xff, 0xff};
+	XSDL_CreateText(XSDL_Get(root, "mns_form"), "label1", &body1,
+		"Email:", &col1, 1, XSDL_TEXT_LEFT);
 	XSDL_CreateInput(XSDL_Get(root, "mns_form"), "mns_user", 
-			270, 260, 260, 40, "");
+			250, 230, 300, 40, "");
+
+	SDL_Rect body2 = {250, 286, 300, 24};
+	SDL_Color col2 = {0xff, 0xff, 0xff};
+	XSDL_CreateText(XSDL_Get(root, "mns_form"), "label2", &body2,
+		"Password:", &col2, 1, XSDL_TEXT_LEFT);
 	XSDL_CreateInput(XSDL_Get(root, "mns_form"), "mns_pswd", 
-			270, 310, 260, 40, "");
+			250, 310, 300, 40, "");
+	
 	XSDL_CreateButton(XSDL_Get(root, "mns_form"), "mns_login", 
-			290, 370, 220, 40, "Login");
+			250, 380, 300, 40, "Login");
 
 	uint8_t vis = 1;
 	uint8_t bck = 1;
@@ -180,6 +192,9 @@ int init_resources()
 	sprintf(path, "%s/%s", cwd, "mecha.ttf");	
 	if(XSDL_LoadFont("/home/juke/code/c/vasall-client/res/bitter.ttf", 24) < 0)
 		return (-1);
+	if(XSDL_LoadFont("/home/juke/code/c/vasall-client/res/bitter.ttf", 16) < 0)
+		return (-1);
+
 
 	return(0);
 }

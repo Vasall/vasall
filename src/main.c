@@ -11,7 +11,7 @@
 /* Window setting */
 int SCREEN_WIDTH = 800;					/* Screen width */
 int SCREEN_HEIGHT = 600;				/* Screen height */
-XSDL_Color CLR_COL = {0x18, 0x18, 0x18};		/* Clear-color */
+XSDL_Color CLR_COL = {0x18, 0x18, 0x18};		/* Background-color of window */
 
 /* === Global variables === */
 char running = 0;					/* 1 if game is running, 0 if not */
@@ -51,7 +51,6 @@ int main(int argc, char** args)
 	}
 	root = context->root;
 
-	/* Load all necessary resources */
 	if(init_resources() < 0) {
 		printf("[!] Couldn't load all resources!\n");
 		goto cleanup_renderer;

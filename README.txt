@@ -9,7 +9,7 @@ first have to install the required dependencies using the
 following commands:
 
 $ sudo apt update && sudo apt upgrade
-$ sudo apt install make git pkg-config libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev
+$ sudo apt install make git pkg-config libsdl2-dev libsdl2-ttf-dev
 
 To get the source-code, you have to clone the 
 reposity into a folder, and change into the newly 

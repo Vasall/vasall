@@ -6,6 +6,9 @@
 /build
 /objects
 
+# Ignore subrepositories
+/XSDL
+
 # Just to be save, ignore all object-files
 *.o
 

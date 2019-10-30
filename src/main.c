@@ -29,8 +29,10 @@ void init_gui(XSDL_Context *ctx);
 void display_nodes(XSDL_Context *ctx);
 void process_input();
 
-int main(int argc, char** args) 
+int main(int argc, char** argv) 
 {
+	printf("\nStarting vasall-client...\n");
+
 	if(XSDL_Init(SDL_INIT_EVERYTHING) < 0) {
 		printf("[!] SDL could not initialize! (%s)\n", XSDL_GetError());
 		goto exit;
@@ -52,7 +54,7 @@ int main(int argc, char** args)
 	}
 	root = context->root;
 
-	if(init_resources() < 0) {
+	if(init_resources(argv[0]) < 0) {
 		printf("[!] Couldn't load all resources!\n");
 		goto cleanup_renderer;
 	}
@@ -155,15 +157,23 @@ XSDL_Renderer *init_renderer(XSDL_Window *win)
 int init_resources()
 {
 	char cwd[256];
-	readlink("/proc/self/exe", cwd, 256);	
-
-	printf("Path: %s\n", cwd);
-
+	char exe_dir[256];
 	char path[512];
-	sprintf(path, "%s/%s", cwd, "mecha.ttf");	
-	if(XSDL_LoadFont("/home/juke/code/c/vasall-client/res/bitter.ttf", 24) < 0)
+	int i = 0;
+
+	readlink("/proc/self/exe", cwd, 256);
+	for(i = strlen(cwd); i >= 0; i--)
+		if(cwd[i] == '/')
+			break;
+	memcpy(exe_dir, cwd, i);
+
+	printf("Directory: %s\n", exe_dir);
+
+	sprintf(path, "%s/%s", exe_dir, "res/mecha.ttf");	
+	if(XSDL_LoadFont(path, 24) < 0)
 		return (-1);
-	if(XSDL_LoadFont("/home/juke/code/c/vasall-client/res/bitter.ttf", 16) < 0)
+	sprintf(path, "%s/%s", exe_dir, "res/bitter.ttf");
+	if(XSDL_LoadFont(path, 16) < 0)
 		return (-1);
 
 

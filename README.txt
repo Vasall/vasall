@@ -20,8 +20,7 @@ $ cd ./vasall-client
 
 Additionally some other submodules are needed:
 
-$ git submodule init
-$ git submodule update
+$ git clone https://github.com/Vasall/XSDL.git
 
 After this is done, you're now able to build the 
 project yourself using this command:

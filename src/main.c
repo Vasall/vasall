@@ -1,6 +1,7 @@
 /* Using SDL and standard IO */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <SDL2/SDL.h>
 #include <unistd.h>
@@ -155,6 +156,8 @@ int init_resources()
 {
 	char cwd[256];
 	readlink("/proc/self/exe", cwd, 256);	
+
+	printf("Path: %s\n", cwd);
 
 	char path[512];
 	sprintf(path, "%s/%s", cwd, "mecha.ttf");	

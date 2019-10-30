@@ -2,8 +2,10 @@
 *.swp
 *.swo
 
+# Ignore executable
+/build/game
+
 # Ignore directories created while building the project
-/build
 /objects
 
 # Ignore subrepositories

@@ -11,26 +11,22 @@
 /* Window setting */
 int SCREEN_WIDTH = 800;					/* Screen width */
 int SCREEN_HEIGHT = 600;				/* Screen height */
-SDL_Color CLEAR_COLOR = {0x18, 0x18, 0x18};		/* Clear-color */
+XSDL_Color CLR_COL = {0x18, 0x18, 0x18};		/* Clear-color */
 
 /* === Global variables === */
 char running = 0;					/* 1 if game is running, 0 if not */
-SDL_Window *window;					/* Pointer to window-struct */
-SDL_Renderer *renderer;					/* Pointer to renderer-struct */
+XSDL_Window *window;					/* Pointer to window-struct */
+XSDL_Renderer *renderer;				/* Pointer to renderer-struct */
 XSDL_Context *context;					/* The GUI-context */
 XSDL_Node *root;					/* Pointer to the root node */
 
 /* === Prototypes === */
-SDL_Window *init_window();
-SDL_Renderer *init_renderer(SDL_Window *win);
+XSDL_Window *init_window();
+XSDL_Renderer *init_renderer(XSDL_Window *win);
 int init_resources();
+void init_gui(XSDL_Context *ctx);
 void display_nodes(XSDL_Context *ctx);
 void process_input();
-
-Uint32 ColourToUint(int R, int G, int B)
-{
-	return (Uint32)((R << 16) + (G << 8) + (B << 0));
-}
 
 int main(int argc, char** args) 
 {
@@ -61,37 +57,8 @@ int main(int argc, char** args)
 		goto cleanup_renderer;
 	}
 
-	/* Create the menu-sceen */
-	XSDL_CreateWrapper(root, "menu", 
-			0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-	XSDL_CreateWrapper(XSDL_Get(root, "menu"), "mns_form",
-			200, 125, 400, 350);
+	init_gui(context);
 
-	
-	SDL_Rect body1 = {250, 206, 300, 24};
-	SDL_Color col1 = {0xff, 0xff, 0xff};
-	XSDL_CreateText(XSDL_Get(root, "mns_form"), "label1", &body1,
-		"Email:", &col1, 1, XSDL_TEXT_LEFT);
-	XSDL_CreateInput(XSDL_Get(root, "mns_form"), "mns_user", 
-			250, 230, 300, 40, "");
-
-	SDL_Rect body2 = {250, 286, 300, 24};
-	SDL_Color col2 = {0xff, 0xff, 0xff};
-	XSDL_CreateText(XSDL_Get(root, "mns_form"), "label2", &body2,
-		"Password:", &col2, 1, XSDL_TEXT_LEFT);
-	XSDL_CreateInput(XSDL_Get(root, "mns_form"), "mns_pswd", 
-			250, 310, 300, 40, "");
-	
-	XSDL_CreateButton(XSDL_Get(root, "mns_form"), "mns_login", 
-			250, 380, 300, 40, "Login");
-
-	uint8_t vis = 1;
-	uint8_t bck = 1;
-	SDL_Color bck_col = {0xff, 0x00, 0x00};
-	XSDL_ModStyle(XSDL_Get(root, "mns_form"), XSDL_STY_VIS, &vis);
-	XSDL_ModStyle(XSDL_Get(root, "mns_form"), XSDL_STY_BCK, &bck);
-	XSDL_ModStyle(XSDL_Get(root, "mns_form"), XSDL_STY_BCK_COL, &bck_col);
-		
 	/* Display nodes in the console */
 	display_nodes(context);
 
@@ -107,9 +74,11 @@ int main(int argc, char** args)
 		process_input();
 
 		/* Clear the screen */
-		SDL_SetRenderDrawColor(renderer, CLEAR_COLOR.r, CLEAR_COLOR.g,
-				CLEAR_COLOR.b, CLEAR_COLOR.a);
+		SDL_SetRenderDrawColor(renderer, CLR_COL.r, CLR_COL.g, 
+				CLR_COL.b, CLR_COL.a);
 		SDL_RenderClear(renderer);
+
+		XSDL_Update(context);
 
 		/* Render the current UI-context */
 		XSDL_RenderPipe(renderer, context->pipe);
@@ -141,10 +110,10 @@ exit:
  *
  * Returns: Window-Pointer or NULL if an error occurred
  */
-SDL_Window *init_window()
+XSDL_Window *init_window()
 {
 	/* Create and initialize the window */
-	SDL_Window *win = SDL_CreateWindow("Vasall", 
+	XSDL_Window *win = SDL_CreateWindow("Vasall", 
 			SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
 			SCREEN_WIDTH, SCREEN_HEIGHT, 
 			SDL_WINDOW_SHOWN);
@@ -167,12 +136,12 @@ SDL_Window *init_window()
  *
  * Returns: Renderer-pointer or NULL if an error occurred
  */
-SDL_Renderer *init_renderer(SDL_Window *win)
+XSDL_Renderer *init_renderer(XSDL_Window *win)
 {
 	uint32_t flg = SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC;
 
 	/* Create and initialize the renderer*/
-	SDL_Renderer *ren = SDL_CreateRenderer(win, -1, flg);
+	XSDL_Renderer *ren = SDL_CreateRenderer(win, -1, flg);
 
 	return(ren);
 }
@@ -199,6 +168,45 @@ int init_resources()
 	return(0);
 }
 
+/*
+ * Initialize the GUI and place all elements.
+ *
+ * @ctx: The context to create
+*/
+void init_gui(XSDL_Context *ctx)
+{
+	XSDL_Node *rootnode = ctx->root;
+
+	/* Create the menu-sceen */
+	XSDL_CreateWrapper(rootnode, "menu", 
+			0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+	XSDL_CreateWrapper(XSDL_Get(rootnode, "menu"), "mns_form",
+			200, 125, 400, 350);
+
+	XSDL_Rect body = {250, 206, 300, 24};
+	XSDL_Color col = {0xff, 0xff, 0xff};
+	XSDL_CreateText(XSDL_Get(rootnode, "mns_form"), "label1", &body,
+		"Email:", &col, 1, XSDL_TEXT_LEFT);
+	XSDL_CreateInput(XSDL_Get(rootnode, "mns_form"), "mns_user", 
+			250, 230, 300, 40, "");
+
+	XSDL_Rect body1 = {250, 286, 300, 24};
+	XSDL_Color col1 = {0xff, 0xff, 0xff};
+	XSDL_CreateText(XSDL_Get(rootnode, "mns_form"), "label2", &body1,
+		"Password:", &col1, 1, XSDL_TEXT_LEFT);
+	XSDL_CreateInput(XSDL_Get(rootnode, "mns_form"), "mns_pswd", 
+			250, 310, 300, 40, "");
+	
+	XSDL_CreateButton(XSDL_Get(rootnode, "mns_form"), "mns_login", 
+			250, 380, 300, 40, "Login");
+
+	uint8_t vis = 1;
+	uint8_t bck = 1;
+	XSDL_Color bck_col = {0xff, 0x00, 0x00};
+	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_VIS, &vis);
+	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_BCK, &bck);
+	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_BCK_COL, &bck_col);
+}
 
 /*
  * Show a single node in the node-tree. This
@@ -236,7 +244,7 @@ void display_nodes(XSDL_Context *ctx)
  */
 void process_input() 
 {
-	SDL_Event event;
+	XSDL_Event event;
 
 	/* Poll for events. SDL_PollEvent() returns 0 when there are no  */
 	/* more events on the event queue, our while loop will exit when */
@@ -262,7 +270,7 @@ void process_input()
 					case(1):
 						break;
 
-						/* Right mouse-button */
+					/* Right mouse-button */
 					case(3):
 						break;
 				}

@@ -2,7 +2,7 @@
 
 echo "Start building project."
 
-java -jar ./XSDL/HeaderJoiner.jar -o ./XSDL/xsdl.h -t ./XSDL/headers/XSDL.h ./XSDL/headers/XSDL_node.h ./XSDL/headers/XSDL_context.h ./XSDL/headers/XSDL_render.h ./XSDL/headers/XSDL_text.h
+java -jar ./XSDL/HeaderJoiner.jar -o ./XSDL/xsdl.h -t ./XSDL/headers/XSDL.h ./XSDL/headers/XSDL_node.h ./XSDL/headers/XSDL_stdnodes.h ./XSDL/headers/XSDL_context.h ./XSDL/headers/XSDL_render.h ./XSDL/headers/XSDL_text.h
 
 DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 OBJECTDIR="${DIR}/objects"

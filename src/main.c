@@ -12,7 +12,7 @@
 /* Window setting */
 int SCREEN_WIDTH = 800;					/* Screen width */
 int SCREEN_HEIGHT = 600;				/* Screen height */
-XSDL_Color CLR_COL = {0x18, 0x18, 0x18};		/* Background-color of window */
+XSDL_Color clr = {0x18, 0x18, 0x18};			/* Background-color of window */
 
 /* === Global variables === */
 char running = 0;					/* 1 if game is running, 0 if not */
@@ -20,6 +20,9 @@ XSDL_Window *window;					/* Pointer to window-struct */
 XSDL_Renderer *renderer;				/* Pointer to renderer-struct */
 XSDL_Context *context;					/* The GUI-context */
 XSDL_Node *root;					/* Pointer to the root node */
+
+/* === Static Prototypes === */
+static void show_node(XSDL_Node *node, void *data);
 
 /* === Prototypes === */
 XSDL_Window *init_window();
@@ -29,14 +32,17 @@ void init_gui(XSDL_Context *ctx);
 void display_nodes(XSDL_Context *ctx);
 void process_input();
 
+
 int main(int argc, char** argv) 
 {
 	printf("\nStarting vasall-client...\n");
 
-	if(XSDL_Init(SDL_INIT_EVERYTHING) < 0) {
+	if(XSDL_Init(XSDL_INIT_EVERYTHING) < 0) {
 		printf("[!] SDL could not initialize! (%s)\n", XSDL_GetError());
 		goto exit;
 	}
+	XSDL_ShowVersions();
+	printf("\n");
 
 	if((window = init_window()) == NULL) {
 		printf("[!] Window could not be created! (%s)\n", SDL_GetError());
@@ -59,30 +65,35 @@ int main(int argc, char** argv)
 		goto cleanup_renderer;
 	}
 
+	/* Initialize the user-interface */
 	init_gui(context);
 
 	/* Display nodes in the console */
-	display_nodes(context);
+	printf("\nNODE-TREE:\n");
+	XSDL_GoDown(root, &show_node, NULL, 0);
 
 	/* Build render-pipe */
 	XSDL_BuildPipe(context->pipe, root);
 
 	/* Mark game as running */
-	running = 1;	
+	running = 1;
 
 	/* Run the game */
 	while(running) {
+		/* -------- UPDATE -------- */
 		/* Process user-input */
 		process_input();
 
+		/* -------- RENDER -------- */
 		/* Clear the screen */
-		SDL_SetRenderDrawColor(renderer, CLR_COL.r, CLR_COL.g, 
-				CLR_COL.b, CLR_COL.a);
+		SDL_SetRenderDrawColor(renderer, clr.r, clr.g,
+				clr.b, clr.a);
 		SDL_RenderClear(renderer);
 
+		/* Update UI-nodes */
 		XSDL_Update(context);
 
-		/* Render the current UI-context */
+		/* Render visible UI-elements */
 		XSDL_RenderPipe(renderer, context->pipe);
 
 		/* Render all elements in the active scene */
@@ -104,6 +115,28 @@ cleanup_sdl:
 exit:
 	return (0);
 }
+
+/* ============== DEFINE STATIC FUNCTIONS ============ */
+
+/*
+ * Show a single node in the node-tree. This
+ * function is a callback-function, therefore
+ * the data-parameter has to be defined, despite
+ * it not being used.
+ *
+ * @node: The node to display
+ * @data: Data-pointer
+*/
+static void show_node(XSDL_Node *node, void *data)
+{
+	printf(" ");
+	int i;
+	for(i = 0; i < node->layer; i++) printf("  ");
+	printf("%s:%d (0x%02x)", node->strid, node->id, node->tag);
+	printf("\n");
+}
+
+/* ================= DEFINE FUNCTIONS ================ */
 
 /*
  * Initialize the window and configure
@@ -140,7 +173,8 @@ XSDL_Window *init_window()
  */
 XSDL_Renderer *init_renderer(XSDL_Window *win)
 {
-	uint32_t flg = SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC;
+	uint32_t flg = XSDL_RENDERER_ACCELERATED | 
+		XSDL_RENDERER_PRESENTVSYNC;
 
 	/* Create and initialize the renderer*/
 	XSDL_Renderer *ren = SDL_CreateRenderer(win, -1, flg);
@@ -218,35 +252,6 @@ void init_gui(XSDL_Context *ctx)
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_VIS, &vis);
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_BCK, &bck);
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_BCK_COL, &bck_col);
-}
-
-/*
- * Show a single node in the node-tree. This
- * function is a callback-function, therefore
- * the data-parameter has to be defined, despite
- * it not being used.
- *
- * @node: The node to display
- * @data: Data-pointer
-*/
-static void show_node(XSDL_Node *node, void *data)
-{
-	printf(" ");
-	int i;
-	for(i = 0; i < node->layer; i++) printf("  ");
-	printf("%s:%d (0x%02x)", node->strid, node->id, node->tag);
-	printf("\n");
-}
-
-/*
- * Display all nodes in a node tree.
- *
- * @ctx: The context containing the node-tree 
-*/
-void display_nodes(XSDL_Context *ctx)
-{
-	printf("\nNODE-TREE:\n");
-	XSDL_GoDown(ctx->root, &show_node, NULL, 0);
 }
 
 /**

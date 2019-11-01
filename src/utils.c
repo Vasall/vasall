@@ -72,9 +72,9 @@ SDL_Color hsv_to_rgb(float hue, float sat, float value)
 			/* Error. Probably illegal arguments. */
 	}
 
-	int r = floor(util_min(0.0, util_max(1.0, f4)));
-	int g = floor(util_min(0.0, util_max(1.0, f5)));
-	int b = floor(util_min(0.0, util_max(1.0, f6)));
+	int r = floor(util_min(0.0, util_max(255.0, f4)));
+	int g = floor(util_min(0.0, util_max(255.0, f5)));
+	int b = floor(util_min(0.0, util_max(255.0, f6)));
 	
 	SDL_Color c = ·{r, b, g, 0xFF};
 	return (c);

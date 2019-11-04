@@ -12,7 +12,7 @@
 /* Window setting */
 int SCREEN_WIDTH = 800;					/* Screen width */
 int SCREEN_HEIGHT = 600;				/* Screen height */
-XSDL_Color clr = {0x18, 0x18, 0x18};			/* Background-color of window */
+XSDL_Color clr = {28, 28, 30};				/* Background-color of window */
 
 /* === Global variables === */
 char running = 0;					/* 1 if game is running, 0 if not */
@@ -206,7 +206,7 @@ int init_resources()
 	sprintf(path, "%s/%s", exe_dir, "res/mecha.ttf");	
 	if(XSDL_LoadFont(path, 24) < 0)
 		return (-1);
-	sprintf(path, "%s/%s", exe_dir, "res/bitter.ttf");
+	sprintf(path, "%s/%s", exe_dir, "res/droid.ttf");
 	if(XSDL_LoadFont(path, 16) < 0)
 		return (-1);
 
@@ -230,14 +230,14 @@ void init_gui(XSDL_Context *ctx)
 			200, 125, 400, 350);
 
 	XSDL_Rect body = {250, 206, 300, 24};
-	XSDL_Color col = {0xff, 0xff, 0xff};
+	XSDL_Color col = {0xff, 0xff, 0xff, 0xff};
 	XSDL_CreateText(XSDL_Get(rootnode, "mns_form"), "label1", &body,
 		"Email:", &col, 1, XSDL_TEXT_LEFT);
 	XSDL_CreateInput(XSDL_Get(rootnode, "mns_form"), "mns_user", 
 			250, 230, 300, 40, "");
 
 	XSDL_Rect body1 = {250, 286, 300, 24};
-	XSDL_Color col1 = {0xff, 0xff, 0xff};
+	XSDL_Color col1 = {0xff, 0xff, 0xff, 0xff};
 	XSDL_CreateText(XSDL_Get(rootnode, "mns_form"), "label2", &body1,
 		"Password:", &col1, 1, XSDL_TEXT_LEFT);
 	XSDL_CreateInput(XSDL_Get(rootnode, "mns_form"), "mns_pswd", 
@@ -248,7 +248,7 @@ void init_gui(XSDL_Context *ctx)
 
 	uint8_t vis = 1;
 	uint8_t bck = 1;
-	XSDL_Color bck_col = {0xff, 0x00, 0x00};
+	XSDL_Color bck_col = {0x23, 0x23, 0x23, 0xff};
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_VIS, &vis);
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_BCK, &bck);
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_BCK_COL, &bck_col);

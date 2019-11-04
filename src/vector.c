@@ -40,7 +40,9 @@ void vec_sub(Vec2 *dst, Vec2 *vec)
 }
 
 /*
- * Subtracts one vector from another and returns the result.
+ * Subtracts the x- and y-values of one vector 
+ * from the values of a different vector and 
+ * returns the result.
  *
  * @vec1: The first vector
  * @vec2: The second vector
@@ -82,7 +84,7 @@ Vec2 vec_scl_ret(Vec2 *vec, float fac)
 
 /*
  * Sets the x and y value of the destination vector to
- * the value of the respecçtive argument
+ * the value of the respecçtive argument.
  *
  * @dst: The destination vector to write into
  * @x: the new x value of the destination vector
@@ -172,7 +174,7 @@ Vec2 vec_lim_ret(Vec2 *vec, float lim)
 }
 
 /*
- * Computes the dot product of two given vectors
+ * Computes the dot product of two given vectors.
  *
  * @vec1: The first vector
  * @vec2: The second vector
@@ -219,7 +221,7 @@ Vec2 vec_nrm_ret(Vec2 *vec)
 }
 
 /*
- * Multiplies a vector by a matrix given by the rest of the arguments
+ * Multiplies a vector by a matrix given by the rest of the arguments.
  *
  * @vec: The input vector
  * @m11: The first row and first column of the matrix
@@ -247,7 +249,7 @@ void vec_matmul(Vec2 *vec, float m11, float m21, float m12, float m22)
  *
  * Returns: A new vector, that is the input vector multiplied by the matrix
  */
-Vec2 vec_matmul_ret(Vec2 *vec, float m11, float m21, float m21, float m22)
+Vec2 vec_matmul_ret(Vec2 *vec, float m11, float m21, float m12, float m22)
 {
 	float r1 = (m11 * vec->x) + (m21 * vec->y);
 	float r2 = (m12 * vec->x) + (m22 * vec->y);
@@ -291,12 +293,12 @@ void vec_rot(Vec2 *vec, float rad)
  */
 Vec2 vec_rot_deg_ret(Vec2 *vec, int deg)
 {
-	float rad = deg / 180 * M_PI;
-	return vec_rot_rad_ret(vec, rad);
+	float rad = (deg / 180 * M_PI);
+	return (vec_rot_ret(vec, rad));
 }
 
 /*
- * Rotates a vector by an angle in degrees
+ * Rotates a vector by an angle in degrees.
  *
  * @vec: The vector to rotate
  * @deg: The angle to rotate by in degrees

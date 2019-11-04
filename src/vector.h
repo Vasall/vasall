@@ -1,6 +1,8 @@
 #ifndef _VECTOR_H_
 #define _VECTOR_H_
 
+#define M_PI 3.14159265358979323846
+
 /*
  * A simple 2d-Vector struct used the
  * same as COORD, but with 32-bit numbers
@@ -12,7 +14,6 @@ typedef struct Vec2 {
 } Vec2;
 
 /* ==== DEFINE PROTOTYPES ==== */
-char in_rect(SDL_Rect *rect, Vec2 *pos);
 void vec_add(Vec2 *dst, Vec2 *val);
 Vec2 vec_add_ret(Vec2 *vec1, Vec2 *vec2);
 void vec_sub(Vec2 *dst, Vec2 *val);

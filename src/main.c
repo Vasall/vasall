@@ -12,7 +12,7 @@
 /* Window setting */
 int SCREEN_WIDTH = 800;					/* Screen width */
 int SCREEN_HEIGHT = 600;				/* Screen height */
-XSDL_Color clr = {28, 28, 30};				/* Background-color of window */
+XSDL_Color clr = { 0x18, 0x18, 0x18};			/* Background-color of window */
 
 /* === Global variables === */
 char running = 0;					/* 1 if game is running, 0 if not */
@@ -205,13 +205,21 @@ int init_resources()
 
 	sprintf(path, "%s/%s", exe_dir, "res/mecha.ttf");	
 	if(XSDL_LoadFont(path, 24) < 0)
-		return (-1);
-	sprintf(path, "%s/%s", exe_dir, "res/droid.ttf");
+		goto loadfailed;
+
+	sprintf(path, "%s/%s", exe_dir, "res/aller.ttf");
 	if(XSDL_LoadFont(path, 16) < 0)
-		return (-1);
+		goto loadfailed;
+
+	sprintf(path, "%s/%s", exe_dir, "res/editundo.ttf");
+	if(XSDL_LoadFont(path, 48) < 0)
+		goto loadfailed;
 
 
 	return(0);
+
+loadfailed:
+	return(-1);
 }
 
 /*
@@ -223,35 +231,49 @@ void init_gui(XSDL_Context *ctx)
 {
 	XSDL_Node *rootnode = ctx->root;
 
+	uint8_t vis = 1;
+	uint8_t bck = 1;
+
 	/* Create the menu-sceen */
 	XSDL_CreateWrapper(rootnode, "menu", 
 			0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 	XSDL_CreateWrapper(XSDL_Get(rootnode, "menu"), "mns_form",
-			200, 125, 400, 350);
+			200, 100, 400, 380);
 
-	XSDL_Rect body = {250, 206, 300, 24};
-	XSDL_Color col = {0xff, 0xff, 0xff, 0xff};
-	XSDL_CreateText(XSDL_Get(rootnode, "mns_form"), "label1", &body,
-		"Email:", &col, 1, XSDL_TEXT_LEFT);
-	XSDL_CreateInput(XSDL_Get(rootnode, "mns_form"), "mns_user", 
-			250, 230, 300, 40, "");
+	XSDL_CreateWrapper(XSDL_Get(rootnode, "mns_form"), "mns_title",
+			200, 100, 400, 80);
+	XSDL_Rect body0 = {250, 114, 300, 52};
+	XSDL_Color col0 = {0xff, 0xff, 0xff, 0xff};
+	XSDL_CreateText(XSDL_Get(rootnode, "mns_title"), "label0", &body0,
+		"VASALL", &col0, 2, 0);
 
-	XSDL_Rect body1 = {250, 286, 300, 24};
+	XSDL_Rect body1 = {240, 206, 320, 24};
 	XSDL_Color col1 = {0xff, 0xff, 0xff, 0xff};
-	XSDL_CreateText(XSDL_Get(rootnode, "mns_form"), "label2", &body1,
-		"Password:", &col1, 1, XSDL_TEXT_LEFT);
+	XSDL_CreateText(XSDL_Get(rootnode, "mns_form"), "label1", &body1,
+		"Email:", &col1, 1, XSDL_TEXT_LEFT);
+	XSDL_CreateInput(XSDL_Get(rootnode, "mns_form"), "mns_user", 
+			240, 230, 320, 40, "");
+
+	XSDL_Rect body2 = {240, 286, 320, 24};
+	XSDL_Color col2 = {0xff, 0xff, 0xff, 0xff};
+	XSDL_CreateText(XSDL_Get(rootnode, "mns_form"), "label2", &body2,
+		"Password:", &col2, 1, XSDL_TEXT_LEFT);
 	XSDL_CreateInput(XSDL_Get(rootnode, "mns_form"), "mns_pswd", 
-			250, 310, 300, 40, "");
+			240, 310, 320, 40, "");
 	
 	XSDL_CreateButton(XSDL_Get(rootnode, "mns_form"), "mns_login", 
-			250, 380, 300, 40, "Login");
+			240, 380, 320, 40, "Login");
 
-	uint8_t vis = 1;
-	uint8_t bck = 1;
 	XSDL_Color bck_col = {0x23, 0x23, 0x23, 0xff};
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_VIS, &vis);
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_BCK, &bck);
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_BCK_COL, &bck_col);
+
+	XSDL_Color title_col = {0xd3, 0x34, 0x5a, 0xff};
+	XSDL_ModStyle(XSDL_Get(rootnode, "mns_title"), XSDL_STY_VIS, &vis);
+	XSDL_ModStyle(XSDL_Get(rootnode, "mns_title"), XSDL_STY_BCK, &bck);
+	XSDL_ModStyle(XSDL_Get(rootnode, "mns_title"), XSDL_STY_BCK_COL, &title_col);
+
 }
 
 /**

@@ -1,6 +1,6 @@
 IMPORTANT: You can only build and run this project on Linux.
 
-## BUILD AND RUN THE PROJECT
+## BUILD AND RUN THE PROJECT  
 Before you can actually compile and run this project, you first have to install
 the required dependencies using the following commands:
 ```$ sudo apt update && sudo apt upgrade```

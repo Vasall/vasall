@@ -146,15 +146,9 @@ static void adjust_position(XSDL_Node *node, void *data)
 	XSDL_Node *par = node->parent;
 
 	if(par != NULL) {
-		node->rend.x += par->rend.x + par->style.inset[3];
-		node->rend.y += par->rend.y + par->style.inset[0];
-	
-	
-		printf("%d-%d-%d-%d\n", par->style.inset[0], par->style.inset[1],
-			par->style.inset[2], par->style.inset[3]);
+		node->rend.x += par->rend.x + par->style.ins[3];
+		node->rend.y += par->rend.y + par->style.ins[0];
 	}
-
-	printf("%s: %d-%d\n", node->strid, node->rend.x, node->rend.y);
 }
 
 /* ================= DEFINE FUNCTIONS ================ */
@@ -286,15 +280,18 @@ void init_gui(XSDL_Context *ctx)
 			40, 280, 320, 40, "Login");
 
 	XSDL_Color bck_col = {0x23, 0x23, 0x23, 0xff};
+	short form_corners[] = {5, 5, 5, 5};
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_VIS, &vis);
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_BCK, &bck);
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_BCK_COL, &bck_col);
+	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_COR_RAD, &form_corners);
 
 	XSDL_Color title_col = {0xd3, 0x34, 0x5a, 0xff};
+	short title_corners[] = {5, 5, 0, 0};
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_title"), XSDL_STY_VIS, &vis);
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_title"), XSDL_STY_BCK, &bck);
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_title"), XSDL_STY_BCK_COL, &title_col);
-
+	XSDL_ModStyle(XSDL_Get(rootnode, "mns_title"), XSDL_STY_COR_RAD, &title_corners);
 }
 
 /**

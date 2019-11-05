@@ -146,8 +146,12 @@ static void adjust_position(XSDL_Node *node, void *data)
 	XSDL_Node *par = node->parent;
 
 	if(par != NULL) {
-		node->rend.x += par->rend.x;
-		node->rend.y += par->rend.y;
+		node->rend.x += par->rend.x + par->style.inset[3];
+		node->rend.y += par->rend.y + par->style.inset[0];
+	
+	
+		printf("%d-%d-%d-%d\n", par->style.inset[0], par->style.inset[1],
+			par->style.inset[2], par->style.inset[3]);
 	}
 
 	printf("%s: %d-%d\n", node->strid, node->rend.x, node->rend.y);

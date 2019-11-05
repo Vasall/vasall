@@ -23,6 +23,7 @@ XSDL_Node *root;					/* Pointer to the root node */
 
 /* === Static Prototypes === */
 static void show_node(XSDL_Node *node, void *data);
+static void adjust_position(XSDL_Node *node, void *data);
 
 /* === Prototypes === */
 XSDL_Window *init_window();
@@ -71,6 +72,8 @@ int main(int argc, char** argv)
 	/* Display nodes in the console */
 	printf("\nNODE-TREE:\n");
 	XSDL_GoDown(root, &show_node, NULL, 0);
+	XSDL_GoDown(root, &adjust_position, NULL, 0);
+
 
 	/* Build render-pipe */
 	XSDL_BuildPipe(context->pipe, root);
@@ -134,6 +137,20 @@ static void show_node(XSDL_Node *node, void *data)
 	for(i = 0; i < node->layer; i++) printf("  ");
 	printf("%s:%d (0x%02x)", node->strid, node->id, node->tag);
 	printf("\n");
+}
+
+static void adjust_position(XSDL_Node *node, void *data) 
+{
+	memcpy(&node->rend, &node->body, sizeof(XSDL_Rect));
+
+	XSDL_Node *par = node->parent;
+
+	if(par != NULL) {
+		node->rend.x += par->rend.x;
+		node->rend.y += par->rend.y;
+	}
+
+	printf("%s: %d-%d\n", node->strid, node->rend.x, node->rend.y);
 }
 
 /* ================= DEFINE FUNCTIONS ================ */
@@ -241,28 +258,28 @@ void init_gui(XSDL_Context *ctx)
 			200, 100, 400, 380);
 
 	XSDL_CreateWrapper(XSDL_Get(rootnode, "mns_form"), "mns_title",
-			200, 100, 400, 80);
-	XSDL_Rect body0 = {250, 114, 300, 52};
+			0, 0, 400, 80);
+	XSDL_Rect body0 = {50, 14, 300, 52};
 	XSDL_Color col0 = {0xff, 0xff, 0xff, 0xff};
 	XSDL_CreateText(XSDL_Get(rootnode, "mns_title"), "label0", &body0,
 		"VASALL", &col0, 2, 0);
 
-	XSDL_Rect body1 = {240, 206, 320, 24};
+	XSDL_Rect body1 = {40, 106, 320, 24};
 	XSDL_Color col1 = {0xff, 0xff, 0xff, 0xff};
 	XSDL_CreateText(XSDL_Get(rootnode, "mns_form"), "label1", &body1,
 		"Email:", &col1, 1, XSDL_TEXT_LEFT);
 	XSDL_CreateInput(XSDL_Get(rootnode, "mns_form"), "mns_user", 
-			240, 230, 320, 40, "");
+			40, 130, 320, 40, "");
 
-	XSDL_Rect body2 = {240, 286, 320, 24};
+	XSDL_Rect body2 = {40, 186, 320, 24};
 	XSDL_Color col2 = {0xff, 0xff, 0xff, 0xff};
 	XSDL_CreateText(XSDL_Get(rootnode, "mns_form"), "label2", &body2,
 		"Password:", &col2, 1, XSDL_TEXT_LEFT);
 	XSDL_CreateInput(XSDL_Get(rootnode, "mns_form"), "mns_pswd", 
-			240, 310, 320, 40, "");
+			40, 210, 320, 40, "");
 	
 	XSDL_CreateButton(XSDL_Get(rootnode, "mns_form"), "mns_login", 
-			240, 380, 320, 40, "Login");
+			40, 280, 320, 40, "Login");
 
 	XSDL_Color bck_col = {0x23, 0x23, 0x23, 0xff};
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_VIS, &vis);

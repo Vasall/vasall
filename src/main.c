@@ -21,10 +21,6 @@ XSDL_Renderer *renderer;				/* Pointer to renderer-struct */
 XSDL_Context *context;					/* The GUI-context */
 XSDL_Node *root;					/* Pointer to the root node */
 
-/* === Static Prototypes === */
-static void show_node(XSDL_Node *node, void *data);
-static void adjust_position(XSDL_Node *node, void *data);
-
 /* === Prototypes === */
 XSDL_Window *init_window();
 XSDL_Renderer *init_renderer(XSDL_Window *win);
@@ -55,7 +51,7 @@ int main(int argc, char** argv)
 		goto cleanup_window;
 	}
 
-	if((context = XSDL_CreateContext(SCREEN_WIDTH, SCREEN_HEIGHT)) == NULL) {
+	if((context = XSDL_CreateContext(window)) == NULL) {
 		printf("[!] Context could not be created!\n");
 		goto cleanup_renderer;
 	}
@@ -68,15 +64,6 @@ int main(int argc, char** argv)
 
 	/* Initialize the user-interface */
 	init_gui(context);
-
-	/* Display nodes in the console */
-	printf("\nNODE-TREE:\n");
-	XSDL_GoDown(root, &show_node, NULL, 0);
-	XSDL_GoDown(root, &adjust_position, NULL, 0);
-
-
-	/* Build render-pipe */
-	XSDL_BuildPipe(context->pipe, root);
 
 	/* Mark game as running */
 	running = 1;
@@ -119,38 +106,6 @@ exit:
 	return (0);
 }
 
-/* ============== DEFINE STATIC FUNCTIONS ============ */
-
-/*
- * Show a single node in the node-tree. This
- * function is a callback-function, therefore
- * the data-parameter has to be defined, despite
- * it not being used.
- *
- * @node: The node to display
- * @data: Data-pointer
-*/
-static void show_node(XSDL_Node *node, void *data)
-{
-	printf(" ");
-	int i;
-	for(i = 0; i < node->layer; i++) printf("  ");
-	printf("%s:%d (0x%02x)", node->strid, node->id, node->tag);
-	printf("\n");
-}
-
-static void adjust_position(XSDL_Node *node, void *data) 
-{
-	memcpy(&node->rend, &node->body, sizeof(XSDL_Rect));
-
-	XSDL_Node *par = node->parent;
-
-	if(par != NULL) {
-		node->rend.x += par->rend.x + par->style.ins[3];
-		node->rend.y += par->rend.y + par->style.ins[0];
-	}
-}
-
 /* ================= DEFINE FUNCTIONS ================ */
 
 /*
@@ -166,7 +121,7 @@ XSDL_Window *init_window()
 	XSDL_Window *win = SDL_CreateWindow("Vasall", 
 			SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
 			SCREEN_WIDTH, SCREEN_HEIGHT, 
-			SDL_WINDOW_SHOWN);
+			SDL_WINDOW_RESIZABLE);
 
 	if(win == NULL) return (NULL);
 
@@ -230,6 +185,11 @@ int init_resources()
 	if(XSDL_LoadFont(path, 48) < 0)
 		goto loadfailed;
 
+	sprintf(path, "%s/%s", exe_dir, "res/mns_bck.png");
+	if(XSDL_LoadImage(renderer, path) < 0)
+		goto loadfailed;
+
+
 
 	return(0);
 
@@ -250,10 +210,9 @@ void init_gui(XSDL_Context *ctx)
 	uint8_t bck = 1;
 
 	/* Create the menu-sceen */
-	XSDL_CreateWrapper(rootnode, "menu", 
-			0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-	XSDL_CreateWrapper(XSDL_Get(rootnode, "menu"), "mns_form",
-			200, 100, 400, 380);
+	XSDL_CreateWrapper(rootnode, "mns", 0, 0, -100, -100);
+	XSDL_CreateWrapper(XSDL_Get(rootnode, "mns"), "mns_form",
+			-1, -1, 400, 380);
 
 	XSDL_CreateWrapper(XSDL_Get(rootnode, "mns_form"), "mns_title",
 			0, 0, 400, 80);
@@ -292,6 +251,9 @@ void init_gui(XSDL_Context *ctx)
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_title"), XSDL_STY_BCK, &bck);
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_title"), XSDL_STY_BCK_COL, &title_col);
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_title"), XSDL_STY_COR_RAD, &title_corners);
+
+	/* Create the game-sceen */
+	XSDL_CreateWrapper(rootnode, "gms", 0, 0, -100, -100);
 }
 
 /**
@@ -307,10 +269,8 @@ void process_input()
 	/* more events on the event queue, our while loop will exit when */
 	/* that occurs.                                                  */
 	while(SDL_PollEvent(&event)) {
-		if(event.type == SDL_QUIT) {
+		if(event.type == SDL_QUIT)
 			running = 0;
-			return;
-		}
 
 		/* Process interactions with the UI */
 		if(XSDL_ProcEvent(context, &event) > -1)

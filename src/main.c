@@ -15,6 +15,9 @@ int SCREEN_HEIGHT = 600;				/* Screen height */
 XSDL_Color clr = { 0x18, 0x18, 0x18};			/* Background-color of window */
 
 /* === Global variables === */
+uint8_t one = 1;
+uint8_t zero = 0;
+
 char running = 0;					/* 1 if game is running, 0 if not */
 XSDL_Window *window;					/* Pointer to window-struct */
 XSDL_Renderer *renderer;				/* Pointer to renderer-struct */
@@ -28,6 +31,7 @@ int init_resources();
 void init_gui(XSDL_Context *ctx);
 void display_nodes(XSDL_Context *ctx);
 void process_input();
+void try_login();
 
 
 int main(int argc, char** argv) 
@@ -206,9 +210,6 @@ void init_gui(XSDL_Context *ctx)
 {
 	XSDL_Node *rootnode = ctx->root;
 
-	uint8_t vis = 1;
-	uint8_t bck = 1;
-
 	/* Create the menu-sceen */
 	XSDL_CreateWrapper(rootnode, "mns", 0, 0, -100, -100);
 	XSDL_CreateWrapper(XSDL_Get(rootnode, "mns"), "mns_form",
@@ -240,20 +241,38 @@ void init_gui(XSDL_Context *ctx)
 
 	XSDL_Color bck_col = {0x23, 0x23, 0x23, 0xff};
 	short form_corners[] = {5, 5, 5, 5};
-	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_VIS, &vis);
-	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_BCK, &bck);
+	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_VIS, &one);
+	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_BCK, &one);
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_BCK_COL, &bck_col);
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_COR_RAD, &form_corners);
 
 	XSDL_Color title_col = {0xd3, 0x34, 0x5a, 0xff};
-	short title_corners[] = {5, 5, 0, 0};
-	XSDL_ModStyle(XSDL_Get(rootnode, "mns_title"), XSDL_STY_VIS, &vis);
-	XSDL_ModStyle(XSDL_Get(rootnode, "mns_title"), XSDL_STY_BCK, &bck);
+	short title_cor[] = {5, 5, 0, 0};
+	XSDL_ModStyle(XSDL_Get(rootnode, "mns_title"), XSDL_STY_VIS, &one);
+	XSDL_ModStyle(XSDL_Get(rootnode, "mns_title"), XSDL_STY_BCK, &one);
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_title"), XSDL_STY_BCK_COL, &title_col);
-	XSDL_ModStyle(XSDL_Get(rootnode, "mns_title"), XSDL_STY_COR_RAD, &title_corners);
+	XSDL_ModStyle(XSDL_Get(rootnode, "mns_title"), XSDL_STY_COR_RAD, &title_cor);
+
+	XSDL_BindEvent(XSDL_Get(rootnode, "mns_login"), XSDL_EVT_MOUSEDOWN, &try_login);
 
 	/* Create the game-sceen */
 	XSDL_CreateWrapper(rootnode, "gms", 0, 0, -100, -100);
+	XSDL_Color gms_bck_col = {0x47, 0x2d, 0x5c, 0xff};
+	XSDL_ModStyle(XSDL_Get(rootnode, "gms"), XSDL_STY_VIS, &one);
+	XSDL_ModStyle(XSDL_Get(rootnode, "gms"), XSDL_STY_BCK, &one);
+	XSDL_ModStyle(XSDL_Get(rootnode, "gms"), XSDL_STY_BCK_COL, &gms_bck_col);
+
+	XSDL_CreateWrapper(XSDL_Get(rootnode, "gms"), "gms_stats", -1, 5, 780, 30);
+	XSDL_Color test_col = {0x23, 0x25, 0x30, 0xff};
+	short stats_cor[] = {6, 6, 6, 6};
+	XSDL_ModStyle(XSDL_Get(rootnode, "gms_stats"), XSDL_STY_VIS, &one);
+	XSDL_ModStyle(XSDL_Get(rootnode, "gms_stats"), XSDL_STY_BCK, &one);
+	XSDL_ModStyle(XSDL_Get(rootnode, "gms_stats"), XSDL_STY_BCK_COL, &test_col);
+	XSDL_ModStyle(XSDL_Get(rootnode, "gms_stats"), XSDL_STY_COR_RAD, &stats_cor);
+
+	XSDL_ModFlag(XSDL_Get(rootnode, "gms"), XSDL_FLG_ACT, &zero);
+
+	XSDL_ShowNodes(rootnode);	
 }
 
 /**
@@ -302,4 +321,15 @@ void process_input()
 				break;
 		}
 	}
+}
+
+void try_login()
+{
+	printf("Logged in.\n");
+
+	XSDL_ModFlag(XSDL_Get(root, "mns"), XSDL_FLG_ACT, &zero);
+	XSDL_ModFlag(XSDL_Get(root, "gms"), XSDL_FLG_ACT, &one);
+
+	XSDL_ShowNodes(root);
+	XSDL_ShowPipe(context);
 }

@@ -3,109 +3,86 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <SDL2/SDL.h>
 #include <unistd.h>
+#include <assert.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_opengl.h>
+#include <GL/gl.h>
 /* Include custom headers */
-#include "../XSDL/xsdl.h"
 #include "vector.h"
 
 /* Window setting */
-int SCREEN_WIDTH = 800;					/* Screen width */
-int SCREEN_HEIGHT = 600;				/* Screen height */
-XSDL_Color clr = { 0x18, 0x18, 0x18};			/* Background-color of window */
+int win_w = 800;					/* Screen width */
+int win_h = 600;					/* Screen height */
+uint32_t win_flgs = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
 
 /* === Global variables === */
 uint8_t one = 1;
 uint8_t zero = 0;
 
-char running = 0;					/* 1 if game is running, 0 if not */
-XSDL_Window *window;					/* Pointer to window-struct */
-XSDL_Renderer *renderer;				/* Pointer to renderer-struct */
-XSDL_Context *context;					/* The GUI-context */
-XSDL_Node *root;					/* Pointer to the root node */
+uint32_t running = 0;					/* 1 if game is running, 0 if not */
+uint32_t fullscreen = 0;
+SDL_Window *window;					/* Pointer to window-struct */
+SDL_GLContext *gl_ctx;					/* Pointer to GL-context-struct */
 
 /* === Prototypes === */
-XSDL_Window *init_window();
-XSDL_Renderer *init_renderer(XSDL_Window *win);
-int init_resources();
-void init_gui(XSDL_Context *ctx);
-void display_nodes(XSDL_Context *ctx);
-void process_input();
-void try_login();
-
+SDL_Window *init_window();
+SDL_GLContext *init_context(SDL_Window *win);
 
 int main(int argc, char** argv) 
 {
 	printf("\nStarting vasall-client...\n");
 
-	if(XSDL_Init(XSDL_INIT_EVERYTHING) < 0) {
-		printf("[!] SDL could not initialize! (%s)\n", XSDL_GetError());
-		goto exit;
+	if(SDL_Init(SDL_INIT_EVERYTHING) < 0) {
+		printf("[!] SDL could not initialize! (%s)\n", SDL_GetError());
+		return(-1);
 	}
-	XSDL_ShowVersions();
 	printf("\n");
 
 	if((window = init_window()) == NULL) {
 		printf("[!] Window could not be created! (%s)\n", SDL_GetError());
-		goto cleanup_sdl;
+		return(-1);
 	}
 
-	if((renderer = init_renderer(window)) == NULL) {
-		printf("[!] Renderer could not be created! (%s)\n", SDL_GetError());
-		goto cleanup_window;
+	if((gl_ctx = init_context(window)) == NULL) {
+		printf("[!] GL-Context could not be created!\n");
+		return(-1);
 	}
 
-	if((context = XSDL_CreateContext(window)) == NULL) {
-		printf("[!] Context could not be created!\n");
-		goto cleanup_renderer;
-	}
-	root = context->root;
-
-	if(init_resources(argv[0]) < 0) {
-		printf("[!] Couldn't load all resources!\n");
-		goto cleanup_renderer;
-	}
-
-	/* Initialize the user-interface */
-	init_gui(context);
-
-	/* Mark game as running */
 	running = 1;
 
-	/* Run the game */
-	while(running) {
-		/* -------- UPDATE -------- */
-		/* Process user-input */
-		process_input();
+	while (running) {
+		SDL_Event event;
+		while (SDL_PollEvent(&event)) {
+			if (event.type == SDL_KEYDOWN) {
+				switch (event.key.keysym.sym) {
+					case SDLK_ESCAPE:
+						running = 0;
+						break;
+					case 'f':
+						fullscreen = !fullscreen;
+						if (fullscreen) {
+							SDL_SetWindowFullscreen(window, win_flgs | SDL_WINDOW_FULLSCREEN_DESKTOP);
+						}
+						else {
+							SDL_SetWindowFullscreen(window, win_flgs);
+						}
+						break;
+					default:
+						break;
+				}
+			}
+			else if (event.type == SDL_QUIT) {
+				running = 0;
+			}
+		}
 
-		/* -------- RENDER -------- */
-		/* Clear the screen */
-		SDL_SetRenderDrawColor(renderer, clr.r, clr.g,
-				clr.b, clr.a);
-		SDL_RenderClear(renderer);
+		glViewport(0, 0, win_w, win_h);
+		glClearColor(0.2, 0.2, 0.2, 1.0);
+		glClear(GL_COLOR_BUFFER_BIT);
 
-		/* Update UI-nodes */
-		XSDL_Update(context);
-
-		/* Render visible UI-elements */
-		XSDL_RenderPipe(renderer, context->pipe);
-
-		/* Render all elements in the active scene */
-		SDL_RenderPresent(renderer);
+		SDL_GL_SwapWindow(window);
 	}
-
-	/* Destroy context */
-	XSDL_DeleteContext(context);
-
-cleanup_renderer:
-	/* Destory renderer */
-	SDL_DestroyRenderer(renderer);
-cleanup_window:
-	/* Destroy window */
-	SDL_DestroyWindow(window);
-cleanup_sdl:
-	/* Quit XSDL subsystems */
-	XSDL_Quit();
 exit:
 	return (0);
 }
@@ -119,18 +96,17 @@ exit:
  *
  * Returns: Window-Pointer or NULL if an error occurred
  */
-XSDL_Window *init_window()
+SDL_Window *init_window()
 {
 	/* Create and initialize the window */
-	XSDL_Window *win = SDL_CreateWindow("Vasall", 
+	SDL_Window *win = SDL_CreateWindow("Vasall", 
 			SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
-			SCREEN_WIDTH, SCREEN_HEIGHT, 
-			SDL_WINDOW_RESIZABLE);
+			win_w, win_h, 
+			win_flgs);
 
 	if(win == NULL) return (NULL);
 
-	/* Set the window-icon */
-	XSDL_SetWindowIcon(win);
+	assert(win);
 
 	return(win);
 }
@@ -145,23 +121,21 @@ XSDL_Window *init_window()
  *
  * Returns: Renderer-pointer or NULL if an error occurred
  */
-XSDL_Renderer *init_renderer(XSDL_Window *win)
+SDL_GLContext *init_context(SDL_Window *win)
 {
-	uint32_t flg = XSDL_RENDERER_ACCELERATED | 
-		XSDL_RENDERER_PRESENTVSYNC;
+	SDL_GLContext ctx = SDL_GL_CreateContext(win);
 
-	/* Create and initialize the renderer*/
-	XSDL_Renderer *ren = SDL_CreateRenderer(win, -1, flg);
-
-	return(ren);
+	return(ctx);
 }
+
+#if DEBUG_TEST
 
 /*
  * Load all necessary resources, like fonts, sprites
  * and more.
  *
  * Returns: 0 on success and -1 if an error occurred
-*/
+ */
 int init_resources()
 {
 	char cwd[256];
@@ -193,8 +167,6 @@ int init_resources()
 	if(XSDL_LoadImage(renderer, path) < 0)
 		goto loadfailed;
 
-
-
 	return(0);
 
 loadfailed:
@@ -205,38 +177,41 @@ loadfailed:
  * Initialize the GUI and place all elements.
  *
  * @ctx: The context to create
-*/
-void init_gui(XSDL_Context *ctx)
+ */
+void init_gui(XSDL_UIContext *ctx)
 {
 	XSDL_Node *rootnode = ctx->root;
 
 	/* Create the menu-sceen */
 	XSDL_CreateWrapper(rootnode, "mns", 0, 0, -100, -100);
-	XSDL_CreateWrapper(XSDL_Get(rootnode, "mns"), "mns_form",
-			-1, -1, 400, 380);
+	XSDL_Node *mns_form = XSDL_CreateWrapper(XSDL_Get(rootnode, "mns"), 
+			"mns_form", -1, -1, 400, 380);
 
-	XSDL_CreateWrapper(XSDL_Get(rootnode, "mns_form"), "mns_title",
+	XSDL_CreateWrapper(mns_form, "mns_title",
 			0, 0, 400, 80);
 	XSDL_Rect body0 = {50, 14, 300, 52};
 	XSDL_CreateText(XSDL_Get(rootnode, "mns_title"), "label0", &body0,
-		"VASALL", &XSDL_WHITE, 2, 0);
+			"VASALL", &XSDL_WHITE, 2, 0);
 
 	XSDL_Rect body1 = {40, 106, 320, 24};
-	XSDL_CreateText(XSDL_Get(rootnode, "mns_form"), "label1", &body1,"Email:", &XSDL_WHITE, 1, XSDL_TEXT_LEFT);
-	XSDL_CreateInput(XSDL_Get(rootnode, "mns_form"), "mns_user", 40, 130, 320, 40, "");
+	XSDL_CreateText(mns_form, "mns_user_label", &body1,"Email:", 
+			&XSDL_WHITE, 1, XSDL_TEXT_LEFT);
+	XSDL_CreateInput(mns_form, "mns_user", 40, 130, 320, 40, "");
 
 	XSDL_Rect body2 = {40, 186, 320, 24};
-	XSDL_CreateText(XSDL_Get(rootnode, "mns_form"), "label2", &body2, "Password:", &XSDL_WHITE, 1, XSDL_TEXT_LEFT);
-	XSDL_CreateInput(XSDL_Get(rootnode, "mns_form"), "mns_pswd", 40, 210, 320, 40, "");
-	
-	XSDL_CreateButton(XSDL_Get(rootnode, "mns_form"), "mns_login", 40, 280, 320, 40, "Login");
+	XSDL_CreateText(mns_form, "mns_user_label", &body2, "Password:", 
+			&XSDL_WHITE, 1, XSDL_TEXT_LEFT);
+	XSDL_CreateInput(mns_form, "mns_pswd", 40, 210, 320, 40, "");
+
+	XSDL_CreateButton(XSDL_Get(rootnode, "mns_form"), "mns_login", 
+			40, 280, 320, 40, "Login");
 
 	XSDL_Color mns_form_bck_col = {0x23, 0x23, 0x23, 0xff};
 	short mns_form_corners[] = {5, 5, 5, 5};
-	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_VIS, &one);
-	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_BCK, &one);
-	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_BCK_COL, &mns_form_bck_col);
-	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_COR_RAD, &mns_form_corners);
+	XSDL_ModStyle(mns_form, XSDL_STY_VIS, &one);
+	XSDL_ModStyle(mns_form, XSDL_STY_BCK, &one);
+	XSDL_ModStyle(mns_form, XSDL_STY_BCK_COL, &mns_form_bck_col);
+	XSDL_ModStyle(mns_form, XSDL_STY_COR_RAD, &mns_form_corners);
 
 	XSDL_Color mns_title_bck_col = {0xd3, 0x34, 0x5a, 0xff};
 	short mns_title_cor[] = {5, 5, 0, 0};
@@ -267,61 +242,4 @@ void init_gui(XSDL_Context *ctx)
 	XSDL_ShowNodes(rootnode);	
 }
 
-/**
- * Process a user-input. This function processes all 
- * possible inputs, like closing the window, pressing a
- * key or pressing a mouse-button. 
- */
-void process_input() 
-{
-	XSDL_Event event;
-
-	/* Poll for events. SDL_PollEvent() returns 0 when there are no  */
-	/* more events on the event queue, our while loop will exit when */
-	/* that occurs.                                                  */
-	while(SDL_PollEvent(&event)) {
-		if(event.type == SDL_QUIT)
-			running = 0;
-
-		/* Process interactions with the UI */
-		if(XSDL_ProcEvent(context, &event) > -1)
-			continue;
-
-		/* If user didn't interact with UI */
-		switch(event.type) {
-			case(SDL_MOUSEMOTION):
-				break;
-
-			case(SDL_MOUSEBUTTONDOWN):
-				switch(event.button.button) {
-					/* Left mouse-button */
-					case(1):
-						break;
-
-					/* Right mouse-button */
-					case(3):
-						break;
-				}
-				break;
-
-			case(SDL_KEYDOWN):
-				switch(event.key.keysym.sym) {
-					case(SDLK_ESCAPE):
-						running = 0;
-						break;
-				}
-				break;
-		}
-	}
-}
-
-void try_login()
-{
-	printf("Logged in.\n");
-
-	XSDL_ModFlag(XSDL_Get(root, "mns"), XSDL_FLG_ACT, &zero);
-	XSDL_ModFlag(XSDL_Get(root, "gms"), XSDL_FLG_ACT, &one);
-
-	XSDL_ShowNodes(root);
-	XSDL_ShowPipe(context);
-}
+#endif

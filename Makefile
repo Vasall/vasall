@@ -1,7 +1,7 @@
 CC=gcc
 OUT=./build/game
 CFLAGS=-Wall -ansi
-LDFLAGS=$(shell pkg-config --cflags --libs sdl2 SDL2_ttf SDL2_image) -lm
+LDFLAGS=$(shell pkg-config --cflags --libs sdl2 SDL2_ttf SDL2_image gl) -lm
 
 $(OUT): ./objects/main.o ./objects/vector.o
 	$(CC) -o $(OUT) ./objects/main.o ./objects/vector.o $(LDFLAGS) $(CFLAGS)

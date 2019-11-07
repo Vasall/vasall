@@ -218,40 +218,32 @@ void init_gui(XSDL_Context *ctx)
 	XSDL_CreateWrapper(XSDL_Get(rootnode, "mns_form"), "mns_title",
 			0, 0, 400, 80);
 	XSDL_Rect body0 = {50, 14, 300, 52};
-	XSDL_Color col0 = {0xff, 0xff, 0xff, 0xff};
 	XSDL_CreateText(XSDL_Get(rootnode, "mns_title"), "label0", &body0,
-		"VASALL", &col0, 2, 0);
+		"VASALL", &XSDL_WHITE, 2, 0);
 
 	XSDL_Rect body1 = {40, 106, 320, 24};
-	XSDL_Color col1 = {0xff, 0xff, 0xff, 0xff};
-	XSDL_CreateText(XSDL_Get(rootnode, "mns_form"), "label1", &body1,
-		"Email:", &col1, 1, XSDL_TEXT_LEFT);
-	XSDL_CreateInput(XSDL_Get(rootnode, "mns_form"), "mns_user", 
-			40, 130, 320, 40, "");
+	XSDL_CreateText(XSDL_Get(rootnode, "mns_form"), "label1", &body1,"Email:", &XSDL_WHITE, 1, XSDL_TEXT_LEFT);
+	XSDL_CreateInput(XSDL_Get(rootnode, "mns_form"), "mns_user", 40, 130, 320, 40, "");
 
 	XSDL_Rect body2 = {40, 186, 320, 24};
-	XSDL_Color col2 = {0xff, 0xff, 0xff, 0xff};
-	XSDL_CreateText(XSDL_Get(rootnode, "mns_form"), "label2", &body2,
-		"Password:", &col2, 1, XSDL_TEXT_LEFT);
-	XSDL_CreateInput(XSDL_Get(rootnode, "mns_form"), "mns_pswd", 
-			40, 210, 320, 40, "");
+	XSDL_CreateText(XSDL_Get(rootnode, "mns_form"), "label2", &body2, "Password:", &XSDL_WHITE, 1, XSDL_TEXT_LEFT);
+	XSDL_CreateInput(XSDL_Get(rootnode, "mns_form"), "mns_pswd", 40, 210, 320, 40, "");
 	
-	XSDL_CreateButton(XSDL_Get(rootnode, "mns_form"), "mns_login", 
-			40, 280, 320, 40, "Login");
+	XSDL_CreateButton(XSDL_Get(rootnode, "mns_form"), "mns_login", 40, 280, 320, 40, "Login");
 
-	XSDL_Color bck_col = {0x23, 0x23, 0x23, 0xff};
-	short form_corners[] = {5, 5, 5, 5};
+	XSDL_Color mns_form_bck_col = {0x23, 0x23, 0x23, 0xff};
+	short mns_form_corners[] = {5, 5, 5, 5};
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_VIS, &one);
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_BCK, &one);
-	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_BCK_COL, &bck_col);
-	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_COR_RAD, &form_corners);
+	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_BCK_COL, &mns_form_bck_col);
+	XSDL_ModStyle(XSDL_Get(rootnode, "mns_form"), XSDL_STY_COR_RAD, &mns_form_corners);
 
-	XSDL_Color title_col = {0xd3, 0x34, 0x5a, 0xff};
-	short title_cor[] = {5, 5, 0, 0};
+	XSDL_Color mns_title_bck_col = {0xd3, 0x34, 0x5a, 0xff};
+	short mns_title_cor[] = {5, 5, 0, 0};
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_title"), XSDL_STY_VIS, &one);
 	XSDL_ModStyle(XSDL_Get(rootnode, "mns_title"), XSDL_STY_BCK, &one);
-	XSDL_ModStyle(XSDL_Get(rootnode, "mns_title"), XSDL_STY_BCK_COL, &title_col);
-	XSDL_ModStyle(XSDL_Get(rootnode, "mns_title"), XSDL_STY_COR_RAD, &title_cor);
+	XSDL_ModStyle(XSDL_Get(rootnode, "mns_title"), XSDL_STY_BCK_COL, &mns_title_bck_col);
+	XSDL_ModStyle(XSDL_Get(rootnode, "mns_title"), XSDL_STY_COR_RAD, &mns_title_cor);
 
 	XSDL_BindEvent(XSDL_Get(rootnode, "mns_login"), XSDL_EVT_MOUSEDOWN, &try_login);
 
@@ -262,13 +254,13 @@ void init_gui(XSDL_Context *ctx)
 	XSDL_ModStyle(XSDL_Get(rootnode, "gms"), XSDL_STY_BCK, &one);
 	XSDL_ModStyle(XSDL_Get(rootnode, "gms"), XSDL_STY_BCK_COL, &gms_bck_col);
 
-	XSDL_CreateWrapper(XSDL_Get(rootnode, "gms"), "gms_stats", -1, 5, 780, 30);
-	XSDL_Color test_col = {0x23, 0x25, 0x30, 0xff};
-	short stats_cor[] = {6, 6, 6, 6};
+	XSDL_CreateWrapper(XSDL_Get(rootnode, "gms"), "gms_stats", -1, 5, 780, 35);
+	XSDL_Color gms_stats_bck_col = {0x23, 0x25, 0x30, 0xff};
+	short gms_stats_cor[] = {6, 6, 6, 6};
 	XSDL_ModStyle(XSDL_Get(rootnode, "gms_stats"), XSDL_STY_VIS, &one);
 	XSDL_ModStyle(XSDL_Get(rootnode, "gms_stats"), XSDL_STY_BCK, &one);
-	XSDL_ModStyle(XSDL_Get(rootnode, "gms_stats"), XSDL_STY_BCK_COL, &test_col);
-	XSDL_ModStyle(XSDL_Get(rootnode, "gms_stats"), XSDL_STY_COR_RAD, &stats_cor);
+	XSDL_ModStyle(XSDL_Get(rootnode, "gms_stats"), XSDL_STY_BCK_COL, &gms_stats_bck_col);
+	XSDL_ModStyle(XSDL_Get(rootnode, "gms_stats"), XSDL_STY_COR_RAD, &gms_stats_cor);
 
 	XSDL_ModFlag(XSDL_Get(rootnode, "gms"), XSDL_FLG_ACT, &zero);
 

@@ -2,7 +2,11 @@
 
 echo "Start building project."
 
-java -jar ./XSDL/HeaderJoiner.jar -o ./XSDL/xsdl.h -t ./XSDL/headers/XSDL.h ./XSDL/headers/XSDL_utils.h ./XSDL/headers/XSDL_text.h ./XSDL/headers/XSDL_img.h ./XSDL/headers/XSDL_node.h ./XSDL/headers/XSDL_stdnodes.h ./XSDL/headers/XSDL_context.h ./XSDL/headers/XSDL_render.h 
+java -jar ./ENUD/HeaderJoiner.jar -o ./ENUD/enud.h -t ./ENUD/headers/ENUD.h \
+./ENUD/headers/ENUD_utils.h ./ENUD/headers/ENUD_text.h ./ENUD/headers/ENUD_img.h \
+./ENUD/headers/ENUD_node.h ./ENUD/headers/ENUD_stdnodes.h ./ENUD/headers/ENUD_context.h \
+./ENUD/headers/ENUD_render.h 
+
 DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 OBJECTDIR="${DIR}/objects"
 BUILDDIR="${DIR}/build"

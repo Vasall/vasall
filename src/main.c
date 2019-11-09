@@ -5,34 +5,43 @@
 #include <time.h>
 #include <SDL2/SDL.h>
 #include <unistd.h>
-/* Include custom headers */
+
 #include "../ENUD/enud.h"
 #include "vector.h"
 
-/* Window setting */
-int SCREEN_WIDTH = 800;					/* Screen width */
-int SCREEN_HEIGHT = 600;				/* Screen height */
-ENUD_Color clr = { 0x18, 0x18, 0x18};			/* Background-color of window */
-
-/* === Global variables === */
 uint8_t one = 1;
 uint8_t zero = 0;
 
-char running = 0;					/* 1 if game is running, 0 if not */
-ENUD_Window *window;					/* Pointer to window-struct */
-ENUD_Renderer *renderer;				/* Pointer to renderer-struct */
-ENUD_UIContext *context;				/* The GUI-context */
-ENUD_Node *root;					/* Pointer to the root node */
+/* =============== WINDOW SETTINGS =================== */
 
-/* === Prototypes === */
+int win_w = 800;
+int win_h = 600;
+int win_flgs = SDL_WINDOW_RESIZABLE; 
+int ren_flg = ENUD_RENDERER_ACCELERATED | ENUD_RENDERER_PRESENTVSYNC;
+ENUD_Color win_clr = { 0x18, 0x18, 0x18};
+
+/* ============== GLOBAL VARIABLES =================== */
+
+uint8_t running = 0;
+uint8_t fullscr = 0;
+ENUD_Window *window;
+ENUD_Renderer *renderer;
+ENUD_UIContext *context;
+ENUD_Node *root;
+
+/* ================= PROTOTYPES ====================== */
+
+/* Initialize the game */
 ENUD_Window *init_window();
 ENUD_Renderer *init_renderer(ENUD_Window *win);
 int init_resources();
 void init_gui(ENUD_UIContext *ctx);
-void display_nodes(ENUD_UIContext *ctx);
+
+void toggle_fullscreen();
 void process_input();
 void try_login();
 
+/* ================ MAIN FUNCTION ==================== */
 
 int main(int argc, char** argv) 
 {
@@ -46,12 +55,12 @@ int main(int argc, char** argv)
 	printf("\n");
 
 	if((window = init_window()) == NULL) {
-		printf("[!] Window could not be created! (%s)\n", SDL_GetError());
+		printf("[!] Window could not be created! (%s)\n", ENUD_GetError());
 		goto cleanup_sdl;
 	}
 
 	if((renderer = init_renderer(window)) == NULL) {
-		printf("[!] Renderer could not be created! (%s)\n", SDL_GetError());
+		printf("[!] Renderer could not be created! (%s)\n", ENUD_GetError());
 		goto cleanup_window;
 	}
 
@@ -80,9 +89,8 @@ int main(int argc, char** argv)
 
 		/* -------- RENDER -------- */
 		/* Clear the screen */
-		SDL_SetRenderDrawColor(renderer, clr.r, clr.g,
-				clr.b, clr.a);
-		SDL_RenderClear(renderer);
+		ENUD_SetRenderDrawColor(renderer, &win_clr);
+		ENUD_RenderClear(renderer);
 
 		/* Update UI-nodes */
 		ENUD_Update(context);
@@ -91,7 +99,7 @@ int main(int argc, char** argv)
 		ENUD_RenderPipe(renderer, context->pipe);
 
 		/* Render all elements in the active scene */
-		SDL_RenderPresent(renderer);
+		ENUD_RenderPresent(renderer);
 	}
 
 	/* Destroy context */
@@ -99,10 +107,10 @@ int main(int argc, char** argv)
 
 cleanup_renderer:
 	/* Destory renderer */
-	SDL_DestroyRenderer(renderer);
+	ENUD_DestroyRenderer(renderer);
 cleanup_window:
 	/* Destroy window */
-	SDL_DestroyWindow(window);
+	ENUD_DestroyWindow(window);
 cleanup_sdl:
 	/* Quit ENUD subsystems */
 	ENUD_Quit();
@@ -110,7 +118,11 @@ exit:
 	return (0);
 }
 
-/* ================= DEFINE FUNCTIONS ================ */
+/* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
+/*                    SETUP FUNCTIONS                  */
+/* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
+
+/* ============= INITIALIZE THE GAME ================= */
 
 /*
  * Initialize the window and configure
@@ -122,12 +134,15 @@ exit:
 ENUD_Window *init_window()
 {
 	/* Create and initialize the window */
-	ENUD_Window *win = SDL_CreateWindow("Vasall", 
-			SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
-			SCREEN_WIDTH, SCREEN_HEIGHT, 
-			SDL_WINDOW_RESIZABLE);
+	ENUD_Window *win = ENUD_CreateWindow(
+			"Vasall", 
+			ENUD_WINDOWPOS_UNDEFINED, 
+			ENUD_WINDOWPOS_UNDEFINED, 
+			win_w, win_h, 
+			win_flgs);
 
-	if(win == NULL) return (NULL);
+	if(win == NULL) 
+		return (NULL);
 
 	/* Set the window-icon */
 	ENUD_SetWindowIcon(win);
@@ -147,11 +162,8 @@ ENUD_Window *init_window()
  */
 ENUD_Renderer *init_renderer(ENUD_Window *win)
 {
-	uint32_t flg = ENUD_RENDERER_ACCELERATED | 
-		ENUD_RENDERER_PRESENTVSYNC;
-
 	/* Create and initialize the renderer*/
-	ENUD_Renderer *ren = SDL_CreateRenderer(win, -1, flg);
+	ENUD_Renderer *ren = ENUD_CreateRenderer(win, -1, ren_flg);
 
 	return(ren);
 }
@@ -193,8 +205,6 @@ int init_resources()
 	if(ENUD_LoadImage(renderer, path) < 0)
 		goto loadfailed;
 
-
-
 	return(0);
 
 loadfailed:
@@ -222,11 +232,13 @@ void init_gui(ENUD_UIContext *ctx)
 		"VASALL", &ENUD_WHITE, 2, 0);
 
 	ENUD_Rect body1 = {40, 106, 320, 24};
-	ENUD_CreateText(ENUD_Get(rootnode, "mns_form"), "label1", &body1,"Email:", &ENUD_WHITE, 1, ENUD_TEXT_LEFT);
+	ENUD_CreateText(ENUD_Get(rootnode, "mns_form"), "label1", &body1,"Email:", 
+			&ENUD_WHITE, 1, ENUD_TEXT_LEFT);
 	ENUD_CreateInput(ENUD_Get(rootnode, "mns_form"), "mns_user", 40, 130, 320, 40, "");
 
 	ENUD_Rect body2 = {40, 186, 320, 24};
-	ENUD_CreateText(ENUD_Get(rootnode, "mns_form"), "label2", &body2, "Password:", &ENUD_WHITE, 1, ENUD_TEXT_LEFT);
+	ENUD_CreateText(ENUD_Get(rootnode, "mns_form"), "label2", &body2, "Password:", 
+			&ENUD_WHITE, 1, ENUD_TEXT_LEFT);
 	ENUD_CreateInput(ENUD_Get(rootnode, "mns_form"), "mns_pswd", 40, 210, 320, 40, "");
 	
 	ENUD_CreateButton(ENUD_Get(rootnode, "mns_form"), "mns_login", 40, 280, 320, 40, "Login");
@@ -263,8 +275,6 @@ void init_gui(ENUD_UIContext *ctx)
 	ENUD_ModStyle(ENUD_Get(rootnode, "gms_stats"), ENUD_STY_COR_RAD, &gms_stats_cor);
 
 	ENUD_ModFlag(ENUD_Get(rootnode, "gms"), ENUD_FLG_ACT, &zero);
-
-	ENUD_ShowNodes(rootnode);	
 }
 
 /**
@@ -279,8 +289,8 @@ void process_input()
 	/* Poll for events. SDL_PollEvent() returns 0 when there are no  */
 	/* more events on the event queue, our while loop will exit when */
 	/* that occurs.                                                  */
-	while(SDL_PollEvent(&event)) {
-		if(event.type == SDL_QUIT)
+	while(ENUD_PollEvent(&event)) {
+		if(event.type == ENUD_QUIT)
 			running = 0;
 
 		/* Process interactions with the UI */
@@ -289,30 +299,30 @@ void process_input()
 
 		/* If user didn't interact with UI */
 		switch(event.type) {
-			case(SDL_MOUSEMOTION):
-				break;
-
-			case(SDL_MOUSEBUTTONDOWN):
-				switch(event.button.button) {
-					/* Left mouse-button */
-					case(1):
-						break;
-
-					/* Right mouse-button */
-					case(3):
-						break;
-				}
-				break;
-
-			case(SDL_KEYDOWN):
+			case(ENUD_KEYDOWN):
 				switch(event.key.keysym.sym) {
-					case(SDLK_ESCAPE):
+					case(ENUDK_ESCAPE):
 						running = 0;
-						break;
+						continue;
+
+					case(ENUDK_f):
+						toggle_fullscreen();
+						continue;
 				}
 				break;
 		}
 	}
+}
+
+void toggle_fullscreen()
+{
+	fullscr = !fullscr;
+
+	if(fullscr)
+		ENUD_SetWindowFullscreen(window, win_flgs | 
+				ENUD_WINDOW_FULLSCREEN_DESKTOP);
+	else
+		ENUD_SetWindowFullscreen(window, win_flgs);
 }
 
 void try_login()

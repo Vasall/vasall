@@ -9,7 +9,7 @@
 /objects
 
 # Ignore subrepositories
-/XSDL
+/ENUD
 
 # Just to be save, ignore all object-files
 *.o

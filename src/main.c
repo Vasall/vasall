@@ -14,8 +14,8 @@ uint8_t zero = 0;
 
 /* =============== WINDOW SETTINGS =================== */
 
-int win_w = 800;
-int win_h = 600;
+int *win_w;
+int *win_h;
 int win_flgs = SDL_WINDOW_RESIZABLE; 
 int ren_flg = ENUD_RENDERER_ACCELERATED | ENUD_RENDERER_PRESENTVSYNC;
 ENUD_Color win_clr = { 0x18, 0x18, 0x18};
@@ -138,7 +138,7 @@ ENUD_Window *init_window()
 			"Vasall", 
 			ENUD_WINDOWPOS_UNDEFINED, 
 			ENUD_WINDOWPOS_UNDEFINED, 
-			win_w, win_h, 
+			800, 600, 
 			win_flgs);
 
 	if(win == NULL) 
@@ -306,7 +306,7 @@ void process_input()
 						continue;
 
 					case(ENUDK_f):
-						toggle_fullscreen();
+						/*toggle_fullscreen();*/
 						continue;
 				}
 				break;
@@ -327,11 +327,9 @@ void toggle_fullscreen()
 
 void try_login()
 {
-	printf("Logged in.\n");
+	printf("Trying to connect to server...\n");
 
 	ENUD_ModFlag(ENUD_Get(root, "mns"), ENUD_FLG_ACT, &zero);
 	ENUD_ModFlag(ENUD_Get(root, "gms"), ENUD_FLG_ACT, &one);
-
-	ENUD_ShowNodes(root);
-	ENUD_ShowPipe(context);
+	return;
 }

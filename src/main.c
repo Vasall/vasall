@@ -24,10 +24,11 @@ ENUD_Color win_clr = { 0x18, 0x18, 0x18};
 
 uint8_t running = 0;
 uint8_t fullscr = 0;
-ENUD_Window *window;
-ENUD_Renderer *renderer;
-ENUD_UIContext *context;
-ENUD_Node *root;
+ENUD_Window *window = NULL;
+ENUD_Renderer *renderer = NULL;
+ENUD_UIContext *context = NULL;
+ENUD_Node *root = NULL;
+ENUD_Event event;
 
 /* ================= PROTOTYPES ====================== */
 
@@ -38,12 +39,11 @@ int init_resources();
 void init_gui(ENUD_UIContext *ctx);
 
 void toggle_fullscreen();
-void process_input();
 void try_login();
 
 /* ================ MAIN FUNCTION ==================== */
 
-int main(int argc, char** argv) 
+int main(int argc, char **argv) 
 {
 	printf("\nStarting vasall-client...\n");
 
@@ -83,9 +83,19 @@ int main(int argc, char** argv)
 
 	/* Run the game */
 	while(running) {
-		/* -------- UPDATE -------- */
+		/* -------- EVENTS -------- */
 		/* Process user-input */
-		process_input();
+		while(ENUD_PollEvent(&event)) {
+			if(event.type == ENUD_QUIT)
+				running = 0;
+
+			/* Process interactions with the UI */
+			if(ENUD_ProcEvent(context, &event) > -1)
+				continue;
+		}
+
+		/* -------- UPDATE -------- */
+
 
 		/* -------- RENDER -------- */
 		/* Clear the screen */
@@ -133,7 +143,6 @@ exit:
  */
 ENUD_Window *init_window()
 {
-	/* Create and initialize the window */
 	ENUD_Window *win = ENUD_CreateWindow(
 			"Vasall", 
 			ENUD_WINDOWPOS_UNDEFINED, 
@@ -144,7 +153,6 @@ ENUD_Window *init_window()
 	if(win == NULL) 
 		return (NULL);
 
-	/* Set the window-icon */
 	ENUD_SetWindowIcon(win);
 
 	return(win);
@@ -162,7 +170,6 @@ ENUD_Window *init_window()
  */
 ENUD_Renderer *init_renderer(ENUD_Window *win)
 {
-	/* Create and initialize the renderer*/
 	ENUD_Renderer *ren = ENUD_CreateRenderer(win, -1, ren_flg);
 
 	return(ren);
@@ -173,7 +180,7 @@ ENUD_Renderer *init_renderer(ENUD_Window *win)
  * and more.
  *
  * Returns: 0 on success and -1 if an error occurred
-*/
+ */
 int init_resources()
 {
 	char cwd[256];
@@ -215,7 +222,7 @@ loadfailed:
  * Initialize the GUI and place all elements.
  *
  * @ctx: The context to create
-*/
+ */
 void init_gui(ENUD_UIContext *ctx)
 {
 	ENUD_Node *rootnode = ctx->root;
@@ -229,7 +236,7 @@ void init_gui(ENUD_UIContext *ctx)
 			0, 0, 400, 80);
 	ENUD_Rect body0 = {50, 14, 300, 52};
 	ENUD_CreateText(ENUD_Get(rootnode, "mns_title"), "label0", &body0,
-		"VASALL", &ENUD_WHITE, 2, 0);
+			"VASALL", &ENUD_WHITE, 2, 0);
 
 	ENUD_Rect body1 = {40, 106, 320, 24};
 	ENUD_CreateText(ENUD_Get(rootnode, "mns_form"), "label1", &body1,"Email:", 
@@ -240,7 +247,7 @@ void init_gui(ENUD_UIContext *ctx)
 	ENUD_CreateText(ENUD_Get(rootnode, "mns_form"), "label2", &body2, "Password:", 
 			&ENUD_WHITE, 1, ENUD_TEXT_LEFT);
 	ENUD_CreateInput(ENUD_Get(rootnode, "mns_form"), "mns_pswd", 40, 210, 320, 40, "");
-	
+
 	ENUD_CreateButton(ENUD_Get(rootnode, "mns_form"), "mns_login", 40, 280, 320, 40, "Login");
 
 	ENUD_Color mns_form_bck_col = {0x23, 0x23, 0x23, 0xff};
@@ -277,43 +284,6 @@ void init_gui(ENUD_UIContext *ctx)
 	ENUD_ModFlag(ENUD_Get(rootnode, "gms"), ENUD_FLG_ACT, &zero);
 }
 
-/**
- * Process a user-input. This function processes all 
- * possible inputs, like closing the window, pressing a
- * key or pressing a mouse-button. 
- */
-void process_input() 
-{
-	ENUD_Event event;
-
-	/* Poll for events. SDL_PollEvent() returns 0 when there are no  */
-	/* more events on the event queue, our while loop will exit when */
-	/* that occurs.                                                  */
-	while(ENUD_PollEvent(&event)) {
-		if(event.type == ENUD_QUIT)
-			running = 0;
-
-		/* Process interactions with the UI */
-		if(ENUD_ProcEvent(context, &event) > -1)
-			continue;
-
-		/* If user didn't interact with UI */
-		switch(event.type) {
-			case(ENUD_KEYDOWN):
-				switch(event.key.keysym.sym) {
-					case(ENUDK_ESCAPE):
-						running = 0;
-						continue;
-
-					case(ENUDK_f):
-						/*toggle_fullscreen();*/
-						continue;
-				}
-				break;
-		}
-	}
-}
-
 void toggle_fullscreen()
 {
 	fullscr = !fullscr;
@@ -331,5 +301,6 @@ void try_login()
 
 	ENUD_ModFlag(ENUD_Get(root, "mns"), ENUD_FLG_ACT, &zero);
 	ENUD_ModFlag(ENUD_Get(root, "gms"), ENUD_FLG_ACT, &one);
+
 	return;
 }

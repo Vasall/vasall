@@ -15,7 +15,27 @@ void menu_upd()
 	}
 }
 
+int ox = 0, oy = 0;
 
 void game_upd()
 {
+	ox = (ox + 2) % 80;
+	oy = (oy + 2) % 80;
+
+	SDL_SetRenderDrawColor(renderer, 
+			255, 
+			0, 
+			0, 
+			255);
+
+	int x, y;
+	for(x = ox; x < context->win_w; x += 80) {
+		SDL_RenderDrawLine(renderer, 
+				x, 0, x, context->win_h);
+
+		for(y = oy; y < context->win_h; y += 80) {
+			SDL_RenderDrawLine(renderer, 
+					0, y, context->win_w, y);
+		}
+	}
 }

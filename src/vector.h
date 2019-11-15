@@ -1,5 +1,5 @@
-#ifndef _VECTOR_H_
-#define _VECTOR_H_
+#ifndef VASALL_VECTOR_H
+#define VASALL_VECTOR_H
 
 #define M_PI 3.14159265358979323846
 

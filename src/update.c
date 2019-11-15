@@ -1,41 +1,38 @@
-void menu_upd()
+#include "update.h"
+
+void menu_procevt(ENUD_Event *evt)
 {
-	XSDL_Event event;
+}
 
-	/* Poll for events. SDL_PollEvent() returns 0 when there are no  */
-	/* more events on the event queue, our while loop will exit when */
-	/* that occurs.                                                  */
-	while(SDL_PollEvent(&event)) {
-		if(event.type == SDL_QUIT)
-			running = 0;
-
-		/* Process interactions with the UI */
-		if(XSDL_ProcEvent(context, &event) > -1)
-			continue;
-	}
+void menu_update()
+{
 }
 
 int ox = 0, oy = 0;
+int tile_size = 32;
 
-void game_upd()
+void game_procevt(ENUD_Event *evt)
 {
-	ox = (ox + 2) % 80;
-	oy = (oy + 2) % 80;
 
-	SDL_SetRenderDrawColor(renderer, 
-			255, 
-			0, 
-			0, 
-			255);
+}
 
+void game_update()
+{
+	ox = (ox + 2) % tile_size;
+	oy = (oy + 2) % tile_size;
+
+	ENUD_Color col = {0xff, 0xff, 0xff, 0xff};
+	
+	ENUD_SetRenderDrawColor(g_renderer, &col);
+		
 	int x, y;
-	for(x = ox; x < context->win_w; x += 80) {
-		SDL_RenderDrawLine(renderer, 
-				x, 0, x, context->win_h);
+	for(x = ox; x < g_context->win_w; x += tile_size) {
+		ENUD_RenderDrawLine(g_renderer, 
+				x, 0, x, g_context->win_h);
 
-		for(y = oy; y < context->win_h; y += 80) {
-			SDL_RenderDrawLine(renderer, 
-					0, y, context->win_w, y);
+		for(y = oy; y < g_context->win_h; y += tile_size) {
+			ENUD_RenderDrawLine(g_renderer, 
+					0, y, g_context->win_w, y);
 		}
 	}
 }

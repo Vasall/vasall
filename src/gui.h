@@ -1,12 +1,12 @@
+#ifndef VASALL_GUI_H
+#define VASALL_GUI_H
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <SDL.h>
-#include "../XSDL/xsdl.h"
+#include "../ENUD/enud.h"
+#include "global.h"
+#include "update.h"
 
-/* Window setting */
-#define SCREEN_WIDTH	800			/* Screen width */
-#define SCREEN_HEIGHT	600			/* Screen height */
+void init_gui();
 
-void init_gui(XSDL_Context *ctx);
-
-
+#endif

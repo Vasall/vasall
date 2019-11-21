@@ -3,7 +3,7 @@
 echo "Start building project."
 
 DIR="$( cd "$(dirname "$0")" ; pwd -P )"
-OBJECTDIR="${DIR}/objects"
+OBJECTDIR="${DIR}/obj"
 BUILDDIR="${DIR}/build"
 
 bash "${DIR}/ENUD/build.sh"

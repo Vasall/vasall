@@ -1,6 +1,9 @@
 #ifndef VASALL_CAMERA_H
 #define VASALL_CAMERA_H
 
+#include "vector.h"
+#include "global.h"
+
 /*
  * A camera-struct used to respresent
  * the game-view. This is used to keep

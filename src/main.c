@@ -7,16 +7,23 @@
 #include <unistd.h>
 
 #define ENUD_IMPLEMENTATION
+#define ENUD_DEFINE_LIB
+#define ENUD_DEFINE_ONCE
 #include "../ENUD/enud.h"
+
+#define VASALL_DEFINE_GLOBAL
+#include "global.h"
+
 #include "vector.h"
 #include "gui.h"
+#include "world.h"
 #include "update.h"
 
 /* =============== WINDOW SETTINGS =================== */
 
-int g_win_flgs = ENUD_WINDOW_RESIZABLE; 
+int g_win_flgs = 0; 
 int g_ren_flg = ENUD_RENDERER_ACCELERATED | ENUD_RENDERER_PRESENTVSYNC;
-ENUD_Color g_win_clr = { 0x18, 0x18, 0x18};
+ENUD_Color g_win_clr = {0x18, 0x18, 0x18, 0xFF };
 
 /* ============== GLOBAL VARIABLES =================== */
 
@@ -26,6 +33,14 @@ ENUD_Window *g_window = NULL;
 ENUD_Renderer *g_renderer = NULL;
 ENUD_UIContext *g_context = NULL;
 ENUD_Node *g_root = NULL;
+
+vsCamera g_camera = {
+	{10, 10},
+	1.0,
+	32
+};
+
+vsWorld *g_world = NULL;
 
 ENUD_Event event;
 
@@ -77,7 +92,9 @@ int main(int argc, char **argv)
 
 	/* Initialize the user-interface */
 	init_gui();
-		
+
+	g_world = wld_create(1024, 1024, 3);
+	
 	/* Mark game as running */
 	g_running = 1;
 
@@ -102,7 +119,7 @@ int main(int argc, char **argv)
 
 			/* Process interacttion with the game */
 			if(g_procevt != NULL) {
-				g_procevt(g_context, &event);
+				g_procevt(&event);
 			}
 		}
 
@@ -112,7 +129,7 @@ int main(int argc, char **argv)
 		}
 
 		/* Update UI-nodes */
-		ENUD_Update(g_context);
+		ENUD_UpdateUIContext(g_context);
 
 		/* Render visible UI-elements */
 		ENUD_RenderPipe(g_renderer, g_context->pipe);
@@ -213,11 +230,20 @@ int init_resources()
 	if(ENUD_LoadFont(path, 16) < 0)
 		goto loadfailed;
 
+	sprintf(path, "%s/%s", exe_dir, "res/aller.ttf");
+	if(ENUD_LoadFont(path, 16) < 0)
+		goto loadfailed;
+
+
 	sprintf(path, "%s/%s", exe_dir, "res/editundo.ttf");
 	if(ENUD_LoadFont(path, 48) < 0)
 		goto loadfailed;
 
 	sprintf(path, "%s/%s", exe_dir, "res/mns_bck.png");
+	if(ENUD_LoadImage(g_renderer, path) < 0)
+		goto loadfailed;
+
+	sprintf(path, "%s/%s", exe_dir, "res/sprites/house_00.png");
 	if(ENUD_LoadImage(g_renderer, path) < 0)
 		goto loadfailed;
 

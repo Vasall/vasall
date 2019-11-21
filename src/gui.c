@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "gui.h"
+
 
 void try_login()
 {
@@ -8,6 +10,10 @@ void try_login()
 
 	ENUD_ModFlag(ENUD_Get(g_root, "mns"), ENUD_FLG_ACT, &zero);
 	ENUD_ModFlag(ENUD_Get(g_root, "gms"), ENUD_FLG_ACT, &one);
+
+	ENUD_Color new_col = {0x1d, 0x43, 0x73, 0xFF };
+	/* SAND: ENUD_Color new_col = { 0xE0, 0xAB, 0x7B, 0xFF }; */
+	memcpy(&g_win_clr, &new_col, sizeof(ENUD_Color));
 
 	g_procevt = &game_procevt;
 	g_update = &game_update;
@@ -29,19 +35,41 @@ void init_gui()
 			0, 0, 400, 80);
 	ENUD_Rect body0 = {50, 14, 300, 52};
 	ENUD_CreateText(ENUD_Get(g_root, "mns_title"), "label0", &body0,
-			"VASALL", &ENUD_WHITE, 2, 0);
+			"VASALL", &ENUD_WHITE, 3, 0);
 
-	ENUD_Rect body1 = {40, 106, 320, 24};
+	ENUD_Rect body1 = {40, 96, 320, 24};
 	ENUD_CreateText(ENUD_Get(g_root, "mns_form"), "label1", &body1,"Email:", 
-			&ENUD_WHITE, 1, ENUD_TEXT_LEFT);
-	ENUD_CreateInput(ENUD_Get(g_root, "mns_form"), "mns_user", 40, 130, 320, 40, "");
+			&ENUD_WHITE, 2, ENUD_TEXT_LEFT);
+	ENUD_CreateInput(ENUD_Get(g_root, "mns_form"), "mns_user", 40, 120, 320, 40, "");
 
-	ENUD_Rect body2 = {40, 186, 320, 24};
+	ENUD_Rect body2 = {40, 176, 320, 24};
 	ENUD_CreateText(ENUD_Get(g_root, "mns_form"), "label2", &body2, "Password:", 
-			&ENUD_WHITE, 1, ENUD_TEXT_LEFT);
-	ENUD_CreateInput(ENUD_Get(g_root, "mns_form"), "mns_pswd", 40, 210, 320, 40, "");
+			&ENUD_WHITE, 2, ENUD_TEXT_LEFT);
+	ENUD_CreateInput(ENUD_Get(g_root, "mns_form"), "mns_pswd", 40, 200, 320, 40, "");
 
-	ENUD_CreateButton(ENUD_Get(g_root, "mns_form"), "mns_login", 40, 280, 320, 40, "Login");
+	ENUD_CreateButton(ENUD_Get(g_root, "mns_form"), "mns_login", 40, 270, 320, 40, "Login");
+
+	ENUD_Color mns_text_col = { 0xF9, 0xF9, 0xF9, 0xFF };
+	ENUD_Color mns_input_bck_col = {0x37, 0x37, 0x37, 0xFF};
+	ENUD_Color mns_input_bor_col = {0x28, 0x28, 0x28, 0xFF};
+	short mns_input_corners[] = {4, 4, 4, 4};
+	ENUD_ModStyle(ENUD_Get(g_root, "mns_user"), ENUD_STY_VIS, &one);
+	ENUD_ModStyle(ENUD_Get(g_root, "mns_user"), ENUD_STY_BCK, &one);
+	ENUD_ModStyle(ENUD_Get(g_root, "mns_user"), ENUD_STY_BCK_COL, &mns_input_bck_col);
+	ENUD_ModStyle(ENUD_Get(g_root, "mns_user"), ENUD_STY_BOR, &one);
+	ENUD_ModStyle(ENUD_Get(g_root, "mns_user"), ENUD_STY_BOR_COL, &mns_input_bor_col);
+	ENUD_ModStyle(ENUD_Get(g_root, "mns_user"), ENUD_STY_COR_RAD, &mns_input_corners);
+	ENUD_Input *user_input = ENUD_Get(g_root, "mns_user")->element;
+	memcpy(&user_input->col, &mns_text_col, sizeof(ENUD_Color));
+
+	ENUD_ModStyle(ENUD_Get(g_root, "mns_pswd"), ENUD_STY_VIS, &one);
+	ENUD_ModStyle(ENUD_Get(g_root, "mns_pswd"), ENUD_STY_BCK, &one);
+	ENUD_ModStyle(ENUD_Get(g_root, "mns_pswd"), ENUD_STY_BCK_COL, &mns_input_bck_col);
+	ENUD_ModStyle(ENUD_Get(g_root, "mns_pswd"), ENUD_STY_BOR, &one);
+	ENUD_ModStyle(ENUD_Get(g_root, "mns_pswd"), ENUD_STY_BOR_COL, &mns_input_bor_col);
+	ENUD_ModStyle(ENUD_Get(g_root, "mns_pswd"), ENUD_STY_COR_RAD, &mns_input_corners);
+	ENUD_Input *pswd_input = ENUD_Get(g_root, "mns_pswd")->element;
+	memcpy(&pswd_input->col, &mns_text_col, sizeof(ENUD_Color));
 
 	ENUD_Color mns_form_bck_col = {0x23, 0x23, 0x23, 0xff};
 	short mns_form_corners[] = {5, 5, 5, 5};
@@ -64,8 +92,10 @@ void init_gui()
 	ENUD_ModStyle(ENUD_Get(g_root, "gms"), ENUD_STY_VIS, &one);
 
 	ENUD_CreateWrapper(ENUD_Get(g_root, "gms"), "gms_stats", -1, 5, 790, 35);
-	ENUD_Color gms_stats_bck_col = {0x23, 0x25, 0x30, 0xff};
-	short gms_stats_cor[] = {6, 6, 6, 6};
+	/*ENUD_Color gms_stats_bck_col = { 0x34, 0x33, 0x30, 0xff};*/
+	/*ENUD_Color gms_stats_bck_col = { 0x17, 0x2A, 0x3A, 0xff};*/
+	ENUD_Color gms_stats_bck_col = { 0x19, 0x22, 0x2D, 0xf1};
+	short gms_stats_cor[] = {3, 3, 3, 3};
 	ENUD_ModStyle(ENUD_Get(g_root, "gms_stats"), ENUD_STY_VIS, &one);
 	ENUD_ModStyle(ENUD_Get(g_root, "gms_stats"), ENUD_STY_BCK, &one);
 	ENUD_ModStyle(ENUD_Get(g_root, "gms_stats"), ENUD_STY_BCK_COL, &gms_stats_bck_col);

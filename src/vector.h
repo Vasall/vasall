@@ -3,6 +3,13 @@
 
 #define M_PI 3.14159265358979323846
 
+typedef struct vsRect {
+	float x;
+	float y;
+	float w;
+	float h;
+} vsRect;
+
 /*
  * A simple 2d-Vector struct used the
  * same as COORD, but with 32-bit numbers

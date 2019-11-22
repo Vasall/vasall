@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include "../ENUD/enud.h"
+#include "camera.h"
 #include "vector.h" 
 
 typedef struct vsTile vsTile;
@@ -37,7 +39,8 @@ typedef struct vsWorld {
 	 * as a 2d-array. The layer-amount
 	 * is defined seperatelly.
 	*/
-	Vec2 size;
+	int w;
+	int h;
 
 	/*
 	 * The amount of layers, this 
@@ -72,5 +75,10 @@ extern vsWorld *wld_create(int x, int y, short l);
  * allocated memory.
 */
 extern int wld_delete(vsWorld *world);
+
+/*
+ * Render a world.
+*/
+extern int wld_render(ENUD_Renderer *ren, vsCamera *cam, vsWorld *world);
 
 #endif

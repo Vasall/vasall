@@ -61,15 +61,5 @@ void game_procevt(ENUD_Event *evt)
 
 void game_update()
 {
-	vsRect building = {10.0, 10.0, 2.0, 3.0};
-       	int x, y;
-	int w, h;
-
-	cam_getpos(&g_camera, building.x, building.y, &x, &y);
-	cam_convun(&g_camera, building.w, building.h, &w, &h);
-
-	ENUD_Rect rend = {x, y, w, h};
-
-	ENUD_RenderCopy(g_renderer, ENUD_Images[1], NULL, &rend);
-
+	wld_render(g_renderer, &g_camera, g_world);
 }

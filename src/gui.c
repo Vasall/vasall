@@ -11,8 +11,9 @@ void try_login()
 	ENUD_ModFlag(ENUD_Get(g_root, "mns"), ENUD_FLG_ACT, &zero);
 	ENUD_ModFlag(ENUD_Get(g_root, "gms"), ENUD_FLG_ACT, &one);
 
-	ENUD_Color new_col = {0x1d, 0x43, 0x73, 0xFF };
-	/* SAND: ENUD_Color new_col = { 0xE0, 0xAB, 0x7B, 0xFF }; */
+	/*ENUD_Color new_col = {0x1d, 0x43, 0x73, 0xFF };*/
+	/*ENUD_Color new_col = { 0xE0, 0xAB, 0x7B, 0xFF };*/
+	ENUD_Color new_col = { 0x5f, 0x6f, 0xba, 0xFF };
 	memcpy(&g_win_clr, &new_col, sizeof(ENUD_Color));
 
 	g_procevt = &game_procevt;
@@ -71,17 +72,17 @@ void init_gui()
 	ENUD_Input *pswd_input = ENUD_Get(g_root, "mns_pswd")->element;
 	memcpy(&pswd_input->col, &mns_text_col, sizeof(ENUD_Color));
 
-	ENUD_Color mns_form_bck_col = {0x23, 0x23, 0x23, 0xff};
+
+	ENUD_Color mns_form_bck_col = {0x3D, 0x3B, 0x3C, 0xff};
 	short mns_form_corners[] = {5, 5, 5, 5};
 	ENUD_ModStyle(ENUD_Get(g_root, "mns_form"), ENUD_STY_VIS, &one);
-	ENUD_ModStyle(ENUD_Get(g_root, "mns_form"), ENUD_STY_BCK, &one);
+	/*ENUD_ModStyle(ENUD_Get(g_root, "mns_form"), ENUD_STY_BCK, &one);*/
 	ENUD_ModStyle(ENUD_Get(g_root, "mns_form"), ENUD_STY_BCK_COL, &mns_form_bck_col);
 	ENUD_ModStyle(ENUD_Get(g_root, "mns_form"), ENUD_STY_COR_RAD, &mns_form_corners);
 
 	ENUD_Color mns_title_bck_col = {0xd3, 0x34, 0x5a, 0xff};
 	short mns_title_cor[] = {5, 5, 0, 0};
 	ENUD_ModStyle(ENUD_Get(g_root, "mns_title"), ENUD_STY_VIS, &one);
-	ENUD_ModStyle(ENUD_Get(g_root, "mns_title"), ENUD_STY_BCK, &one);
 	ENUD_ModStyle(ENUD_Get(g_root, "mns_title"), ENUD_STY_BCK_COL, &mns_title_bck_col);
 	ENUD_ModStyle(ENUD_Get(g_root, "mns_title"), ENUD_STY_COR_RAD, &mns_title_cor);
 
@@ -92,9 +93,7 @@ void init_gui()
 	ENUD_ModStyle(ENUD_Get(g_root, "gms"), ENUD_STY_VIS, &one);
 
 	ENUD_CreateWrapper(ENUD_Get(g_root, "gms"), "gms_stats", -1, 5, 790, 35);
-	/*ENUD_Color gms_stats_bck_col = { 0x34, 0x33, 0x30, 0xff};*/
-	/*ENUD_Color gms_stats_bck_col = { 0x17, 0x2A, 0x3A, 0xff};*/
-	ENUD_Color gms_stats_bck_col = { 0x19, 0x22, 0x2D, 0xf1};
+	ENUD_Color gms_stats_bck_col = { 0x2b, 0x2b, 0x36, 0xf8};
 	short gms_stats_cor[] = {3, 3, 3, 3};
 	ENUD_ModStyle(ENUD_Get(g_root, "gms_stats"), ENUD_STY_VIS, &one);
 	ENUD_ModStyle(ENUD_Get(g_root, "gms_stats"), ENUD_STY_BCK, &one);

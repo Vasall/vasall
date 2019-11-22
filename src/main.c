@@ -23,7 +23,7 @@
 
 int g_win_flgs = 0; 
 int g_ren_flg = ENUD_RENDERER_ACCELERATED | ENUD_RENDERER_PRESENTVSYNC;
-ENUD_Color g_win_clr = {0x18, 0x18, 0x18, 0xFF };
+ENUD_Color g_win_clr = {0x2b, 0x2d, 0x36, 0xFF };
 
 /* ============== GLOBAL VARIABLES =================== */
 
@@ -93,7 +93,7 @@ int main(int argc, char **argv)
 	/* Initialize the user-interface */
 	init_gui();
 
-	g_world = wld_create(1024, 1024, 3);
+	g_world = wld_create(100, 100, 3);
 	
 	/* Mark game as running */
 	g_running = 1;
@@ -245,6 +245,10 @@ int init_resources()
 
 	sprintf(path, "%s/%s", exe_dir, "res/sprites/house_00.png");
 	if(ENUD_LoadImage(g_renderer, path) < 0)
+		goto loadfailed;
+
+	sprintf(path, "%s/%s", exe_dir, "res/sprites/tiles.png");
+	if(ENUD_LoadSprite(g_renderer, path, 32, 32) < 0)
 		goto loadfailed;
 
 	return(0);

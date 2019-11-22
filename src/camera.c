@@ -1,5 +1,5 @@
 #define NOT_DEFINE_CAMERA
-#include "camera.h"
+#include "global.h"
 
 /*
  * Convert a relative position in units to an 

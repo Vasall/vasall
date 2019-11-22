@@ -2,7 +2,7 @@
 #define VASALL_CAMERA_H
 
 #include "vector.h"
-#include "global.h"
+#include "camera.h"
 
 /*
  * A camera-struct used to respresent

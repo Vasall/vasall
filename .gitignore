@@ -1,19 +1,10 @@
-# I'm using vim, therefore ignore files used by vim
+# I'm using vim, therefore ignore swap-files used by vim
 *.swp
 *.swo
 
 # Ignore executable
-/build/game
-
-# Ignore directories created while building the project
-/objects
-
-# Ignore subrepositories
+/bin
+/obj
 /ENUD
-
-# Just to be save, ignore all object-files
-*.o
-
-# Additional ignores
-/dev
 /tools
+/dev

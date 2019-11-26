@@ -13,7 +13,7 @@ void try_login()
 
 	/*ENUD_Color new_col = {0x1d, 0x43, 0x73, 0xFF };*/
 	/*ENUD_Color new_col = { 0xE0, 0xAB, 0x7B, 0xFF };*/
-	ENUD_Color new_col = { 0x5f, 0x6f, 0xba, 0xFF };
+	ENUD_Color new_col = { 0x23, 0x23, 0x23, 0xFF };
 	memcpy(&g_win_clr, &new_col, sizeof(ENUD_Color));
 
 	g_procevt = &game_procevt;

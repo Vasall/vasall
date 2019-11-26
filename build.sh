@@ -4,7 +4,7 @@ echo "Start building project."
 
 DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 OBJECTDIR="${DIR}/obj"
-BUILDDIR="${DIR}/build"
+BUILDDIR="${DIR}/bin"
 
 bash "${DIR}/ENUD/build.sh"
 

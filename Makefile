@@ -1,26 +1,52 @@
-CC=gcc
-OUT=./build/vasall-client
-CFLAGS=-Wall -ansi -g 
-#-Wno-unused
-LDFLAGS=$(shell pkg-config --cflags --libs sdl2 SDL2_ttf SDL2_image) -lm
+# ------------------------------------------------
+# Generic Makefile
+#
+# Author: yanick.rochon@gmail.com
+# Date  : 2011-08-10
+#
+# Changelog :
+#   2010-11-05 - first version
+#   2011-08-10 - added structure : sources, objects, binaries
+#                thanks to http://stackoverflow.com/users/128940/beta
+#   2017-04-24 - changed order of linker params
+# ------------------------------------------------
 
-$(OUT): ./obj/main.o ./obj/update.o ./obj/vector.o ./obj/gui.o ./obj/camera.o ./obj/world.o
-	$(CC) -o $(OUT) ./obj/main.o ./obj/update.o ./obj/vector.o ./obj/gui.o ./obj/camera.o ./obj/world.o $(LDFLAGS) $(CFLAGS)
+# project name (generate executable with this name)
+TARGET   = vasall-client
 
-./obj/main.o: ./src/main.c
-	$(CC) -c ./src/main.c -o ./obj/main.o $(LDFLAGS) $(CFLAGS)
+CC       = gcc
+# compiling flags here
+CFLAGS   = -ansi -Wall -I. $(shell pkg-config --cflags --libs sdl2 SDL2_ttf SDL2_image)
 
-./obj/update.o: ./src/update.c
-	$(CC) -c ./src/update.c -o ./obj/update.o $(LDFLAGS) $(CFLAGS)
+LINKER   = gcc
+# linking flags here
+LFLAGS   = -Wall -I. -lm $(shell pkg-config --cflags --libs sdl2 SDL2_ttf SDL2_image)
 
-./obj/vector.o: ./src/vector.c
-	$(CC) -c ./src/vector.c -o ./obj/vector.o $(LDFLAGS) $(CFLAGS)
+# change these to proper directories where each file should be
+SRCDIR   = src
+OBJDIR   = obj
+BINDIR   = bin
 
-./obj/gui.o: ./src/gui.c
-	$(CC) -c ./src/gui.c -o ./obj/gui.o $(LDFLAGS) $(CFLAGS)
+SOURCES  := $(wildcard $(SRCDIR)/*.c)
+INCLUDES := $(wildcard $(SRCDIR)/*.h)
+OBJECTS  := $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+rm       = rm -f
 
-./obj/camera.o: ./src/camera.c
-	$(CC) -c ./src/camera.c -o ./obj/camera.o $(LDFLAGS) $(CFLAGS)
 
-./obj/world.o: ./src/world.c
-	$(CC) -c ./src/world.c -o ./obj/world.o $(LDFLAGS) $(CFLAGS)
+$(BINDIR)/$(TARGET): $(OBJECTS)
+	@$(LINKER) $(OBJECTS) $(LFLAGS) -o $@
+	@echo "Linking complete!"
+
+$(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
+	@$(CC) $(CFLAGS) -c $< -o $@
+	@echo "Compiled "$<" successfully!"
+
+.PHONY: clean
+clean:
+	@$(rm) $(OBJECTS)
+	@echo "Cleanup complete!"
+
+.PHONY: remove
+remove: clean
+	@$(rm) $(BINDIR)/$(TARGET)
+	@echo "Executable removed!"

@@ -5,6 +5,7 @@
 #include <time.h>
 #include <SDL2/SDL.h>
 #include <unistd.h>
+#include <limits.h>
 
 #define ENUD_IMPLEMENTATION
 #define ENUD_DEFINE_LIB
@@ -21,7 +22,7 @@
 
 /* =============== WINDOW SETTINGS =================== */
 
-int g_win_flgs = 0; 
+int g_win_flgs = ENUD_WINDOW_RESIZABLE; 
 int g_ren_flg = ENUD_RENDERER_ACCELERATED | ENUD_RENDERER_PRESENTVSYNC;
 ENUD_Color g_win_clr = {0x2b, 0x2d, 0x36, 0xFF };
 
@@ -34,8 +35,9 @@ ENUD_Renderer *g_renderer = NULL;
 ENUD_UIContext *g_context = NULL;
 ENUD_Node *g_root = NULL;
 
-vsCamera g_camera = {
-	{10, 10},
+ENUD_Camera g_camera = {
+	10, 
+	10,
 	1.0,
 	32
 };
@@ -52,7 +54,7 @@ void (*g_update)() = NULL;
 /* Initialize the game */
 ENUD_Window *init_window();
 ENUD_Renderer *init_renderer(ENUD_Window *win);
-int init_resources();
+int init_resources(char *arg_pth);
 
 void toggle_fullscreen();
 
@@ -60,7 +62,7 @@ void toggle_fullscreen();
 
 int main(int argc, char **argv) 
 {
-	printf("\nStarting vasall-client...\n");
+	printf("Starting vasall-client...\n");
 
 	if(ENUD_Init(ENUD_INIT_EVERYTHING) < 0) {
 		printf("[!] SDL could not initialize! (%s)\n", ENUD_GetError());
@@ -85,6 +87,7 @@ int main(int argc, char **argv)
 	}
 	g_root = g_context->root;
 
+	printf("Load world.\n");
 	if(init_resources(argv[0]) < 0) {
 		printf("[!] Couldn't load all resources!\n");
 		goto cleanup_renderer;
@@ -93,8 +96,14 @@ int main(int argc, char **argv)
 	/* Initialize the user-interface */
 	init_gui();
 
+	printf("Initialized userinterface.\n");
+	/* ENUD_ShowNodes(g_root); */
+	ENUD_ShowPipe(g_context);
+
 	g_world = wld_create(100, 100, 3);
-	
+
+	printf("Created world.\n");
+
 	/* Mark game as running */
 	g_running = 1;
 
@@ -110,8 +119,9 @@ int main(int argc, char **argv)
 		/* -------- EVENTS -------- */
 		/* Process user-input */
 		while(ENUD_PollEvent(&event)) {
-			if(event.type == ENUD_QUIT)
+			if(event.type == ENUD_QUIT) {
 				g_running = 0;
+			}
 
 			/* Process interactions with the UI */
 			if(ENUD_ProcEvent(g_context, &event) > -1)
@@ -207,48 +217,64 @@ ENUD_Renderer *init_renderer(ENUD_Window *win)
  *
  * Returns: 0 on success and -1 if an error occurred
  */
-int init_resources()
+int init_resources(char *arg_pth)
 {
-	char cwd[256];
 	char exe_dir[256];
-	char path[512];
-	int i = 0;
+	char path[PATH_MAX];
 
-	readlink("/proc/self/exe", cwd, 256);
-	for(i = strlen(cwd); i >= 0; i--)
-		if(cwd[i] == '/')
-			break;
-	memcpy(exe_dir, cwd, i);
+	/*
+	   char cwd[256];
+	   int i = 0;
+	   readlink("/proc/self/exe", cwd, 256);
+	   for(i = strlen(cwd); i >= 0; i--)
+	   if(cwd[i] == '/')
+	   break;
+	   memcpy(exe_dir, cwd, i);
+	 */
+
+	char path_save[PATH_MAX];
+	char *p;
+
+	if(!(p = strrchr(arg_pth, '/'))) {
+		getcwd(exe_dir, sizeof(exe_dir));
+	}
+	else {
+		*p = '\0';
+		getcwd(path_save, sizeof(path_save));
+		chdir(arg_pth);
+		getcwd(exe_dir, sizeof(exe_dir));
+		chdir(path_save);
+	}
 
 	printf("Directory: %s\n", exe_dir);
 
-	sprintf(path, "%s/%s", exe_dir, "res/mecha.ttf");	
+	ENUD_CombinePath(path, exe_dir, "../res/mecha.ttf");	
 	if(ENUD_LoadFont(path, 24) < 0)
 		goto loadfailed;
 
-	sprintf(path, "%s/%s", exe_dir, "res/unifont.ttf");
+	ENUD_CombinePath(path, exe_dir, "../res/unifont.ttf");
 	if(ENUD_LoadFont(path, 16) < 0)
 		goto loadfailed;
 
-	sprintf(path, "%s/%s", exe_dir, "res/aller.ttf");
+	ENUD_CombinePath(path, exe_dir, "../res/aller.ttf");
 	if(ENUD_LoadFont(path, 16) < 0)
 		goto loadfailed;
 
 
-	sprintf(path, "%s/%s", exe_dir, "res/editundo.ttf");
+	ENUD_CombinePath(path, exe_dir, "../res/editundo.ttf");
 	if(ENUD_LoadFont(path, 48) < 0)
 		goto loadfailed;
 
-	sprintf(path, "%s/%s", exe_dir, "res/mns_bck.png");
+	ENUD_CombinePath(path, exe_dir, "../res/sprites/house_00.png");
 	if(ENUD_LoadImage(g_renderer, path) < 0)
 		goto loadfailed;
 
-	sprintf(path, "%s/%s", exe_dir, "res/sprites/house_00.png");
-	if(ENUD_LoadImage(g_renderer, path) < 0)
-		goto loadfailed;
-
-	sprintf(path, "%s/%s", exe_dir, "res/sprites/tiles.png");
+	ENUD_CombinePath(path, exe_dir, "../res/sprites/tiles.png");
 	if(ENUD_LoadSprite(g_renderer, path, 32, 32) < 0)
+		goto loadfailed;
+
+	ENUD_CombinePath(path, exe_dir, "../res/sprites/base_00.png");
+	if(ENUD_LoadSprite(g_renderer, path, 128, 192) < 0)
 		goto loadfailed;
 
 	return(0);

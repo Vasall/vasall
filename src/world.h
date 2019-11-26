@@ -5,24 +5,21 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "../ENUD/enud.h"
-#include "camera.h"
 #include "vector.h" 
-
-typedef struct vsTile vsTile;
-typedef struct vsWorld vsWorld;
+#include "global.h"
 
 typedef struct vsTile {
+	/*
+	 * The position of this tile.
+	*/
+	int x;
+	int y;
+
 	/*
 	 * Index of the tile in the
 	 * tile-cache.
 	*/
 	int index;
-
-	/*
-	 * Pointer to the world-struct
-	 * containing this tile.
-	*/
-	vsWorld *world;
 
 	/*
 	 * Additional data attached to this
@@ -32,6 +29,10 @@ typedef struct vsTile {
 	*/
 	void *data;
 } vsTile;
+
+typedef struct vsField {
+
+} vsField;
 
 typedef struct vsWorld {
 	/*
@@ -79,6 +80,6 @@ extern int wld_delete(vsWorld *world);
 /*
  * Render a world.
 */
-extern int wld_render(ENUD_Renderer *ren, vsCamera *cam, vsWorld *world);
+extern int wld_render(ENUD_Renderer *ren, ENUD_Camera *cam, vsWorld *world);
 
 #endif

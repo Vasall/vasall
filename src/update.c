@@ -1,10 +1,24 @@
 #include "update.h"
 
+/*
+ * Process input-events on the menuscreen.
+ * This function is a screen specific
+ * callback function used to handle
+ * interactions happening on the menuscreen.
+ *
+ * @evt: Pointer to the event-struct
+ */
 void menu_procevt(ENUD_Event *evt)
 {
 
 }
 
+/*
+ * Update the menuscreen.
+ * This function is a screen specific
+ * callback function used to handle 
+ * updates for the menuscreen.
+ */
 void menu_update()
 {
 
@@ -18,6 +32,29 @@ float del_mouse_x, del_mouse_y;
 float tile_size;
 float del_wheel;
 
+#ifdef TODO_DEBUF
+void limit_camera()
+{
+	float min_x, min_y, max_x, max_y;
+	float f = g_camera.tilesz * g_camera.zoom;
+
+	min_x = ((g_context->win_w / 2) / f);
+	min_y = ((g_context->win_h / 2) / f);
+
+	if(g_camera->x < min_x) g_camera->x = min_x;
+
+}
+#endif
+
+
+/*
+ * Process input-events on the gamescreen.
+ * This function is a screen specific
+ * callback function used to handle
+ * interactions happening on the gamescreen.
+ *
+ * @evt: Pointer to the event-struct
+ */
 void game_procevt(ENUD_Event *evt)
 {
 	switch(evt->type) {
@@ -25,12 +62,12 @@ void game_procevt(ENUD_Event *evt)
 			if(evt->button.button == ENUD_BUTTON_RIGHT) {
 				use_drag = 1;
 
-				old_cam_x = g_camera.pos.x;
-				old_cam_y = g_camera.pos.y;
+				old_cam_x = g_camera.x;
+				old_cam_y = g_camera.y;
 
 				ENUD_GetMouseState(&old_mouse_x, &old_mouse_y);
 			}
-			
+
 			break;
 
 		case(ENUD_MOUSEBUTTONUP):
@@ -46,8 +83,8 @@ void game_procevt(ENUD_Event *evt)
 				tile_size = g_camera.zoom * g_camera.tilesz;
 				del_mouse_x = ((old_mouse_x - mouse_x) / tile_size);
 				del_mouse_y = ((old_mouse_y - mouse_y) / tile_size);
-				g_camera.pos.x = old_cam_x + del_mouse_x;
-				g_camera.pos.y = old_cam_y + del_mouse_y;
+				g_camera.x = old_cam_x + del_mouse_x;
+				g_camera.y = old_cam_y + del_mouse_y;
 			}
 			break;
 
@@ -59,7 +96,21 @@ void game_procevt(ENUD_Event *evt)
 	}
 }
 
+/*
+ * Update the gamescreen.
+ * This function is a screen specific
+ * callback function used to handle 
+ * updates for the gamescreen.
+ */
 void game_update()
 {
 	wld_render(g_renderer, &g_camera, g_world);
+
+	ENUD_RenderSprite(g_renderer, 
+		g_context, &g_camera,
+		ENUD_Sprites[1], 
+		0, 
+		20 + 0.5,
+		20 + 0.5);
+
 }

@@ -2,8 +2,18 @@
 #define VASALL_GLOBAL_H
 
 #include "../ENUD/enud.h"
-#include "camera.h"
 #include "world.h"
+
+/*
+typedef struct vsCoreStruct {
+	ENUD_Window *window;
+	ENUD_Renderer *renderer;
+	ENUD_UIContext *context;
+	ENUD_Node *root;
+	ENUD_Camera *camera;
+	vsWorld *world;
+} vsCoreStruct;
+*/
 
 extern uint8_t one;
 extern uint8_t zero;
@@ -23,7 +33,7 @@ extern ENUD_Node *g_root;
 
 /* ======= GAME STRUCTS ====== */
 #ifndef NOT_DEFINE_CAMERA
-extern vsCamera g_camera;
+extern ENUD_Camera g_camera;
 #endif
 
 #ifndef NOT_DEFINE_WORLD

@@ -2,7 +2,7 @@
 *.swp
 *.swo
 
-# Ignore executable
+# Ignore the follwing directories
 /bin
 /obj
 /ENUD

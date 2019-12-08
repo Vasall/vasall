@@ -5,6 +5,9 @@
 # Ignore the follwing directories
 /bin
 /obj
-/ENUD
 /tools
 /dev
+
+# Ignore sub-modules
+/enud
+/

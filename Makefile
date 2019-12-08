@@ -15,12 +15,14 @@
 TARGET   = vasall-client
 
 CC       = gcc
-# compiling flags here
-CFLAGS   = -ansi -Wall -I. $(shell pkg-config --cflags --libs sdl2 SDL2_ttf SDL2_image)
+# Error flags for compiling
+ERRFLAGS = -Wall -Wall -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wold-style-definition
+# Compiling flags here
+CFLAGS   = -g -O0 -std=c89 -pedantic -I. $(shell pkg-config --cflags --libs sdl2 SDL2_ttf SDL2_image)
 
 LINKER   = gcc
 # linking flags here
-LFLAGS   = -Wall -I. -lm $(shell pkg-config --cflags --libs sdl2 SDL2_ttf SDL2_image)
+LFLAGS   = -Wall -I. -lm -lGL -lGLU $(shell pkg-config --cflags --libs sdl2 SDL2_ttf SDL2_image)
 
 # change these to proper directories where each file should be
 SRCDIR   = src
@@ -38,7 +40,7 @@ $(BINDIR)/$(TARGET): $(OBJECTS)
 	@echo "Linking complete!"
 
 $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
-	@$(CC) $(CFLAGS) -c $< -o $@
+	@$(CC) $(CFLAGS) $(ERRFLAGS) -c $< -o $@
 	@echo "Compiled "$<" successfully!"
 
 .PHONY: clean

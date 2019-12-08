@@ -3,25 +3,33 @@
 echo "Start building project."
 
 DIR="$( cd "$(dirname "$0")" ; pwd -P )"
-OBJECTDIR="${DIR}/obj"
-BUILDDIR="${DIR}/bin"
+OBJ_DIR="${DIR}/obj"
+BIN_DIR="${DIR}/bin"
 
-bash "${DIR}/ENUD/build.sh"
+echo "Check enud-lib."
+ if [ ! -d "${DIR}/enud" ]; then
+	echo "Failed to find enud-lib."
+	echo "Run this command: git clone https://github.com/Vasall/enud.git"
+	exit -1
+else 
+	echo "Found enud-lib."
+	bash "${DIR}/enud/build.sh"
+fi
 
 echo "Check object-dir."
-if [ ! -d "$OBJECTDIR" ]; then
+if [ ! -d "${OBJ_DIR}" ]; then
 	echo "Create object-dir."
-	mkdir -p "$OBJECTDIR";
+	mkdir -p "${OBJ_DIR}";
 else 
 	echo "Object-dir already exists."
 fi
 
-echo "Check build-dir."
-if [ ! -d "$BUILDDIR" ]; then
-	echo "Create build-dir."
-	mkdir -p "$BUILDDIR";
+echo "Check binary-dir."
+if [ ! -d "${BIN_DIR}" ]; then
+	echo "Create binary-dir."
+	mkdir -p "${BIN_DIR}";
 else 
-	echo "Build-dir already exists."
+	echo "Binary-dir already exists."
 fi
 
 echo "Compile files."

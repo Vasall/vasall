@@ -1,295 +1,79 @@
-/* Using SDL and standard IO */
+/* Using SDL and standard IO */                                                                      
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <SDL2/SDL.h>
+#include <GL/gl.h>
 #include <unistd.h>
 #include <limits.h>
 
 #define ENUD_IMPLEMENTATION
 #define ENUD_DEFINE_LIB
 #define ENUD_DEFINE_ONCE
-#include "../ENUD/enud.h"
+#include "../enud/enud.h"
+#include "wrapper.h"
+#include "setup.h"
+#include "handle.h"
 
-#define VASALL_DEFINE_GLOBAL
-#include "global.h"
-
-#include "vector.h"
-#include "gui.h"
-#include "world.h"
-#include "update.h"
-
-/* =============== WINDOW SETTINGS =================== */
-
-int g_win_flgs = ENUD_WINDOW_RESIZABLE; 
-int g_ren_flg = ENUD_RENDERER_ACCELERATED | ENUD_RENDERER_PRESENTVSYNC;
-ENUD_Color g_win_clr = {0x2b, 0x2d, 0x36, 0xFF };
-
-/* ============== GLOBAL VARIABLES =================== */
-
-uint8_t g_running = 0;
-uint8_t g_fullscr = 0;
-ENUD_Window *g_window = NULL;
-ENUD_Renderer *g_renderer = NULL;
-ENUD_UIContext *g_context = NULL;
-ENUD_Node *g_root = NULL;
-
-ENUD_Camera g_camera = {
-	10, 
-	10,
-	1.0,
-	32
-};
-
-vsWorld *g_world = NULL;
-
-ENUD_Event event;
-
-void (*g_procevt)() = NULL;
-void (*g_update)() = NULL;
-
-/* ================= PROTOTYPES ====================== */
-
-/* Initialize the game */
-ENUD_Window *init_window();
-ENUD_Renderer *init_renderer(ENUD_Window *win);
-int init_resources(char *arg_pth);
-
-void toggle_fullscreen();
-
-/* ================ MAIN FUNCTION ==================== */
-
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
-	printf("Starting vasall-client...\n");
+	ENUD_Event event;
 
-	if(ENUD_Init(ENUD_INIT_EVERYTHING) < 0) {
-		printf("[!] SDL could not initialize! (%s)\n", ENUD_GetError());
+	printf("Starting vasall-client.\n");
+
+	if(init(argc, argv) < 0) {
 		goto exit;
-	}
-	ENUD_ShowVersions();
-	printf("\n");
+	}	
 
-	if((g_window = init_window()) == NULL) {
-		printf("[!] Window could not be created! (%s)\n", ENUD_GetError());
-		goto cleanup_sdl;
-	}
-
-	if((g_renderer = init_renderer(g_window)) == NULL) {
-		printf("[!] Renderer could not be created! (%s)\n", ENUD_GetError());
-		goto cleanup_window;
-	}
-
-	if((g_context = ENUD_CreateUIContext(g_window)) == NULL) {
-		printf("[!] Context could not be created!\n");
-		goto cleanup_renderer;
-	}
-	g_root = g_context->root;
-
-	printf("Load world.\n");
-	if(init_resources(argv[0]) < 0) {
-		printf("[!] Couldn't load all resources!\n");
-		goto cleanup_renderer;
-	}
-
-	/* Initialize the user-interface */
-	init_gui();
-
-	printf("Initialized userinterface.\n");
-	/* ENUD_ShowNodes(g_root); */
-	ENUD_ShowPipe(g_context);
-
-	g_world = wld_create(100, 100, 3);
-
-	printf("Created world.\n");
-
-	/* Mark game as running */
-	g_running = 1;
-
-	g_procevt = &menu_procevt;
-	g_update = &menu_update;
-
-	/* Run the game */
-	while(g_running) {
-		/* Clear the screen */
-		ENUD_SetRenderDrawColor(g_renderer, &g_win_clr);
-		ENUD_RenderClear(g_renderer);
-
-		/* -------- EVENTS -------- */
+	core->running = 1;
+	while(core->running) {
+		/* -------- EVENTS -------- */                                                       
 		/* Process user-input */
 		while(ENUD_PollEvent(&event)) {
 			if(event.type == ENUD_QUIT) {
-				g_running = 0;
+				core->running = 0;
+				break;
 			}
 
 			/* Process interactions with the UI */
-			if(ENUD_ProcEvent(g_context, &event) > -1)
+			if(ENUD_ProcEvent(core->uicontext, &event) > -1) {
 				continue;
+			}
 
-			/* Process interacttion with the game */
-			if(g_procevt != NULL) {
-				g_procevt(&event);
+			/* Run specified event-handler */
+			if(core->procevt != NULL) {
+				core->procevt(&event);
 			}
 		}
 
-		/* -------- UPDATE -------- */
-		if(g_update != NULL) {
-			g_update();
+		/* Run specified update-function */
+		if(core->update != NULL) {
+			core->update();
 		}
 
-		/* Update UI-nodes */
-		ENUD_UpdateUIContext(g_context);
+		/* -------- RENDER -------- */
+		/* Clear the window */
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		/* Render visible UI-elements */
-		ENUD_RenderPipe(g_renderer, g_context->pipe);
+		/* Run specified render-function */
+		if(core->render != NULL) {
+			core->render();
+		}
 
-		/* Render all elements in the active scene */
-		ENUD_RenderPresent(g_renderer);
+		/* Render the user-interface */
+		ENUD_RenderPipe(core->uicontext);
+
+		/* Render the pixel-buffer */
+		ENUD_GL_SwapWindow(core->window);
 	}
 
-	/* Destroy context */
-	ENUD_DeleteUIContext(g_context);
 
-cleanup_renderer:
-	/* Destory renderer */
-	ENUD_DestroyRenderer(g_renderer);
-cleanup_window:
-	/* Destroy window */
-	ENUD_DestroyWindow(g_window);
-cleanup_sdl:
-	/* Quit ENUD subsystems */
+	/* Clear the font-cache */
+	ENUD_ClearFontCache();
+
+	/* Quit the ENUD-subsystem */
 	ENUD_Quit();
+
 exit:
-	return (0);
-}
-
-/* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
-/*                    SETUP FUNCTIONS                  */
-/* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
-
-/* ============= INITIALIZE THE GAME ================= */
-
-/*
- * Initialize the window and configure
- * basic settings like the title, minimal
- * window size and window-icon.
- *
- * Returns: Window-Pointer or NULL if an error occurred
- */
-ENUD_Window *init_window()
-{
-	ENUD_Window *win = ENUD_CreateWindow(
-			"Vasall", 
-			ENUD_WINDOWPOS_UNDEFINED, 
-			ENUD_WINDOWPOS_UNDEFINED, 
-			800, 600, 
-			g_win_flgs);
-
-	if(win == NULL) 
-		return (NULL);
-
-	ENUD_SetWindowIcon(win);
-
-	return(win);
-}
-
-/*
- * This function will initialize the SDL-renderer
- * and set the render-flags. Note that it's very important
- * to enable VSync, or otherwise the either the Framerate
- * or performance will be off.
- *
- * @win: Pointer to underlying window
- *
- * Returns: Renderer-pointer or NULL if an error occurred
- */
-ENUD_Renderer *init_renderer(ENUD_Window *win)
-{
-	ENUD_Renderer *ren = ENUD_CreateRenderer(win, -1, g_ren_flg);
-
-	return(ren);
-}
-
-/*
- * Load all necessary resources, like fonts, sprites
- * and more.
- *
- * Returns: 0 on success and -1 if an error occurred
- */
-int init_resources(char *arg_pth)
-{
-	char exe_dir[256];
-	char path[PATH_MAX];
-
-	/*
-	   char cwd[256];
-	   int i = 0;
-	   readlink("/proc/self/exe", cwd, 256);
-	   for(i = strlen(cwd); i >= 0; i--)
-	   if(cwd[i] == '/')
-	   break;
-	   memcpy(exe_dir, cwd, i);
-	 */
-
-	char path_save[PATH_MAX];
-	char *p;
-
-	if(!(p = strrchr(arg_pth, '/'))) {
-		getcwd(exe_dir, sizeof(exe_dir));
-	}
-	else {
-		*p = '\0';
-		getcwd(path_save, sizeof(path_save));
-		chdir(arg_pth);
-		getcwd(exe_dir, sizeof(exe_dir));
-		chdir(path_save);
-	}
-
-	printf("Directory: %s\n", exe_dir);
-
-	ENUD_CombinePath(path, exe_dir, "../res/mecha.ttf");	
-	if(ENUD_LoadFont(path, 24) < 0)
-		goto loadfailed;
-
-	ENUD_CombinePath(path, exe_dir, "../res/unifont.ttf");
-	if(ENUD_LoadFont(path, 16) < 0)
-		goto loadfailed;
-
-	ENUD_CombinePath(path, exe_dir, "../res/aller.ttf");
-	if(ENUD_LoadFont(path, 16) < 0)
-		goto loadfailed;
-
-
-	ENUD_CombinePath(path, exe_dir, "../res/editundo.ttf");
-	if(ENUD_LoadFont(path, 48) < 0)
-		goto loadfailed;
-
-	ENUD_CombinePath(path, exe_dir, "../res/sprites/house_00.png");
-	if(ENUD_LoadImage(g_renderer, path) < 0)
-		goto loadfailed;
-
-	ENUD_CombinePath(path, exe_dir, "../res/sprites/tiles.png");
-	if(ENUD_LoadSprite(g_renderer, path, 32, 32) < 0)
-		goto loadfailed;
-
-	ENUD_CombinePath(path, exe_dir, "../res/sprites/base_00.png");
-	if(ENUD_LoadSprite(g_renderer, path, 128, 192) < 0)
-		goto loadfailed;
-
 	return(0);
-
-loadfailed:
-	return(-1);
-}
-
-void toggle_fullscreen()
-{
-	g_fullscr = !g_fullscr;
-
-	if(g_fullscr)
-		ENUD_SetWindowFullscreen(g_window, g_win_flgs | 
-				ENUD_WINDOW_FULLSCREEN_DESKTOP);
-	else
-		ENUD_SetWindowFullscreen(g_window, g_win_flgs);
 }

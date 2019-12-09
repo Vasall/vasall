@@ -3,6 +3,9 @@
 
 #include "wrapper.h"
 
+/* Handle the resize-event */
+void handle_resize(ENUD_Event *evt);
+
 /* MENUSCREEN::CALLBACKS */
 void menu_procevt(ENUD_Event *evt); 
 void menu_update(void);

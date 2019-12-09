@@ -103,6 +103,8 @@ cleanup_enud:
 */
 int initGL(void)
 {
+	int ratio;
+
 	/* Create the ENUD-OpenGL-context */
 	if((core->glcontext = ENUD_GL_CreateContext(core->window)) == NULL) {
 		return(-1);
@@ -143,8 +145,10 @@ int initGL(void)
 	glLoadIdentity();
 
 	/* Create the camera-view */
-	glOrtho(-50, 50, -50, 50, -200, 200);	
+	ratio = 800 / 600;
+	glOrtho(-50 * ratio, 50 * ratio, -50, 50, -200, 200);	
 
+	glViewport(0, 0, 800, 600);
 
 	return(0);
 }

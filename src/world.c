@@ -52,8 +52,8 @@ void generateTerrain(World *world)
 		for(z = 0; z < WORLD_SIZE; z++) {
 
 			/* Set height */
-			/*heightMap[x][z] = 40 * heightmapImage[x][z] + 10;*/
-			heightMap[x][z] = 10;
+			heightMap[x][z] = 40 * heightmapImage[x][z] + 10;
+			/*heightMap[x][z] = 10;*/
 			tmp = heightMap[x][z];
 			/*printf("%d/%d:%f\n", x, z, tmp);*/
 

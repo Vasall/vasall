@@ -1,26 +1,57 @@
-#ifndef VASALL_WORLD_H
-#define VASALL_WORLD_H
+#ifndef _WORLD_H_
+#define _WORLD_H_
+
+#include "shader.h"
+#include "../enud/enud.h"
 
 #define WORLD_SIZE 256
 
-extern float heightMap[WORLD_SIZE][WORLD_SIZE];
 extern float faceNormals[WORLD_SIZE][WORLD_SIZE][3];
 extern float materialColours[WORLD_SIZE][WORLD_SIZE][4];
 
+typedef struct Field {
+	char *fid;
+
+	int x;
+	int y;
+
+	GLuint vao;
+	GLuint vbo;
+
+	float *heights;
+} Field;
+
 typedef struct World {
-	int i;
+	int width;
+	int height;
+	int size;
+
+	float *heightmap;
+
+	GLuint vao;
+	GLuint vbo;
+	GLuint ebo;
+	GLuint cbo;
+	int indlen;
+	Shader *shd;
 } World;
 
-/* Initialize the world */
-World *initWorld(void);
+/* Create and initialize a new world */
+World *wldCreate(void);
 
-void generateTerrain(World *world);
+/* Destroy a world */
+void wldDestroy(World *world);
+
+/* Generate the terrain of the world */
+void wldGenTerrain(World *world);
+
+/* Render the terrain of the world */
 void renderTerrain(World *world);
+
+/* Get the height of the terrain at the given position */
 float getHeight(World *world, float x, float z);
 float *getNormal(World *world, float x, float z);
 
-void generateWater(World *world, float);
-void smoothTerrain(World *world, float);
 void calculateFaceNormals(World *world);
 
 #endif

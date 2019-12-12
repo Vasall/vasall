@@ -23,7 +23,11 @@ void handle_resize(ENUD_Event *evt)
 	glViewport(0, 0, ctx->win_w, ctx->win_h);
 
 	/* Update projection matrix */
-	glOrtho(-50 * ratio, 50 * ratio, -50, 50, -200, 200);
+	/*glOrtho(-50 * ratio, 50 * ratio, -50, 50, -200, 200);*/
+	/*glOrtho(-50 * ratio, 50 * ratio, -50, 50, -200, 200);	*/
+	/*glFrustum(-1.0, 1.0, -1.0, 1.0, 1.5, 20.0);*/
+	gluPerspective(40, ratio, 0.1, 100);
+
 }
 
 
@@ -38,19 +42,23 @@ void menu_update(void)
 
 void game_procevt(ENUD_Event *evt)
 {
+	return;
 	switch(evt->type) {
 		case(ENUD_MOUSEMOTION):
 			if(SDL_GetMouseState(NULL, NULL) & 
 					SDL_BUTTON(SDL_BUTTON_LEFT)) {
-				mouseMoved(core->camera, 
+				camMouseMoved(core->camera, 
 						evt->motion.xrel, 
 						evt->motion.yrel);
 
-				printf("Rotation: %f/%f/%f\n",
-						core->camera->rot[0],
-						core->camera->rot[1],
-						core->camera->rot[2]);
+				printf("Rotation: %f/%f\n",
+						core->camera->rot.x,
+						core->camera->rot.y);
 			}
+			break;
+
+		case(ENUD_MOUSEWHEEL):
+			camZoom(core->camera, evt->wheel.y);
 			break;
 	}
 }
@@ -61,15 +69,13 @@ void game_update(void)
 
 void game_render(void)
 {
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
 	/* Transform according to camera */
-	glRotatef(core->camera->rot[0], 1, 0, 0);
-	glRotatef(core->camera->rot[1], 0, 1, 0);
-	glTranslatef(-core->camera->pos[0], 
-			-core->camera->pos[1], 
-			-core->camera->pos[2]);
+	/* glRotatef(core->camera->rot.x, 1, 0, 0);
+	glRotatef(core->camera->rot.y, 0, 1, 0);
+	glTranslatef(-core->camera->pos.x, 
+			-core->camera->pos.y, 
+			-core->camera->pos.z);
+			*/
 
 
 	/* Render the terrain */

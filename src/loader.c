@@ -3,30 +3,35 @@
 #include <unistd.h>
 
 #include "loader.h"
-#include "wrapper.h"
+#include "global.h"
 #include "../enud/enud.h"
 
-char *getCurrentDirectoryPath(char *fileName);
-
-GLubyte* loadPPM(char* fileName, int8_t pathRelative, int* width, int* height) 
+GLubyte* loadPPM(char* fileName, int8_t pathRelative, 
+	int* width, int* height)
 {
 	FILE *file;
-	char b[100], c;
-	int maxColor, imageWidth, imageHeight, size;
-	int red, green, blue, i;
+	char *path, b[100], c;
+	int maxColor, imageWidth, imageHeight, size, red, green, blue, i;
 	float scaledColor;
 	GLubyte *image;
 
-	/* if path is relative to running directory, get absolute path */
+	/* If path is relative to running directory, get absolute path */
+	path = malloc(512 * sizeof(char));
+	if(path == NULL) {
+		printf("Failed to allocate memory.\n");
+		goto failed;
+	}
+
+	strcpy(path, fileName);
 	if (pathRelative) {
-		fileName = getCurrentDirectoryPath(fileName);
+		ENUD_CombinePath(path, core->bindir, fileName);
 	}
 
 	/* open the file in read mode */
-	file = fopen(fileName, "r");
+	file = fopen(path, "r");
 	if (file == NULL) {
-		printf("Error. File \"%s\" could not be loaded.\n", fileName);
-		exit(0);
+		printf("Error. File \"%s\" could not be loaded.\n", path);
+		goto failed;
 	}
 
 	/* scan everything up to new line */
@@ -35,7 +40,7 @@ GLubyte* loadPPM(char* fileName, int8_t pathRelative, int* width, int* height)
 	/* check if first two characters are not P3. If not, it's not an ASCII PPM file */
 	if (b[0]!='P'|| b[1] != '3') {
 		printf("%s is not a PPM file!\n", fileName);
-		exit(0);
+		goto failed;
 	}
 
 	/* read past the file comments (then go back 1 so we don't miss the size) */
@@ -70,6 +75,10 @@ GLubyte* loadPPM(char* fileName, int8_t pathRelative, int* width, int* height)
 	*height = imageHeight;
 
 	return (image);
+
+failed:
+	printf("Failed to load PPM-file: %s\n", path);
+	exit(0);
 }
 
 float **loadPPMHeightmap(char* fileName, int8_t pathRelative, int terrainSize) 
@@ -80,6 +89,9 @@ float **loadPPMHeightmap(char* fileName, int8_t pathRelative, int terrainSize)
 	float **heightmapImage;
 
 	img = loadPPM(fileName, pathRelative, &width, &height);
+	if(img == NULL) {
+		return(NULL);
+	}
 
 	/* Check that image is same size as terrain */
 	if (width < terrainSize || height < terrainSize) {
@@ -131,19 +143,4 @@ void loadPPMTexture(char* fileName, int8_t pathRelative, GLuint* textures)
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, img);
-}
-
-char *getCurrentDirectoryPath(char *file) 
-{
-	/* Initialize path */
-	char *pth;	
-	
-	pth = (char *)malloc(strlen(core->bindir) + strlen(file) + 1);
-	if(pth == NULL) {
-		perror("Failed to join paths\n");
-		exit(0);
-	}
-
-	ENUD_CombinePath(pth, core->bindir, file);
-	return(pth);
 }

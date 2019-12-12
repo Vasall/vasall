@@ -3,14 +3,11 @@
 
 #include "../enud/enud.h"
 
-/* Initialize the core structs */
-int init(int argc, char **argv);
+/* Create and configure the window */
+ENUD_Window *initWindow(void);
 
 /* Initialize OpenGL */
 int initGL(void);
-
-/* Create and configure the window */
-ENUD_Window *initWindow(void);
 
 /* Load all resources into the differente caches */
 int loadResources(void);

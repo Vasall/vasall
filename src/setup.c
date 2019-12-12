@@ -3,96 +3,38 @@
 #include <unistd.h>
 
 #include "setup.h"
-#include "wrapper.h"
+#include "global.h"
 #include "handle.h"
 
 /* ========= REDECLARE EXTERN VARIABLES ============== */
 int g_win_flgs = ENUD_WINDOW_RESIZABLE | ENUD_WINDOW_OPENGL;
-int g_ren_flg = ENUD_RENDERER_ACCELERATED | ENUD_RENDERER_PRESENTVSYNC;
-
-
-float lightPos[4] = {0,65,0, 1};
 
 /*
- * Initialize the frameworks used by the client
- * and setup the main structs for the camera,
- * world, etc.
+ * Create and configure the basic settings of
+ * the main window.
  *
- * @argc: The amount of arguments passed to main
- * @argv: A buffer containing all arguments passed
- * 	to main
- *
- * Returns: 0 on sucess and -1 if an error occurred
+ * Returns: Either a pointer to the new window
+ * 	of NULL if an error occurred
 */
-int init(int argc, char **argv)
+ENUD_Window *initWindow(void)
 {
-	if(argc < 1) {
-		return(-1);
+	ENUD_Window *win;
+/*
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+*/
+	win = ENUD_CreateWindow("Vasall",
+			ENUD_WINDOWPOS_UNDEFINED,
+			ENUD_WINDOWPOS_UNDEFINED,
+			800, 600,
+			g_win_flgs);
+
+	if(win == NULL) {
+		return(NULL);
 	}
 
-	printf("Init ENUD-subsystem.\n");
-	if(ENUD_Init(ENUD_INIT_EVERYTHING) < 0) {                                                    
-		printf("[!] ENUD could not initialize! (%s)\n", ENUD_GetError());
-		return(-1);
-	}
-
-	printf("Init core-wrapper.\n");
-	if((core = initWrapper()) == NULL) {
-		printf("Failed to initialize core-wrapper.\n");
-		goto cleanup_enud;
-	}
-
-	printf("Init window.\n");
-	if((core->window = initWindow()) == NULL) {
-		printf("[!] Failed to create window! (%s)\n", ENUD_GetError());
-		goto cleanup_enud;
-	}
-
-	printf("Init OpenGL.\n");
-	if(initGL() < 0) {
-		printf("[!] Failed to initialize OpenGL.\n");
-		goto cleanup_enud;
-	}
-
-	printf("Init UI-context.\n");
-	if((core->uicontext = ENUD_CreateUIContext(core->window)) == NULL) {
-		printf("[!] Failed to setup ui-context.\n");
-		goto cleanup_enud;
-	}
-	core->uiroot = core->uicontext->root;
-
-	core->bindir = ENUD_GetBinDir(argv[0]);
-
-	printf("Load resources.\n");
-	if(loadResources() < 0) {
-		printf("[!] Failed to load resources.\n");
-		goto cleanup_enud;
-	}
-
-	printf("Init UI-elements.\n");
-	if(initUI() < 0) {
-		printf("[!] Failed to setup ui.\n");
-		goto cleanup_enud;
-	}
-
-	printf("Init camera.\n");
-	if((core->camera = initCamera()) == NULL) {
-		printf("[!] Failed ot setup camera.\n");
-		goto cleanup_enud;
-	}
-
-	printf("Init world-container.\n");
-	if((core->world = initWorld()) == NULL) {
-		printf("[!] Failed to initialize world.\n");
-		goto cleanup_enud;
-	}
-
-	return(0);
-
-cleanup_enud:
-	ENUD_Quit();
-
-	return(-1);
+	return(win);
 }
 
 /*
@@ -107,72 +49,28 @@ int initGL(void)
 
 	/* Create the ENUD-OpenGL-context */
 	if((core->glcontext = ENUD_GL_CreateContext(core->window)) == NULL) {
+		printf("Failed to create context.\n");
 		return(-1);
 	}
 
-	/* Enable flat shading (for artistic reasons) */
-	glShadeModel(GL_FLAT);
-
 	/* Set clear-color */
 	glClearColor(0.095, 0.095, 0.095, 1.0);
-	glEnable(GL_DEPTH_TEST);
-
-	glFrontFace(GL_CCW);
-	glCullFace(GL_BACK);
-	glEnable(GL_CULL_FACE);
 
 	/* Set projection matrix, using perspective w/ correct aspect ratio */
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();  
-
-	/* Enable flat shading (for artistic reasons) */
-	glShadeModel(GL_FLAT);
-
-	/* Set clear-color */
-	glClearColor(0.095, 0.095, 0.095, 1);
-	/*glEnable(GL_DEPTH_TEST);*/
-
-	glFrontFace(GL_CCW);
-	glCullFace(GL_BACK);
-	glEnable(GL_CULL_FACE);
-
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
-	glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
-
-	/* Set projection matrix, using perspective w/ correct aspect ratio */
-	glMatrixMode(GL_PROJECTION);
+	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
 	/* Create the camera-view */
-	ratio = 800 / 600;
-	glOrtho(-50 * ratio, 50 * ratio, -50, 50, -200, 200);	
+	ratio = 800 / 600 ;
+	/* glOrtho(-50 * ratio, 50 * ratio, -50, 50, -200, 200);*/
+	/*glFrustum(-1.0, 1.0, -1.0, 1.0, 1.5, 20.0);*/
+	gluPerspective(40, ratio, 0.1, 100);
+	
+	gluLookAt(100.0, 50.0, 100.0, 0, 0, 0, 0, 1, 0);
 
 	glViewport(0, 0, 800, 600);
 
 	return(0);
-}
-
-/*
- * Create and configure the basic settings of
- * the main window.
- *
- * Returns: Either a pointer to the new window
- * 	of NULL if an error occurred
-*/
-ENUD_Window *initWindow(void)
-{
-	ENUD_Window *win = ENUD_CreateWindow("Vasall",
-			ENUD_WINDOWPOS_UNDEFINED,
-			ENUD_WINDOWPOS_UNDEFINED,
-			800, 600,
-			g_win_flgs);
-
-	if(win == NULL) {
-		return(NULL);
-	}
-
-	return(win);
 }
 
 /*

@@ -1,30 +1,42 @@
 #ifndef VASALL_CAMERA_H
 #define VASALL_CAMERA_H
 
+#include "vec.h"
 #include "../enud/enud.h"
-
-#define TO_RADS 3.141592654/180.0
 
 typedef enum {LEFT, RIGHT, FORWARD, BACK} Direction;
 
 typedef struct Camera  {
-    float pos[3];
-    float rot[3];
+	/*
+	 * The current position of the
+	 * camera in the world.
+	*/
+	Vec3 pos;
 
-    int midWinX;
-    int midWinY;
+	/*
+	 * The current rotation of the
+	 * camera in degrees.
+	*/
+	Vec3 rot;
 
-
-    float movementSpeedFactor;
-    float mouseSensitivity;
+	/*
+	 * The sensivity of the camera, which
+	 * influences how the camera can
+	 * be controlled by the mouse.
+	*/
+	float sensitivity;
 } Camera;
 
-/* Create a new camera */
-Camera *initCamera(void);
+/* Create a new camera and set the position */
+Camera *camCreate(int x, int y, int z);
+
+/* Destroy a camera */
+void camDestroy(Camera *cam);
 
 /* Change the rotation of the camera */
-void mouseMoved(Camera *cam, int deltaX, int deltaY);
+void camMouseMoved(Camera *cam, int delx, int dely);
 
+void camZoom(Camera *cam, int val);
 
 void movcam(Camera *cam, Direction dir);
 

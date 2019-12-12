@@ -1,4 +1,3 @@
-/* Using SDL and standard IO */                                                                      
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,23 +9,84 @@
 #define ENUD_DEFINE_LIB
 #define ENUD_DEFINE_ONCE
 #include "../enud/enud.h"
-#include "wrapper.h"
+#include "global.h"
 #include "setup.h"
 #include "handle.h"
 
-/* Prototypes */
 void handle_events(void);
 void update(void);
 void render(void);
 
 int main(int argc, char **argv)
 {
-	printf("Starting vasall-client.\n");
+	if(argc){/* Prevent warning for not using argc */}
 
-	if(init(argc, argv) < 0) {
+	printf("Initialize ENUD-subsystem\n");
+	if(ENUD_Init(ENUD_INIT_EVERYTHING) < 0) {                                                    
+		printf("[!] ENUD could not initialize! (%s)\n", 
+				ENUD_GetError());
 		goto exit;
-	}	
+	}
+	ENUD_ShowVersions();
 
+	printf("Initialize core-wrapper\n");
+	if((core = gloCreate()) == NULL) {
+		printf("Failed to initialize core-wrapper.\n");
+		goto cleanup_enud;
+	}
+
+	printf("Initialize window\n");
+	if((core->window = initWindow()) == NULL) {
+		printf("[!] Failed to create window! (%s)\n", 
+				ENUD_GetError());
+		goto cleanup_core;
+	}
+
+	printf("Initialize OpenGL\n");
+	if(initGL() < 0) {
+		printf("[!] Failed to initialize OpenGL.\n");
+		goto cleanup_window;
+	}
+	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
+
+	printf("Initialize UI-context\n");
+	if((core->uicontext = ENUD_CreateUIContext(core->window)) == NULL) {
+		printf("[!] Failed to setup ui-context.\n");
+		goto cleanup_gl;
+	}
+	core->uiroot = core->uicontext->root;
+
+	core->bindir = ENUD_GetBinDir(argv[0]);
+
+	printf("Load resources\n");
+	if(loadResources() < 0) {
+		printf("[!] Failed to load resources.\n");
+		goto cleanup_ui;
+	}
+
+	printf("Initialize userinterface\n");
+	if(initUI() < 0) {
+		printf("[!] Failed to setup ui.\n");
+		goto cleanup_ui;
+	}
+
+	printf("Initialize camera\n");
+	if((core->camera = camCreate(0, 50, 0)) == NULL) {
+		printf("[!] Failed ot setup camera.\n");
+		goto cleanup_ui;
+	}
+
+	printf("Initialize world-container\n");
+	if((core->world = wldCreate()) == NULL) {
+		printf("[!] Failed to initialize world.\n");
+		goto cleanup_camera;
+	}
+	
+	/* 
+	 * Mark the game as running and
+	 * then proceed to jump into the
+	 * main game-loop. 
+	*/
 	core->running = 1;
 	while(core->running) {
 		handle_events();
@@ -35,10 +95,26 @@ int main(int argc, char **argv)
 	}
 
 
-	/* Clear the font-cache */
+	wldDestroy(core->world);
+
 	ENUD_ClearFontCache();
 
-	/* Quit the ENUD-subsystem */
+cleanup_camera:
+	camDestroy(core->camera);
+
+cleanup_ui:
+	ENUD_DeleteUIContext(core->uicontext);
+
+cleanup_gl:
+	ENUD_GL_DeleteContext(core->glcontext);
+
+cleanup_window:
+	ENUD_DestroyWindow(core->window);
+
+cleanup_core:
+	gloDestroy(core);
+
+cleanup_enud:
 	ENUD_Quit();
 
 exit:
@@ -47,14 +123,15 @@ exit:
 
 /*
  * Process and handle the current 
- * events.
+ * events. Note that the custom
+ * event-callback-function will be
+ * skipped if the user interacts with
+ * the userinterface.
  */
 void handle_events(void)
 {
 	ENUD_Event event;
 
-	/* -------- EVENTS -------- */                                                       
-	/* Process user-input */
 	while(ENUD_PollEvent(&event)) {
 		if(event.type == ENUD_QUIT) {
 			core->running = 0;
@@ -63,6 +140,7 @@ void handle_events(void)
 
 		/* Process interactions with the UI */
 		if(ENUD_ProcEvent(core->uicontext, &event) > -1) {
+			/* Skip, as the user interacted with the UI */
 			continue;
 		}
 
@@ -82,7 +160,8 @@ void handle_events(void)
 }
 
 /*
- * Update the current game.
+ * Update the current game and execute
+ * the update-callback-function.
  */
 void update(void)
 {
@@ -93,22 +172,20 @@ void update(void)
 }
 
 /*
- * Render the game.
+ * Render the game-scene and the 
+ * user-interface and then execute the
+ * render-callback-function.
  */
 void render(void)
 {
-	/* Clear the window */
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT);
 
-	/* Run specified render-function */
+	/* Run current render-function */
 	if(core->render != NULL) {
 		core->render();
 	}
 
-	/* Render the user-interface */
-	ENUD_RenderPipe(core->uicontext);
+	/* ENUD_RenderPipe(core->uicontext); */
 
-	/* Render the pixel-buffer */
 	ENUD_GL_SwapWindow(core->window);
-
 }

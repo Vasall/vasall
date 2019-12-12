@@ -1,7 +1,7 @@
-#ifndef VASALL_HANDLE_H
-#define VASALL_HANDLE_H
+#ifndef _HANDLE_H_
+#define _HANDLE_H_
 
-#include "wrapper.h"
+#include "global.h"
 
 /* Handle the resize-event */
 void handle_resize(ENUD_Event *evt);

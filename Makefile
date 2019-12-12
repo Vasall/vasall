@@ -22,7 +22,8 @@ CFLAGS   = -g -O0 -std=c89 -pedantic -I. $(shell pkg-config --cflags --libs sdl2
 
 LINKER   = gcc
 # linking flags here
-LFLAGS   = -Wall -I. -lm -lGL -lGLU $(shell pkg-config --cflags --libs sdl2 SDL2_ttf SDL2_image)
+LFLAGS   = -Wall -I. -lm -lGL -lGLU -lglut \
+	   $(shell pkg-config --cflags --libs sdl2 SDL2_ttf SDL2_image)
 
 # change these to proper directories where each file should be
 SRCDIR   = src

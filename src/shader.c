@@ -36,53 +36,6 @@ char* filetobuf(char *file)
     return (buf);
 }
 
-/*
- * Create a new color-struct and set
- * the rgb-values. The given values will
- * be divided by 255, as opengl wants
- * floating-point-values between 0 and 1.
- * The transparency will be set to 1.
- *
- * @r: The red-value ranging from 0-255
- * @g: The green-value ranging from 0-255
- * @b: The blue-value ranging from 0-255
- *
- * Returns: A new color-struct containing
- * 	the specified values as floats
- */
-Color colFromRGB(int r, int g, int b)
-{
-	Color col;
-	col.r = r / 255;
-	col.g = g / 255;
-	col.b = b / 255;
-	col.a = 1.0;
-	return(col);
-}
-
-/*
- * Create a new color-struct and set
- * the rgba-values. The given values will
- * be divided by 255, as opengl wants
- * floating-point-values between 0 and 1.
- *
- * @r: The red-value ranging from 0-255
- * @g: The green-value ranging from 0-255
- * @b: The blue-value ranging from 0-255
- * @a: The tranparency ranging from 0-255
- *
- * Returns: A new color-struct containing
- * 	the specified values as floats
- */
-Color colFromRGBA(int r, int g, int b, int a)
-{
-	Color col;
-	col.r = r / 255;
-	col.g = g / 255;
-	col.b = b / 255;
-	col.a = a / 255;
-	return(col);	
-}
 
 /* 
  * Create a new shader program, and load both the
@@ -112,14 +65,14 @@ Shader *shdCreate(char *vtx_shd, char *frg_shd)
 		vtxsrc = filetobuf(path);
 		if(vtxsrc != NULL) {
 			shd->vshdr = glCreateShader(GL_VERTEX_SHADER);
-			glShaderSource(shd->vshdr, 1, 
-					(const GLchar**)&vtxsrc, NULL);
+			glShaderSource(shd->vshdr, 1, (const GLchar**)&vtxsrc, NULL);
 			glCompileShader(shd->vshdr);
+
 			glGetShaderiv(shd->vshdr, GL_COMPILE_STATUS, &success);
 			if(!success) {
 				glGetShaderInfoLog(shd->vshdr, 512, NULL, infoLog);
-				printf("Failed to compile shader(%s)\n",
-						infoLog);
+				printf("Failed to compile shader %s: %s\n",
+						path, infoLog);
 				exit(1);
 			}
 			glAttachShader(shd->id, shd->vshdr);
@@ -136,18 +89,17 @@ Shader *shdCreate(char *vtx_shd, char *frg_shd)
 		ENUD_CombinePath(path, core->bindir, frg_shd);
 		frgsrc = filetobuf(path);
 		if(frgsrc != NULL) {
-			shd->vshdr = glCreateShader(GL_FRAGMENT_SHADER);
-			glShaderSource(shd->fshdr, 1, 
-					(const GLchar**)&frgsrc, NULL);
+			shd->fshdr = glCreateShader(GL_FRAGMENT_SHADER);
+			glShaderSource(shd->fshdr, 1, (const GLchar**)&frgsrc, NULL);
 			glCompileShader(shd->fshdr);
+
 			glGetShaderiv(shd->fshdr, GL_COMPILE_STATUS, &success);
 			if(!success) {
 				glGetShaderInfoLog(shd->fshdr, 512, NULL, infoLog);
-				printf("Failed to compile shader(%s)\n",
-						infoLog);
+				printf("Failed to compile shader %s: %s\n", path, infoLog);
 				exit(1);
 			}
-			glAttachShader(shd->id, shd->vshdr);
+			glAttachShader(shd->id, shd->fshdr);
 			printf("Added fragment-shader\n");
 
 		}

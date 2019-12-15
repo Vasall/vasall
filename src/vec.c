@@ -193,3 +193,39 @@ Vec3 vecNrmRet(Vec3 v)
 	res.z = v.z / len;
 	return(res);
 }
+
+/*
+ * Create a new 4x4 matrix and fill the
+ * memory with zeros.
+ *
+ * Returns: The created matrix or NULL
+ * 	if an error occurred
+ */
+Mat4 mat4Zero(void)
+{
+	Mat4 mat;
+	
+	mat = calloc(16, sizeof(float));
+	if(mat == NULL) {
+		return(NULL);
+	}
+
+	mat[15] = 1.0;
+
+	return(mat);
+}
+
+Mat4 mat4Idt(void)
+{
+	Mat4 mat = mat4Zero();
+	if(mat == NULL) {
+		return(NULL);
+	}
+
+	mat[0] = 1.0;
+	mat[5] = 1.0;
+	mat[10] = 1.0;
+	mat[15] = 1.0;
+
+	return(mat);
+}

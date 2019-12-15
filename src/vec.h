@@ -10,7 +10,6 @@ typedef struct Vec3 {
 	float z;
 } Vec3;
 
-
 /* Create a new 3d-vector */
 Vec3 vecCreate(float x, float y, float z);
 
@@ -46,5 +45,15 @@ void vecNrm(Vec3 *v);
 
 /* Normalize a vector and return the result */
 Vec3 vecNrmRet(Vec3 v);
+
+
+
+typedef float *Mat4;
+
+/* Create a new 4x4 matrix filled with zeros */
+Mat4 mat4Zero(void);
+
+/* Create an identity 4x4 matrix */
+Mat4 mat4Idt(void);
 
 #endif

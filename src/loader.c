@@ -27,23 +27,23 @@ GLubyte* loadPPM(char* fileName, int8_t pathRelative,
 		ENUD_CombinePath(path, core->bindir, fileName);
 	}
 
-	/* open the file in read mode */
+	/* Open the file in read mode */
 	file = fopen(path, "r");
 	if (file == NULL) {
 		printf("Error. File \"%s\" could not be loaded.\n", path);
 		goto failed;
 	}
 
-	/* scan everything up to new line */
+	/* Scan everything up to new line */
 	fscanf(file,"%[^\n] ", b);
 
-	/* check if first two characters are not P3. If not, it's not an ASCII PPM file */
+	/* Check if first two characters are not P3. If not, it's not an ASCII PPM file */
 	if (b[0]!='P'|| b[1] != '3') {
 		printf("%s is not a PPM file!\n", fileName);
 		goto failed;
 	}
 
-	/* read past the file comments (then go back 1 so we don't miss the size) */
+	/* Read past the file comments (then go back 1 so we don't miss the size) */
 	fscanf(file, "%c", &c);
 	while(c == '#')	{
 		fscanf(file, "%[^\n] ", b);
@@ -51,19 +51,19 @@ GLubyte* loadPPM(char* fileName, int8_t pathRelative,
 	}
 	ungetc(c, file);
 
-	/* read the rows, columns and max colour values */
+	/* Read the rows, columns and max colour values */
 	fscanf(file, "%d %d %d", &imageWidth, &imageHeight, &maxColor);
 
-	/* number of pixels is width * height */
+	/* Number of pixels is width * height */
 	size = imageWidth * imageHeight;
 
-	/* allocate memory to store 3 GLuints for every pixel */
+	/* Allocate memory to store 3 GLuints for every pixel */
 	image = (GLubyte *)malloc(3 * sizeof(GLuint) * size);
 
-	/* scale the colour in case maxCol is not 255 */
+	/* Scale the colour in case maxCol is not 255 */
 	scaledColor = 255.0 / maxColor;
 
-	/* start reading pixel colour data */
+	/* Start reading pixel colour data */
 	for (i = 0; i < size; i++) {
 		fscanf(file,"%d %d %d", &red, &green, &blue );
 		image[3 * size - 3 * i - 3] = red * scaledColor;

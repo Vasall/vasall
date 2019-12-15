@@ -19,11 +19,7 @@ int g_win_flgs = ENUD_WINDOW_RESIZABLE | ENUD_WINDOW_OPENGL;
 ENUD_Window *initWindow(void)
 {
 	ENUD_Window *win;
-/*
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-*/
+
 	win = ENUD_CreateWindow("Vasall",
 			ENUD_WINDOWPOS_UNDEFINED,
 			ENUD_WINDOWPOS_UNDEFINED,
@@ -41,12 +37,11 @@ ENUD_Window *initWindow(void)
  * This function is going to setup
  * OpenGL with the default settings.
  *
- * Returns: 0 on sucess and -1 if an error occurred
+ * Returns: 0 on success and -1 
+ * 	if an error occurred
 */
 int initGL(void)
 {
-	int ratio;
-
 	/* Create the ENUD-OpenGL-context */
 	if((core->glcontext = ENUD_GL_CreateContext(core->window)) == NULL) {
 		printf("Failed to create context.\n");
@@ -56,28 +51,15 @@ int initGL(void)
 	/* Set clear-color */
 	glClearColor(0.095, 0.095, 0.095, 1.0);
 
-	/* Set projection matrix, using perspective w/ correct aspect ratio */
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	/* Create the camera-view */
-	ratio = 800 / 600 ;
-	/* glOrtho(-50 * ratio, 50 * ratio, -50, 50, -200, 200);*/
-	/*glFrustum(-1.0, 1.0, -1.0, 1.0, 1.5, 20.0);*/
-	gluPerspective(40, ratio, 0.1, 100);
-	
-	gluLookAt(100.0, 50.0, 100.0, 0, 0, 0, 0, 1, 0);
-
-	glViewport(0, 0, 800, 600);
-
 	return(0);
 }
 
 /*
- * Load all necessary resources, like fonts, sprites
- * and more.
+ * Load all necessary resources, 
+ * like fonts, sprites and more.
  *
- * Returns: 0 on success and -1 if an error occurred
+ * Returns: 0 on success and -1 
+ * 	if an error occurred
  */
 int loadResources(void)
 {
@@ -107,6 +89,15 @@ loadfailed:
 	return(-1);
 }
 
+/*
+ * This is a short callback-function to
+ * switch from the menuscreen to the
+ * gamescreen.
+ *
+ * @n: Pointer to the node this event is
+ * 	attached to
+ * @e: Pointer to the event
+ */
 static void try_login(ENUD_Node *n, ENUD_Event *e)
 {
 	if(n||e){/* Prevent wraning for not using paameters */}
@@ -124,6 +115,9 @@ static void try_login(ENUD_Node *n, ENUD_Event *e)
 
 /*
  * Initialize the UI and place all elements.
+ *
+ * Returns: 0 on success and -1
+ * 	if an error occurred
  */
 int initUI(void)
 {

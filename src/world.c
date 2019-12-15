@@ -4,25 +4,13 @@
 #include <GL/gl.h>
 
 #include "world.h"
+#include "global.h"
+#include "stdutil.h"
 #include "shader.h"
 #include "loader.h"
 #include "../enud/enud.h"
 
-float faceNormals[WORLD_SIZE][WORLD_SIZE][3];
-float materialColours[WORLD_SIZE][WORLD_SIZE][4];
-
-/*
- * Convert a 2d-position to a 1d-position
- * in a single-dimension-array.
- *
- * @x: The x-position in the array
- * @y: The y-position in the array
- * @w: The width of the array
- */
-static int twodim(int x, int y, int w)
-{
-	return(x + (y * w));
-}
+float delF = 0.0;
 
 static int storeQuad1(uint32_t *idxbuf, int ptr, uint32_t tl, uint32_t tr, 
 		uint32_t bl, uint32_t br, int8_t mixed) {
@@ -47,8 +35,6 @@ static int storeQuad2(uint32_t *idxbuf, int ptr, uint32_t tl, uint32_t tr,
 }
 
 /* 
- * TODO: FLIP row and column!!
- *
  * Generate an array containing indices for all
  * buffers.
  */
@@ -149,7 +135,7 @@ void wldGenTerrain(World *world)
 	float **heightmapImage;
 	float *heightmap;
 	Vertex *vertices;
-	Color *colors;
+	ColorRGB *colors;
 	uint32_t *indices;
 	int indlen;
 
@@ -167,8 +153,8 @@ void wldGenTerrain(World *world)
 	memset(vertices, 0, vsz * sizeof(Vertex));
 
 	/* Create an array for all vertice-colors */
-	colors = malloc(vsz * sizeof(Color));
-	memset(colors, 0, vsz * sizeof(Color));
+	colors = malloc(vsz * sizeof(ColorRGB));
+	memset(colors, 0, vsz * sizeof(ColorRGB));
 
 	heightmapImage = loadPPMHeightmap("../res/images/heightmap_256.ppm", 1, WORLD_SIZE);
 
@@ -176,7 +162,7 @@ void wldGenTerrain(World *world)
 	for(x = 0; x < world->width; x++) {
 		for(z = 0; z < world->height; z++) {
 			Vertex *vtx;
-			Color *col;
+			ColorRGB *col;
 
 			idx = twodim(z, x, w);
 
@@ -185,10 +171,6 @@ void wldGenTerrain(World *world)
 
 			/* Set height */
 			tmp = heightmap[idx] = 40 * heightmapImage[x][z] + 10;
-			/*heightMap[x][z] = (0.5 * abs(x - 127.0));*/
-			/*tmp = heightmap[idx] = 0;*/
-			/* printf("%.2f ", tmp);
-			   if(idx % 10 == 0) printf("\n"); */
 
 			/* Set the position of the vertex */
 			vtx->x = x;
@@ -196,58 +178,32 @@ void wldGenTerrain(World *world)
 			vtx->z = z;
 
 			if (tmp <= 15) {
-				materialColours[x][z][0] = 0.79;
-				materialColours[x][z][1] = 0.69;
-				materialColours[x][z][2] = 0.39;
-
 				col->r = 0.79;
 				col->g = 0.69;
 				col->b = 0.39;
 			}
 			else if (tmp > 15 && tmp <= 20) {
-				materialColours[x][z][0] = 0.53;
-				materialColours[x][z][1] = 0.72;
-				materialColours[x][z][2] = 0.32;
-
 				col->r = 0.53;
 				col->g = 0.72;
 				col->b = 0.32;
 			}
 			else if (tmp > 20 && tmp <= 30) {
-				materialColours[x][z][0] = 0.31;
-				materialColours[x][z][1] = 0.67;
-				materialColours[x][z][2] = 0.36;
-
 				col->r = 0.31;
 				col->g = 0.67;
 				col->b = 0.36;
 			}
 			else if (tmp > 30 && tmp <= 35) {
-				materialColours[x][z][0] = 0.47;
-				materialColours[x][z][1] = 0.47;
-				materialColours[x][z][2] = 0.47;
-
 				col->r = 0.47;
 				col->g = 0.47;
 				col->b = 0.47;
 			}
-			else {
-				materialColours[x][z][0] = 0.78;
-				materialColours[x][z][1] = 0.78;
-				materialColours[x][z][2] = 0.82;
-
+			else {			
 				col->r = 0.78;
 				col->g = 0.78;
 				col->b = 0.82;
 			}
-
-			materialColours[x][z][3] = 1;
-
-			col->a = 1.0;
 		}
 	}
-
-	printf("Using %d vertices.\n", vsz);
 
 	indices = genIdxBuf(world->width, &indlen);
 	if(indices == NULL) {
@@ -255,8 +211,6 @@ void wldGenTerrain(World *world)
 		exit(1);
 	}
 	world->indlen = indlen;
-
-	printf("Using %d indices.\n", indlen);
 
 	/* ========== VAO ========== */	
 	/* Create vertex array object */
@@ -283,13 +237,25 @@ void wldGenTerrain(World *world)
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indlen * sizeof(unsigned int), 
 			indices, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), NULL);
-	glEnableVertexAttribArray(0);	
+	/* 1st attribute buffer : indices */
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+	/* ======== COLORS ========= */
+	/* Create a color buffer object */
+	glGenBuffers(1, &world->cbo);
+
+	/* Copy our color attay in a different one for OpenGL to use */
+	glBindBuffer(GL_ARRAY_BUFFER, world->cbo);
+	glBufferData(GL_ARRAY_BUFFER, vsz * sizeof(ColorRGB), colors, GL_STATIC_DRAW);
+
+	/* 2nd attribute buffer : colors */
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
 	/* Load shader-program */
-	world->shd = shdCreate("../res/shaders/terrain.vert", "../res/shaders/terrain.frag"); 
-
-	/*calculateFaceNormals(world);*/
+	world->shd = shdCreate("../res/shaders/terrain.vert", "../res/shaders/terrain.frag");
+	glBindAttribLocation(world->shd->id, 0, "vtxPos");
+	glBindAttribLocation(world->shd->id, 1, "vtxCol");
+	glLinkProgram(world->shd->id);
 }
 
 /*
@@ -299,48 +265,43 @@ void wldGenTerrain(World *world)
  */
 void renderTerrain(World *world) 
 {
-	glUseProgram(world->shd->id);
+	int err, model, view, proj;
+
+	Mat4 mod, vie, pro;
+       
+	mod = mat4Idt();
+	vie = camGetView(core->camera);
+	pro = camGetProj(core->camera);
+
 	glBindVertexArray(world->vao);
+	glUseProgram(world->shd->id);
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+
+	model = glGetUniformLocation(world->shd->id, "model");
+	view = glGetUniformLocation(world->shd->id, "view");
+	proj = glGetUniformLocation(world->shd->id, "proj");
+
+	glUniformMatrix4fv(model, 1, GL_FALSE, mod);
+	glUniformMatrix4fv(view, 1, GL_FALSE, vie);
+	glUniformMatrix4fv(proj, 1, GL_FALSE, pro);
+
+	err = glGetError();
+	if(err != 0) printf("Error: %x\n", err);
+
 	glDrawElements(GL_TRIANGLES, world->indlen, GL_UNSIGNED_INT, 0);
-		
-	/*	
-	   int x, z, w, idx;
-	   float *heightmap;
-	   float terrainOffset = (WORLD_SIZE) / 2.0;
-
-	   heightmap = world->heightmap;
-	   w = world->width;
-
-	    Iterate over all values in heightmap
-	   for(x = 0; x < world->width - 1; x++) {
-	   glBegin(GL_QUAD_STRIP);
-	   for(z = 0; z < world->height; z++) {
-	   idx = twodim(z, x, w);
-
-	   glMaterialfv(GL_FRONT, GL_AMBIENT, materialColours[x][z]);
-	   glMaterialfv(GL_FRONT, GL_DIFFUSE, materialColours[x][z]);
-
-	   glNormal3fv(faceNormals[x + 1][z]);
-	   glVertex3f(x + 1 - terrainOffset, heightmap[idx + w], 
-	   z - terrainOffset);
-
-	   glNormal3fv(faceNormals[x][z]);
-	   glVertex3f(x - terrainOffset, heightmap[idx], 
-	   z - terrainOffset);
-
-	   }
-	   glEnd();
-	   }
-	   */
+	glBindVertexArray(0);
 }
 
 void calculateFaceNormals(World *world)
 {    
 	int x, z, w, idx;
 	float *heightmap;
+	float ***faceNormals;
 
 	heightmap = world->heightmap;
 	w = world->width;
+
 
 	/* Calculate normals */
 	for(x = 0; x < world->width; x++) {
@@ -441,6 +402,8 @@ float getHeight(World *world, float x, float z)
 float *getNormal(World *world, float x, float z) 
 {
 	int ix, iz;
+	float ***faceNormals;
+
 
 	/* Coordinate (0,0) corresponds with middle of terrain map */
 	ix = x + (world->width / 2.0);

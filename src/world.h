@@ -6,9 +6,6 @@
 
 #define WORLD_SIZE 256
 
-extern float faceNormals[WORLD_SIZE][WORLD_SIZE][3];
-extern float materialColours[WORLD_SIZE][WORLD_SIZE][4];
-
 typedef struct Field {
 	char *fid;
 

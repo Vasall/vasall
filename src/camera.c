@@ -1,3 +1,7 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
 #include "camera.h"
 
 /*
@@ -13,8 +17,10 @@
  * Returns: Either the pointer to the created
  * 	camera-struct or null
  */
-Camera *camCreate(int x, int y, int z)
+Camera *camCreate(int fx, int fy, int fz, float px, float py, float pz)
 {
+	float delx, dely, delz;
+
 	/* Initialize the camera-struct */
 	Camera *cam;
 
@@ -24,13 +30,47 @@ Camera *camCreate(int x, int y, int z)
 	}
 	memset(cam, 0, sizeof(Camera));
 
-	/* Set the position of the mouse */
-	cam->pos.x = x;
-	cam->pos.y = y;
-	cam->pos.z = z;
+	/* Set the position of the target */
+	cam->trg.x = fx;
+	cam->trg.y = fy;
+	cam->trg.z = fz;
+
+	/* Set the position of the camera */
+	cam->pos.x = px;
+	cam->pos.y = py;
+	cam->pos.z = pz;
+
+	delx = px - fx;
+	dely = py - fy;
+	delz = pz - fz;
+
+	/* The normalized direction vector from the target to the camera */
+	cam->dir = vecNrmRet(vecCreate(delx, dely, delz));
+
+	/* Calculate the distance between the target and the camera */
+	cam->dist = sqrt(delx + dely + delz);
 
 	/* Set the sensitivity of the mouse */
 	cam->sensitivity = 0.2;
+
+	/* Create the projection matrix */
+	cam->proj = mat4Zero();
+	setProjMat(45, 0.1, 100.0, cam->proj);	
+
+	/* Create the view matrix */
+	cam->view = mat4Zero();
+
+	cam->view[0] = 1.0;
+	cam->view[1] = 0.0;
+	cam->view[2] = 0.0;
+
+	cam->view[4] = 0.0;
+	cam->view[5] = 1.0;
+	cam->view[6] = 0.0;
+
+	cam->view[8] = delx * -1;
+	cam->view[9] = dely * -1;
+	cam->view[10] = delz * -1;
 
 	return(cam);
 }
@@ -45,6 +85,65 @@ Camera *camCreate(int x, int y, int z)
 void camDestroy(Camera *cam)
 {
 	free(cam);
+}
+
+/*
+ * Get the projection matrix of a camera.
+ *
+ * @cam: Pointer to the camera
+ *
+ * Returns: A 4x4 matrix representing
+ * 	the projection matrix
+ */
+Mat4 camGetProj(Camera *cam)
+{
+	return(cam->proj);
+}
+
+/*
+ * Get the view matrix of a camera.
+ *
+ * @cam: Pointer to the camera
+ *
+ * Returns: A 4x4 matrix representing
+ * 	the view matrix
+ */
+Mat4 camGetView(Camera *cam)
+{
+	return(cam->view);
+}
+
+/* 
+ * Get the position of the camera.
+ *
+ * @cam: Pointer to the camera
+ *
+ * Returns: A 3d-vector containing the
+ * 	position of the camera
+*/
+Vec3 camGetPos(Camera* cam)
+{
+	return(cam->pos);
+}
+
+/* 
+ * Get the direction the camera is looking.
+ * This function will return the normalvector
+ * pointing from the camera to the target.
+ *
+ * @cam: Pointer to the camera
+ *
+ * Returns: A 3d-vector containing the
+ * 	direction the camera is pointing
+ * 	towards
+ *
+*/
+Vec3 camGetDir(Camera *cam)
+{
+	Vec3 dir;
+	vecCpy(&dir, &cam->dir);
+	vecNrm(&dir);
+	return(dir);
 }
 
 /*
@@ -137,3 +236,14 @@ void movcam(Camera *cam, Direction dir)
 	cam->pos.x += (movementVec.x / movVecLen) * 2;
 	cam->pos.z += (movementVec.z / movVecLen) * 2;
 }
+
+void setProjMat(float aof, float near, float far, Mat4 m)
+{ 
+    float scale = (1 / tan(aof * 0.5 * M_PI / 180));
+    m[0] = scale;
+    m[5] = scale;
+    m[10] = -far / (far - near);
+    m[14] = -far * near / (far - near);
+    m[11] = -1;
+    m[15] = 0;
+} 

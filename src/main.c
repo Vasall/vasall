@@ -29,6 +29,12 @@ int main(int argc, char **argv)
 	}
 	ENUD_ShowVersions();
 
+/*
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+*/
+
 	printf("Initialize core-wrapper\n");
 	if((core = gloCreate()) == NULL) {
 		printf("Failed to initialize core-wrapper.\n");
@@ -71,7 +77,7 @@ int main(int argc, char **argv)
 	}
 
 	printf("Initialize camera\n");
-	if((core->camera = camCreate(0, 50, 0)) == NULL) {
+	if((core->camera = camCreate(0, 0, 0, 0, 50, 0)) == NULL) {
 		printf("[!] Failed ot setup camera.\n");
 		goto cleanup_ui;
 	}

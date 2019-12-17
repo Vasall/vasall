@@ -58,6 +58,8 @@ typedef struct Camera  {
 	 * The current viewmatrix.
 	 */
 	Mat4 view;
+
+	Mat4 model;
 } Camera;
 
 /* Create a new camera and set the position */
@@ -75,6 +77,8 @@ Mat4 camGetView(Camera *cam);
 /* Get the position of the camera */
 Vec3 camGetPos(Camera *cam);
 
+Mat4 camGetModel(Camera *cam);
+
 /* Get the direction the camera is looking */
 Vec3 camGetDir(Camera *cam);
 
@@ -85,7 +89,10 @@ void camZoom(Camera *cam, int val);
 
 void movcam(Camera *cam, Direction dir);
 
+/* Calculate a view matrix */
+Mat4 lookAt(Vec3 from, Vec3 to);
+
 /* Create a new projection matrix */
-void setProjMat(float aof, float near, float far, Mat4 m);
+void setProjMat(float aov, float asp, float near, float far, Mat4 m);
 
 #endif

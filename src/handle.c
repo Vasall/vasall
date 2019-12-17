@@ -68,15 +68,6 @@ void game_update(void)
 
 void game_render(void)
 {
-	/* Transform according to camera */
-	/* glRotatef(core->camera->rot.x, 1, 0, 0);
-	glRotatef(core->camera->rot.y, 0, 1, 0);
-	glTranslatef(-core->camera->pos.x, 
-			-core->camera->pos.y, 
-			-core->camera->pos.z);
-			*/
-
-
 	/* Render the terrain */
 	renderTerrain(core->world);
 }

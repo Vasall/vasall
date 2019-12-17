@@ -195,6 +195,28 @@ Vec3 vecNrmRet(Vec3 v)
 }
 
 /*
+ * Calculate the cross-product and
+ * then return the result as a new
+ * vector.
+ *
+ * @v1: The first vector
+ * @v2: The second vector
+ *
+ * Returns: A new vector containing
+ * 	the resulting values
+ */
+Vec3 vecCross(Vec3 v1, Vec3 v2)
+{
+	Vec3 v;
+
+	v.x = (v1.y * v2.z) - (v1.z * v2.y);
+	v.y = (v1.z * v2.x) - (v1.x * v2.z);
+	v.z = (v1.x * v2.y) - (v1.y * v2.x);
+
+	return(v);
+}
+
+/*
  * Create a new 4x4 matrix and fill the
  * memory with zeros.
  *
@@ -215,6 +237,12 @@ Mat4 mat4Zero(void)
 	return(mat);
 }
 
+/*
+ * Create an identity matrix.
+ *
+ * Returns: The created matrix or NULL
+ * 	if an error occurred
+ */
 Mat4 mat4Idt(void)
 {
 	Mat4 mat = mat4Zero();
@@ -222,10 +250,26 @@ Mat4 mat4Idt(void)
 		return(NULL);
 	}
 
-	mat[0] = 1.0;
-	mat[5] = 1.0;
-	mat[10] = 1.0;
-	mat[15] = 1.0;
+	mat[0x00] = 1.0;
+	mat[0x05] = 1.0;
+	mat[0x0a] = 1.0;
+	mat[0x0f] = 1.0;
 
 	return(mat);
+}
+
+/*
+ * Display a 4x4 matrix in the console.
+ *
+ * @m: The matrix to display
+ */
+void mat4Print(Mat4 m)
+{
+	int r, c;
+	for(r = 0; r < 4; r++) {
+		for(c = 0; c < 4; c++) {
+			printf("%6.2f ", m[r + c * 4]);
+		}
+		printf("\n");
+	}
 }

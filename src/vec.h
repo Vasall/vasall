@@ -46,7 +46,8 @@ void vecNrm(Vec3 *v);
 /* Normalize a vector and return the result */
 Vec3 vecNrmRet(Vec3 v);
 
-
+/* Calculate the cross-product and return the result */
+Vec3 vecCross(Vec3 v1, Vec3 v2);
 
 typedef float *Mat4;
 
@@ -55,5 +56,8 @@ Mat4 mat4Zero(void);
 
 /* Create an identity 4x4 matrix */
 Mat4 mat4Idt(void);
+
+/* Display a 4x4 matrix in the console */
+void mat4Print(Mat4 m);
 
 #endif

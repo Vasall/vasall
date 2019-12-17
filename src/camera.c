@@ -4,6 +4,8 @@
 
 #include "camera.h"
 
+void setViewMat(float tx, float ty, float tz, float px, float py, float pz, Mat4 m);
+
 /*
  * Create a new camera and initialize the
  * values of the struct with the default
@@ -20,11 +22,12 @@
 Camera *camCreate(int fx, int fy, int fz, float px, float py, float pz)
 {
 	float delx, dely, delz;
+	Vec3 del;
 
 	/* Initialize the camera-struct */
 	Camera *cam;
 
-	cam = (Camera *)malloc(sizeof(Camera));
+	cam = malloc(sizeof(Camera));
 	if(cam == NULL) {
 		return(NULL);
 	}
@@ -43,34 +46,33 @@ Camera *camCreate(int fx, int fy, int fz, float px, float py, float pz)
 	delx = px - fx;
 	dely = py - fy;
 	delz = pz - fz;
+	del = vecCreate(delx, dely, delz);
 
 	/* The normalized direction vector from the target to the camera */
-	cam->dir = vecNrmRet(vecCreate(delx, dely, delz));
+	cam->dir = vecNrmRet(del);
 
 	/* Calculate the distance between the target and the camera */
-	cam->dist = sqrt(delx + dely + delz);
+	cam->dist = vecMag(del);
 
 	/* Set the sensitivity of the mouse */
-	cam->sensitivity = 0.2;
+	cam->sensitivity = 0.2;	
 
 	/* Create the projection matrix */
-	cam->proj = mat4Zero();
-	setProjMat(45, 0.1, 100.0, cam->proj);	
+	cam->proj = mat4Idt();
+	setProjMat(45.0, (float)(800.0 / 600.0), 0.1, 1000.0, cam->proj);	
 
-	/* Create the view matrix */
-	cam->view = mat4Zero();
+	cam->view = mat4Idt();
+	setViewMat(fx, fy, fz, px, py, pz, cam->view);
 
-	cam->view[0] = 1.0;
-	cam->view[1] = 0.0;
-	cam->view[2] = 0.0;
+	printf("Projection-matrix:\n");
+	mat4Print(cam->proj);
 
-	cam->view[4] = 0.0;
-	cam->view[5] = 1.0;
-	cam->view[6] = 0.0;
+	printf("View-matrix:\n");
+	mat4Print(cam->view);
 
-	cam->view[8] = delx * -1;
-	cam->view[9] = dely * -1;
-	cam->view[10] = delz * -1;
+	cam->model = mat4Idt();
+	printf("Model-matrix:\n");
+	mat4Print(cam->model);
 
 	return(cam);
 }
@@ -113,6 +115,11 @@ Mat4 camGetView(Camera *cam)
 	return(cam->view);
 }
 
+Mat4 camGetModel(Camera *cam)
+{
+	return(cam->model);
+}
+
 /* 
  * Get the position of the camera.
  *
@@ -120,7 +127,7 @@ Mat4 camGetView(Camera *cam)
  *
  * Returns: A 3d-vector containing the
  * 	position of the camera
-*/
+ */
 Vec3 camGetPos(Camera* cam)
 {
 	return(cam->pos);
@@ -137,7 +144,7 @@ Vec3 camGetPos(Camera* cam)
  * 	direction the camera is pointing
  * 	towards
  *
-*/
+ */
 Vec3 camGetDir(Camera *cam)
 {
 	Vec3 dir;
@@ -156,7 +163,7 @@ Vec3 camGetDir(Camera *cam)
  * 	been moved on the x-axis
  * @dely: The number of pixels, the mouse has
  * 	been moved on the y-axis
-*/
+ */
 void camMouseMoved(Camera *cam, int delx, int dely)
 {
 	/* Rotate camera */
@@ -237,13 +244,63 @@ void movcam(Camera *cam, Direction dir)
 	cam->pos.z += (movementVec.z / movVecLen) * 2;
 }
 
-void setProjMat(float aof, float near, float far, Mat4 m)
-{ 
-    float scale = (1 / tan(aof * 0.5 * M_PI / 180));
-    m[0] = scale;
-    m[5] = scale;
-    m[10] = -far / (far - near);
-    m[14] = -far * near / (far - near);
-    m[11] = -1;
-    m[15] = 0;
-} 
+void setProjMat(float aov, float asp, float near, float far, Mat4 m)
+{
+	float bottom, top, left, right, tangent;
+
+	tangent = near * tan(aov * 0.5 * M_PI / 180);
+
+	top = tangent;
+	bottom = -top;
+	right = top * asp;
+       	left = -right; 
+
+	printf("top/bottom: %.2f/%.2f\n", top, bottom);
+	printf("right/left: %.2f/%.2f\n", right, left);
+
+	m[0x0] = (2 * near) / (right - left);
+
+	m[0x5] = (2 * near) / (top - bottom); 
+	
+	m[0x8] = (right + left) / (right - left); 
+	m[0x9] = (top + bottom) / (top - bottom); 
+	m[0xa] = -(far + near) / (far - near); 
+	m[0xb] = -1; 
+	
+	m[0xe] = (-2 * far * near) / (far - near); 
+	m[0xf] = 0;
+
+}
+
+void setViewMat(float fx, float fy, float fz, float px, float py, float pz, Mat4 m)
+{
+	Vec3 pos, trg, tmp, forw, left, up;
+	
+	tmp = vecCreate(0.0, 1.0, 0.0);
+
+	trg = vecCreate(fx, fy, fz);
+	pos = vecCreate(px, py, pz);
+
+	printf("Target: %.2f/%.2f/%.2f\n", trg.x, trg.y, trg.z);
+	printf("Position: %.2f/%.2f/%.2f\n", pos.x, pos.y, pos.z);
+
+	forw = vecNrmRet(vecSubRet(pos, trg));
+	left = vecNrmRet(vecCross(vecNrmRet(tmp), forw));
+	up = vecCross(forw, left);
+
+	m[0x0] = left.x;
+	m[0x4] = left.y;
+	m[0x8] = left.z;
+
+	m[0x1] = up.x;
+	m[0x5] = up.y;
+	m[0x9] = up.z;
+
+	m[0x2] = forw.x;
+	m[0x6] = forw.y;
+	m[0xa] = forw.z;
+
+	m[0xc]= -left.x * pos.x - left.y * pos.y - left.z * pos.z;
+	m[0xd]= -up.x * pos.x - up.y * pos.y - up.z * pos.z;
+	m[0xe]= -forw.x * pos.x - forw.y * pos.y - forw.z * pos.z;
+}

@@ -77,7 +77,7 @@ int main(int argc, char **argv)
 	}
 
 	printf("Initialize camera\n");
-	if((core->camera = camCreate(0, 0, 0, 0, 50, 0)) == NULL) {
+	if((core->camera = camCreate(0.0, 0.0, 0.0, 100.0, 100.0, 100.0)) == NULL) {
 		printf("[!] Failed ot setup camera.\n");
 		goto cleanup_ui;
 	}
@@ -87,7 +87,10 @@ int main(int argc, char **argv)
 		printf("[!] Failed to initialize world.\n");
 		goto cleanup_camera;
 	}
-	
+
+
+	try_login(NULL, NULL);	
+
 	/* 
 	 * Mark the game as running and
 	 * then proceed to jump into the

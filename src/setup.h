@@ -3,6 +3,8 @@
 
 #include "../enud/enud.h"
 
+void try_login(ENUD_Node *n, ENUD_Event *e);
+
 /* Create and configure the window */
 ENUD_Window *initWindow(void);
 

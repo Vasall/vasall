@@ -51,6 +51,8 @@ int initGL(void)
 	/* Set clear-color */
 	glClearColor(0.095, 0.095, 0.095, 1.0);
 
+
+
 	return(0);
 }
 
@@ -98,7 +100,7 @@ loadfailed:
  * 	attached to
  * @e: Pointer to the event
  */
-static void try_login(ENUD_Node *n, ENUD_Event *e)
+void try_login(ENUD_Node *n, ENUD_Event *e)
 {
 	if(n||e){/* Prevent wraning for not using paameters */}
 

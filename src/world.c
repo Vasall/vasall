@@ -147,10 +147,10 @@ void wldGenTerrain(World *world)
 	/* Reset heightmap */
 	memset(heightmap, 0, (WORLD_SIZE * WORLD_SIZE));
 
-	/* Create an array for all vertices */
+	/* Initialize the vertex-array */
 	vsz = world->size;
+	printf("vsz: %d\n", vsz);
 	vertices = malloc(vsz * sizeof(Vertex));
-	memset(vertices, 0, vsz * sizeof(Vertex));
 
 	/* Create an array for all vertice-colors */
 	colors = malloc(vsz * sizeof(ColorRGB));
@@ -173,14 +173,14 @@ void wldGenTerrain(World *world)
 			tmp = heightmap[idx] = 40 * heightmapImage[x][z] + 10;
 
 			/* Set the position of the vertex */
-			vtx->x = x;
+			vtx->x = x - 128.0;
 			vtx->y = tmp;
-			vtx->z = z;
+			vtx->z = z - 128.0;
 
 			if (tmp <= 15) {
 				col->r = 0.79;
 				col->g = 0.69;
-				col->b = 0.39;
+				col->b = 0.39;	
 			}
 			else if (tmp > 15 && tmp <= 20) {
 				col->r = 0.53;
@@ -197,7 +197,7 @@ void wldGenTerrain(World *world)
 				col->g = 0.47;
 				col->b = 0.47;
 			}
-			else {			
+			else {	
 				col->r = 0.78;
 				col->g = 0.78;
 				col->b = 0.82;
@@ -218,15 +218,18 @@ void wldGenTerrain(World *world)
 
 	/* Bind vertex array object */
 	glBindVertexArray(world->vao);
-	
+
 	/* ========= MESH ========== */
 	/* Create vertex buffer object */
 	glGenBuffers(1, &world->vbo);
-	
+
 	/* Copy our vertices array in a vertex buffer for OpenGL to use */
 	glBindBuffer(GL_ARRAY_BUFFER, world->vbo);
 	glBufferData(GL_ARRAY_BUFFER, vsz * sizeof(Vertex), 
 			vertices, GL_STATIC_DRAW);
+
+	/* 1st attribute buffer : vertices */
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
 	/* ======== INDEX ========== */
 	/* Create an element buffer object */
@@ -236,9 +239,6 @@ void wldGenTerrain(World *world)
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, world->ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indlen * sizeof(unsigned int), 
 			indices, GL_STATIC_DRAW);
-
-	/* 1st attribute buffer : indices */
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
 	/* ======== COLORS ========= */
 	/* Create a color buffer object */
@@ -268,8 +268,8 @@ void renderTerrain(World *world)
 	int err, model, view, proj;
 
 	Mat4 mod, vie, pro;
-       
-	mod = mat4Idt();
+
+	mod = camGetModel(core->camera);
 	vie = camGetView(core->camera);
 	pro = camGetProj(core->camera);
 
@@ -279,8 +279,11 @@ void renderTerrain(World *world)
 	glEnableVertexAttribArray(1);
 
 	model = glGetUniformLocation(world->shd->id, "model");
+	if(model == -1) {printf("model!!\n"); exit(1);}
 	view = glGetUniformLocation(world->shd->id, "view");
+	if(view == -1) {printf("view!!\n"); exit(1);}
 	proj = glGetUniformLocation(world->shd->id, "proj");
+	if(proj == -1) {printf("proj!!\n"); exit(1);}
 
 	glUniformMatrix4fv(model, 1, GL_FALSE, mod);
 	glUniformMatrix4fv(view, 1, GL_FALSE, vie);

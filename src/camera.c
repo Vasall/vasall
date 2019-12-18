@@ -27,11 +27,10 @@ Camera *camCreate(int fx, int fy, int fz, float px, float py, float pz)
 	/* Initialize the camera-struct */
 	Camera *cam;
 
-	cam = malloc(sizeof(Camera));
+	cam = calloc(1, sizeof(Camera));
 	if(cam == NULL) {
 		return(NULL);
 	}
-	memset(cam, 0, sizeof(Camera));
 
 	/* Set the position of the target */
 	cam->trg.x = fx;
@@ -43,6 +42,7 @@ Camera *camCreate(int fx, int fy, int fz, float px, float py, float pz)
 	cam->pos.y = py;
 	cam->pos.z = pz;
 
+	/* Get the connecting vector between the camera and the target */
 	delx = px - fx;
 	dely = py - fy;
 	delz = pz - fz;
@@ -61,19 +61,13 @@ Camera *camCreate(int fx, int fy, int fz, float px, float py, float pz)
 	cam->proj = mat4Idt();
 	setProjMat(45.0, (float)(800.0 / 600.0), 0.1, 1000.0, cam->proj);	
 
+	/* Create the view-matrix */
 	cam->view = mat4Idt();
 	setViewMat(fx, fy, fz, px, py, pz, cam->view);
 
-	printf("Projection-matrix:\n");
-	mat4Print(cam->proj);
-
-	printf("View-matrix:\n");
-	mat4Print(cam->view);
-
-	cam->model = mat4Idt();
-	printf("Model-matrix:\n");
-	mat4Print(cam->model);
-
+	/* TODO: Move the model matrix to the models */
+	cam->model = mat4Idt();	
+	
 	return(cam);
 }
 
@@ -196,11 +190,8 @@ void camZoom(Camera *cam, int val)
 	vec.y = sin(cam->rot.x * TO_RADS);
 
 	vecNrm(&vec);
-	printf("Normal: %f/%f/%f\n", vec.x, vec.y, vec.z);
 	vecScl(&vec, val);
-	printf("Before: %f/%f/%f\n", cam->pos.x, cam->pos.y, cam->pos.z);
 	vecAdd(&cam->pos, vec);
-	printf("Before: %f/%f/%f\n", cam->pos.x, cam->pos.y, cam->pos.z);
 }
 
 
@@ -255,18 +246,12 @@ void setProjMat(float aov, float asp, float near, float far, Mat4 m)
 	right = top * asp;
        	left = -right; 
 
-	printf("top/bottom: %.2f/%.2f\n", top, bottom);
-	printf("right/left: %.2f/%.2f\n", right, left);
-
 	m[0x0] = (2 * near) / (right - left);
-
-	m[0x5] = (2 * near) / (top - bottom); 
-	
+	m[0x5] = (2 * near) / (top - bottom); 	
 	m[0x8] = (right + left) / (right - left); 
 	m[0x9] = (top + bottom) / (top - bottom); 
 	m[0xa] = -(far + near) / (far - near); 
 	m[0xb] = -1; 
-	
 	m[0xe] = (-2 * far * near) / (far - near); 
 	m[0xf] = 0;
 
@@ -280,9 +265,6 @@ void setViewMat(float fx, float fy, float fz, float px, float py, float pz, Mat4
 
 	trg = vecCreate(fx, fy, fz);
 	pos = vecCreate(px, py, pz);
-
-	printf("Target: %.2f/%.2f/%.2f\n", trg.x, trg.y, trg.z);
-	printf("Position: %.2f/%.2f/%.2f\n", pos.x, pos.y, pos.z);
 
 	forw = vecNrmRet(vecSubRet(pos, trg));
 	left = vecNrmRet(vecCross(vecNrmRet(tmp), forw));

@@ -100,6 +100,8 @@ World *wldCreate(void)
 
 	memset(world->heightmap, 0, world->size);
 
+	world->model = NULL;
+
 	/* Generate the terrain */
 	wldGenTerrain(world);
 
@@ -127,8 +129,11 @@ void wldDestroy(World *world)
  *
  * @world: Pointer to the world to create a
  * 	terrain for
+ *
+ * Returns: Either 0 on success or -1
+ * 	if an error occurred
  */
-void wldGenTerrain(World *world)
+int wldGenTerrain(World *world)
 {   
 	int x, z, w, idx, vsz;
 	float tmp;
@@ -138,8 +143,7 @@ void wldGenTerrain(World *world)
 	ColorRGB *colors;
 	uint32_t *indices;
 	int indlen;
-
-	srand(13);
+	Model *mdl;	
 
 	heightmap = world->heightmap;
 	w = world->width;
@@ -149,12 +153,19 @@ void wldGenTerrain(World *world)
 
 	/* Initialize the vertex-array */
 	vsz = world->size;
-	printf("vsz: %d\n", vsz);
 	vertices = malloc(vsz * sizeof(Vertex));
+	if(vertices == NULL) {
+		printf("Failed to allocate space for vertices.\n");
+		return(-1);
+	}
+
 
 	/* Create an array for all vertice-colors */
 	colors = malloc(vsz * sizeof(ColorRGB));
-	memset(colors, 0, vsz * sizeof(ColorRGB));
+	if(colors == NULL) {
+		printf("Failed to allocate space for colors.\n");
+		return(-1);
+	}
 
 	heightmapImage = loadPPMHeightmap("../res/images/heightmap_256.ppm", 1, WORLD_SIZE);
 
@@ -212,50 +223,36 @@ void wldGenTerrain(World *world)
 	}
 	world->indlen = indlen;
 
-	/* ========== VAO ========== */	
-	/* Create vertex array object */
-	glGenVertexArrays(1, &world->vao);
+	/* Start creating the model for the terrain */
+	mdl = mdlBegin();
+	if(mdl == NULL) {
+		printf("Failed to create model.\n");
+		exit(1);
+	}
 
-	/* Bind vertex array object */
-	glBindVertexArray(world->vao);
+	mdl->shader = shdBegin(); 
+	if(mdl->shader == NULL) {
+		printf("Failed to create shader.\n");
+		exit(1);
+	}
 
-	/* ========= MESH ========== */
-	/* Create vertex buffer object */
-	glGenBuffers(1, &world->vbo);
 
-	/* Copy our vertices array in a vertex buffer for OpenGL to use */
-	glBindBuffer(GL_ARRAY_BUFFER, world->vbo);
-	glBufferData(GL_ARRAY_BUFFER, vsz * sizeof(Vertex), 
-			vertices, GL_STATIC_DRAW);
+	shdAttachVtx(mdl->shader, "../res/shaders/terrain.vert");
+	shdAttachFrg(mdl->shader, "../res/shaders/terrain.frag");
 
-	/* 1st attribute buffer : vertices */
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	mdlLoadVtx(mdl, vertices, vsz, indices, indlen);
+	mdlAttachColBuf(mdl, colors, vsz);
 
-	/* ======== INDEX ========== */
-	/* Create an element buffer object */
-	glGenBuffers(1, &world->ebo);
+	glBindAttribLocation(mdl->shader->prog, 0, "vtxPos");
+	glBindAttribLocation(mdl->shader->prog, 1, "vtxCol");
 
-	/* Copy our index array in a element buffer for OpenGL to use */
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, world->ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indlen * sizeof(unsigned int), 
-			indices, GL_STATIC_DRAW);
+	/* Finish creating the model for the terrain */
+	if(mdlEnd(mdl) != 0) {
+		exit(1);
+	}
+	world->model = mdl;
 
-	/* ======== COLORS ========= */
-	/* Create a color buffer object */
-	glGenBuffers(1, &world->cbo);
-
-	/* Copy our color attay in a different one for OpenGL to use */
-	glBindBuffer(GL_ARRAY_BUFFER, world->cbo);
-	glBufferData(GL_ARRAY_BUFFER, vsz * sizeof(ColorRGB), colors, GL_STATIC_DRAW);
-
-	/* 2nd attribute buffer : colors */
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-	/* Load shader-program */
-	world->shd = shdCreate("../res/shaders/terrain.vert", "../res/shaders/terrain.frag");
-	glBindAttribLocation(world->shd->id, 0, "vtxPos");
-	glBindAttribLocation(world->shd->id, 1, "vtxCol");
-	glLinkProgram(world->shd->id);
+	return(0);
 }
 
 /*
@@ -265,35 +262,7 @@ void wldGenTerrain(World *world)
  */
 void renderTerrain(World *world) 
 {
-	int err, model, view, proj;
-
-	Mat4 mod, vie, pro;
-
-	mod = camGetModel(core->camera);
-	vie = camGetView(core->camera);
-	pro = camGetProj(core->camera);
-
-	glBindVertexArray(world->vao);
-	glUseProgram(world->shd->id);
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-
-	model = glGetUniformLocation(world->shd->id, "model");
-	if(model == -1) {printf("model!!\n"); exit(1);}
-	view = glGetUniformLocation(world->shd->id, "view");
-	if(view == -1) {printf("view!!\n"); exit(1);}
-	proj = glGetUniformLocation(world->shd->id, "proj");
-	if(proj == -1) {printf("proj!!\n"); exit(1);}
-
-	glUniformMatrix4fv(model, 1, GL_FALSE, mod);
-	glUniformMatrix4fv(view, 1, GL_FALSE, vie);
-	glUniformMatrix4fv(proj, 1, GL_FALSE, pro);
-
-	err = glGetError();
-	if(err != 0) printf("Error: %x\n", err);
-
-	glDrawElements(GL_TRIANGLES, world->indlen, GL_UNSIGNED_INT, 0);
-	glBindVertexArray(0);
+	mdlRender(world->model);	
 }
 
 void calculateFaceNormals(World *world)

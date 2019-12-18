@@ -51,7 +51,7 @@ int initGL(void)
 	/* Set clear-color */
 	glClearColor(0.095, 0.095, 0.095, 1.0);
 
-
+	glEnable(GL_DEPTH_TEST);
 
 	return(0);
 }

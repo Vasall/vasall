@@ -17,6 +17,8 @@ void handle_events(void);
 void update(void);
 void render(void);
 
+float f = 0.0;
+
 int main(int argc, char **argv)
 {
 	if(argc){/* Prevent warning for not using argc */}
@@ -147,6 +149,12 @@ void handle_events(void)
 			break;
 		}
 
+		if(event.type == SDL_KEYDOWN && event.key.keysym.scancode == 20 &&
+				event.key.keysym.mod & KMOD_CTRL) {
+			core->running = 0;
+			break;
+		}
+
 		/* Process interactions with the UI */
 		if(ENUD_ProcEvent(core->uicontext, &event) > -1) {
 			/* Skip, as the user interacted with the UI */
@@ -178,6 +186,9 @@ void update(void)
 	if(core->update != NULL) {
 		core->update();
 	}
+
+	mdlSetRot(core->world->model, 0.0, f, 0.0);
+	f += 0.1;
 }
 
 /*
@@ -187,7 +198,7 @@ void update(void)
  */
 void render(void)
 {
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	/* Run current render-function */
 	if(core->render != NULL) {

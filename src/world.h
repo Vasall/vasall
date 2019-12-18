@@ -1,7 +1,7 @@
 #ifndef _WORLD_H_
 #define _WORLD_H_
 
-#include "shader.h"
+#include "model.h"
 #include "../enud/enud.h"
 
 #define WORLD_SIZE 256
@@ -30,7 +30,10 @@ typedef struct World {
 	GLuint ebo;
 	GLuint cbo;
 	int indlen;
+
 	Shader *shd;
+
+	Model *model;
 } World;
 
 /* Create and initialize a new world */
@@ -40,7 +43,7 @@ World *wldCreate(void);
 void wldDestroy(World *world);
 
 /* Generate the terrain of the world */
-void wldGenTerrain(World *world);
+int wldGenTerrain(World *world);
 
 /* Render the terrain of the world */
 void renderTerrain(World *world);

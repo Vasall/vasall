@@ -79,17 +79,17 @@ int main(int argc, char **argv)
 	}
 
 	printf("Initialize camera\n");
-	if((core->camera = camCreate(0.0, 0.0, 0.0, 100.0, 100.0, 100.0)) == NULL) {
+	if((core->camera = camCreate(45.0, 800.0 / 600.0, 0.1, 1000.0)) == NULL) {
 		printf("[!] Failed ot setup camera.\n");
 		goto cleanup_ui;
 	}
+	camSetViewMat(core->camera, 0.0, 0.0, 0.0, 100.0, 100.0, 100.0);
 
 	printf("Initialize world-container\n");
 	if((core->world = wldCreate()) == NULL) {
 		printf("[!] Failed to initialize world.\n");
 		goto cleanup_camera;
 	}
-
 
 	try_login(NULL, NULL);	
 

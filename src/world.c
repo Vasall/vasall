@@ -219,36 +219,28 @@ int wldGenTerrain(World *world)
 	indices = genIdxBuf(world->width, &indlen);
 	if(indices == NULL) {
 		printf("Failed to get indices.\n");
-		exit(1);
+		return(-1);
 	}
-	world->indlen = indlen;
 
 	/* Start creating the model for the terrain */
 	mdl = mdlBegin();
 	if(mdl == NULL) {
 		printf("Failed to create model.\n");
-		exit(1);
+		return(-1);
 	}
-
-	mdl->shader = shdBegin(); 
-	if(mdl->shader == NULL) {
-		printf("Failed to create shader.\n");
-		exit(1);
-	}
-
-
-	shdAttachVtx(mdl->shader, "../res/shaders/terrain.vert");
-	shdAttachFrg(mdl->shader, "../res/shaders/terrain.frag");
 
 	mdlLoadVtx(mdl, vertices, vsz, indices, indlen);
 	mdlAttachColBuf(mdl, colors, vsz);
+
+	shdAttachVtx(mdl->shader, "../res/shaders/terrain.vert");
+	shdAttachFrg(mdl->shader, "../res/shaders/terrain.frag");
 
 	glBindAttribLocation(mdl->shader->prog, 0, "vtxPos");
 	glBindAttribLocation(mdl->shader->prog, 1, "vtxCol");
 
 	/* Finish creating the model for the terrain */
 	if(mdlEnd(mdl) != 0) {
-		exit(1);
+		return(-1);
 	}
 	world->model = mdl;
 

@@ -50,6 +50,29 @@ typedef struct Camera  {
 	float sensitivity;
 
 	/*
+	 * The angle of view used for the
+	 * perspective matrix.
+	 */
+	float aov;
+
+	/*
+	 * The current aspect ratio.
+	 */
+	float asp;
+
+	/*
+	 * The near-limit used when
+	 * checking for clipping.
+	 */
+	float near;
+
+	/*
+	 * The far-limit used when
+	 * checking for clipping.
+	 */
+	float far;
+	
+	/*
 	 * The projection matrix.
 	 */
 	Mat4 proj;
@@ -59,11 +82,10 @@ typedef struct Camera  {
 	 */
 	Mat4 view;
 
-	Mat4 model;
 } Camera;
 
 /* Create a new camera and set the position */
-Camera *camCreate(int fx, int fy, int fz, float px, float py, float pz);
+Camera *camCreate(float aov, float asp, float near, float far);
 
 /* Destroy a camera */
 void camDestroy(Camera *cam);
@@ -77,22 +99,26 @@ Mat4 camGetView(Camera *cam);
 /* Get the position of the camera */
 Vec3 camGetPos(Camera *cam);
 
-Mat4 camGetModel(Camera *cam);
-
 /* Get the direction the camera is looking */
 Vec3 camGetDir(Camera *cam);
 
 /* Change the rotation of the camera */
 void camMouseMoved(Camera *cam, int delx, int dely);
 
+/* Adjust the zoom of the camera */
 void camZoom(Camera *cam, int val);
 
 void movcam(Camera *cam, Direction dir);
 
-/* Calculate a view matrix */
-Mat4 lookAt(Vec3 from, Vec3 to);
+/* Update the position of a camera */
+void camUpdPos(Camera *cam);
 
 /* Create a new projection matrix */
-void setProjMat(float aov, float asp, float near, float far, Mat4 m);
+void camSetProjMat(Camera* cam, float aov, float asp, 
+		float near, float far);
+
+/* Create a new view-matrix */
+void camSetViewMat(Camera *cam, float fx, float fy, float fz, 
+		float px, float py, float pz);
 
 #endif

@@ -25,14 +25,6 @@ typedef struct World {
 
 	float *heightmap;
 
-	GLuint vao;
-	GLuint vbo;
-	GLuint ebo;
-	GLuint cbo;
-	int indlen;
-
-	Shader *shd;
-
 	Model *model;
 } World;
 

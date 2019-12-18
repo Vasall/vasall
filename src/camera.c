@@ -4,25 +4,23 @@
 
 #include "camera.h"
 
-void setViewMat(float tx, float ty, float tz, float px, float py, float pz, Mat4 m);
-
 /*
  * Create a new camera and initialize the
  * values of the struct with the default
  * settings and set the position of the
  * camera.
  *
- * @x: The x-position of the camera
- * @y: The y-position of the camera
- * @z: The z-position of the camera
- * 
+ * @aov: The angle of view
+ * @asp: The current aspect ratio
+ * @near: The near-limit
+ * @far: The far-limit
+ *
  * Returns: Either the pointer to the created
  * 	camera-struct or null
  */
-Camera *camCreate(int fx, int fy, int fz, float px, float py, float pz)
+Camera *camCreate(float aov, float asp, float near, float far)
 {
-	float delx, dely, delz;
-	Vec3 del;
+ 	Vec3 del;
 
 	/* Initialize the camera-struct */
 	Camera *cam;
@@ -33,20 +31,17 @@ Camera *camCreate(int fx, int fy, int fz, float px, float py, float pz)
 	}
 
 	/* Set the position of the target */
-	cam->trg.x = fx;
-	cam->trg.y = fy;
-	cam->trg.z = fz;
+	cam->trg.x = 0;
+	cam->trg.y = 0;
+	cam->trg.z = 0;
 
 	/* Set the position of the camera */
-	cam->pos.x = px;
-	cam->pos.y = py;
-	cam->pos.z = pz;
+	cam->pos.x = 1.0;
+	cam->pos.y = 1.0;
+	cam->pos.z = 1.0;
 
 	/* Get the connecting vector between the camera and the target */
-	delx = px - fx;
-	dely = py - fy;
-	delz = pz - fz;
-	del = vecCreate(delx, dely, delz);
+	del = vecSubRet(cam->pos, cam->trg);
 
 	/* The normalized direction vector from the target to the camera */
 	cam->dir = vecNrmRet(del);
@@ -59,15 +54,12 @@ Camera *camCreate(int fx, int fy, int fz, float px, float py, float pz)
 
 	/* Create the projection matrix */
 	cam->proj = mat4Idt();
-	setProjMat(45.0, (float)(800.0 / 600.0), 0.1, 1000.0, cam->proj);	
+	camSetProjMat(cam, aov, asp, near, far);
 
 	/* Create the view-matrix */
 	cam->view = mat4Idt();
-	setViewMat(fx, fy, fz, px, py, pz, cam->view);
+	camSetViewMat(cam, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0);
 
-	/* TODO: Move the model matrix to the models */
-	cam->model = mat4Idt();	
-	
 	return(cam);
 }
 
@@ -107,11 +99,6 @@ Mat4 camGetProj(Camera *cam)
 Mat4 camGetView(Camera *cam)
 {
 	return(cam->view);
-}
-
-Mat4 camGetModel(Camera *cam)
-{
-	return(cam->model);
 }
 
 /* 
@@ -181,17 +168,20 @@ void camMouseMoved(Camera *cam, int delx, int dely)
 	}
 }
 
+/*
+ * Change the zoom of the camera,
+ * when scrolling. This function
+ * will then also reposition the 
+ * camera and update the view-matrix.
+ *
+ * @cam: Pointer to the camera to modify
+ * @val: The scrolling-value
+ */
 void camZoom(Camera *cam, int val)
 {
-	Vec3 vec;
-	/* Calculate rotations (need to move in direction we're pointing) */
-	vec.x = -sin(cam->rot.y * TO_RADS);
-	vec.z = cos(cam->rot.y * TO_RADS);
-	vec.y = sin(cam->rot.x * TO_RADS);
+	cam->dist += val;
 
-	vecNrm(&vec);
-	vecScl(&vec, val);
-	vecAdd(&cam->pos, vec);
+	camUpdPos(cam);
 }
 
 
@@ -235,54 +225,104 @@ void movcam(Camera *cam, Direction dir)
 	cam->pos.z += (movementVec.z / movVecLen) * 2;
 }
 
-void setProjMat(float aov, float asp, float near, float far, Mat4 m)
+/* 
+ * Update the position of a camera.
+ *
+ * @cam: Pointer to the camera to modify
+*/
+void camUpdPos(Camera *cam)
+{
+	cam->pos = vecSclRet(cam->dir, cam->dist);
+
+	camSetViewMat(cam, 
+			cam->trg.x, cam->trg.y, cam->trg.z, 
+			cam->pos.x, cam->pos.y, cam->pos.z);
+}
+
+/*
+ * Create a new projection-matrix and
+ * write the result into the given
+ * matrix.
+ *
+ * @cam: The camera to modify
+ * @aov: Angle of view in degree
+ * @asp: The aspect ratio of the window
+ * @near: The near-limit
+ * @far: The far-limit
+ * @m: the matrix to write the result to
+ */
+void camSetProjMat(Camera *cam, float aov, float asp, float near, 
+		float far)
 {
 	float bottom, top, left, right, tangent;
+
+	cam->aov = aov;
+	cam->asp = asp;
+	cam->near = near;
+	cam->far = far;
 
 	tangent = near * tan(aov * 0.5 * M_PI / 180);
 
 	top = tangent;
 	bottom = -top;
 	right = top * asp;
-       	left = -right; 
+	left = -right; 
 
-	m[0x0] = (2 * near) / (right - left);
-	m[0x5] = (2 * near) / (top - bottom); 	
-	m[0x8] = (right + left) / (right - left); 
-	m[0x9] = (top + bottom) / (top - bottom); 
-	m[0xa] = -(far + near) / (far - near); 
-	m[0xb] = -1; 
-	m[0xe] = (-2 * far * near) / (far - near); 
-	m[0xf] = 0;
+	cam->proj[0x0] = (2 * near) / (right - left);
+	cam->proj[0x5] = (2 * near) / (top - bottom); 	
+	cam->proj[0x8] = (right + left) / (right - left); 
+	cam->proj[0x9] = (top + bottom) / (top - bottom); 
+	cam->proj[0xa] = -(far + near) / (far - near); 
+	cam->proj[0xb] = -1; 
+	cam->proj[0xe] = (-2 * far * near) / (far - near); 
+	cam->proj[0xf] = 0;
 
 }
 
-void setViewMat(float fx, float fy, float fz, float px, float py, float pz, Mat4 m)
+/*
+ * Create a view-matrix and write the
+ * result into the specified vector.
+ *
+ * @cam: The camera to modify
+ * @fx: The x-position of the target
+ * @fy: The y-position of the target
+ * @fz: The z-posiiton of the target
+ * @px: The x-position of the camera
+ * @py: The y-position of the camera
+ * @pz: The z-position of the camera
+ * @m: The 4x4 matrix to write the result to
+ */
+void camSetViewMat(Camera *cam, float fx, float fy, float fz, 
+		float px, float py, float pz)
 {
-	Vec3 pos, trg, tmp, forw, left, up;
-	
+	Vec3 pos, trg, del, tmp, forw, left, up;
+
 	tmp = vecCreate(0.0, 1.0, 0.0);
 
-	trg = vecCreate(fx, fy, fz);
-	pos = vecCreate(px, py, pz);
+	cam->trg = trg = vecCreate(fx, fy, fz);
+	cam->pos = pos = vecCreate(px, py, pz);
+
+	del = vecSubRet(cam->pos, cam->trg);
+	cam->dir = vecNrmRet(del);
+	cam->dist = vecMag(del);
 
 	forw = vecNrmRet(vecSubRet(pos, trg));
 	left = vecNrmRet(vecCross(vecNrmRet(tmp), forw));
 	up = vecCross(forw, left);
 
-	m[0x0] = left.x;
-	m[0x4] = left.y;
-	m[0x8] = left.z;
+	cam->view[0x0] = left.x;
+	cam->view[0x4] = left.y;
+	cam->view[0x8] = left.z;
 
-	m[0x1] = up.x;
-	m[0x5] = up.y;
-	m[0x9] = up.z;
+	cam->view[0x1] = up.x;
+	cam->view[0x5] = up.y;
+	cam->view[0x9] = up.z;
 
-	m[0x2] = forw.x;
-	m[0x6] = forw.y;
-	m[0xa] = forw.z;
+	cam->view[0x2] = forw.x;
+	cam->view[0x6] = forw.y;
+	cam->view[0xa] = forw.z;
 
-	m[0xc]= -left.x * pos.x - left.y * pos.y - left.z * pos.z;
-	m[0xd]= -up.x * pos.x - up.y * pos.y - up.z * pos.z;
-	m[0xe]= -forw.x * pos.x - forw.y * pos.y - forw.z * pos.z;
+	cam->view[0xc]= -left.x * pos.x - left.y * pos.y - left.z * pos.z;
+	cam->view[0xd]= -up.x * pos.x - up.y * pos.y - up.z * pos.z;
+	cam->view[0xe]= -forw.x * pos.x - forw.y * pos.y - forw.z * pos.z;
 }

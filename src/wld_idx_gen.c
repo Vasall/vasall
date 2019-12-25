@@ -1,68 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "world_indexgen.h"
+#include "wld_idx_gen.h"
 #include "stdutil.h"
-
-/* 
- * Generate an array containing indices for all
- * buffers.
- */
-unsigned int *genIdxBuf(int num, int *len)
-{
-	int idxc = ((num - 1) * (num - 1)) * 6;
-	int ptr, col, row;
-	unsigned int *idxbuf = malloc(idxc * sizeof(unsigned int));
-
-	*len = idxc;
-
-	ptr = 0;
-	for(col = 0; col < num - 1; col++) {
-		for(row = 0; row < num - 1; row++) {
-			uint32_t topLeft = twodim(col, row, num);
-			uint32_t topRight = twodim(col + 1, row, num);
-			uint32_t bottomLeft = twodim(col, row + 1, num);
-			uint32_t bottomRight = twodim(col + 1, row + 1, num);
-
-			if(row % 2 == 0) {
-				ptr = storeQuad1(idxbuf, ptr, 
-						topLeft, topRight,
-						bottomLeft, bottomRight,
-						col % 2 == 0);
-			}
-			else {
-				ptr = storeQuad2(idxbuf, ptr,
-						topLeft, topRight,
-						bottomLeft, bottomRight,
-						col % 2 == 0);
-			}
-		}
-	}
-
-	return(idxbuf);
-}
-
-int storeQuad1(uint32_t *idxbuf, int ptr, uint32_t tl, uint32_t tr, 
-		uint32_t bl, uint32_t br, int8_t mixed) {
-	idxbuf[ptr++] = tl;
-	idxbuf[ptr++] = bl;
-	idxbuf[ptr++] = mixed ? tr : br;
-	idxbuf[ptr++] = br;
-	idxbuf[ptr++] = tr;
-	idxbuf[ptr++] = mixed ? bl : tl;
-	return(ptr);
-}
-
-int storeQuad2(uint32_t *idxbuf, int ptr, uint32_t tl, uint32_t tr, 
-		uint32_t bl, uint32_t br, int8_t mixed) {
-	idxbuf[ptr++] = tr;
-	idxbuf[ptr++] = tl;
-	idxbuf[ptr++] = mixed ? br : bl;
-	idxbuf[ptr++] = bl;
-	idxbuf[ptr++] = br;
-	idxbuf[ptr++] = mixed ? tl : tr;
-	return (ptr);
-}
 
 int calculateVertexCount(int vtxnum) {
 	int bottom2Rows = 2 * vtxnum;

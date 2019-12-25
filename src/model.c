@@ -157,6 +157,54 @@ void mdlAttachColBuf(Model *mdl, ColorRGB *colbuf, int collen)
 	glBindVertexArray(0);
 }
 
+
+/* 
+ * Attach a new buffer to the model and 
+ * if specified enable the buffer.
+ *
+ * @mdl: Pointer to the model
+ * @buf: The buffer to insert
+ * @elsize: The size of one element in the buffer
+ * @num: The number of elements in the buffer
+ * @en: Should the buffer be bound
+*/
+void mdlAttachBuf(Model *mdl, void *buf, int elsize, int num, int8_t en)
+{
+	uint32_t bao;
+
+	/* Bind vertex-array-object */
+	glBindVertexArray(mdl->vao);
+
+	/* Create a buffer-array-object */
+	glGenBuffers(1, &bao);
+
+	/* Copy our color attay in a different one for OpenGL to use */
+	glBindBuffer(GL_ARRAY_BUFFER, bao);
+	glBufferData(GL_ARRAY_BUFFER, num * elsize, buf, GL_STATIC_DRAW);
+
+	if(en) {
+		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	}
+
+	/* Unbind vao */
+	glBindVertexArray(0);
+
+}
+
+/* 
+ * Calculate the normal-vectors 
+ * for the model and create a new
+ * buffer-object.
+ *
+ * @mdl: Pointer to the model to 
+ * 	calculate the normals for 
+*/
+void mdlCalcNormals(Model *mdl)
+{
+	if(mdl) {}
+}
+
+
 /*
  * Render a model.
  *
@@ -176,6 +224,7 @@ void mdlRender(Model *mdl)
 	glUseProgram(mdl->shader->prog);
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
 
 	model = glGetUniformLocation(mdl->shader->prog, "model");
 	if(model == -1) {printf("model!!\n"); exit(1);}

@@ -10,7 +10,7 @@
 #include "shader.h"
 #include "loader.h"
 #include "../enud/enud.h"
-#include "world_indexgen.h"
+#include "wld_idx_gen.h"
 
 float delF = 0.0;
 
@@ -77,10 +77,11 @@ void wldDestroy(World *world)
  */
 int wldGenTerrain(World *world)
 {   
-	int vtxnum, x, z, w, idx, j, i;
+	int vtxnum, x, z, w, idx, i, j;
 	float **hImg, *heights, xpos, zpos;
 	Vertex *vertices, *lastRow;
 	ColorRGB *colors;
+	Vec3 *normals;
 	uint32_t *indices;
 	int indlen;
 	Model *mdl;
@@ -105,6 +106,13 @@ int wldGenTerrain(World *world)
 		return(-1);
 	}
 
+	/* Create an array for all normal-vectors */
+	normals = malloc(vtxnum * sizeof(Vec3));
+	if(normals == NULL) {
+		printf("Failed to allocate space for colors.\n");
+		return(-1);
+	}
+
 	hImg = loadPPMHeightmap("../res/images/heightmap_256.ppm", 1, 256);
 	heights = world->heights;
 	for(x = 0; x < world->xsize; x++) {
@@ -117,7 +125,7 @@ int wldGenTerrain(World *world)
 	lastRow = malloc((world->xsize - 1) * sizeof(Vertex) * 2);
 
 	/* Iterate over all points in the heightmap */
-	i = 0;
+	idx = 0;
 	for(z = 0; z < world->zsize - 1; z++) {
 		for(x = 0; x < world->xsize - 1; x++) {
 			Vertex ctl, ctr, cbl, cbr;
@@ -142,12 +150,12 @@ int wldGenTerrain(World *world)
 			cbr.y = 40.0 * hImg[x + 1][z + 1] + 10.0;
 			cbr.z = zpos + 1.0;
 
-			vertices[i] = ctl;
-			i++;
+			vertices[idx] = ctl;
+			idx++;
 
 			if(z != world->zsize - 2 || x == world->xsize - 2) {	
-				vertices[i] = ctr;
-				i++;
+				vertices[idx] = ctr;
+				idx++;
 			}
 
 			if(z == world->zsize - 2) {
@@ -162,15 +170,13 @@ int wldGenTerrain(World *world)
 		Vertex right = lastRow[j * 2 + 1];
 
 		if(left.x == 0 || right.x == 1) {
-			vertices[i] = left;
-			i++;
+			vertices[idx] = left;
+			idx++;
 		}
 
-		vertices[i] = right;
-		i++;
+		vertices[idx] = right;
+		idx++;
 	}
-	printf("vtxnum: %d\n", vtxnum);
-	printf("Finished at %d\n", i);
 
 	indices = generateIndexBuffer(world->xsize, &indlen);
 	if(indices == NULL) {
@@ -178,6 +184,7 @@ int wldGenTerrain(World *world)
 		return(-1);
 	}
 
+	/* Calculate the colors for the vertices */
 	for(j = 0; j < indlen - 2; j += 3) {
 		ColorRGB col;
 		Vertex v, mid = {0.0, 0.0, 0.0};
@@ -217,6 +224,18 @@ int wldGenTerrain(World *world)
 		colors[indices[j]] = col;
 	}
 
+	/* Calculate normal-vectors for all triangles */
+	for(j = 0; j < indlen - 2; j += 3) {
+		Vec3 v1 = vertices[indices[j]];
+		Vec3 v2 = vertices[indices[j + 1]];
+		Vec3 v3 = vertices[indices[j + 2]];
+		Vec3 del1 = vecSubRet(v2, v1);
+		Vec3 del2 = vecSubRet(v2, v3);
+		Vec3 nrm = vecNrmRet(vecCross(del1, del2));
+		
+		normals[indices[j]] = nrm;
+	}
+
 	/* Start creating the model for the terrain */
 	mdl = mdlBegin();
 	if(mdl == NULL) {
@@ -226,12 +245,14 @@ int wldGenTerrain(World *world)
 
 	mdlLoadVtx(mdl, vertices, vtxnum, indices, indlen);
 	mdlAttachColBuf(mdl, colors, vtxnum);
+	mdlAttachBuf(mdl, normals, sizeof(Vec3), vtxnum, 1);
 
 	shdAttachVtx(mdl->shader, "../res/shaders/terrain.vert");
 	shdAttachFrg(mdl->shader, "../res/shaders/terrain.frag");
 
 	glBindAttribLocation(mdl->shader->prog, 0, "vtxPos");
 	glBindAttribLocation(mdl->shader->prog, 1, "vtxCol");
+	glBindAttribLocation(mdl->shader->prog, 2, "vtxNrm");
 
 	/* Finish creating the model for the terrain */
 	if(mdlEnd(mdl) != 0) {
@@ -249,5 +270,5 @@ int wldGenTerrain(World *world)
  */
 void renderTerrain(World *world) 
 {
-	mdlRender(world->model);	
+	mdlRender(world->model);
 }

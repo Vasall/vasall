@@ -4,12 +4,6 @@
 #include <stdio.h>
 #include <stdint.h>
 
-unsigned int *genIdxBuf(int num, int *len);
-int storeQuad1(uint32_t *idxbuf, int ptr, uint32_t tl, uint32_t tr, 
-		uint32_t bl, uint32_t br, int8_t mixed);
-int storeQuad2(uint32_t *idxbuf, int ptr, uint32_t tl, uint32_t tr, 
-		uint32_t bl, uint32_t br, int8_t mixed);
-
 int calculateVertexCount(int vtxnum);
 uint32_t *generateIndexBuffer(int vtxnum, int *idxlen);
 int storeTopSection(uint32_t *indices, int rowlen, int vtxnum);

@@ -10,17 +10,18 @@
 */
 void handle_resize(ENUD_Event *evt)
 {
-	int ratio;
+	double ratio;
 	ENUD_UIContext *ctx = core->uicontext;	
 
 	if(evt){/* Prevent warning for not using evt */}
+	
+	printf("%d/%d\n", ctx->win_w, ctx->win_h);
 
 	/* Update the viewport */
 	glViewport(0, 0, ctx->win_w, ctx->win_h);
 
 	/* Update projection matrix */
-	ratio = ctx->win_w / ctx->win_h;
-	printf("%d/%d\n", ctx->win_w, ctx->win_h);
+	ratio = (double)ctx->win_w / (double)ctx->win_h;
 	camSetProjMat(core->camera, 45.0, ratio, 0.1, 1000.0);
 }
 

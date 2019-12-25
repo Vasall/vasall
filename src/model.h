@@ -94,6 +94,12 @@ void mdlLoadVtx(Model *mdl, Vertex *vtxbuf, int vtxlen,
 /* Attach colors to the model */
 void mdlAttachColBuf(Model *mdl, ColorRGB *colbuf, int collen);
 
+/* Attach a new buffer to the model */
+void mdlAttachBuf(Model *mdl, void *buf, int elsize, int num, int8_t en);
+
+/* Calculate the normal-vectors for the model */
+void mdlCalcNormals(Model *mdl);
+
 /* Render a model */
 void mdlRender(Model *mdl);
 

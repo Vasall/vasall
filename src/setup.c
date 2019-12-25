@@ -1,3 +1,8 @@
+#define GL_GLEXT_PROTOTYPES
+#include <GL/glut.h>
+#include <GL/glext.h>
+#include <GL/gl.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -50,6 +55,8 @@ int initGL(void)
 
 	/* Set clear-color */
 	glClearColor(0.095, 0.095, 0.095, 1.0);
+
+	glProvokingVertex(GL_FIRST_VERTEX_CONVENTION);
 
 	glEnable(GL_DEPTH_TEST);
 

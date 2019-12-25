@@ -18,7 +18,7 @@ CC       = gcc
 # Error flags for compiling
 ERRFLAGS = -Wall -Wall -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wold-style-definition
 # Compiling flags here
-CFLAGS   = -g -O0 -std=c89 -pedantic -I. $(shell pkg-config --cflags --libs sdl2 SDL2_ttf SDL2_image)
+CFLAGS   = -g -O0 -ansi -std=c89 -pedantic -I. $(shell pkg-config --cflags --libs sdl2 SDL2_ttf SDL2_image)
 
 LINKER   = gcc
 # linking flags here

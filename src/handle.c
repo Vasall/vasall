@@ -13,21 +13,15 @@ void handle_resize(ENUD_Event *evt)
 	int ratio;
 	ENUD_UIContext *ctx = core->uicontext;	
 
-	ratio = ctx->win_w / ctx->win_h;
-	printf("%d\n", ratio);
-	
-
 	if(evt){/* Prevent warning for not using evt */}
 
 	/* Update the viewport */
-	/*glViewport(0, 0, ctx->win_w, ctx->win_h);*/
+	glViewport(0, 0, ctx->win_w, ctx->win_h);
 
 	/* Update projection matrix */
-	/*glOrtho(-50 * ratio, 50 * ratio, -50, 50, -200, 200);*/
-	/*glOrtho(-50 * ratio, 50 * ratio, -50, 50, -200, 200);	*/
-	/*glFrustum(-1.0, 1.0, -1.0, 1.0, 1.5, 20.0);*/
-	/*gluPerspective(40, ratio, 0.1, 100);*/
-
+	ratio = ctx->win_w / ctx->win_h;
+	printf("%d/%d\n", ctx->win_w, ctx->win_h);
+	camSetProjMat(core->camera, 45.0, ratio, 0.1, 1000.0);
 }
 
 

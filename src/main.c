@@ -26,16 +26,14 @@ int main(int argc, char **argv)
 	printf("Initialize ENUD-subsystem\n");
 	if(ENUD_Init(ENUD_INIT_EVERYTHING) < 0) {                                                    
 		printf("[!] ENUD could not initialize! (%s)\n", 
-				ENUD_GetError());
+				SDL_GetError());
 		goto exit;
 	}
 	ENUD_ShowVersions();
 
-/*
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-*/
 
 	printf("Initialize core-wrapper\n");
 	if((core = gloCreate()) == NULL) {
@@ -149,7 +147,8 @@ void handle_events(void)
 			break;
 		}
 
-		if(event.type == SDL_KEYDOWN && event.key.keysym.scancode == 20 &&
+		if(event.type == SDL_KEYDOWN && 
+				event.key.keysym.scancode == 20 &&
 				event.key.keysym.mod & KMOD_CTRL) {
 			core->running = 0;
 			break;

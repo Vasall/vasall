@@ -150,6 +150,22 @@ Vec3 vecSclRet(Vec3 v, float f)
 	return(res);
 }
 
+/*
+ * Divide the vector by the given
+ * factor. This function is the
+ * inverse to the scale-procedure.
+ *
+ * @v: The vector to scale
+ * @f: The scaling factor
+ */
+void vecInvScl(Vec3 *v, float f)
+{
+	v->x /= f;
+	v->y /= f;
+	v->z /= f;
+}
+
+
 /* 
  * Get the magnitude of a vector.
  *

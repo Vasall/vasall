@@ -19,11 +19,11 @@ typedef struct Field {
 } Field;
 
 typedef struct World {
-	int width;
-	int height;
-	int size;
+	int xsize;
+	int zsize;
+	int ptnum;
 
-	float *heightmap;
+	float *heights;
 
 	Model *model;
 } World;
@@ -42,8 +42,5 @@ void renderTerrain(World *world);
 
 /* Get the height of the terrain at the given position */
 float getHeight(World *world, float x, float z);
-float *getNormal(World *world, float x, float z);
-
-void calculateFaceNormals(World *world);
 
 #endif

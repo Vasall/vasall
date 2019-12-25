@@ -37,6 +37,9 @@ void vecScl(Vec3 *v, float f);
 /* Scale a vector by a factor and return the result */
 Vec3 vecSclRet(Vec3 v, float f);
 
+/* Divide the vector by the factor */
+void vecInvScl(Vec3 *v, float f);
+
 /* Get the magnitude of a vector and return the result */
 float vecMag(Vec3 v);
 

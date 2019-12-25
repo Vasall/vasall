@@ -1,4 +1,4 @@
-#version 130
+#version 330 core
 
 in vec3 vtxPos;
 in vec3 vtxCol;
@@ -7,7 +7,7 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;
 
-out vec4 color;
+flat out vec4 color;
 
 void main()
 {

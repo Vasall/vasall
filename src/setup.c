@@ -54,7 +54,7 @@ int initGL(void)
 	}
 
 	/* Set clear-color */
-	glClearColor(0.095, 0.095, 0.095, 1.0);
+	glClearColor(1.0, 1.0, 1.0, 1.0);
 
 	glProvokingVertex(GL_FIRST_VERTEX_CONVENTION);
 

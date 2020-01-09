@@ -36,9 +36,9 @@ Camera *camCreate(float aov, float asp, float near, float far)
 	cam->trg.z = 0;
 
 	/* Set the position of the camera */
-	cam->pos.x = 1.0;
+	cam->pos.x = 0.0;
 	cam->pos.y = 1.0;
-	cam->pos.z = 1.0;
+	cam->pos.z = 0.0;
 
 	/* Get the connecting vector between the camera and the target */
 	del = vecSubRet(cam->pos, cam->trg);
@@ -179,50 +179,57 @@ void camMouseMoved(Camera *cam, int delx, int dely)
  */
 void camZoom(Camera *cam, int val)
 {
-	cam->dist += val;
+	/*cam->dist += val;*/
+	
+	camMov(cam, vecSclRet(cam->dir, val), 0);
+	cam->dist += vecMag(cam->dir) * val;
 
 	camUpdPos(cam);
 }
 
 
-void camMovDir(Camera *cam, Direction dir) 
+void camMovDir(Camera *cam, Direction dir, int mov_trg) 
 {
 	/* Vector to add to our position */
 	Vec3 movVec = {0, 0, 0};
 
 	Vec3 up = vecCreate(0.0, 1.0, 0.0);
 	Vec3 forward = vecCreate(cam->dir.x, 0.0, cam->dir.z);
-	Vec3 right = vecCross(up, forward);
+	Vec3 left = vecCross(up, forward);
 	
 	vecNrm(&forward);
 	/* XXX When norming forward before the cross product we don't
 	 * need to norm 'right' vector */
-	vecNrm(&right);
+	vecNrm(&left);
 
 	/* UP and DOWN not yet implemented */
 
 	switch(dir) {
 		case FORWARD:
-			movVec = forward;
-			break;
-		case BACK:
 			movVec = vecSclRet(forward, -1.0);
 			break;
+		case BACK:
+			movVec = forward;
+			break;
 		case RIGHT:
-			movVec = right;
+			movVec = left;
 			break;
 		case LEFT:
-			movVec = vecSclRet(right, -1.0);
+			movVec = vecSclRet(left, -1.0);
 			break;
 		default:
 			break;
 	}
 
-	movcam(cam, movVec);
+	camMov(cam, movVec, mov_trg);
 }
 
-void camMov(Camera *cam, Vec3 mov) {
+void camMov(Camera *cam, Vec3 mov, int mov_trg) {
 	vecAdd(&cam->pos, mov);
+	
+	if(mov_trg)
+		vecAdd(&cam->trg, mov);
+
 	camUpdPos(cam);
 }
 
@@ -233,8 +240,6 @@ void camMov(Camera *cam, Vec3 mov) {
 */
 void camUpdPos(Camera *cam)
 {
-	cam->pos = vecSclRet(cam->dir, cam->dist);
-
 	camSetViewMat(cam, 
 			cam->trg.x, cam->trg.y, cam->trg.z, 
 			cam->pos.x, cam->pos.y, cam->pos.z);

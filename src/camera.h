@@ -108,9 +108,9 @@ void camMouseMoved(Camera *cam, int delx, int dely);
 /* Adjust the zoom of the camera */
 void camZoom(Camera *cam, int val);
 
-void camMovDir(Camera *cam, Direction dir);
+void camMovDir(Camera *cam, Direction dir, int mov_trg);
 
-void camMov(Camera *cam, Vec3 mov);
+void camMov(Camera *cam, Vec3 mov, int mov_trg);
 
 /* Update the position of a camera */
 void camUpdPos(Camera *cam);

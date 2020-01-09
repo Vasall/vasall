@@ -185,44 +185,45 @@ void camZoom(Camera *cam, int val)
 }
 
 
-void movcam(Camera *cam, Direction dir) 
+void camMovDir(Camera *cam, Direction dir) 
 {
 	/* Vector to add to our position */
-	Vec3 movementVec = {0, 0, 0};
+	Vec3 movVec = {0, 0, 0};
 
-	/* Calculate rotations (need to move in direction we're pointing) */
-	float cosXRot = cos(cam->rot.x * TO_RADS);
-	float sinYRot = sin(cam->rot.y * TO_RADS);
-	float cosYRot = cos(cam->rot.y * TO_RADS);
+	Vec3 up = vecCreate(0.0, 1.0, 0.0);
+	Vec3 forward = vecCreate(cam->dir.x, 0.0, cam->dir.z);
+	Vec3 right = vecCross(up, forward);
+	
+	vecNrm(&forward);
+	/* XXX When norming forward before the cross product we don't
+	 * need to norm 'right' vector */
+	vecNrm(&right);
 
-	float movVecLen;
+	/* UP and DOWN not yet implemented */
 
-	/* Move camera */
-	if (dir == FORWARD) {
-		movementVec.x += sinYRot * cosXRot;
-		movementVec.z += -cosYRot * cosXRot;
+	switch(dir) {
+		case FORWARD:
+			movVec = forward;
+			break;
+		case BACK:
+			movVec = vecSclRet(forward, -1.0);
+			break;
+		case RIGHT:
+			movVec = right;
+			break;
+		case LEFT:
+			movVec = vecSclRet(right, -1.0);
+			break;
+		default:
+			break;
 	}
-	else if (dir == BACK) {
-		movementVec.x += -sinYRot * cosXRot;
-		movementVec.z += cosYRot * cosXRot;
-	}
-	else if (dir == LEFT) {
-		movementVec.x += -cosYRot;
-		movementVec.z += -sinYRot;
-	}
-	else if (dir == RIGHT) {
-		movementVec.x += cosYRot;
-		movementVec.z += sinYRot;
-	}
 
-	/* Calculate length of vector */
-	movVecLen = (float)sqrt(movementVec.x * movementVec.x + 
-			movementVec.y * movementVec.y +
-			movementVec.z * movementVec.z);
+	movcam(cam, movVec);
+}
 
-	/* Normalize vector */
-	cam->pos.x += (movementVec.x / movVecLen) * 2;
-	cam->pos.z += (movementVec.z / movVecLen) * 2;
+void camMov(Camera *cam, Vec3 mov) {
+	vecAdd(&cam->pos, mov);
+	camUpdPos(cam);
 }
 
 /* 

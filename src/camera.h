@@ -2,7 +2,7 @@
 #define _CAMERA_H_
 
 #include "vec.h"
-#include "../enud/enud.h"
+#include "../XSDL/xsdl.h"
 
 typedef enum {LEFT, RIGHT, FORWARD, BACK} Direction;
 

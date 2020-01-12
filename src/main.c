@@ -5,10 +5,10 @@
 #include <unistd.h>
 #include <limits.h>
 
-#define ENUD_IMPLEMENTATION
-#define ENUD_DEFINE_LIB
-#define ENUD_DEFINE_ONCE
-#include "../enud/enud.h"
+#define XSDL_IMPLEMENTATION
+#define XSDL_DEFINE_LIB
+#define XSDL_DEFINE_ONCE
+#include "../XSDL/xsdl.h"
 #include "global.h"
 #include "setup.h"
 #include "handle.h"
@@ -23,13 +23,13 @@ int main(int argc, char **argv)
 {
 	if(argc){/* Prevent warning for not using argc */}
 
-	printf("Initialize ENUD-subsystem\n");
-	if(ENUD_Init(ENUD_INIT_EVERYTHING) < 0) {                                                    
-		printf("[!] ENUD could not initialize! (%s)\n", 
+	printf("Initialize XSDL-subsystem\n");
+	if(XSDL_Init(XSDL_INIT_EVERYTHING) < 0) {                                                    
+		printf("[!] XSDL could not initialize! (%s)\n", 
 				SDL_GetError());
 		goto exit;
 	}
-	ENUD_ShowVersions();
+	XSDL_ShowVersions();
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
@@ -44,7 +44,7 @@ int main(int argc, char **argv)
 	printf("Initialize window\n");
 	if((core->window = initWindow()) == NULL) {
 		printf("[!] Failed to create window! (%s)\n", 
-				ENUD_GetError());
+				XSDL_GetError());
 		goto cleanup_core;
 	}
 
@@ -56,13 +56,13 @@ int main(int argc, char **argv)
 	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
 
 	printf("Initialize UI-context\n");
-	if((core->uicontext = ENUD_CreateUIContext(core->window)) == NULL) {
+	if((core->uicontext = XSDL_CreateUIContext(core->window)) == NULL) {
 		printf("[!] Failed to setup ui-context.\n");
 		goto cleanup_gl;
 	}
 	core->uiroot = core->uicontext->root;
 
-	core->bindir = ENUD_GetBinDir(argv[0]);
+	core->bindir = XSDL_GetBinDir(argv[0]);
 
 	printf("Load resources\n");
 	if(loadResources() < 0) {
@@ -106,25 +106,25 @@ int main(int argc, char **argv)
 
 	wldDestroy(core->world);
 
-	ENUD_ClearFontCache();
+	XSDL_ClearFontCache();
 
 cleanup_camera:
 	camDestroy(core->camera);
 
 cleanup_ui:
-	ENUD_DeleteUIContext(core->uicontext);
+	XSDL_DeleteUIContext(core->uicontext);
 
 cleanup_gl:
-	ENUD_GL_DeleteContext(core->glcontext);
+	XSDL_GL_DeleteContext(core->glcontext);
 
 cleanup_window:
-	ENUD_DestroyWindow(core->window);
+	XSDL_DestroyWindow(core->window);
 
 cleanup_core:
 	gloDestroy(core);
 
 cleanup_enud:
-	ENUD_Quit();
+	XSDL_Quit();
 
 exit:
 	return(0);
@@ -139,11 +139,11 @@ exit:
  */
 void handle_events(void)
 {
-	ENUD_Event event;
+	XSDL_Event event;
 	int mod_ctrl, mod_shift;
 
-	while(ENUD_PollEvent(&event)) {
-		if(event.type == ENUD_QUIT) {
+	while(XSDL_PollEvent(&event)) {
+		if(event.type == XSDL_QUIT) {
 			core->running = 0;
 			break;
 		}
@@ -178,14 +178,14 @@ void handle_events(void)
 		}
 
 		/* Process interactions with the UI */
-		if(ENUD_ProcEvent(core->uicontext, &event) > -1) {
+		if(XSDL_ProcEvent(core->uicontext, &event) > -1) {
 			/* Skip, as the user interacted with the UI */
 			continue;
 		}
 
-		if(event.type == ENUD_WINDOWEVENT) {
+		if(event.type == XSDL_WINDOWEVENT) {
 			switch(event.window.event) {
-				case(ENUD_WINDOWEVENT_RESIZED):
+				case(XSDL_WINDOWEVENT_RESIZED):
 					handle_resize(&event);
 					break;
 			}
@@ -227,7 +227,7 @@ void render(void)
 		core->render();
 	}
 
-	/* ENUD_RenderPipe(core->uicontext); */
+	/* XSDL_RenderPipe(core->uicontext); */
 
-	ENUD_GL_SwapWindow(core->window);
+	XSDL_GL_SwapWindow(core->window);
 }

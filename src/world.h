@@ -2,7 +2,7 @@
 #define _WORLD_H_
 
 #include "model.h"
-#include "../enud/enud.h"
+#include "../XSDL/xsdl.h"
 
 #define WORLD_SIZE 256
 

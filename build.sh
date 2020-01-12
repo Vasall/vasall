@@ -6,14 +6,14 @@ DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 OBJ_DIR="${DIR}/obj"
 BIN_DIR="${DIR}/bin"
 
-echo "Check enud-lib."
- if [ ! -d "${DIR}/enud" ]; then
-	echo "Failed to find enud-lib."
-	echo "Run this command: git clone https://github.com/Vasall/enud.git"
+echo "Check XSDL-lib."
+ if [ ! -d "${DIR}/XSDL" ]; then
+	echo "Failed to find XSDL-lib."
+	echo "Run this command: git clone https://github.com/enudstudios/XSDL.git"
 	exit -1
 else 
-	echo "Found enud-lib."
-	bash "${DIR}/enud/build.sh"
+	echo "Found XSDL-lib."
+	bash "${DIR}/XSDL/build.sh"
 fi
 
 echo "Check object-dir."

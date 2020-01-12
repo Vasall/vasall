@@ -9,7 +9,6 @@
 #include "stdutil.h"
 #include "shader.h"
 #include "loader.h"
-#include "../enud/enud.h"
 #include "wld_idx_gen.h"
 
 float delF = 0.0;

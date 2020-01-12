@@ -10,7 +10,7 @@
 
 #include "shader.h"
 #include "global.h"
-#include "../enud/enud.h"
+#include "../XSDL/xsdl.h"
 
 char* filetobuf(char *file);
 
@@ -61,7 +61,7 @@ Shader *shdCreate(char *vtx_shd, char *frg_shd)
 	shd->prog = glCreateProgram();
 
 	if(vtx_shd != NULL) {
-		ENUD_CombinePath(path, core->bindir, vtx_shd);
+		XSDL_CombinePath(path, core->bindir, vtx_shd);
 		vtxsrc = filetobuf(path);
 		if(vtxsrc != NULL) {
 			shd->vshdr = glCreateShader(GL_VERTEX_SHADER);
@@ -86,7 +86,7 @@ Shader *shdCreate(char *vtx_shd, char *frg_shd)
 	}
 
 	if(frg_shd != NULL) {
-		ENUD_CombinePath(path, core->bindir, frg_shd);
+		XSDL_CombinePath(path, core->bindir, frg_shd);
 		frgsrc = filetobuf(path);
 		if(frgsrc != NULL) {
 			shd->fshdr = glCreateShader(GL_FRAGMENT_SHADER);
@@ -165,7 +165,7 @@ void shdAttachVtx(Shader *shd, char *pth)
 	int success;
 	char path[512], *vtxsrc, infoLog[512];
 
-	ENUD_CombinePath(path, core->bindir, pth);
+	XSDL_CombinePath(path, core->bindir, pth);
 	vtxsrc = filetobuf(path);
 	if(vtxsrc != NULL) {
 		shd->vshdr = glCreateShader(GL_VERTEX_SHADER);
@@ -204,7 +204,7 @@ void shdAttachFrg(Shader *shd, char *pth)
 	char path[512], infoLog[512], *frgsrc;
 
 
-	ENUD_CombinePath(path, core->bindir, pth);
+	XSDL_CombinePath(path, core->bindir, pth);
 	frgsrc = filetobuf(path);
 	if(frgsrc != NULL) {
 		shd->fshdr = glCreateShader(GL_FRAGMENT_SHADER);

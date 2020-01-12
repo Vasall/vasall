@@ -1,12 +1,12 @@
 #ifndef VASALL_SETUP_H
 #define VASALL_SETUP_H
 
-#include "../enud/enud.h"
+#include "../XSDL/xsdl.h"
 
-void try_login(ENUD_Node *n, ENUD_Event *e);
+void try_login(XSDL_Node *n, XSDL_Event *e);
 
 /* Create and configure the window */
-ENUD_Window *initWindow(void);
+XSDL_Window *initWindow(void);
 
 /* Initialize OpenGL */
 int initGL(void);

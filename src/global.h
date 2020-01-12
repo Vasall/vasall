@@ -1,7 +1,7 @@
 #ifndef _GLOBAL_H_
 #define _GLOBAL_H_
 
-#include "../enud/enud.h"
+#include "../XSDL/xsdl.h"
 #include "camera.h"
 #include "world.h"
 
@@ -18,30 +18,30 @@ typedef struct gloWrapper {
 	 * which represents the created
 	 * window itself.
 	*/
-	ENUD_Window *window;
+	XSDL_Window *window;
 
 	/*
 	 * Pointer to the OpenGL-context,
 	 * which is used for rendering
 	 * both by the client and the
-	 * ENUD-subsystem.
+	 * XSDL-subsystem.
 	*/
-	ENUD_GLContext glcontext;
+	XSDL_GLContext glcontext;
 
 	/*
 	 * Pointer to the UI-context
-	 * created by the ENUD-subsystem.
+	 * created by the XSDL-subsystem.
 	 * This struct is used to manage
 	 * the userinterface.
 	*/
-	ENUD_UIContext *uicontext;
+	XSDL_UIContext *uicontext;
 
 	/*
 	 * This is just a shortcut to the
 	 * root node in the node-tree of the
 	 * previously declared ui-context.
 	*/
-	ENUD_Node *uiroot;
+	XSDL_Node *uiroot;
 
 	/*
 	 * Pointer to the camera, which is
@@ -81,7 +81,7 @@ typedef struct gloWrapper {
 	 * this function whenever the user
 	 * input something.
 	*/
-	void (*procevt)(ENUD_Event *e);
+	void (*procevt)(XSDL_Event *e);
 
 	/*
 	 * This is the callback-function to

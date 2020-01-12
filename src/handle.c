@@ -1,5 +1,5 @@
 #include "handle.h"
-#include "../enud/enud.h"
+#include "../XSDL/xsdl.h"
 
 /*
  * This function is used as a
@@ -8,10 +8,10 @@
  *
  * @evt: A pointer to the event
 */
-void handle_resize(ENUD_Event *evt)
+void handle_resize(XSDL_Event *evt)
 {
 	double ratio;
-	ENUD_UIContext *ctx = core->uicontext;	
+	XSDL_UIContext *ctx = core->uicontext;	
 
 	if(evt){/* Prevent warning for not using evt */}
 	
@@ -26,7 +26,7 @@ void handle_resize(ENUD_Event *evt)
 }
 
 
-void menu_procevt(ENUD_Event *evt)
+void menu_procevt(XSDL_Event *evt)
 {
 	if(evt){/* Prevent warning for not using evt */}
 }
@@ -35,10 +35,10 @@ void menu_update(void)
 {
 }
 
-void game_procevt(ENUD_Event *evt)
+void game_procevt(XSDL_Event *evt)
 {
 	switch(evt->type) {
-		case(ENUD_MOUSEMOTION):
+		case(XSDL_MOUSEMOTION):
 			if(SDL_GetMouseState(NULL, NULL) & 
 					SDL_BUTTON(SDL_BUTTON_LEFT)) {
 				camMouseMoved(core->camera, 
@@ -51,7 +51,7 @@ void game_procevt(ENUD_Event *evt)
 			}
 			break;
 
-		case(ENUD_MOUSEWHEEL):
+		case(XSDL_MOUSEWHEEL):
 			camZoom(core->camera, evt->wheel.y);
 			break;
 	}

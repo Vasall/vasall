@@ -4,7 +4,7 @@
 
 #include "loader.h"
 #include "global.h"
-#include "../enud/enud.h"
+#include "../XSDL/xsdl.h"
 
 GLubyte* loadPPM(char* fileName, int8_t pathRelative, 
 	int* width, int* height)
@@ -24,7 +24,7 @@ GLubyte* loadPPM(char* fileName, int8_t pathRelative,
 
 	strcpy(path, fileName);
 	if (pathRelative) {
-		ENUD_CombinePath(path, core->bindir, fileName);
+		XSDL_CombinePath(path, core->bindir, fileName);
 	}
 
 	/* Open the file in read mode */

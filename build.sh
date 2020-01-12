@@ -7,13 +7,12 @@ OBJ_DIR="${DIR}/obj"
 BIN_DIR="${DIR}/bin"
 
 echo "Check XSDL-lib."
- if [ ! -d "${DIR}/XSDL" ]; then
+ if [ ! -d "${DIR}/submod/XSDL" ]; then
 	echo "Failed to find XSDL-lib."
 	echo "Run this command: git clone https://github.com/enudstudios/XSDL.git"
 	exit -1
 else 
 	echo "Found XSDL-lib."
-	bash "${DIR}/XSDL/build.sh"
 fi
 
 echo "Check object-dir."

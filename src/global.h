@@ -1,7 +1,7 @@
 #ifndef _GLOBAL_H_
 #define _GLOBAL_H_
 
-#include "../XSDL/xsdl.h"
+#include "XSDL/xsdl.h"
 #include "camera.h"
 #include "world.h"
 

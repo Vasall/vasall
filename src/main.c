@@ -8,7 +8,7 @@
 #define XSDL_IMPLEMENTATION
 #define XSDL_DEFINE_LIB
 #define XSDL_DEFINE_ONCE
-#include "../XSDL/xsdl.h"
+#include "XSDL/xsdl.h"
 #include "global.h"
 #include "setup.h"
 #include "handle.h"

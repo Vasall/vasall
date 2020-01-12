@@ -1,7 +1,7 @@
 #ifndef VASALL_SETUP_H
 #define VASALL_SETUP_H
 
-#include "../XSDL/xsdl.h"
+#include "XSDL/xsdl.h"
 
 void try_login(XSDL_Node *n, XSDL_Event *e);
 

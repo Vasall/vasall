@@ -1,40 +1,49 @@
 # ------------------------------------------------
-# Generic Makefile
+# Generic Makefile, capable of including static
+# libraries
 #
-# Author: yanick.rochon@gmail.com
-# Date  : 2011-08-10
+# Modified by:      admin@enudstudios.com        
+# Date:             2020-01-09 
 #
-# Changelog :
-#   2010-11-05 - first version
-#   2011-08-10 - added structure : sources, objects, binaries
-#                thanks to http://stackoverflow.com/users/128940/beta
-#   2017-04-24 - changed order of linker params
+# Original Author:  yanick.rochon@gmail.com
+# Date:             2011-08-10
 # ------------------------------------------------
 
-# project name (generate executable with this name)
-TARGET   = vasall-client
+# Name of the created executable
+TARGET     := vasall-client 
 
-CC       = gcc
+# Get the absolute path to the directory this makefile is in
+MKFILE_PTH := $(abspath $(lastword $(MAKEFILE_LIST)))
+MKFILE_DIR := $(dir $(MKFILE_PTH))
+
+# All subdirectories in the lib-folder
+LIB_PTH    := submod
+LIB_DIRS   := $(sort $(dir $(wildcard $(MKFILE_DIR)$(LIB_PTH)/*/)))
+
+# Set static libararies
+LIBS       :=  
+
+CC         := gcc
 # Error flags for compiling
-ERRFLAGS = -Wall -Wall -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wold-style-definition
+ERRFLAGS   := -Wall -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wold-style-definition
 # Compiling flags here
-CFLAGS   = -g -O0 -ansi -std=c89 -pedantic -I. $(shell pkg-config --cflags --libs sdl2 SDL2_ttf SDL2_image)
+CFLAGS     := -g -O0 -ansi -std=c89 -pedantic -I. -I./$(LIB_PTH)/ \
+       	$(shell pkg-config --cflags --libs sdl2 SDL2_ttf SDL2_image)
 
-LINKER   = gcc
-# linking flags here
-LFLAGS   = -Wall -I. -lm -lGL -lGLU -lglut \
-	   $(shell pkg-config --cflags --libs sdl2 SDL2_ttf SDL2_image)
+LINKER     := gcc
+# Linking flags here
+LFLAGS     := -Wall -I. $(LIBS) -lm -lGL -lGLU -lglut \
+	$(shell pkg-config --cflags --libs sdl2 SDL2_ttf SDL2_image)
+# Change these to proper directories where each file should be
+SRCDIR     := src
+OBJDIR     := obj
+BINDIR     := bin
 
-# change these to proper directories where each file should be
-SRCDIR   = src
-OBJDIR   = obj
-BINDIR   = bin
+SOURCES    := $(wildcard $(SRCDIR)/*.c)
+INCLUDES   := $(wildcard $(SRCDIR)/*.h)
+OBJECTS    := $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
-SOURCES  := $(wildcard $(SRCDIR)/*.c)
-INCLUDES := $(wildcard $(SRCDIR)/*.h)
-OBJECTS  := $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
-rm       = rm -f
-
+rm         := rm -f
 
 $(BINDIR)/$(TARGET): $(OBJECTS)
 	@$(LINKER) $(OBJECTS) $(LFLAGS) -o $@
@@ -43,6 +52,9 @@ $(BINDIR)/$(TARGET): $(OBJECTS)
 $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
 	@$(CC) $(CFLAGS) $(ERRFLAGS) -c $< -o $@
 	@echo "Compiled "$<" successfully!"
+
+subsdirs: $(LIB_DIRS)
+	$(MAKE) --directory=$@
 
 .PHONY: clean
 clean:

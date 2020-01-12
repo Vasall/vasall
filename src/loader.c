@@ -4,7 +4,7 @@
 
 #include "loader.h"
 #include "global.h"
-#include "../XSDL/xsdl.h"
+#include "XSDL/xsdl.h"
 
 GLubyte* loadPPM(char* fileName, int8_t pathRelative, 
 	int* width, int* height)

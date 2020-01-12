@@ -10,7 +10,7 @@
 
 #include "shader.h"
 #include "global.h"
-#include "../XSDL/xsdl.h"
+#include "XSDL/xsdl.h"
 
 char* filetobuf(char *file);
 

@@ -1,5 +1,5 @@
 #include "handle.h"
-#include "../XSDL/xsdl.h"
+#include "XSDL/xsdl.h"
 
 /*
  * This function is used as a

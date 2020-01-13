@@ -19,12 +19,39 @@ typedef struct Field {
 } Field;
 
 typedef struct World {
+	/*
+	 * The x-size and the z-size
+	 * of the world. 
+	 */
 	int xsize;
 	int zsize;
 	int ptnum;
 
+	/*
+	 * The heightmap, containing
+	 * the heights of each vertex
+	 * of the terrain.
+	 */
 	float *heights;
 
+	/*
+	 * The relative position of
+	 * the terrain, which will be
+	 * passed to the model.
+	 */	
+	Vec3 pos;
+
+	/*
+	 * The relative rotation of
+	 * the terrain, which will be
+	 * passed to the model.
+	 */
+	Vec3 rot;
+
+	/*
+	 * The underlying model for
+	 * the terrain.
+	 */
 	Model *model;
 } World;
 

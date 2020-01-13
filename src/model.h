@@ -2,8 +2,16 @@
 #define _MODEL_H_
 
 #include <stdint.h>
+#include "vec.h"
+#include "mat.h"
 #include "shader.h"
 #include "stdutil.h"
+
+#define MESH_OK                  0
+#define MESH_ERR_CREATING       -1
+#define MESH_ERR_ADD_BAO        -2
+#define MESH_ERR_SHADER         -3
+#define MESH_ERR_FINISHING      -4
 
 typedef struct Model {
 	/*
@@ -61,19 +69,31 @@ typedef struct Model {
 	 * The translation-matrix of
 	 * the model.
 	 */
-	Mat4 trans;
+	Mat4 trans_mat;
 		
 	/*
 	 * The rotation-matrix of the
 	 * model.
 	 */
-	Mat4 rot;
+	Mat4 rot_mat;
 
 	/*
 	 * The scaling-matrix of the
 	 * model.
 	 */
-	Mat4 scl;
+	Mat4 scl_mat;
+	
+	/*
+	 * A pointer to the position-vector
+	 * the model should be rendered at.
+	 */
+	Vec3 *pos;
+
+	/*
+	 * A pointer to the rotation-vector
+	 * the model should use for rotation.
+	 */
+	Vec3 *rot;
 
 	/*
 	 * The status of the model.
@@ -82,20 +102,18 @@ typedef struct Model {
 } Model;
 
 /* Start creating a new model and fill struct with default values */
-Model *mdlBegin(void);
+Model *mdlCreate(Vec3 *pos, Vec3 *rot);
 
 /* Finish creating the new model */
-int mdlEnd(Model *mdl);
+int mdlFinish(Model *mdl);
 
 /* Set the vertices and indices of the model */
-void mdlLoadVtx(Model *mdl, Vertex *vtxbuf, int vtxlen, 
-		uint32_t *idxbuf, int idxlen);
-
-/* Attach colors to the model */
-void mdlAttachColBuf(Model *mdl, ColorRGB *colbuf, int collen);
+void mdlSetMesh(Model *mdl, Vertex *vtxbuf, int vtxlen, 
+		uint32_t *idxbuf, int idxlen, uint8_t nrmflg);
 
 /* Attach a new buffer to the model */
-void mdlAttachBuf(Model *mdl, void *buf, int elsize, int num, int8_t en);
+void mdlAddBAO(Model *mdl, void *buf, int elsize, int num, 
+		uint8_t bindflg, uint8_t bindsz);
 
 /* Calculate the normal-vectors for the model */
 void mdlCalcNormals(Model *mdl);
@@ -104,9 +122,9 @@ void mdlCalcNormals(Model *mdl);
 void mdlRender(Model *mdl);
 
 /* Get the model-matrix for rendering */
-Mat4 mdlGetMdlMat(Model *mdl);
+Mat4 mdlGetMatrix(Model *mdl);
 
 /* Set the rotation of a model */
-void mdlSetRot(Model *mdl, float x, float y, float z);
+void mdlSetRot(Model *mdl);
 
 #endif

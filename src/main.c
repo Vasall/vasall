@@ -95,7 +95,7 @@ int main(int argc, char **argv)
 	 * Mark the game as running and
 	 * then proceed to jump into the
 	 * main game-loop. 
-	*/
+	 */
 	core->running = 1;
 	while(core->running) {
 		handle_events();
@@ -140,41 +140,11 @@ exit:
 void handle_events(void)
 {
 	XSDL_Event event;
-	int mod_ctrl, mod_shift;
 
 	while(XSDL_PollEvent(&event)) {
 		if(event.type == XSDL_QUIT) {
 			core->running = 0;
 			break;
-		}
-
-		if(event.type == SDL_KEYDOWN) {
-			if(event.key.keysym.scancode == 20 &&
-					event.key.keysym.mod & KMOD_CTRL) {
-				core->running = 0;
-				break;
-			}
-
-			mod_ctrl = event.key.keysym.mod &
-				(KMOD_LCTRL | KMOD_RCTRL);
-			mod_shift = event.key.keysym.mod & 
-				(KMOD_LSHIFT | KMOD_RSHIFT);
-			switch(event.key.keysym.sym) {
-				case SDLK_w:
-					camMovDir(core->camera, FORWARD, mod_shift);
-					break;
-				case SDLK_s:
-					camMovDir(core->camera, BACK, mod_shift);
-					break;
-				case SDLK_a:
-					camMovDir(core->camera, LEFT, mod_shift);
-					break;
-				case SDLK_d:
-					camMovDir(core->camera, RIGHT, mod_shift);
-					break;
-				default:
-					break;
-			}
 		}
 
 		/* Process interactions with the UI */
@@ -210,7 +180,7 @@ void update(void)
 	}
 
 	/*mdlSetRot(core->world->model, 0.0, f, 0.0);
-	f += 0.1;*/
+	  f += 0.1;*/
 }
 
 /*

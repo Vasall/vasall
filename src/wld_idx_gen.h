@@ -4,16 +4,31 @@
 #include <stdio.h>
 #include <stdint.h>
 
-int calculateVertexCount(int vtxnum);
-uint32_t *generateIndexBuffer(int vtxnum, int *idxlen);
+/* Calculate the necessary vertices for a terrain */
+int calcVertexNum(int vtxnum);
+
+/* Generate the index-buffer for a terrain */
+uint32_t *genIndexBuf(int vtxnum, int *idxlen);
+
+/* Store the vertices for the top-section */
 int storeTopSection(uint32_t *indices, int rowlen, int vtxnum);
+
+/* Store the vertices for the second-to-last line */
 int storeSecondLastLine(uint32_t *indices, int pointer, int rowlen, int vtxnum);
+
+/* Store the vertices for the last line */
 int storeLastLine(uint32_t *indices, int pointer, int rowlen, int vtxnum);
-int storeQuad(int topLeft, int topRight, int bottomLeft, int bottomRight, 
-		uint32_t *indices, int pointer, int8_t rightHanded);
-int storeLastRowQuad(int topLeft, int topRight, int bottomLeft, int bottomRight, 
-		uint32_t *indices, int pointer, int8_t rightHanded);
-int storeLeftTriangle(int topLeft, int topRight, int bottomLeft, int bottomRight, 
-		uint32_t *indices, int pointer, int8_t rightHanded);
+
+/* Store the vertices for a single default quad */
+int storeQuad(int tl, int tr, int bl, int br, uint32_t *indices, 
+		int ptr, int8_t flg);
+
+/* Store the vertices for a single quad in the last row */
+int storeLastRowQuad(int tl, int tr, int bl, int br, uint32_t *indices, 
+		int ptr, int8_t flg);
+
+/* Store the vertices of the left triangle of a quad  */
+int storeLeftTriangle(int tl, int tr, int bl, int br, uint32_t *indices, 
+		int ptr, int8_t flg);
 
 #endif

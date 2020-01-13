@@ -7,14 +7,14 @@
  * resizing the window.
  *
  * @evt: A pointer to the event
-*/
+ */
 void handle_resize(XSDL_Event *evt)
 {
 	double ratio;
 	XSDL_UIContext *ctx = core->uicontext;	
 
 	if(evt){/* Prevent warning for not using evt */}
-	
+
 	printf("%d/%d\n", ctx->win_w, ctx->win_h);
 
 	/* Update the viewport */
@@ -28,7 +28,7 @@ void handle_resize(XSDL_Event *evt)
 
 void menu_procevt(XSDL_Event *evt)
 {
-	if(evt){/* Prevent warning for not using evt */}
+	if(evt) {/* Prevent warning for not using evt */}
 }
 
 void menu_update(void)
@@ -37,22 +37,48 @@ void menu_update(void)
 
 void game_procevt(XSDL_Event *evt)
 {
+	int mod, mod_ctrl, mod_shift;
+
+	if(mod_ctrl) {/* Prevent warning for not using mod_ctrl */}
+
 	switch(evt->type) {
-		case(XSDL_MOUSEMOTION):
-			if(SDL_GetMouseState(NULL, NULL) & 
-					SDL_BUTTON(SDL_BUTTON_LEFT)) {
-				camMouseMoved(core->camera, 
-						evt->motion.xrel, 
-						evt->motion.yrel);
-
-				printf("Rotation: %f/%f\n",
-						core->camera->rot.x,
-						core->camera->rot.y);
-			}
-			break;
-
 		case(XSDL_MOUSEWHEEL):
 			camZoom(core->camera, evt->wheel.y);
+			break;
+
+		case(XSDL_KEYDOWN):
+			mod = evt->key.keysym.mod;
+			if(evt->key.keysym.scancode == 20 && mod & KMOD_CTRL) {
+				core->running = 0;
+				break;
+			}
+
+			mod_ctrl = mod & (KMOD_LCTRL | KMOD_RCTRL);
+			mod_shift = mod & (KMOD_LSHIFT | KMOD_RSHIFT);
+			switch(evt->key.keysym.sym) {
+				case(SDLK_w):
+					camMovDir(core->camera, 
+							FORWARD, mod_shift);
+					break;
+				case(XSDLK_s):
+					camMovDir(core->camera, 
+							BACK, mod_shift);
+					break;
+				case(XSDLK_a):
+					camMovDir(core->camera, 
+							LEFT, mod_shift);
+					break;
+				case(XSDLK_d):
+					camMovDir(core->camera, 
+							RIGHT, mod_shift);
+					break;
+				case(XSDLK_q):
+					camZoom(core->camera, 1);
+					break;
+				case(XSDLK_e):
+					camZoom(core->camera, -1);
+					break;
+			}
 			break;
 	}
 }

@@ -18,10 +18,13 @@
  * the model-cache and mark the new 
  * struct as the currently active one.
  *
+ * @pos: The position-reference of the model
+ * @rot: The rotation-reference of the model
+ *
  * Returns: Either a pointer to the new
  * 	model of NULL
-*/
-Model *mdlBegin(void)
+ */
+Model *mdlCreate(Vec3 *pos, Vec3 *rot)
 {
 	Model *mdl = NULL;
 
@@ -42,19 +45,24 @@ Model *mdlBegin(void)
 	mdl->vtx_len = 0;
 	mdl->idx_len = 0;
 
-	mdl->trans = mat4Idt();
+	mdl->trans_mat = mat4Idt();
 
-	mdl->rot = mat4Idt();
+	mdl->rot_mat = mat4Idt();
 
-	mdl->scl = mat4Idt();
+	mdl->scl_mat = mat4Idt();
 
-	mdl->status = 0;
+	/* Copy both the position- and the rotation-reference */
+	mdl->pos = pos;
+	mdl->rot = rot;
 
 	mdl->shader = shdBegin();
-	if(mdl->shader == NULL) {
-		printf("Failed to create shader.\n");
+	if(mdl->shader == NULL) { 
+		mdl->status = MESH_ERR_CREATING;
 		return(NULL);
 	}
+
+	/* Set the status on  */
+	mdl->status = MESH_OK;
 
 	return(mdl);
 }
@@ -65,20 +73,18 @@ Model *mdlBegin(void)
  *
  * @mdl: Pointer to the model to finish
  *
- * Returns: Either 0 on success or
- * 	-1 if an error occurred
+ * Returns: The current status of the model
  */
-int mdlEnd(Model *mdl)
+int mdlFinish(Model *mdl)
 {
 	/* Finish shader-program */
 	glLinkProgram(mdl->shader->prog);
 
 	if(mdl->status != 0) {
-		printf("Error: %x\n", mdl->status);
-		return(-1);
+		mdl->status = MESH_ERR_FINISHING;
 	}
 
-	return(0);
+	return(mdl->status);
 }
 
 /*
@@ -90,16 +96,17 @@ int mdlEnd(Model *mdl)
  * @vtxlen: The length of the vertex-buffer
  * @idxbuf: The index-buffer
  * @idxlen: The length of the index-buffer
+ * @nrmflg: This flag indicates, if the normales should be calculated
  */
-void mdlLoadVtx(Model *mdl, Vertex *vtxbuf, int vtxlen, 
-		uint32_t *idxbuf, int idxlen)
+void mdlSetMesh(Model *mdl, Vertex *vtxbuf, int vtxlen, 
+		uint32_t *idxbuf, int idxlen, uint8_t nrmflg)
 {
 	uint32_t vbo, ibo;
 
 	/* Bind vertex array object */
 	glBindVertexArray(mdl->vao);
 
-	/* ========= MESH ========== */
+	/* ======= VERTICES ======== */
 	/* Create vertex buffer object */
 	glGenBuffers(1, &vbo);
 
@@ -115,7 +122,7 @@ void mdlLoadVtx(Model *mdl, Vertex *vtxbuf, int vtxlen,
 
 	mdl->bia[mdl->bia_num] = vbo;
 	mdl->bia_num++;
-		
+
 	/* ======== INDEX ========== */
 	/* Create an element buffer object */
 	glGenBuffers(1, &ibo);
@@ -130,33 +137,43 @@ void mdlLoadVtx(Model *mdl, Vertex *vtxbuf, int vtxlen,
 	mdl->bia[mdl->bia_num] = ibo;
 	mdl->bia_num++;
 
+	if(nrmflg) {
+		uint32_t nbo;
+		int i;
+		Vec3 *normals;
+
+		normals = calloc(vtxlen, sizeof(Vec3));
+
+		for(i = 0; i < idxlen - 2; i += 3) {
+			Vec3 v1 = vtxbuf[idxbuf[i]];
+			Vec3 v2 = vtxbuf[idxbuf[i + 1]];
+			Vec3 v3 = vtxbuf[idxbuf[i + 2]];
+			Vec3 del1 = vecSubRet(v2, v1);
+			Vec3 del2 = vecSubRet(v2, v3);
+			Vec3 nrm = vecNrmRet(vecCross(del1, del2));
+
+			normals[idxbuf[i]] = nrm;
+		}
+
+		/* ======== NORMALS ======== */
+		/* Create normals buffer object */
+		glGenBuffers(1, &nbo);
+
+		/* Copy our normals into a buffer for OpenGL to use */
+		glBindBuffer(GL_ARRAY_BUFFER, nbo);
+		glBufferData(GL_ARRAY_BUFFER, vtxlen * sizeof(Vec3), 
+				normals, GL_STATIC_DRAW);
+
+		/* 2st attribute buffer : normals */
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+		mdl->bia[mdl->bia_num] = vbo;
+		mdl->bia_num++;
+	}
+
 	/* Unbind vao */
 	glBindVertexArray(0);
 }
-
-void mdlAttachColBuf(Model *mdl, ColorRGB *colbuf, int collen)
-{
-	uint32_t cbo;
-	
-	/* Bind vertex array object */
-	glBindVertexArray(mdl->vao);
-
-	/* ======== COLORS ========= */
-	/* Create a color buffer object */
-	glGenBuffers(1, &cbo);
-
-	/* Copy our color attay in a different one for OpenGL to use */
-	glBindBuffer(GL_ARRAY_BUFFER, cbo);
-	glBufferData(GL_ARRAY_BUFFER, collen * sizeof(ColorRGB), 
-			colbuf, GL_STATIC_DRAW);
-
-	/* 2nd attribute buffer : colors */
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-	/* Unbind vao */
-	glBindVertexArray(0);
-}
-
 
 /* 
  * Attach a new buffer to the model and 
@@ -166,9 +183,11 @@ void mdlAttachColBuf(Model *mdl, ColorRGB *colbuf, int collen)
  * @buf: The buffer to insert
  * @elsize: The size of one element in the buffer
  * @num: The number of elements in the buffer
- * @en: Should the buffer be bound
-*/
-void mdlAttachBuf(Model *mdl, void *buf, int elsize, int num, int8_t en)
+ * @en: Should the buffer be bound and to what index
+ * @sz: The number of float values per element(or 0 when en=0)
+ */
+void mdlAddBAO(Model *mdl, void *buf, int elsize, int num, 
+		uint8_t bindflg, uint8_t bindsz)
 {
 	uint32_t bao;
 
@@ -182,13 +201,17 @@ void mdlAttachBuf(Model *mdl, void *buf, int elsize, int num, int8_t en)
 	glBindBuffer(GL_ARRAY_BUFFER, bao);
 	glBufferData(GL_ARRAY_BUFFER, num * elsize, buf, GL_STATIC_DRAW);
 
-	if(en) {
-		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	if(bindflg) {
+		glVertexAttribPointer(bindflg, bindsz, GL_FLOAT, 
+				GL_FALSE, 0, NULL);
 	}
+
+	/* Add the bao to the buffer-index-array */
+	mdl->bia[mdl->bia_num] = bao;
+	mdl->bia_num++;
 
 	/* Unbind vao */
 	glBindVertexArray(0);
-
 }
 
 /* 
@@ -198,7 +221,7 @@ void mdlAttachBuf(Model *mdl, void *buf, int elsize, int num, int8_t en)
  *
  * @mdl: Pointer to the model to 
  * 	calculate the normals for 
-*/
+ */
 void mdlCalcNormals(Model *mdl)
 {
 	if(mdl) {}
@@ -216,7 +239,7 @@ void mdlRender(Model *mdl)
 
 	Mat4 mod, vie, pro;
 
-	mod = mdlGetMdlMat(mdl);
+	mod = mdlGetMatrix(mdl);
 	vie = camGetView(core->camera);
 	pro = camGetProj(core->camera);
 
@@ -257,11 +280,11 @@ void mdlRender(Model *mdl)
  * 	return garbage if an error
  * 	occurred
  */
-Mat4 mdlGetMdlMat(Model *mdl)
+Mat4 mdlGetMatrix(Model *mdl)
 {
 	Mat4 ret = mat4Idt();
 	/*mat4Mult(ret, mdl->scl);*/
-	ret = mdl->rot;
+	ret = mdl->rot_mat;
 	/*mat4Mult(ret, mdl->trans);*/
 	return(ret);
 }
@@ -277,30 +300,19 @@ Mat4 mdlGetMdlMat(Model *mdl)
  * @y: The y-axis-rotation
  * @z: The z-axis-rotation
  */
-void mdlSetRot(Model *mdl, float x, float y, float z)
+void mdlSetRot(Model *mdl)
 {
-	x *= DEGTORAD;
-	y *= DEGTORAD;
-	z *= DEGTORAD;
+	mdl->pos->x *= DEGTORAD;
+	mdl->pos->y *= DEGTORAD;
+	mdl->pos->z *= DEGTORAD;
 
-	memset(mdl->rot, 0, 16 * sizeof(float));
-/*
-	mdl->rot[0x0] = 1;
-	mdl->rot[0x5] = cos(x);
-	mdl->rot[0x6] = sin(x);
-	mdl->rot[0x9] = -sin(x);
-	mdl->rot[0xa] = cos(x);
-*/
-	mdl->rot[0x0] = cos(y);
-	mdl->rot[0x2] = -sin(y);
-	mdl->rot[0x8] = sin(y);
-	mdl->rot[0xa] = cos(y);
-/*
-	mdl->rot[0x0] *= cos(z);
-	mdl->rot[0x1] = sin(z);
-	mdl->rot[0x4] = -sin(z);
-	mdl->rot[0x5] *= cos(z);
-*/
-	mdl->rot[0x5] = 1.0;
-	mdl->rot[0xf] = 1.0;
+	memset(mdl->rot_mat, 0, 16 * sizeof(float));
+
+	mdl->rot_mat[0x0] = cos(mdl->pos->y);
+	mdl->rot_mat[0x2] = -sin(mdl->pos->y);
+	mdl->rot_mat[0x8] = sin(mdl->pos->y);
+	mdl->rot_mat[0xa] = cos(mdl->pos->y);
+
+	mdl->rot_mat[0x5] = 1.0;
+	mdl->rot_mat[0xf] = 1.0;
 }

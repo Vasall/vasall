@@ -5,7 +5,7 @@
 #include "vec.h"
 #include "mat.h"
 #include "shader.h"
-#include "stdutil.h"
+#include "utils.h"
 
 #define MESH_OK                  0
 #define MESH_ERR_CREATING       -1

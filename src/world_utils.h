@@ -1,5 +1,5 @@
-#ifndef _WORLD_INDEXGEN_H_
-#define _WORLD_INDEXGEN_H_
+#ifndef _WORLD_UTILS_H_
+#define _WORLD_UTILS_H_
 
 #include <stdio.h>
 #include <stdint.h>

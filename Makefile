@@ -17,10 +17,9 @@ MKFILE_PTH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR := $(dir $(MKFILE_PTH))
 
 # All subdirectories in the lib-folder
-LIB_PTH    := submod
+LIB_PTH    := lib
 LIB_DIRS   := $(sort $(dir $(wildcard $(MKFILE_DIR)$(LIB_PTH)/*/)))
 
-$(info $(LIB_DIRS))
 # Set static libararies
 LIBS       :=  
 

@@ -6,10 +6,10 @@
 #include "world.h"
 #include "global.h"
 #include "vec.h"
-#include "stdutil.h"
+#include "utils.h"
 #include "shader.h"
 #include "loader.h"
-#include "wld_idx_gen.h"
+#include "world_utils.h"
 
 /*
  * Initialize a default world-struct.
@@ -110,7 +110,7 @@ int wldGenTerrain(World *world)
 	for(x = 0; x < world->xsize; x++) {
 		for(z = 0; z < world->zsize; z++) {
 			i = twodim(z, x, world->zsize);
-			heights[i] = (40.0 * hImg[x][z] + 10.0) * 0.0;
+			heights[i] = (40.0 * hImg[x][z] + 10.0) * 1.0;
 		}
 	}
 

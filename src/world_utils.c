@@ -1,8 +1,7 @@
+#include "world_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "wld_idx_gen.h"
-#include "stdutil.h"
+#include "utils.h"
 
 /*
  * This function is used to calculate

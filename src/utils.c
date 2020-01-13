@@ -1,6 +1,6 @@
+#include "utils.h"
+#include <stdio.h>
 #include <stdlib.h>
-
-#include "stdutil.h"
 
 /*
  * Convert a 2d-position to a 1d-position

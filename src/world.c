@@ -110,7 +110,7 @@ int wldGenTerrain(World *world)
 	for(x = 0; x < world->xsize; x++) {
 		for(z = 0; z < world->zsize; z++) {
 			i = twodim(z, x, world->zsize);
-			heights[i] = (40.0 * hImg[x][z] + 10.0);
+			heights[i] = (40.0 * hImg[x][z] + 10.0) * 0.0;
 		}
 	}
 
@@ -238,7 +238,7 @@ int wldGenTerrain(World *world)
  *
  * @world: A pointer to the world to draw
  */
-void renderTerrain(World *world) 
+void wldRenderTerrain(World *world) 
 {
 	mdlRender(world->model);
 }

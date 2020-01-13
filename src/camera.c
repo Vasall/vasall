@@ -20,22 +20,19 @@
  */
 Camera *camCreate(float aov, float asp, float near, float far)
 {
+	Camera *cam;
  	Vec3 del;
 
 	/* Initialize the camera-struct */
-	Camera *cam;
-
 	cam = calloc(1, sizeof(Camera));
-	if(cam == NULL) {
-		return(NULL);
-	}
+	if(cam == NULL) return(NULL);
 
-	/* Set the position of the target */
+	/* Set the default position of the target */
 	cam->trg[0] = 0;
 	cam->trg[1] = 0;
 	cam->trg[2] = 0;
 
-	/* Set the position of the camera */
+	/* Set the default position of the camera */
 	cam->pos[0] = 0.0;
 	cam->pos[1] = 1.0;
 	cam->pos[2] = 0.0;
@@ -76,7 +73,8 @@ void camDestroy(Camera *cam)
 }
 
 /*
- * Get the projection matrix of a camera.
+ * Get the projection matrix of the camera
+ * and write it to the specified matrix.
  *
  * @cam: Pointer to the camera
  * @mat: The matrix to write the result to
@@ -87,7 +85,8 @@ void camGetProj(Camera *cam, Mat4 mat)
 }
 
 /*
- * Get the view matrix of a camera.
+ * Get the view matrix of a camera and
+ * write it to the specified matrix.
  *
  * @cam: Pointer to the camera
  * @mat: The matrix to write to
@@ -179,7 +178,7 @@ void camZoom(Camera *cam, int val)
 
 void camMovDir(Camera *cam, Direction dir, int mov_trg) 
 {
-	Vec3 movVec, up, forw, left, tmp;
+	Vec3 movVec, up, forw, left;
 
 	/* Vector to add to our position */
 	vecSet(movVec, 0.0, 0.0, 0.0);
@@ -247,7 +246,6 @@ void camUpdPos(Camera *cam)
  * @asp: The aspect ratio of the window
  * @near: The near-limit
  * @far: The far-limit
- * @m: the matrix to write the result to
  */
 void camSetProjMat(Camera *cam, float aov, float asp, float near, 
 		float far)
@@ -282,28 +280,31 @@ void camSetProjMat(Camera *cam, float aov, float asp, float near,
  * result into the specified vector.
  *
  * @cam: The camera to modify
- * @fx: The x-position of the target
- * @fy: The y-position of the target
- * @fz: The z-posiiton of the target
+ * @tx: The x-position of the target
+ * @ty: The y-position of the target
+ * @tz: The z-posiiton of the target
  * @px: The x-position of the camera
  * @py: The y-position of the camera
  * @pz: The z-position of the camera
- * @m: The 4x4 matrix to write the result to
  */
-void camSetViewMat(Camera *cam, float fx, float fy, float fz, 
+void camSetViewMat(Camera *cam, float tx, float ty, float tz, 
 		float px, float py, float pz)
 {
 	Vec3 pos, trg, del, tmp, forw, left, up, stdup;
 
+	/* The default up-vector */
 	vecSet(stdup, 0.0, 1.0, 0.0);
 	vecNrm(stdup, stdup);
 
-	vecSet(cam->trg, fx, fy, fz);
-	vecSet(trg, fx, fy, fz);
+	/* Set the target-position */
+	vecSet(cam->trg, tx, ty, tz);
+	vecCpy(trg, cam->trg);
 
+	/* Set the camera-position */
 	vecSet(cam->pos, px, py, pz);
-	vecSet(pos, px, py, pz);
+	vecCpy(pos, cam->pos);
 
+	/* The direction-vector from the camera to the target */
 	vecSub(cam->pos, cam->trg, del);
 	vecNrm(del, cam->dir);
 	cam->dist = vecMag(del);

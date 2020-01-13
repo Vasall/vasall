@@ -121,7 +121,7 @@ void camSetProjMat(Camera* cam, float aov, float asp,
 		float near, float far);
 
 /* Create a new view-matrix */
-void camSetViewMat(Camera *cam, float fx, float fy, float fz, 
+void camSetViewMat(Camera *cam, float tx, float ty, float tz, 
 		float px, float py, float pz);
 
 #endif

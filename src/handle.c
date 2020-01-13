@@ -90,5 +90,5 @@ void game_update(void)
 void game_render(void)
 {
 	/* Render the terrain */
-	renderTerrain(core->world);
+	wldRenderTerrain(core->world);
 }

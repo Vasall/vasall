@@ -65,9 +65,9 @@ void wldDestroy(World *world);
 int wldGenTerrain(World *world);
 
 /* Render the terrain of the world */
-void renderTerrain(World *world);
+void wldRenderTerrain(World *world);
 
 /* Get the height of the terrain at the given position */
-float getHeight(World *world, float x, float z);
+float wldGetHeight(World *world, float x, float z);
 
 #endif

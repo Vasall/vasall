@@ -122,7 +122,7 @@ void mdlCalcNormals(Model *mdl);
 void mdlRender(Model *mdl);
 
 /* Get the model-matrix for rendering */
-Mat4 mdlGetMatrix(Model *mdl);
+void mdlGetMatrix(Model *mdl, Mat4 mat);
 
 /* Set the rotation of a model */
 void mdlSetRot(Model *mdl);

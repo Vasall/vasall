@@ -92,10 +92,10 @@ Camera *camCreate(float aov, float asp, float near, float far);
 void camDestroy(Camera *cam);
 
 /* Get the projection matrix of the camera */
-Mat4 camGetProj(Camera *cam);
+void camGetProj(Camera *cam, Mat4 mat);
 
 /* Get the view matrix of the camera */
-Mat4 camGetView(Camera *cam);
+void camGetView(Camera *cam, Mat4 mat);
 
 /* Get the position of the camera */
 Vec3 camGetPos(Camera *cam);

@@ -20,6 +20,7 @@ MKFILE_DIR := $(dir $(MKFILE_PTH))
 LIB_PTH    := submod
 LIB_DIRS   := $(sort $(dir $(wildcard $(MKFILE_DIR)$(LIB_PTH)/*/)))
 
+$(info $(LIB_DIRS))
 # Set static libararies
 LIBS       :=  
 
@@ -34,6 +35,7 @@ LINKER     := gcc
 # Linking flags here
 LFLAGS     := -Wall -I. $(LIBS) -lm -lGL -lGLU -lglut \
 	$(shell pkg-config --cflags --libs sdl2 SDL2_ttf SDL2_image)
+
 # Change these to proper directories where each file should be
 SRCDIR     := src
 OBJDIR     := obj

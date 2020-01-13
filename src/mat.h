@@ -1,22 +1,20 @@
 #ifndef _MAT_H_
 #define _MAT_H_
 
-typedef float *Mat4;
+#define MAT4_SIZE (sizeof(float)*16)
+typedef float Mat4[16];
 
 /* Create a new 4x4 matrix filled with zeros */
-Mat4 mat4Zero(void);
+void mat4Zero(Mat4 mat);
 
 /* Create an identity 4x4 matrix */
-Mat4 mat4Idt(void);
+void mat4Idt(Mat4 mat);
 
-/* Multiply two matrices and write result to first one */
-void mat4Mult(Mat4 m1, Mat4 m2);
+/* Copy the values from one matrix to another */
+void mat4Cpy(Mat4 dst, Mat4 src);
 
-/* Multiply two matrices and return the result */
-Mat4 mat4MultRet(Mat4 m1, Mat4 m2);
-
-/* Combine two matrices into one */
-void mat4Combine(Mat4 m1, Mat4 m2, Mat4 dst);
+/* Multiply two matrices */
+void mat4Mult(Mat4 m1, Mat4 m2, Mat4 res);
 
 /* Display a 4x4 matrix in the console */
 void mat4Print(Mat4 m);

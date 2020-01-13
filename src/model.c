@@ -45,11 +45,9 @@ Model *mdlCreate(Vec3 *pos, Vec3 *rot)
 	mdl->vtx_len = 0;
 	mdl->idx_len = 0;
 
-	mdl->trans_mat = mat4Idt();
-
-	mdl->rot_mat = mat4Idt();
-
-	mdl->scl_mat = mat4Idt();
+	mat4Idt(mdl->trans_mat);
+	mat4Idt(mdl->rot_mat);
+	mat4Idt(mdl->scl_mat);
 
 	/* Copy both the position- and the rotation-reference */
 	mdl->pos = pos;
@@ -239,9 +237,9 @@ void mdlRender(Model *mdl)
 
 	Mat4 mod, vie, pro;
 
-	mod = mdlGetMatrix(mdl);
-	vie = camGetView(core->camera);
-	pro = camGetProj(core->camera);
+	mdlGetMatrix(mdl, mod);
+	camGetView(core->camera, vie);
+	camGetProj(core->camera, pro);
 
 	glBindVertexArray(mdl->vao);
 	glUseProgram(mdl->shader->prog);
@@ -274,19 +272,13 @@ void mdlRender(Model *mdl)
  * as a new matrix.
  *
  * @mdl: Pointer to the model
- *
- * Returns: The resulting matrix,
- * 	note that this function will
- * 	return garbage if an error
- * 	occurred
+ * @mat: The matrix to write the model-matrix to
  */
-Mat4 mdlGetMatrix(Model *mdl)
+void mdlGetMatrix(Model *mdl, Mat4 mat)
 {
-	Mat4 ret = mat4Idt();
 	/*mat4Mult(ret, mdl->scl);*/
-	ret = mdl->rot_mat;
+	mat4Cpy(mat, mdl->rot_mat);
 	/*mat4Mult(ret, mdl->trans);*/
-	return(ret);
 }
 
 /*

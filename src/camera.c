@@ -53,11 +53,11 @@ Camera *camCreate(float aov, float asp, float near, float far)
 	cam->sensitivity = 0.2;	
 
 	/* Create the projection matrix */
-	cam->proj = mat4Idt();
+	mat4Idt(cam->proj);
 	camSetProjMat(cam, aov, asp, near, far);
 
 	/* Create the view-matrix */
-	cam->view = mat4Idt();
+	mat4Idt(cam->view);
 	camSetViewMat(cam, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0);
 
 	return(cam);
@@ -79,26 +79,22 @@ void camDestroy(Camera *cam)
  * Get the projection matrix of a camera.
  *
  * @cam: Pointer to the camera
- *
- * Returns: A 4x4 matrix representing
- * 	the projection matrix
+ * @mat: The matrix to write the result to
  */
-Mat4 camGetProj(Camera *cam)
+void camGetProj(Camera *cam, Mat4 mat)
 {
-	return(cam->proj);
+	mat4Cpy(mat, cam->proj);
 }
 
 /*
  * Get the view matrix of a camera.
  *
  * @cam: Pointer to the camera
- *
- * Returns: A 4x4 matrix representing
- * 	the view matrix
+ * @mat: The matrix to write to
  */
-Mat4 camGetView(Camera *cam)
+void camGetView(Camera *cam, Mat4 mat)
 {
-	return(cam->view);
+	mat4Cpy(mat, cam->view);
 }
 
 /* 

@@ -31,20 +31,20 @@ Camera *camCreate(float aov, float asp, float near, float far)
 	}
 
 	/* Set the position of the target */
-	cam->trg.x = 0;
-	cam->trg.y = 0;
-	cam->trg.z = 0;
+	cam->trg[0] = 0;
+	cam->trg[1] = 0;
+	cam->trg[2] = 0;
 
 	/* Set the position of the camera */
-	cam->pos.x = 0.0;
-	cam->pos.y = 1.0;
-	cam->pos.z = 0.0;
+	cam->pos[0] = 0.0;
+	cam->pos[1] = 1.0;
+	cam->pos[2] = 0.0;
 
 	/* Get the connecting vector between the camera and the target */
-	del = vecSubRet(cam->pos, cam->trg);
+	vecSub(cam->pos, cam->trg, del);
 
 	/* The normalized direction vector from the target to the camera */
-	cam->dir = vecNrmRet(del);
+	vecNrm(del, cam->dir);
 
 	/* Calculate the distance between the target and the camera */
 	cam->dist = vecMag(del);
@@ -101,13 +101,11 @@ void camGetView(Camera *cam, Mat4 mat)
  * Get the position of the camera.
  *
  * @cam: Pointer to the camera
- *
- * Returns: A 3d-vector containing the
- * 	position of the camera
+ * @pos: The vector to write the position to
  */
-Vec3 camGetPos(Camera* cam)
+void camGetPos(Camera* cam, Vec3 pos)
 {
-	return(cam->pos);
+	vecCpy(pos, cam->pos);
 }
 
 /* 
@@ -116,18 +114,12 @@ Vec3 camGetPos(Camera* cam)
  * pointing from the camera to the target.
  *
  * @cam: Pointer to the camera
- *
- * Returns: A 3d-vector containing the
- * 	direction the camera is pointing
- * 	towards
- *
+ * @dir: The vector write the direction to
  */
-Vec3 camGetDir(Camera *cam)
+void camGetDir(Camera *cam, Vec3 dir)
 {
-	Vec3 dir;
-	vecCpy(&dir, &cam->dir);
-	vecNrm(&dir);
-	return(dir);
+	vecCpy(dir, cam->dir);
+	vecNrm(dir, dir);
 }
 
 /*
@@ -144,23 +136,23 @@ Vec3 camGetDir(Camera *cam)
 void camMouseMoved(Camera *cam, int delx, int dely)
 {
 	/* Rotate camera */
-	cam->rot.x += ((float)dely) * cam->sensitivity;
-	cam->rot.y += ((float)delx) * cam->sensitivity;
+	cam->rot[0] += ((float)dely) * cam->sensitivity;
+	cam->rot[1] += ((float)delx) * cam->sensitivity;
 
 	/* Limit looking down to vertically down */
-	if (cam->rot.x > 90) {
-		cam->rot.x = 90;
+	if (cam->rot[0] > 90) {
+		cam->rot[0] = 90;
 	}
-	if (cam->rot.x < -90) {
-		cam->rot.x = -90;
+	if (cam->rot[0] < -90) {
+		cam->rot[0] = -90;
 	}
 
 	/* Modulo of int is not available */
-	if (cam->rot.y < 0) {
-		cam->rot.y += 360;
+	if (cam->rot[1] < 0) {
+		cam->rot[1] += 360;
 	}
-	if (cam->rot.y > 360) {
-		cam->rot.y += -360;
+	if (cam->rot[1] > 360) {
+		cam->rot[1] += -360;
 	}
 }
 
@@ -175,9 +167,10 @@ void camMouseMoved(Camera *cam, int delx, int dely)
  */
 void camZoom(Camera *cam, int val)
 {
-	/*cam->dist += val;*/
-	
-	camMov(cam, vecSclRet(cam->dir, val), 0);
+	Vec3 tmp;
+
+	vecScl(cam->dir, val, tmp);
+	camMov(cam, tmp, 0);
 	cam->dist += vecMag(cam->dir) * val;
 
 	camUpdPos(cam);
@@ -186,32 +179,34 @@ void camZoom(Camera *cam, int val)
 
 void camMovDir(Camera *cam, Direction dir, int mov_trg) 
 {
-	/* Vector to add to our position */
-	Vec3 movVec = {0, 0, 0};
+	Vec3 movVec, up, forw, left, tmp;
 
-	Vec3 up = vecCreate(0.0, 1.0, 0.0);
-	Vec3 forward = vecCreate(cam->dir.x, 0.0, cam->dir.z);
-	Vec3 left = vecCross(up, forward);
+	/* Vector to add to our position */
+	vecSet(movVec, 0.0, 0.0, 0.0);
+
+	vecSet(up, 0.0, 1.0, 0.0);
+	vecSet(forw, cam->dir[0], 0.0, cam->dir[2]);
+	vecCross(up, forw, left);
 	
-	vecNrm(&forward);
+	vecNrm(forw, forw);
 	/* XXX When norming forward before the cross product we don't
 	 * need to norm 'right' vector */
-	vecNrm(&left);
+	vecNrm(left, left);
 
 	/* UP and DOWN not yet implemented */
 
 	switch(dir) {
 		case FORWARD:
-			movVec = vecSclRet(forward, -1.0);
+			vecScl(forw, -1.0, movVec);
 			break;
 		case BACK:
-			movVec = forward;
+			vecCpy(movVec, forw);
 			break;
 		case RIGHT:
-			movVec = left;
+			vecCpy(movVec, left);
 			break;
 		case LEFT:
-			movVec = vecSclRet(left, -1.0);
+			vecScl(left, -1.0, movVec);
 			break;
 		default:
 			break;
@@ -221,10 +216,11 @@ void camMovDir(Camera *cam, Direction dir, int mov_trg)
 }
 
 void camMov(Camera *cam, Vec3 mov, int mov_trg) {
-	vecAdd(&cam->pos, mov);
+	vecAdd(cam->pos, mov, cam->pos);
 	
-	if(mov_trg)
-		vecAdd(&cam->trg, mov);
+	if(mov_trg) {
+		vecAdd(cam->trg, mov, cam->trg);
+	}
 
 	camUpdPos(cam);
 }
@@ -237,8 +233,8 @@ void camMov(Camera *cam, Vec3 mov, int mov_trg) {
 void camUpdPos(Camera *cam)
 {
 	camSetViewMat(cam, 
-			cam->trg.x, cam->trg.y, cam->trg.z, 
-			cam->pos.x, cam->pos.y, cam->pos.z);
+			cam->trg[0], cam->trg[1], cam->trg[2], 
+			cam->pos[0], cam->pos[1], cam->pos[2]);
 }
 
 /*
@@ -297,34 +293,42 @@ void camSetProjMat(Camera *cam, float aov, float asp, float near,
 void camSetViewMat(Camera *cam, float fx, float fy, float fz, 
 		float px, float py, float pz)
 {
-	Vec3 pos, trg, del, tmp, forw, left, up;
+	Vec3 pos, trg, del, tmp, forw, left, up, stdup;
 
-	tmp = vecCreate(0.0, 1.0, 0.0);
+	vecSet(stdup, 0.0, 1.0, 0.0);
+	vecNrm(stdup, stdup);
 
-	cam->trg = trg = vecCreate(fx, fy, fz);
-	cam->pos = pos = vecCreate(px, py, pz);
+	vecSet(cam->trg, fx, fy, fz);
+	vecSet(trg, fx, fy, fz);
 
-	del = vecSubRet(cam->pos, cam->trg);
-	cam->dir = vecNrmRet(del);
+	vecSet(cam->pos, px, py, pz);
+	vecSet(pos, px, py, pz);
+
+	vecSub(cam->pos, cam->trg, del);
+	vecNrm(del, cam->dir);
 	cam->dist = vecMag(del);
 
-	forw = vecNrmRet(vecSubRet(pos, trg));
-	left = vecNrmRet(vecCross(vecNrmRet(tmp), forw));
-	up = vecCross(forw, left);
+	vecSub(pos, trg, tmp);
+	vecNrm(tmp, forw);
+	
+	vecCross(stdup, forw, left);
+	vecNrm(left, left);
 
-	cam->view[0x0] = left.x;
-	cam->view[0x4] = left.y;
-	cam->view[0x8] = left.z;
+	vecCross(forw, left, up);
 
-	cam->view[0x1] = up.x;
-	cam->view[0x5] = up.y;
-	cam->view[0x9] = up.z;
+	cam->view[0x0] = left[0];
+	cam->view[0x4] = left[1];
+	cam->view[0x8] = left[2];
 
-	cam->view[0x2] = forw.x;
-	cam->view[0x6] = forw.y;
-	cam->view[0xa] = forw.z;
+	cam->view[0x1] = up[0];
+	cam->view[0x5] = up[1];
+	cam->view[0x9] = up[2];
 
-	cam->view[0xc]= -left.x * pos.x - left.y * pos.y - left.z * pos.z;
-	cam->view[0xd]= -up.x * pos.x - up.y * pos.y - up.z * pos.z;
-	cam->view[0xe]= -forw.x * pos.x - forw.y * pos.y - forw.z * pos.z;
+	cam->view[0x2] = forw[0];
+	cam->view[0x6] = forw[1];
+	cam->view[0xa] = forw[2];
+
+	cam->view[0xc]= -left[0] * pos[0] - left[1] * pos[1] - left[2] * pos[2];
+	cam->view[0xd]= -up[0] * pos[0] - up[1] * pos[1] - up[2] * pos[2];
+	cam->view[0xe]= -forw[0] * pos[0] - forw[1] * pos[1] - forw[2] * pos[2];
 }

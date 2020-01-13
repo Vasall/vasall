@@ -98,10 +98,10 @@ void camGetProj(Camera *cam, Mat4 mat);
 void camGetView(Camera *cam, Mat4 mat);
 
 /* Get the position of the camera */
-Vec3 camGetPos(Camera *cam);
+void camGetPos(Camera *cam, Vec3 pos);
 
 /* Get the direction the camera is looking */
-Vec3 camGetDir(Camera *cam);
+void camGetDir(Camera *cam, Vec3 dir);
 
 /* Change the rotation of the camera */
 void camMouseMoved(Camera *cam, int delx, int dely);

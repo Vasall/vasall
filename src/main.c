@@ -83,6 +83,9 @@ int main(int argc, char **argv)
 	}
 	camSetViewMat(core->camera, 0.0, 0.0, 0.0, 100.0, 100.0, 100.0);
 
+	mat4Print(core->camera->view);
+	mat4Print(core->camera->proj);
+
 	printf("Initialize world-container\n");
 	if((core->world = wldCreate()) == NULL) {
 		printf("[!] Failed to initialize world.\n");

@@ -108,7 +108,7 @@ Model *mdlCreate(Vec3 *pos, Vec3 *rot);
 int mdlFinish(Model *mdl);
 
 /* Set the vertices and indices of the model */
-void mdlSetMesh(Model *mdl, Vertex *vtxbuf, int vtxlen, 
+void mdlSetMesh(Model *mdl, Vec3 *vtxbuf, int vtxlen, 
 		uint32_t *idxbuf, int idxlen, uint8_t nrmflg);
 
 /* Attach a new buffer to the model */

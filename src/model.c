@@ -96,7 +96,7 @@ int mdlFinish(Model *mdl)
  * @idxlen: The length of the index-buffer
  * @nrmflg: This flag indicates, if the normales should be calculated
  */
-void mdlSetMesh(Model *mdl, Vertex *vtxbuf, int vtxlen, 
+void mdlSetMesh(Model *mdl, Vec3 *vtxbuf, int vtxlen, 
 		uint32_t *idxbuf, int idxlen, uint8_t nrmflg)
 {
 	uint32_t vbo, ibo;
@@ -110,7 +110,7 @@ void mdlSetMesh(Model *mdl, Vertex *vtxbuf, int vtxlen,
 
 	/* Copy our vertices array in a vertex buffer for OpenGL to use */
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, vtxlen * sizeof(Vertex), 
+	glBufferData(GL_ARRAY_BUFFER, vtxlen * VEC3_SIZE, 
 			vtxbuf, GL_STATIC_DRAW);
 
 	/* 1st attribute buffer : vertices */
@@ -143,14 +143,17 @@ void mdlSetMesh(Model *mdl, Vertex *vtxbuf, int vtxlen,
 		normals = calloc(vtxlen, sizeof(Vec3));
 
 		for(i = 0; i < idxlen - 2; i += 3) {
-			Vec3 v1 = vtxbuf[idxbuf[i]];
-			Vec3 v2 = vtxbuf[idxbuf[i + 1]];
-			Vec3 v3 = vtxbuf[idxbuf[i + 2]];
-			Vec3 del1 = vecSubRet(v2, v1);
-			Vec3 del2 = vecSubRet(v2, v3);
-			Vec3 nrm = vecNrmRet(vecCross(del1, del2));
+			Vec3 v1, v2, v3, del1, del2, nrm;
 
-			normals[idxbuf[i]] = nrm;
+			vecCpy(v1, vtxbuf[idxbuf[i]]);
+			vecCpy(v2, vtxbuf[idxbuf[i + 1]]);
+			vecCpy(v3, vtxbuf[idxbuf[i + 2]]);
+			vecSub(v2, v1, del1);
+			vecSub(v2, v3, del2);
+			vecCross(del1, del2, nrm);
+			vecNrm(nrm, nrm);
+
+			vecCpy(normals[idxbuf[i]], nrm);
 		}
 
 		/* ======== NORMALS ======== */
@@ -294,16 +297,16 @@ void mdlGetMatrix(Model *mdl, Mat4 mat)
  */
 void mdlSetRot(Model *mdl)
 {
-	mdl->pos->x *= DEGTORAD;
-	mdl->pos->y *= DEGTORAD;
-	mdl->pos->z *= DEGTORAD;
+	(*mdl->pos)[0] *= DEGTORAD;
+	(*mdl->pos)[1] *= DEGTORAD;
+	(*mdl->pos)[2] *= DEGTORAD;
 
 	memset(mdl->rot_mat, 0, 16 * sizeof(float));
 
-	mdl->rot_mat[0x0] = cos(mdl->pos->y);
-	mdl->rot_mat[0x2] = -sin(mdl->pos->y);
-	mdl->rot_mat[0x8] = sin(mdl->pos->y);
-	mdl->rot_mat[0xa] = cos(mdl->pos->y);
+	mdl->rot_mat[0x0] = cos((*mdl->pos)[1]);
+	mdl->rot_mat[0x2] = -sin((*mdl->pos)[1]);
+	mdl->rot_mat[0x8] = sin((*mdl->pos)[1]);
+	mdl->rot_mat[0xa] = cos((*mdl->pos)[1]);
 
 	mdl->rot_mat[0x5] = 1.0;
 	mdl->rot_mat[0xf] = 1.0;

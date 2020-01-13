@@ -3,13 +3,6 @@
 
 #include "vec.h"
 
-/*
- * A single vertex containing three
- * float-values representing the 
- * position.
- */
-typedef struct Vec3 Vertex;
-
 /* 
  * This is a struct containing 
  * four float-values representing

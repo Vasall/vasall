@@ -79,7 +79,7 @@ int wldGenTerrain(World *world)
 {   
 	int vtxnum, x, z, w, idx, i, j;
 	float **hImg, *heights, xpos, zpos;
-	Vertex *vertices, *lastRow;
+	Vec3 *vertices, *lastRow;
 	ColorRGB *colors;
 	uint32_t *indices;
 	int indlen;
@@ -91,7 +91,7 @@ int wldGenTerrain(World *world)
 	vtxnum = calcVertexNum(w);
 
 	/* Initialize the vertex-array */
-	vertices = malloc(vtxnum * sizeof(Vertex));
+	vertices = malloc(vtxnum * VEC3_SIZE);
 	if(vertices == NULL) {
 		printf("Failed to allocate space for vertices.\n");
 		return(-1);
@@ -114,59 +114,60 @@ int wldGenTerrain(World *world)
 		}
 	}
 
-	lastRow = malloc((world->xsize - 1) * sizeof(Vertex) * 2);
+	lastRow = malloc((world->xsize - 1) * VEC3_SIZE * 2);
 
 	/* Iterate over all points in the heightmap */
 	idx = 0;
 	for(z = 0; z < world->zsize - 1; z++) {
 		for(x = 0; x < world->xsize - 1; x++) {
-			Vertex ctl, ctr, cbl, cbr;
+			Vec3 ctl, ctr, cbl, cbr;
 			
 			xpos = x - 128.0;
 			zpos = z - 128.0;
 
-			ctl.x = xpos;
-			ctl.y = heights[twodim(x, z, world->xsize)];
-		       	ctl.z = zpos;
+			ctl[0] = xpos;
+			ctl[1] = heights[twodim(x, z, world->xsize)];
+		       	ctl[2] = zpos;
 
-			ctr.x = xpos + 1.0;
-			ctr.y = heights[twodim(x + 1, z, world->xsize)];
-			ctr.z = zpos;
+			ctr[0] = xpos + 1.0;
+			ctr[1] = heights[twodim(x + 1, z, world->xsize)];
+			ctr[2] = zpos;
 
 
-			cbl.x = xpos;
-			cbl.y = heights[twodim(x, z + 1, world->xsize)];
-			cbl.z = zpos + 1.0;
+			cbl[0] = xpos;
+			cbl[1] = heights[twodim(x, z + 1, world->xsize)];
+			cbl[2] = zpos + 1.0;
 
-			cbr.x = xpos + 1.0;
-			cbr.y = heights[twodim(x + 1, z + 1, world->xsize)];
-			cbr.z = zpos + 1.0;
+			cbr[0] = xpos + 1.0;
+			cbr[1] = heights[twodim(x + 1, z + 1, world->xsize)];
+			cbr[2] = zpos + 1.0;
 
-			vertices[idx] = ctl;
+			vecCpy(vertices[idx], ctl);
 			idx++;
 
 			if(z != world->zsize - 2 || x == world->xsize - 2) {	
-				vertices[idx] = ctr;
+				vecCpy(vertices[idx], ctr);
 				idx++;
 			}
 
 			if(z == world->zsize - 2) {
-				lastRow[x * 2] = cbl;
-				lastRow[x * 2 + 1] = cbr;
+				vecCpy(lastRow[x * 2], cbl);
+				vecCpy(lastRow[x * 2 + 1], cbr);
 			}
 		}
 	}
 
 	for(j = 0; j < world->xsize  - 1; j++) {
-		Vertex left = lastRow[j * 2];
-		Vertex right = lastRow[j * 2 + 1];
+		Vec3 left, right;
+		vecCpy(left, lastRow[j * 2]);
+		vecCpy(right, lastRow[j * 2 + 1]);
 
-		if(left.x == 0 || right.x == 1) {
-			vertices[idx] = left;
+		if(left[0] == 0 || right[0] == 1) {
+			vecCpy(vertices[idx], left);
 			idx++;
 		}
 
-		vertices[idx] = right;
+		vecCpy(vertices[idx], right);
 		idx++;
 	}
 
@@ -179,30 +180,31 @@ int wldGenTerrain(World *world)
 	/* Calculate the colors for the vertices */
 	for(j = 0; j < indlen - 2; j += 3) {
 		ColorRGB col;
-		Vertex v, mid = {0.0, 0.0, 0.0};
+		Vec3 v, mid;
+		vecSet(mid, 0.0, 0.0, 0.0);
 
 		for(i = 0; i < 3; i++) {
-			v = vertices[indices[j + i]];
-			vecAdd(&mid, v);
+			vecCpy(v, vertices[indices[j + i]]);
+			vecAdd(mid, v, mid);
 		}
-		vecInvScl(&mid, 3);
+		vecInvScl(mid, 3, mid);
 
-		if (mid.y <= 15) {
+		if (mid[1] <= 15) {
 			col.r = 0.79;
 			col.g = 0.69;
 			col.b = 0.39;	
 		}
-		else if (mid.y > 15 && mid.y <= 20) {
+		else if (mid[1] > 15 && mid[1] <= 20) {
 			col.r = 0.53;
 			col.g = 0.72;
 			col.b = 0.32;
 		}
-		else if (mid.y > 20 && mid.y <= 30) {
+		else if (mid[1] > 20 && mid[1] <= 30) {
 			col.r = 0.31;
 			col.g = 0.67;
 			col.b = 0.36;
 		}
-		else if (mid.y > 30 && mid.y <= 35) {
+		else if (mid[1] > 30 && mid[1] <= 35) {
 			col.r = 0.47;
 			col.g = 0.47;
 			col.b = 0.47;

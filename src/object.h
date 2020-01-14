@@ -3,7 +3,12 @@
 
 #include "model.h"
 
+#define OBJ_LIMIT 128
+
 typedef struct Object {
+	/* The id of this object in the object-array */
+	unsigned int id;
+
 	/*
 	 * The current position of the
 	 * object.
@@ -28,18 +33,26 @@ typedef struct Object {
 	Model *model;
 } Object;
 
+/* The global object-list */
+extern Object **objects;
+
+/* Initialize the object-array */
+int objInit(void);
 
 /* Create a new object and attach it to the object-array */
-Object *objCreate(float x, float y, float z);
+Object *objCreate(Vec3 pos);
 
 /* Destory an existing object */
 void objDestory(Object *obj);
+
+/* Get an object via the object-id */
+Object *objGet(uint32_t id);
 
 /* Render an object on the screen */
 void objRender(Object *obj);
 
 /* Get the current position of the object */
-void objGetPos(Entity *ent, Vec3 pos);
+void objGetPos(Object *obj, Vec3 pos);
 
 /* Set the new position of the object */
 void objSetPos(Object *obj, Vec3 pos);

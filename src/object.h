@@ -62,6 +62,9 @@ void objGetVel(Object *obj, Vec3 vel);
 /* Set the velocity of the object */
 void objSetVel(Object *obj, Vec3 vel);
 
+/* Add a vector to the velocity*/
+void objAddVel(Object *obj, Vec3 del);
+
 /* Set the object-model */
 void objSetModel(Object *obj, Model *mod);
 

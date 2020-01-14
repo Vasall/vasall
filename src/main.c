@@ -21,7 +21,7 @@ float f = 0.0;
 
 int main(int argc, char **argv)
 {
-	if(argc){/* Prevent warning for not using argc */}
+	if(argc) {/* Prevent warning for not using argc */}
 
 	printf("Initialize XSDL-subsystem\n");
 	if(XSDL_Init(XSDL_INIT_EVERYTHING) < 0) {                                                    
@@ -82,9 +82,6 @@ int main(int argc, char **argv)
 		goto cleanup_ui;
 	}
 	camSetViewMat(core->camera, 0.0, 0.0, 0.0, 100.0, 100.0, 100.0);
-
-	mat4Print(core->camera->view);
-	mat4Print(core->camera->proj);
 
 	printf("Initialize world-container\n");
 	if((core->world = wldCreate()) == NULL) {

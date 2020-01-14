@@ -1,8 +1,7 @@
+#include "loader.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#include "loader.h"
 #include "global.h"
 #include "XSDL/xsdl.h"
 

@@ -52,7 +52,7 @@ typedef struct World {
 	 * The underlying model for
 	 * the terrain.
 	 */
-	Model *model;
+	Model *terrain;
 } World;
 
 /* Create and initialize a new world */
@@ -64,8 +64,8 @@ void wldDestroy(World *world);
 /* Generate the terrain of the world */
 int wldGenTerrain(World *world);
 
-/* Render the terrain of the world */
-void wldRenderTerrain(World *world);
+/* Render the world */
+void wldRender(World *world);
 
 /* Get the height of the terrain at the given position */
 float wldGetHeight(World *world, float x, float z);

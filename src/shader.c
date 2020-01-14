@@ -1,14 +1,13 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
-
 #define GL_GLEXT_PROTOTYPES
 #include <GL/glut.h>
 #include <GL/glext.h>
 #include <GL/gl.h>
 
 #include "shader.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
 #include "global.h"
 #include "XSDL/xsdl.h"
 

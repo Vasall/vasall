@@ -42,7 +42,8 @@ World *wldCreate(void)
 	memset(&world->pos, 0, sizeof(Vec3));
 	memset(&world->rot, 0, sizeof(Vec3));
 
-	world->model = NULL;
+	/* Set the terrain-model-pointer to NULL */
+	world->terrain = NULL;
 
 	/* Generate the terrain */
 	wldGenTerrain(world);
@@ -91,7 +92,7 @@ int wldGenTerrain(World *world)
 	vtxnum = calcVertexNum(w);
 
 	/* Initialize the vertex-array */
-	vertices = malloc(vtxnum * VEC3_SIZE);
+	vertices = calloc(vtxnum, VEC3_SIZE);
 	if(vertices == NULL) {
 		printf("Failed to allocate space for vertices.\n");
 		return(-1);
@@ -99,7 +100,7 @@ int wldGenTerrain(World *world)
 
 
 	/* Create an array for all vertice-colors */
-	colors = malloc(vtxnum * sizeof(ColorRGB));
+	colors = calloc(vtxnum, sizeof(ColorRGB));
 	if(colors == NULL) {
 		printf("Failed to allocate space for colors.\n");
 		return(-1);
@@ -110,7 +111,7 @@ int wldGenTerrain(World *world)
 	for(x = 0; x < world->xsize; x++) {
 		for(z = 0; z < world->zsize; z++) {
 			i = twodim(z, x, world->zsize);
-			heights[i] = (40.0 * hImg[x][z] + 10.0) * 1.0;
+			heights[i] = (40.0 * hImg[x][z] + 10.0) * 0.0;
 		}
 	}
 
@@ -228,7 +229,7 @@ int wldGenTerrain(World *world)
 	glBindAttribLocation(mdl->shader->prog, 2, "vtxCol");
 	if(mdlFinish(mdl) < 0) return(-1);
 
-	world->model = mdl;
+	world->terrain = mdl;
 
 	return(0);
 }
@@ -238,7 +239,7 @@ int wldGenTerrain(World *world)
  *
  * @world: A pointer to the world to draw
  */
-void wldRenderTerrain(World *world) 
+void wldRender(World *world) 
 {
-	mdlRender(world->model);
+	mdlRender(world->terrain);
 }

@@ -4,7 +4,7 @@
 #include "XSDL/xsdl.h"
 #include "camera.h"
 #include "world.h"
-#include "entity.h"
+#include "object.h"
 
 /*
  * This is a struct used as a global-wrapper.
@@ -61,7 +61,7 @@ typedef struct gloWrapper {
 	 * An array containing all currently
 	 * active entities.
 	 */
-	Entity **entities;
+	Object **objects;
 		
 	/*
 	 * The absolute path to the directory

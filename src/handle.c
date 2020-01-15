@@ -57,20 +57,16 @@ void game_procevt(XSDL_Event *evt)
 			mod_shift = mod & (KMOD_LSHIFT | KMOD_RSHIFT);
 			switch(evt->key.keysym.sym) {
 				case(SDLK_w):
-					camMovDir(core->camera, 
-							FORWARD, mod_shift);
+					camMovDir(core->camera, FORWARD);
 					break;
 				case(XSDLK_s):
-					camMovDir(core->camera, 
-							BACK, mod_shift);
+					camMovDir(core->camera, BACK);
 					break;
 				case(XSDLK_a):
-					camMovDir(core->camera, 
-							LEFT, mod_shift);
+					camMovDir(core->camera, LEFT);
 					break;
 				case(XSDLK_d):
-					camMovDir(core->camera, 
-							RIGHT, mod_shift);
+					camMovDir(core->camera, RIGHT);
 					break;
 				case(XSDLK_q):
 					camZoom(core->camera, 1);
@@ -90,5 +86,6 @@ void game_update(void)
 void game_render(void)
 {
 	/* Render the world */
+	camUpdPos(core->camera);
 	wldRender(core->world);
 }

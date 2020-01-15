@@ -82,3 +82,38 @@ void mat4Print(Mat4 m)
 		printf("\n");
 	}
 }
+
+/*
+ * Fills the specified matrix with zeros
+ *
+ * @mat: The matrix to be filled with zeros
+ */
+void mat3Zero(Mat3 mat) {
+	memset(Mat3, 0, MAT3_SIZE);
+}
+
+/*
+ * Creates an Identity matrix
+ *
+ * @mat: The matrix to edit
+ */
+void mat3Idt(Mat3 mat) {
+	mat3Zero(mat);
+	mat[0x0] = 1.0;
+	mat[0x4] = 1.0;
+	mat[0x9] = 1.0;
+}
+
+/*
+ * Copies a matrix
+ *
+ * @dst: The destination matrix to copy to
+ * @src: The source matrix to copy from
+ */
+void mat3Cpy(Mat3 dst, Mat3 src) {
+	memcpy(src, dst, MAT3_SIZE);
+}
+
+void mat3Mult(Mat3 m1, Mat3 m2, Mat3 res) {
+	
+}

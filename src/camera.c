@@ -21,33 +21,22 @@
 Camera *camCreate(float aov, float asp, float near, float far)
 {
 	Camera *cam;
- 	Vec3 del;
 
 	/* Initialize the camera-struct */
 	cam = calloc(1, sizeof(Camera));
 	if(cam == NULL) return(NULL);
-
-	/* Set the default position of the target */
-	cam->trg[0] = 0;
-	cam->trg[1] = 0;
-	cam->trg[2] = 0;
 
 	/* Set the default position of the camera */
 	cam->pos[0] = 0.0;
 	cam->pos[1] = 1.0;
 	cam->pos[2] = 0.0;
 
-	/* Get the connecting vector between the camera and the target */
-	vecSub(cam->pos, cam->trg, del);
-
-	/* The normalized direction vector from the target to the camera */
-	vecNrm(del, cam->dir);
-
-	/* Calculate the distance between the target and the camera */
-	cam->dist = vecMag(del);
+	cam->dir[0] = 1.0;
+	cam->dir[1] = 0.0;
+	cam->dir[2] = 1.0;
 
 	/* Set the sensitivity of the mouse */
-	cam->sensitivity = 0.2;	
+	cam->sensitivity = 0.2;
 
 	/* Create the projection matrix */
 	mat4Idt(cam->proj);
@@ -55,7 +44,7 @@ Camera *camCreate(float aov, float asp, float near, float far)
 
 	/* Create the view-matrix */
 	mat4Idt(cam->view);
-	camSetViewMat(cam, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0);
+	camSetViewMat(cam);
 
 	return(cam);
 }
@@ -113,46 +102,12 @@ void camGetPos(Camera* cam, Vec3 pos)
  * pointing from the camera to the target.
  *
  * @cam: Pointer to the camera
- * @dir: The vector write the direction to
+ * @dir: The vector to write the direction
  */
 void camGetDir(Camera *cam, Vec3 dir)
 {
 	vecCpy(dir, cam->dir);
 	vecNrm(dir, dir);
-}
-
-/*
- * Adjust the rotation of the camera.
- * This function will adjust the rotation of
- * the camera to the movement of the mouse.
- *
- * @cam: Pointer to the camera to modify
- * @delx: The number of pixels, the mouse has
- * 	been moved on the x-axis
- * @dely: The number of pixels, the mouse has
- * 	been moved on the y-axis
- */
-void camMouseMoved(Camera *cam, int delx, int dely)
-{
-	/* Rotate camera */
-	cam->rot[0] += ((float)dely) * cam->sensitivity;
-	cam->rot[1] += ((float)delx) * cam->sensitivity;
-
-	/* Limit looking down to vertically down */
-	if (cam->rot[0] > 90) {
-		cam->rot[0] = 90;
-	}
-	if (cam->rot[0] < -90) {
-		cam->rot[0] = -90;
-	}
-
-	/* Modulo of int is not available */
-	if (cam->rot[1] < 0) {
-		cam->rot[1] += 360;
-	}
-	if (cam->rot[1] > 360) {
-		cam->rot[1] += -360;
-	}
 }
 
 /*
@@ -168,15 +123,39 @@ void camZoom(Camera *cam, int val)
 {
 	Vec3 tmp;
 
-	vecScl(cam->dir, val, tmp);
-	camMov(cam, tmp, 0);
-	cam->dist += vecMag(cam->dir) * val;
+	if(cam->trg_obj != NULL) {
+		cam->dist += val;
+		camLookAt(cam, cam->trg_obj->pos);
+		vecNrm(cam->dir, tmp);
+		vecScl(tmp, -dist, tmp);
+		vecAdd(cam->trg_obj->pos, tmp, cam->pos);
+	} else {
+		/* FIXME this is not a zoom, but movement
+		 * Zooming shouldn't change the camera's position
+		 * when moving freely */
+		vecNrm(cam->dir, tmp);
+		vecScl(tmp, val, tmp);
+		vecAdd(cam->pos, tmp, cam->pos);
+	}
 
 	camUpdPos(cam);
 }
 
+void camRot(Camera *cam, d_yaw, d_pitch) {
+	Mat4 rot_mat;
+	mat4Idt(rot_mat);
+	rot_mat[];
+}
 
-void camMovDir(Camera *cam, Direction dir, int mov_trg) 
+/*
+ * Move the camera in a certain direction
+ *
+ * @cam: The camera to move
+ * @dir: The direction to move the camera in
+ * @mov_trg: Boolean flag, whether the target point should
+ * 	also be moved
+ */
+void camMovDir(Camera *cam, Direction dir)
 {
 	Vec3 movVec, up, forw, left;
 
@@ -185,12 +164,8 @@ void camMovDir(Camera *cam, Direction dir, int mov_trg)
 
 	vecSet(up, 0.0, 1.0, 0.0);
 	vecSet(forw, cam->dir[0], 0.0, cam->dir[2]);
-	vecCross(up, forw, left);
-	
 	vecNrm(forw, forw);
-	/* XXX When norming forward before the cross product we don't
-	 * need to norm 'right' vector */
-	vecNrm(left, left);
+	vecCross(up, forw, left);
 
 	/* UP and DOWN not yet implemented */
 
@@ -211,15 +186,20 @@ void camMovDir(Camera *cam, Direction dir, int mov_trg)
 			break;
 	}
 
-	camMov(cam, movVec, mov_trg);
+	camMov(cam, movVec);
 }
 
-void camMov(Camera *cam, Vec3 mov, int mov_trg) {
-	vecAdd(cam->pos, mov, cam->pos);
-	
-	if(mov_trg) {
-		vecAdd(cam->trg, mov, cam->trg);
+/*
+ * Moves the camera by a specified vector
+ *
+ * @cam: The camera to move
+ */
+void camMov(Camera *cam, Vec3 mov) {
+	if(cam->trg_obj != NULL) {
+		printf("Trying to move camera freely with target entity set.\n");
 	}
+
+	vecAdd(cam->pos, mov, cam->pos);
 
 	camUpdPos(cam);
 }
@@ -231,9 +211,18 @@ void camMov(Camera *cam, Vec3 mov, int mov_trg) {
 */
 void camUpdPos(Camera *cam)
 {
-	camSetViewMat(cam, 
-			cam->trg[0], cam->trg[1], cam->trg[2], 
-			cam->pos[0], cam->pos[1], cam->pos[2]);
+	camSetViewMat(cam);
+}
+
+/*
+ * Adjusts the camera's direction, so it looks
+ * at the target point
+ *
+ * @cam: The camera
+ * @trg: The target position to look at
+ */
+void camLookAt(Camera *cam, Vec3 trg) {
+	vecSub(trg, cam->pos, cam->dir);
 }
 
 /*
@@ -276,42 +265,19 @@ void camSetProjMat(Camera *cam, float aov, float asp, float near,
 }
 
 /*
- * Create a view-matrix and write the
- * result into the specified vector.
+ * Calculate a view-matrix and write the
+ * result into the specified camera
  *
- * @cam: The camera to modify
- * @tx: The x-position of the target
- * @ty: The y-position of the target
- * @tz: The z-posiiton of the target
- * @px: The x-position of the camera
- * @py: The y-position of the camera
- * @pz: The z-position of the camera
+ * @cam: The camera to update the view matrix of
  */
-void camSetViewMat(Camera *cam, float tx, float ty, float tz, 
-		float px, float py, float pz)
+void camSetViewMat(Camera *cam)
 {
-	Vec3 pos, trg, del, tmp, forw, left, up, stdup;
+	Vec3 forw, left, up, stdup;
 
 	/* The default up-vector */
 	vecSet(stdup, 0.0, 1.0, 0.0);
-	vecNrm(stdup, stdup);
 
-	/* Set the target-position */
-	vecSet(cam->trg, tx, ty, tz);
-	vecCpy(trg, cam->trg);
-
-	/* Set the camera-position */
-	vecSet(cam->pos, px, py, pz);
-	vecCpy(pos, cam->pos);
-
-	/* The direction-vector from the camera to the target */
-	vecSub(cam->pos, cam->trg, del);
-	vecNrm(del, cam->dir);
-	cam->dist = vecMag(del);
-
-	vecSub(pos, trg, tmp);
-	vecNrm(tmp, forw);
-	
+	vecNrm(cam->dir, forw);
 	vecCross(stdup, forw, left);
 	vecNrm(left, left);
 
@@ -329,7 +295,7 @@ void camSetViewMat(Camera *cam, float tx, float ty, float tz,
 	cam->view[0x6] = forw[1];
 	cam->view[0xa] = forw[2];
 
-	cam->view[0xc]= -left[0] * pos[0] - left[1] * pos[1] - left[2] * pos[2];
-	cam->view[0xd]= -up[0] * pos[0] - up[1] * pos[1] - up[2] * pos[2];
-	cam->view[0xe]= -forw[0] * pos[0] - forw[1] * pos[1] - forw[2] * pos[2];
+	cam->view[0xc]= -left[0] * cam->pos[0] - left[1] * cam->pos[1] - left[2] * cam->pos[2];
+	cam->view[0xd]= -up[0] * cam->pos[0] - up[1] * cam->pos[1] - up[2] * cam->pos[2];
+	cam->view[0xe]= -forw[0] * cam->pos[0] - forw[1] * cam->pos[1] - forw[2] * cam->pos[2];
 }

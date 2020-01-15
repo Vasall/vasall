@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "vec.h"
+#include "mat.h"
 
 /* 
  * Set the values of a 3d-vector.
@@ -72,6 +73,24 @@ void vecScl(Vec3 v, float f, Vec3 res)
 	res[0] = v[0] * f;
 	res[1] = v[1] * f;
 	res[2] = v[2] * f;
+}
+
+void vecRotX(Vec3 v, float angle, Vec3 res) {
+	Mat3 rmat;
+	mat3Idt(rmat);
+	rmat[];
+	rmat[];
+	rmat[];
+	rmat[];
+}
+
+void vecRotY(Vec3 v, float angle, Vec3 res) {
+	Mat3 rmat;
+
+}
+
+void vecRotZ(Vec3 v, float angle, Vec3 res) {
+	Mat3 rmat;
 }
 
 /*

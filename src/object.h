@@ -39,7 +39,7 @@ void objDestory(Object *obj);
 void objRender(Object *obj);
 
 /* Get the current position of the object */
-void objGetPos(Entity *ent, Vec3 pos);
+void objGetPos(Object *ent, Vec3 pos);
 
 /* Set the new position of the object */
 void objSetPos(Object *obj, Vec3 pos);

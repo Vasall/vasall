@@ -22,6 +22,9 @@ void vecSub(Vec3 v1, Vec3 v2, Vec3 res);
 /* Scale a vector by a factor */
 void vecScl(Vec3 v, float f, Vec3 res);
 
+/* Rotate a vector around each axis */
+void vecRot(Vec3 v, float x, float y, float z, Vec3 res);
+
 /* Divide the vector by the factor */
 void vecInvScl(Vec3 v, float f, Vec3 res);
 

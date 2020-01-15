@@ -3,19 +3,13 @@
 
 #include "vec.h"
 #include "mat.h"
+#include "object.h"
+
 #include "XSDL/xsdl.h"
 
 typedef enum {LEFT, RIGHT, FORWARD, BACK} Direction;
 
 typedef struct Camera  {
-	/*
-	 * The point on the map currently 
-	 * focused by the camera. This
-	 * position is also used to calculate
-	 * the position of the camera.
-	 */
-	Vec3 trg;
-
 	/*
 	 * The current position of the
 	 * camera in the world.
@@ -36,12 +30,6 @@ typedef struct Camera  {
 	 * the camera.
 	 */
 	float dist;
-
-	/*
-	 * The current rotation of the
-	 * camera in degrees.
-	*/
-	Vec3 rot;
 
 	/*
 	 * The sensivity of the camera, which
@@ -83,6 +71,12 @@ typedef struct Camera  {
 	 */
 	Mat4 view;
 
+	/*
+	 * The target entity. When this is not NULL, the camera will
+	 * always follow this entity
+	 */
+	Object *trg_obj;
+
 } Camera;
 
 /* Create a new camera and set the position */
@@ -109,9 +103,10 @@ void camMouseMoved(Camera *cam, int delx, int dely);
 /* Adjust the zoom of the camera */
 void camZoom(Camera *cam, int val);
 
-void camMovDir(Camera *cam, Direction dir, int mov_trg);
+void camMovDir(Camera *cam, Direction dir);
 
-void camMov(Camera *cam, Vec3 mov, int mov_trg);
+/* Moves the camera freely, when no target entity is set */
+void camMov(Camera *cam, Vec3 mov);
 
 /* Update the position of a camera */
 void camUpdPos(Camera *cam);
@@ -121,7 +116,9 @@ void camSetProjMat(Camera* cam, float aov, float asp,
 		float near, float far);
 
 /* Create a new view-matrix */
-void camSetViewMat(Camera *cam, float tx, float ty, float tz, 
-		float px, float py, float pz);
+void camSetViewMat(Camera *cam);
+
+/* Sets the cameras direction to look at a point */
+void camLookAt(Camera *cam, Vec3 trg);
 
 #endif

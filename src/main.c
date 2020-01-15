@@ -81,7 +81,7 @@ int main(int argc, char **argv)
 		printf("[!] Failed ot setup camera.\n");
 		goto cleanup_ui;
 	}
-	camSetViewMat(core->camera, 0.0, 0.0, 0.0, 100.0, 100.0, 100.0);
+	camSetViewMat(core->camera);
 
 	printf("Initialize world-container\n");
 	if((core->world = wldCreate()) == NULL) {

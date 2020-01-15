@@ -46,6 +46,8 @@ Camera *camCreate(float aov, float asp, float near, float far)
 	mat4Idt(cam->view);
 	camSetViewMat(cam);
 
+	cam->trg_obj = NULL;
+
 	return(cam);
 }
 
@@ -91,9 +93,20 @@ void camGetView(Camera *cam, Mat4 mat)
  * @cam: Pointer to the camera
  * @pos: The vector to write the position to
  */
-void camGetPos(Camera* cam, Vec3 pos)
+void camGetPos(Camera *cam, Vec3 pos)
 {
 	vecCpy(pos, cam->pos);
+}
+
+/*
+ * Set the position of the camera.
+ *
+ * @cam: Pointer to the camera
+ * @pos: The vector containing the new position
+ */
+void camSetPos(Camera *cam, Vec3 pos)
+{
+	vecCpy(cam->pos, pos);
 }
 
 /* 
@@ -149,7 +162,8 @@ void camZoom(Camera *cam, int val)
  * @d_yaw: the yaw angle to rotate by (so delta yaw)
  * @d_pitch: the pitch delta
  */
-void camRot(Camera *cam, int d_yaw, int d_pitch) {
+void camRot(Camera *cam, int d_yaw, int d_pitch) 
+{
 	vecRotY(cam->dir, d_yaw, cam->dir);
 	/* FIXME using tan limits possible values for d_pitch */
 	cam->dir[1] += tan(d_pitch);
@@ -307,4 +321,26 @@ void camSetViewMat(Camera *cam)
 	cam->view[0xc]= -left[0] * cam->pos[0] - left[1] * cam->pos[1] - left[2] * cam->pos[2];
 	cam->view[0xd]= -up[0] * cam->pos[0] - up[1] * cam->pos[1] - up[2] * cam->pos[2];
 	cam->view[0xe]= -forw[0] * cam->pos[0] - forw[1] * cam->pos[1] - forw[2] * cam->pos[2];
+}
+
+/* 
+ * Set the camera by first copying the position
+ * of the camera and then calculating the direction.
+ * Then update the view-matrix.
+ *
+ * @cam: Pointer to the camera
+ * @pos: The new position of the camera
+ * @trg: The new target to focus on
+*/
+void camSet(Camera *cam, Vec3 pos, Vec3 trg)
+{
+	Vec3 del;
+	
+	vecCpy(cam->pos, pos);
+	
+	vecSub(trg, pos, del);
+	vecNrm(del, del);
+	vecCpy(cam->dir, del);
+
+	camSetViewMat(cam);
 }

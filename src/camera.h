@@ -94,6 +94,9 @@ void camGetView(Camera *cam, Mat4 mat);
 /* Get the position of the camera */
 void camGetPos(Camera *cam, Vec3 pos);
 
+/* Set the position of the camera */
+void camSetPos(Camera *cam, Vec3 pos);
+
 /* Get the direction the camera is looking */
 void camGetDir(Camera *cam, Vec3 dir);
 
@@ -120,5 +123,8 @@ void camSetViewMat(Camera *cam);
 
 /* Sets the cameras direction to look at a point */
 void camLookAt(Camera *cam, Vec3 trg);
+
+/* Set the camera */
+void camSet(Camera *cam, Vec3 pos, Vec3 trg);
 
 #endif

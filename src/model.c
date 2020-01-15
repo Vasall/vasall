@@ -45,9 +45,9 @@ Model *mdlCreate(Vec3 *pos, Vec3 *rot)
 	mdl->vtx_len = 0;
 	mdl->idx_len = 0;
 
-	mat4Idt(mdl->trans_mat);
-	mat4Idt(mdl->rot_mat);
-	mat4Idt(mdl->scl_mat);
+	mdl->scl[0] = 1.0;
+	mdl->scl[1] = 1.0;
+	mdl->scl[2] = 1.0;
 
 	/* Copy both the position- and the rotation-reference */
 	mdl->pos = pos;
@@ -81,6 +81,8 @@ int mdlFinish(Model *mdl)
 	if(mdl->status != 0) {
 		mdl->status = MESH_ERR_FINISHING;
 	}
+	
+	mdlUpdMatrix(mdl);
 
 	return(mdl->status);
 }
@@ -233,14 +235,15 @@ void mdlCalcNormals(Model *mdl)
  * Render a model.
  *
  * @mdl: Pointer to the model to render
+ * @mat: The matrix that should be used for transformation
  */
-void mdlRender(Model *mdl)
+void mdlRender(Model *mdl, Mat4 mat)
 {
 	int err, model, view, proj;
 
 	Mat4 mod, vie, pro;
 
-	mdlGetMatrix(mdl, mod);
+	mat4Cpy(mat, mod);
 	camGetView(core->camera, vie);
 	camGetProj(core->camera, pro);
 
@@ -269,45 +272,63 @@ void mdlRender(Model *mdl)
 }
 
 /*
- * Get the modelmatrix for rendering.
- * This function will combine all 3
- * model-matrices and return the result
- * as a new matrix.
+ * Create a red-cube as a model (used for dev).
  *
- * @mdl: Pointer to the model
- * @mat: The matrix to write the model-matrix to
- */
-void mdlGetMatrix(Model *mdl, Mat4 mat)
-{
-	/*mat4Mult(ret, mdl->scl);*/
-	mat4Cpy(mat, mdl->rot_mat);
-	/*mat4Mult(ret, mdl->trans);*/
-}
-
-/*
- * TODO: Add the other two rotation
- * axis.
- * 	
- * Set the rotation of a model.
+ * @pos: A position-reference
+ * @rot: A rotation-reference
  *
- * @mdl: The model to modify
- * @x: The x-axis-rotation
- * @y: The y-axis-rotation
- * @z: The z-axis-rotation
+ * Returns: Either a model containing a red cube
+ * 	or NULL if an error occurred
  */
-void mdlSetRot(Model *mdl)
+Model *mdlRedCube(Vec3 *pos, Vec3 *rot)
 {
-	(*mdl->pos)[0] *= DEGTORAD;
-	(*mdl->pos)[1] *= DEGTORAD;
-	(*mdl->pos)[2] *= DEGTORAD;
+	Model *mdl;
+	Vec3 *vtx;
+	uint32_t *idx;
+	ColorRGB *col;
+	int i;
 
-	memset(mdl->rot_mat, 0, 16 * sizeof(float));
+	vtx = malloc(8 * VEC3_SIZE);
+	idx = malloc(36 * sizeof(uint32_t));
+	col = malloc(8 * sizeof(ColorRGB));
 
-	mdl->rot_mat[0x0] = cos((*mdl->pos)[1]);
-	mdl->rot_mat[0x2] = -sin((*mdl->pos)[1]);
-	mdl->rot_mat[0x8] = sin((*mdl->pos)[1]);
-	mdl->rot_mat[0xa] = cos((*mdl->pos)[1]);
+	vecSet(vtx[0], -1.0, -1.0,  1.0);
+	vecSet(vtx[1],  1.0, -1.0,  1.0);
+	vecSet(vtx[2],  1.0,  1.0,  1.0); 
+	vecSet(vtx[3], -1.0,  1.0,  1.0);
+	vecSet(vtx[4], -1.0, -1.0, -1.0);
+	vecSet(vtx[5],  1.0, -1.0, -1.0);
+	vecSet(vtx[6],  1.0,  1.0, -1.0);
+	vecSet(vtx[7], -1.0,  1.0, -1.0);
 
-	mdl->rot_mat[0x5] = 1.0;
-	mdl->rot_mat[0xf] = 1.0;
+	idx[0] = 0;   idx[1] = 1;  idx[2] = 2;
+	idx[3] = 2;   idx[4] = 3;  idx[5] = 0;
+	idx[6] = 1;   idx[7] = 5;  idx[8] = 6;
+	idx[9] = 6;  idx[10] = 2; idx[11] = 1;
+	idx[12] = 7; idx[13] = 6; idx[14] = 5;
+	idx[15] = 5; idx[16] = 4; idx[17] = 7;
+	idx[18] = 4; idx[19] = 0; idx[20] = 3;
+	idx[21] = 3; idx[22] = 7; idx[23] = 4;
+	idx[24] = 4; idx[25] = 5; idx[26] = 1;
+	idx[27] = 1; idx[28] = 0; idx[29] = 4;
+	idx[30] = 3; idx[31] = 2; idx[32] = 6;
+	idx[33] = 6; idx[34] = 7; idx[35] = 3;
+
+	for(i = 0; i < 8; i++) {
+		col[i].r = 1.0;
+		col[i].g = 0.0;
+		col[i].b = 0.0;
+	}	
+
+	if((mdl = mdlCreate(pos, rot)) == NULL) return(NULL);
+	mdlSetMesh(mdl, vtx, 8, idx, 36, 1);
+	mdlAddBAO(mdl, col, sizeof(ColorRGB), 8, 2, 3);
+	shdAttachVtx(mdl->shader, "../res/shaders/flat.vert");
+	shdAttachFrg(mdl->shader, "../res/shaders/flat.frag");
+	glBindAttribLocation(mdl->shader->prog, 0, "vtxPos");
+	glBindAttribLocation(mdl->shader->prog, 1, "vtxNrm");
+	glBindAttribLocation(mdl->shader->prog, 2, "vtxCol");
+	if(mdlFinish(mdl) < 0) return(NULL);
+
+	return(mdl);
 }

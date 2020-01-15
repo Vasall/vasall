@@ -81,6 +81,7 @@ void game_procevt(XSDL_Event *evt)
 
 void game_update(void)
 {
+
 }
 
 void game_render(void)
@@ -88,4 +89,7 @@ void game_render(void)
 	/* Render the world */
 	camUpdPos(core->camera);
 	wldRender(core->world);
+
+	/* Render the player */
+	objRender(core->player);
 }

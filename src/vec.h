@@ -37,4 +37,7 @@ void vecNrm(Vec3 v, Vec3 res);
 /* Calculate the cross-product */
 void vecCross(Vec3 v1, Vec3 v2, Vec3 res);
 
+/* Output a vector in the terminal */
+void vecPrint(Vec3 v);
+
 #endif

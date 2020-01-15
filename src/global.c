@@ -1,11 +1,10 @@
 #include "global.h"
 
+/* Redefine external variables */
 uint8_t zero = 0;
 uint8_t one = 1;
-
-gloWrapper *core;
-
-char *gloErrBuf = NULL;
+gloWrapper *core = NULL;
+char gloErrBuf[256];
 
 
 /* 
@@ -14,16 +13,8 @@ char *gloErrBuf = NULL;
  * @err: The string to set as the new
  * 	error message
 */
-void gloSetError(const char *err)
-{
-	if(gloErrBuf == NULL) {
-		gloErrBuf = (char *)malloc(128 * sizeof(char));
-		if(gloErrBuf == NULL) {
-			printf("Failed to set error-message.");
-			return;
-		}
-	}
-
+void gloSetError(char *err)
+{	
 	strcpy(gloErrBuf, err);
 }
 
@@ -34,39 +25,42 @@ void gloSetError(const char *err)
 */
 char *gloGetError(void)
 {
-	if(gloErrBuf == NULL) {
-		return("No error-message set.");
-	}
-
 	return(gloErrBuf);
 }
 
 
 /*
- * Create a new wrapper and fill the
- * submodules with zeros.
+ * Initialize the global-wrapper.
  *
- * Returns: Either a pointer to the created wrapper
- * 	or NULL if an error occurred
+ * Returns: Either 0 on success or -1
+ * 	if an error occurred
 */
-gloWrapper *gloCreate(void)
+int gloInit(void)
 {
-	gloWrapper *wrapper;
+	Vec3 pos = {0.0, 1.0, 0.0};
 
-	wrapper = (gloWrapper *)malloc(sizeof(gloWrapper));
-	if(wrapper == NULL) {
-		perror("Failed to create global wrapper");
-		return(NULL);
+	core = calloc(1, sizeof(gloWrapper));
+	if(core == NULL) {
+		gloSetError("Failed to create global wrapper");
+		return(-1);
 	}
 
-	memset(wrapper, 0, sizeof(gloWrapper));
-
 	/* Just to be save */
-	wrapper->procevt = NULL;
-	wrapper->update = NULL;
-	wrapper->render = NULL;
+	core->procevt = NULL;
+	core->update = NULL;
+	core->render = NULL;
 
-	return(wrapper);
+	/* Initialize the object-array */
+	if(objInit() < 0) {
+		gloSetError("Failed to initialize object-array");
+		return(-1);
+	}
+	core->objs = objects;
+
+	core->player = objCreate(pos);
+	if(core->player == NULL) return(-1);
+
+	return(0);
 }
 
 /*
@@ -77,9 +71,9 @@ gloWrapper *gloCreate(void)
  *
  * @ptr: The pointer to the wrapper
 */
-void gloDestroy(gloWrapper *ptr)
+void gloClose(void)
 {
-	if(ptr != NULL) {
-		free(ptr);
-	}
+	if(core == NULL) return;
+
+	free(core);
 }

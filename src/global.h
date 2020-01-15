@@ -56,13 +56,15 @@ typedef struct gloWrapper {
 	 * in the area of interest.
 	*/
 	World *world;
-
+	
 	/*
-	 * An array containing all currently
-	 * active entities.
+	 * Pointer to the object array containing
+	 * all objects on the map.
 	 */
-	Object **objects;
-		
+	Object **objs;
+
+	Object *player;
+
 	/*
 	 * The absolute path to the directory
 	 * the binary is in.
@@ -147,18 +149,18 @@ extern gloWrapper *core;
  * functions as doing otherwise can lead
  * to undefind behavior.
  */
-extern char *gloErrBuf;
+extern char gloErrBuf[256];
 
 /* Set a new error-message */
-void gloSetError(const char *err);
+void gloSetError(char *err);
 
 /* Get the most recent error-message */
 char *gloGetError(void);
 
-/* Create a new global-wrapper */
-gloWrapper *gloCreate(void);
+/* Initialize the global-wrapper */
+int gloInit(void);
 
-/* Destroy a global-wrapper */
-void gloDestroy(gloWrapper *ptr);
+/* Destroy the global-wrapper */
+void gloClose(void);
 
 #endif

@@ -74,6 +74,18 @@ void game_procevt(XSDL_Event *evt)
 				case(XSDLK_e):
 					camZoom(core->camera, -1);
 					break;
+				case(XSDLK_UP):
+					camRot(core->camera, 0.0, 0.1);
+					break;
+				case(XSDLK_DOWN):
+					camRot(core->camera, 0.0, -0.1);
+					break;
+				case(XSDLK_RIGHT):
+					camRot(core->camera, 0.1, 0.0);
+					break;
+				case(XSDLK_LEFT):
+					camRot(core->camera, -0.1, 0.0);
+					break;
 			}
 			break;
 	}

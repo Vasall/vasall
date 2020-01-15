@@ -149,11 +149,19 @@ void camZoom(Camera *cam, int val)
  * @d_yaw: the yaw angle to rotate by (so delta yaw)
  * @d_pitch: the pitch delta
  */
-void camRot(Camera *cam, int d_yaw, int d_pitch) {
+void camRot(Camera *cam, float d_yaw, float d_pitch) {
 	vecRotY(cam->dir, d_yaw, cam->dir);
 	/* FIXME using tan limits possible values for d_pitch */
 	cam->dir[1] += tan(d_pitch);
 	vecNrm(cam->dir, cam->dir);
+
+	if(cam->trg_obj != NULL) {
+		/* Rotate around target object */
+		/* TODO */
+	} else {
+		/* Just rotate the camera */
+		camUpdPos(cam);
+	}
 }
 
 /*

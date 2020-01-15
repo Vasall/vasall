@@ -145,7 +145,8 @@ void camZoom(Camera *cam, int val)
 	} else {
 		/* FIXME this is not a zoom, but movement
 		 * Zooming shouldn't change the camera's position
-		 * when moving freely */
+		 * when moving freely, but instead change the
+		 * projection matrix to have a smaller fov */
 		vecNrm(cam->dir, tmp);
 		vecScl(tmp, val, tmp);
 		vecAdd(cam->pos, tmp, cam->pos);
@@ -184,11 +185,12 @@ void camRot(Camera *cam, float d_yaw, float d_pitch) {
 
 	if(cam->trg_obj != NULL) {
 		/* Rotate around target object */
-		/* TODO */
-	} else {
-		/* Just rotate the camera */
-		camUpdPos(cam);
+		Vec3 tmp;
+		vecScl(tmp, -cam->dist, tmp);
+		vecAdd(cam->trg_obj->pos, tmp, cam->pos);
 	}
+
+	camUpdPos(cam);
 }
 
 /*
@@ -241,6 +243,7 @@ void camMovDir(Camera *cam, Direction dir)
 void camMov(Camera *cam, Vec3 mov) {
 	if(cam->trg_obj != NULL) {
 		printf("Trying to move camera freely with target entity set.\n");
+		return;
 	}
 
 	vecAdd(cam->pos, mov, cam->pos);

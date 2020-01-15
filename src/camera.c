@@ -27,13 +27,13 @@ Camera *camCreate(float aov, float asp, float near, float far)
 	if(cam == NULL) return(NULL);
 
 	/* Set the default position of the camera */
-	cam->pos[0] = 0.0;
-	cam->pos[1] = 1.0;
-	cam->pos[2] = 0.0;
+	cam->pos[0] = 2.0;
+	cam->pos[1] = 2.0;
+	cam->pos[2] = 2.0;
 
-	cam->dir[0] = 1.0;
-	cam->dir[1] = 0.0;
-	cam->dir[2] = 1.0;
+	cam->dir[0] = 0.6;
+	cam->dir[1] = 0.3;
+	cam->dir[2] = 0.6;
 
 	/* Set the sensitivity of the mouse */
 	cam->sensitivity = 0.2;
@@ -163,12 +163,21 @@ void camZoom(Camera *cam, int val)
  * @d_pitch: the pitch delta
  */
 void camRot(Camera *cam, float d_yaw, float d_pitch) {
-	vecRotY(cam->dir, d_yaw, cam->dir);
-	/* FIXME using tan does not work! (not linear) */
-	/* TODO implement rotation around specified axis
-	 * and rotate around left vector (cross product) */
-	cam->dir[1] += tan(d_pitch);
+	Vec3 left, stdup;
+	vecSet(stdup, 0.0, 1.0, 0.0);
+
+	if(d_yaw != 0.0)
+		vecRotY(cam->dir, d_yaw, cam->dir);
+	
+	if(d_pitch != 0.0) {
+		vecCross(stdup, cam->dir, left);
+		vecNrm(left, left);
+		vecRotAxis(cam->dir, d_pitch, left, cam->dir);
+	}
 	vecNrm(cam->dir, cam->dir);
+
+	printf("Cam-Dir: %6.2f | %6.2f | %6.2f\n", cam->dir[0], cam->dir[1], cam->dir[2]);
+	printf("Cam-Pos: %6.2f | %6.2f | %6.2f\n", cam->pos[0], cam->pos[1], cam->pos[2]);
 
 	if(cam->trg_obj != NULL) {
 		/* Rotate around target object */
@@ -347,7 +356,7 @@ void camSet(Camera *cam, Vec3 pos, Vec3 trg)
 	
 	vecCpy(cam->pos, pos);
 	
-	vecSub(trg, pos, del);
+	vecSub(pos, trg, del);
 	vecNrm(del, del);
 	vecCpy(cam->dir, del);
 

@@ -24,7 +24,7 @@ float f = 0.0;
 int main(int argc, char **argv)
 {
 	int n;
-	Vec3 pos = {10.0, 10.0, 10.0};
+	Vec3 pos = {20.0, 20.0, 20.0};
 	Vec3 trg = {0.0, 0.0, 0.0};
 	Mat4 mat;
 

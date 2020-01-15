@@ -82,7 +82,8 @@ void vecScl(Vec3 v, float f, Vec3 res)
  * @angle: The angle to rotate by
  * @res: The resulting vector
  */
-void vecRotX(Vec3 v, float angle, Vec3 res) {
+void vecRotX(Vec3 v, float angle, Vec3 res)
+{
 	Mat3 rmat;
 	mat3Idt(rmat);
 	rmat[0x4] = cos(angle);
@@ -100,15 +101,14 @@ void vecRotX(Vec3 v, float angle, Vec3 res) {
  * @angle: The angle to rotate by
  * @res: The resulting vector
  */
-void vecRotY(Vec3 v, float angle, Vec3 res) {
+void vecRotY(Vec3 v, float angle, Vec3 res)
+{
 	Mat3 rmat;
 	mat3Idt(rmat);
 	rmat[0x0] = cos(angle);
 	rmat[0x2] = sin(angle);
 	rmat[0x6] = -sin(angle);
 	rmat[0x8] = cos(angle);
-
-	mat3Print(rmat);
 
 	vecTransf(v, rmat, res);
 }
@@ -120,7 +120,8 @@ void vecRotY(Vec3 v, float angle, Vec3 res) {
  * @angle: The angle to rotate by
  * @res: The resulting vector
  */
-void vecRotZ(Vec3 v, float angle, Vec3 res) {
+void vecRotZ(Vec3 v, float angle, Vec3 res)
+{
 	Mat3 rmat;
 	mat3Idt(rmat);
 	rmat[0x0] = cos(angle);
@@ -130,7 +131,55 @@ void vecRotZ(Vec3 v, float angle, Vec3 res) {
 	vecTransf(v, rmat, res);
 }
 
-void vecTransf(Vec3 v, Mat3 mat, Vec3 res) {
+/*
+ * Rotates a vector around a specified axis
+ *
+ * @v: The input vector
+ * @angle: The angle to rotate by
+ * @axis: The rotation axis
+ * @res: The destination vector to write to
+ */
+void vecRotAxis(Vec3 v, float angle, Vec3 axis, Vec3 res)
+{
+	Mat3 rmat;
+	float q0, q1, q2, q3;
+
+	vecNrm(axis, axis);
+	q0 = cos(angle / 2);
+	q1 = sin(angle / 2) * axis[0];
+	q2 = sin(angle / 2) * axis[1];
+	q3 = sin(angle / 2) * axis[2];
+
+	rmat[0x0] = q0 * q0 + q1 * q1 - q2 * q2 - q3 * q3;
+	rmat[0x1] = 2 * (q1 * q2 - q0 * q3);
+	rmat[0x2] = 2 * (q1 * q3 + q0 * q2);
+	rmat[0x3] = 2 * (q2 * q1 + q0 * q3);
+	rmat[0x4] = q0 * q0 - q1 * q1 + q2 * q2 - q3 * q3;
+	rmat[0x5] = 2 * (q2 * q3 - q0 * q1);
+	rmat[0x6] = 2 * (q3 * q1 - q0 * q2);
+	rmat[0x7] = 2 * (q3 * q2 + q0 * q1);
+	rmat[0x8] = q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3;
+	
+/*
+	c = cos(angle);
+	s = sin(angle);
+
+	rmat[0x0] = c + axis[0] * axis[0] * (1 - c);
+	rmat[0x1] = axis[0] * axis[1] * (1 - c) - axis[2] * s;
+	rmat[0x2] = axis[0] * axis[2] * (1 - c) + axis[1] * s;
+	rmat[0x3] = axis[0] * axis[1] * (1 - c) + axis[2] * s;
+	rmat[0x4] = c + axis[1] * axis[1] * (1 - c);
+	rmat[0x5] = axis[1] * axis[2] * (1 - c) + axis[0] * s;
+	rmat[0x6] = axis[0] * axis[2] * (1 - c) - axis[1] * s;
+	rmat[0x7] = axis[1] * axis[2] * (1 - c) + axis[0] * s;
+	rmat[0x8] = c + axis[2] * axis[2] * (1 - c);
+*/
+	vecTransf(v, rmat, res);
+
+}
+
+void vecTransf(Vec3 v, Mat3 mat, Vec3 res)
+{
 	Vec3 tmp;
 	vecCpy(tmp, v);
 

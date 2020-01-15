@@ -141,10 +141,19 @@ void camZoom(Camera *cam, int val)
 	camUpdPos(cam);
 }
 
+/*
+ * Rotates the camera according to a yaw and pitch.
+ * Angles are in radians
+ *
+ * @cam: The camera to rotate
+ * @d_yaw: the yaw angle to rotate by (so delta yaw)
+ * @d_pitch: the pitch delta
+ */
 void camRot(Camera *cam, d_yaw, d_pitch) {
-	Mat4 rot_mat;
-	mat4Idt(rot_mat);
-	rot_mat[];
+	vecRotY(cam->dir, d_yaw, cam->dir);
+	/* FIXME using tan limits possible values for d_pitch */
+	cam->dir[1] += tan(d_pitch);
+	vecNrm(cam->dir, cam->dir);	
 }
 
 /*

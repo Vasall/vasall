@@ -114,6 +114,43 @@ void mat3Cpy(Mat3 dst, Mat3 src) {
 	memcpy(src, dst, MAT3_SIZE);
 }
 
+/*
+ * Multiplies 2 3x3 matricies together and writes
+ * the result into res
+ *
+ * @m1: The first matrix factor
+ * @m2: The second matrix factor
+ * @res: The resulting matrix
+ */
 void mat3Mult(Mat3 m1, Mat3 m2, Mat3 res) {
-	
+	int i, j, k;
+	mat4Zero(res);
+
+	/* FIXME when m1 is the same as res, the calculation will fail */
+
+	for(i = 0; i < 3; i++) {
+		for(j = 0; j < 3; j++) {
+			res[j * 4 + i] = 0;
+
+			for(k = 0; k < 3; k++) {
+				res[j * 3 + i] += m1[k * 3 + i] * m2[j * 3 + k];
+			}
+		}
+	}
+}
+
+/*
+ * Prints a 3x3 matrix to the console
+ *
+ * @mat: The 3x3 matrix
+ */
+void mat3Print(Mat3 mat) {
+	int r, c;
+
+	for(r = 0; r < 3; r++) {
+		for(c = 0; c < 3; c++) {
+			printf("%6.2f ", mat[c * 3 + r]);
+		}
+		printf("\n");
+	}
 }

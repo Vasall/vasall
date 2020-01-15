@@ -18,13 +18,10 @@
  * the model-cache and mark the new 
  * struct as the currently active one.
  *
- * @pos: The position-reference of the model
- * @rot: The rotation-reference of the model
- *
  * Returns: Either a pointer to the new
  * 	model of NULL
  */
-Model *mdlCreate(Vec3 *pos, Vec3 *rot)
+Model *mdlCreate(void)
 {
 	Model *mdl = NULL;
 
@@ -44,14 +41,6 @@ Model *mdlCreate(Vec3 *pos, Vec3 *rot)
 
 	mdl->vtx_len = 0;
 	mdl->idx_len = 0;
-
-	mdl->scl[0] = 1.0;
-	mdl->scl[1] = 1.0;
-	mdl->scl[2] = 1.0;
-
-	/* Copy both the position- and the rotation-reference */
-	mdl->pos = pos;
-	mdl->rot = rot;
 
 	mdl->shader = shdBegin();
 	if(mdl->shader == NULL) { 
@@ -80,9 +69,7 @@ int mdlFinish(Model *mdl)
 
 	if(mdl->status != 0) {
 		mdl->status = MESH_ERR_FINISHING;
-	}
-	
-	mdlUpdMatrix(mdl);
+	}	
 
 	return(mdl->status);
 }
@@ -280,7 +267,7 @@ void mdlRender(Model *mdl, Mat4 mat)
  * Returns: Either a model containing a red cube
  * 	or NULL if an error occurred
  */
-Model *mdlRedCube(Vec3 *pos, Vec3 *rot)
+Model *mdlRedCube(void)
 {
 	Model *mdl;
 	Vec3 *vtx;
@@ -320,7 +307,7 @@ Model *mdlRedCube(Vec3 *pos, Vec3 *rot)
 		col[i].b = 0.0;
 	}	
 
-	if((mdl = mdlCreate(pos, rot)) == NULL) return(NULL);
+	if((mdl = mdlCreate()) == NULL) return(NULL);
 	mdlSetMesh(mdl, vtx, 8, idx, 36, 1);
 	mdlAddBAO(mdl, col, sizeof(ColorRGB), 8, 2, 3);
 	shdAttachVtx(mdl->shader, "../res/shaders/flat.vert");

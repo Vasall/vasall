@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 /* Redefine external variables */
 Object **objects;
@@ -56,14 +57,18 @@ Object *objCreate(Vec3 pos)
 			goto success;
 		}
 	}
-
-	/* Initialize the model-matrix */
-	mat4Idt(obj->matrix);
-
+	
 failed:
 	return(NULL);
 
 success:
+	obj->scl[0] = 1.0;
+	obj->scl[1] = 1.0;
+	obj->scl[2] = 1.0;
+
+	objUpdMatrix(obj);
+	mat4Print(obj->matrix);
+	
 	return(obj);	
 }
 
@@ -276,20 +281,22 @@ void objGetMatrix(Object *obj, Mat4 mat)
  * Update the model-matrix of a
  * given model.
  *
- * @mdl: The model to update the mode-matrix for
+ * @obj: The model to update the mode-matrix for
  */
-void objUpdMatrix(Object *mdl)
+void objUpdMatrix(Object *obj)
 {
-	obj->rot[0] *= DEGTORAD;
-	obj->rot[1] *= DEGTORAD;
-	obj->rot[2] *= DEGTORAD;
+	Vec3 rot;
+
+	rot[0] = obj->rot[0] * TO_RADS;
+	rot[1] = obj->rot[1] * TO_RADS;
+	rot[2] = obj->rot[2] * TO_RADS;
 
 	mat4Idt(obj->matrix);
 
-	obj->matrix[0x0] = cos(obj->rot[1]);
-	obj->matrix[0x2] = -sin(obj->rot[1]);
-	obj->matrix[0x8] = sin(obj->rot[1]);
-	obj->matrix[0xa] = cos(obj->rot[1]);
+	obj->matrix[0x0] =  cos(rot[1]);
+	obj->matrix[0x2] = -sin(rot[1]);
+	obj->matrix[0x8] =  sin(rot[1]);
+	obj->matrix[0xa] =  cos(rot[1]);
 
 	obj->matrix[0xc] = obj->pos[0];
 	obj->matrix[0xd] = obj->pos[1];

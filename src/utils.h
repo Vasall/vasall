@@ -1,5 +1,5 @@
-#ifndef _STDUTIL_H_
-#define _STDUTIL_H_
+#ifndef _UTILS_H_
+#define _UTILS_H_
 
 #include "vec.h"
 

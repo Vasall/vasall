@@ -75,22 +75,27 @@ void vecScl(Vec3 v, float f, Vec3 res)
 	res[2] = v[2] * f;
 }
 
-void vecRotX(Vec3 v, float angle, Vec3 res) {
+void vecRotX(Vec3 v, float angle, Vec3 res) 
+{
 	Mat3 rmat;
 	mat3Idt(rmat);
+	/*
 	rmat[];
 	rmat[];
 	rmat[];
 	rmat[];
+	*/
+	if(v || angle || res) {/* Revent warning for not using parameters */}
 }
 
 void vecRotY(Vec3 v, float angle, Vec3 res) {
 	Mat3 rmat;
-
+	if(v || angle || res) {/* Revent warning for not using parameters */}
 }
 
 void vecRotZ(Vec3 v, float angle, Vec3 res) {
 	Mat3 rmat;
+	if(v || angle || res) {/* Revent warning for not using parameters */}
 }
 
 /*

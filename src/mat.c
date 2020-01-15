@@ -88,8 +88,9 @@ void mat4Print(Mat4 m)
  *
  * @mat: The matrix to be filled with zeros
  */
-void mat3Zero(Mat3 mat) {
-	memset(Mat3, 0, MAT3_SIZE);
+void mat3Zero(Mat3 mat) 
+{
+	memset(mat, 0, MAT3_SIZE);
 }
 
 /*
@@ -97,11 +98,12 @@ void mat3Zero(Mat3 mat) {
  *
  * @mat: The matrix to edit
  */
-void mat3Idt(Mat3 mat) {
+void mat3Idt(Mat3 mat) 
+{
 	mat3Zero(mat);
 	mat[0x0] = 1.0;
 	mat[0x4] = 1.0;
-	mat[0x9] = 1.0;
+	mat[0x8] = 1.0;
 }
 
 /*
@@ -110,10 +112,12 @@ void mat3Idt(Mat3 mat) {
  * @dst: The destination matrix to copy to
  * @src: The source matrix to copy from
  */
-void mat3Cpy(Mat3 dst, Mat3 src) {
-	memcpy(src, dst, MAT3_SIZE);
+void mat3Cpy(Mat3 dst, Mat3 src) 
+{
+	memcpy(dst, src, MAT3_SIZE);
 }
 
-void mat3Mult(Mat3 m1, Mat3 m2, Mat3 res) {
-	
+void mat3Mult(Mat3 m1, Mat3 m2, Mat3 res) 
+{
+	if(m1 || m2 || res) {/* Prevent warning for not using parameters */}	
 }

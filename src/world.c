@@ -218,7 +218,7 @@ int wldGenTerrain(World *world)
 		memcpy(&colors[indices[j]], &col, sizeof(ColorRGB));
 	}
 
-	if((mdl = mdlCreate(&world->pos, &world->rot)) == NULL) return(-1);
+	if((mdl = mdlCreate()) == NULL) return(-1);
 	mdlSetMesh(mdl, vertices, vtxnum, indices, indlen, 1);
 	mdlAddBAO(mdl, colors, sizeof(ColorRGB), vtxnum, 2, 3);
 	shdAttachVtx(mdl->shader, "../res/shaders/terrain.vert");
@@ -240,5 +240,7 @@ int wldGenTerrain(World *world)
  */
 void wldRender(World *world) 
 {
-	mdlRender(world->terrain);
+	Mat4 idt;
+	mat4Idt(idt);
+	mdlRender(world->terrain, idt);
 }

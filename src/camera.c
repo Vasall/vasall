@@ -127,7 +127,7 @@ void camZoom(Camera *cam, int val)
 		cam->dist += val;
 		camLookAt(cam, cam->trg_obj->pos);
 		vecNrm(cam->dir, tmp);
-		vecScl(tmp, -dist, tmp);
+		vecScl(tmp, -cam->dist, tmp);
 		vecAdd(cam->trg_obj->pos, tmp, cam->pos);
 	} else {
 		/* FIXME this is not a zoom, but movement
@@ -141,10 +141,13 @@ void camZoom(Camera *cam, int val)
 	camUpdPos(cam);
 }
 
-void camRot(Camera *cam, d_yaw, d_pitch) {
+void camRot(Camera *cam, int d_yaw, int d_pitch) {
 	Mat4 rot_mat;
 	mat4Idt(rot_mat);
+	/*
 	rot_mat[];
+	*/
+	if(cam || d_yaw || d_pitch) {}/* Prevent warning for not using parameters */
 }
 
 /*

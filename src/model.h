@@ -66,25 +66,13 @@ typedef struct Model {
 	Shader *shader;
 
 	/*
-	 * A pointer to the position-vector
-	 * the model should be rendered at.
-	 */
-	Vec3 *pos;
-
-	/*
-	 * A pointer to the rotation-vector
-	 * the model should use for rotation.
-	 */
-	Vec3 *rot;
-
-	/*
 	 * The status of the model.
 	 */
 	uint8_t status;
 } Model;
 
 /* Start creating a new model and fill struct with default values */
-Model *mdlCreate(Vec3 *pos, Vec3 *rot);
+Model *mdlCreate(void);
 
 /* Finish creating the new model */
 int mdlFinish(Model *mdl);
@@ -104,6 +92,6 @@ void mdlCalcNormals(Model *mdl);
 void mdlRender(Model *mdl, Mat4 mat);
 
 /* Create a red-cube as a model (used for dev) */
-Model *mdlRedCube(Vec3 *pos, Vec3 *rot);
+Model *mdlRedCube(void);
 
 #endif

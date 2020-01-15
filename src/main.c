@@ -114,7 +114,7 @@ int main(int argc, char **argv)
 	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
 
 	objPrint(core->player);
-	objSetModel(core->player, mdlRedCube(&core->player->pos, &core->player->rot));
+	objSetModel(core->player, mdlRedCube());
 
 	try_login(NULL, NULL);	
 

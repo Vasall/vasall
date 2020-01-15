@@ -1,6 +1,8 @@
 #ifndef _OBJECT_H_
 #define _OBJECT_H_
 
+#include "vec.h"
+#include "mat.h"
 #include "model.h"
 
 #define OBJ_LIMIT 128

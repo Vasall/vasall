@@ -122,7 +122,7 @@ int main(int argc, char **argv)
 	mat4Print(core->camera->proj);
 	*/
 
-	camSet(core->camera, pos, trg);
+	camSet(core->camera, trg, pos);
 	printf("Camera-position: ");vecPrint(core->camera->pos);printf("\n");
 	printf("Direction: ");vecPrint(core->camera->dir);printf("\n");
 

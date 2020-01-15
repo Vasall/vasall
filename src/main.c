@@ -24,8 +24,6 @@ float f = 0.0;
 int main(int argc, char **argv)
 {
 	int n;
-	Vec3 pos = {20.0, 20.0, 20.0};
-	Vec3 trg = {0.0, 0.0, 0.0};
 	Mat4 mat;
 
 	if(argc) {/* Prevent warning for not using argc */}
@@ -116,15 +114,6 @@ int main(int argc, char **argv)
 	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
 
 	objSetModel(core->player, mdlRedCube());
-
-	/*
-	mat4Print(core->camera->view);
-	mat4Print(core->camera->proj);
-	*/
-
-	camSet(core->camera, trg, pos);
-	printf("Camera-position: ");vecPrint(core->camera->pos);printf("\n");
-	printf("Direction: ");vecPrint(core->camera->dir);printf("\n");
 
 	try_login(NULL, NULL);	
 

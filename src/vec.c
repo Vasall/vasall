@@ -75,27 +75,66 @@ void vecScl(Vec3 v, float f, Vec3 res)
 	res[2] = v[2] * f;
 }
 
-void vecRotX(Vec3 v, float angle, Vec3 res) 
-{
+/*
+ * Rotates the vector around the x axis by angle radians
+ *
+ * @v: The input vector
+ * @angle: The angle to rotate by
+ * @res: The resulting vector
+ */
+void vecRotX(Vec3 v, float angle, Vec3 res) {
 	Mat3 rmat;
 	mat3Idt(rmat);
-	/*
-	rmat[];
-	rmat[];
-	rmat[];
-	rmat[];
-	*/
-	if(v || angle || res) {/* Revent warning for not using parameters */}
+	rmat[0x4] = cos(angle);
+	rmat[0x5] = -sin(angle);
+	rmat[0x7] = sin(angle);
+	rmat[0x8] = cos(angle);
+
+	vecTransf(v, rmat, res);
 }
 
+/*
+ * Rotates the vector around the y axis by angle radians
+ *
+ * @v: The input vector
+ * @angle: The angle to rotate by
+ * @res: The resulting vector
+ */
 void vecRotY(Vec3 v, float angle, Vec3 res) {
 	Mat3 rmat;
-	if(v || angle || res) {/* Revent warning for not using parameters */}
+	mat3Idt(rmat);
+	rmat[0x1] = cos(angle);
+	rmat[0x3] = sin(angle);
+	rmat[0x6] = -sin(angle);
+	rmat[0x8] = cos(angle);
+
+	vecTransf(v, rmat, res);
 }
 
+/*
+ * Rotates the vector around the z axis by angle radians
+ *
+ * @v: The input vector
+ * @angle: The angle to rotate by
+ * @res: The resulting vector
+ */
 void vecRotZ(Vec3 v, float angle, Vec3 res) {
 	Mat3 rmat;
-	if(v || angle || res) {/* Revent warning for not using parameters */}
+	mat3Idt(rmat);
+	rmat[0x1] = cos(angle);
+	rmat[0x2] = -sin(angle);
+	rmat[0x4] = sin(angle);
+	rmat[0x5] = cos(angle);
+	vecTransf(v, rmat, res);
+}
+
+void vecTransf(Vec3 v, Mat3 mat, Vec3 res) {
+	Vec3 tmp;
+	vecCpy(tmp, v);
+
+	res[0] = tmp[0] * mat[0x0] + tmp[1] * mat[0x1] + tmp[2] * mat[0x2];
+	res[1] = tmp[0] * mat[0x3] + tmp[1] * mat[0x4] + tmp[2] * mat[0x5];
+	res[2] = tmp[0] * mat[0x6] + tmp[1] * mat[0x7] + tmp[2] * mat[0x8];
 }
 
 /*

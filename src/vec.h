@@ -1,6 +1,8 @@
 #ifndef VASALL_VEC_H
 #define VASALL_VEC_H
 
+#include "mat.h"
+
 #define M_PI 3.141592654
 #define TO_RADS 3.141592654/180.0
 
@@ -22,8 +24,17 @@ void vecSub(Vec3 v1, Vec3 v2, Vec3 res);
 /* Scale a vector by a factor */
 void vecScl(Vec3 v, float f, Vec3 res);
 
-/* Rotate a vector around each axis */
-void vecRot(Vec3 v, float x, float y, float z, Vec3 res);
+/* Rotate a vector around the x axis */
+void vecRotX(Vec3 v, float angle, Vec3 res);
+
+/* Rotate a vector around the y axis */
+void vecRotY(Vec3 v, float angle, Vec3 res);
+
+/* Rotate a vector around the z axis */
+void vecRotZ(Vec3 v, float angle, Vec3 res);
+
+/* Transform a vector using a 3x3 transformation matrix */
+void vecTransf(Vec3 v, Mat3 mat, Vec3 res);
 
 /* Divide the vector by the factor */
 void vecInvScl(Vec3 v, float f, Vec3 res);

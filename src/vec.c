@@ -103,10 +103,12 @@ void vecRotX(Vec3 v, float angle, Vec3 res) {
 void vecRotY(Vec3 v, float angle, Vec3 res) {
 	Mat3 rmat;
 	mat3Idt(rmat);
-	rmat[0x1] = cos(angle);
-	rmat[0x3] = sin(angle);
+	rmat[0x0] = cos(angle);
+	rmat[0x2] = sin(angle);
 	rmat[0x6] = -sin(angle);
 	rmat[0x8] = cos(angle);
+
+	mat3Print(rmat);
 
 	vecTransf(v, rmat, res);
 }
@@ -121,10 +123,10 @@ void vecRotY(Vec3 v, float angle, Vec3 res) {
 void vecRotZ(Vec3 v, float angle, Vec3 res) {
 	Mat3 rmat;
 	mat3Idt(rmat);
-	rmat[0x1] = cos(angle);
-	rmat[0x2] = -sin(angle);
-	rmat[0x4] = sin(angle);
-	rmat[0x5] = cos(angle);
+	rmat[0x0] = cos(angle);
+	rmat[0x1] = -sin(angle);
+	rmat[0x3] = sin(angle);
+	rmat[0x4] = cos(angle);
 	vecTransf(v, rmat, res);
 }
 

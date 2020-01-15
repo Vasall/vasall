@@ -67,7 +67,6 @@ success:
 	obj->scl[2] = 1.0;
 
 	objUpdMatrix(obj);
-	mat4Print(obj->matrix);
 	
 	return(obj);	
 }

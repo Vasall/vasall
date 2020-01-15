@@ -230,7 +230,7 @@ void mdlRender(Model *mdl, Mat4 mat)
 
 	Mat4 mod, vie, pro;
 
-	mat4Cpy(mat, mod);
+	mat4Cpy(mod, mat);
 	camGetView(core->camera, vie);
 	camGetProj(core->camera, pro);
 
@@ -241,11 +241,11 @@ void mdlRender(Model *mdl, Mat4 mat)
 	glEnableVertexAttribArray(2);
 
 	model = glGetUniformLocation(mdl->shader->prog, "model");
-	if(model == -1) {printf("model!!\n"); exit(1);}
+	if(model == -1) { return; }
 	view = glGetUniformLocation(mdl->shader->prog, "view");
-	if(view == -1) {printf("view!!\n"); exit(1);}
+	if(view == -1) { return; }
 	proj = glGetUniformLocation(mdl->shader->prog, "proj");
-	if(proj == -1) {printf("proj!!\n"); exit(1);}
+	if(proj == -1) { return; }
 
 	glUniformMatrix4fv(model, 1, GL_FALSE, mod);
 	glUniformMatrix4fv(view, 1, GL_FALSE, vie);

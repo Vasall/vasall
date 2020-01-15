@@ -75,7 +75,6 @@ Shader *shdCreate(char *vtx_shd, char *frg_shd)
 				exit(1);
 			}
 			glAttachShader(shd->prog, shd->vshdr);
-			printf("Added vertex-shader\n");
 		}
 		else {
 			printf("Failed to load %s\n", path);
@@ -99,7 +98,6 @@ Shader *shdCreate(char *vtx_shd, char *frg_shd)
 				exit(1);
 			}
 			glAttachShader(shd->prog, shd->fshdr);
-			printf("Added fragment-shader\n");
 
 		}
 		else {
@@ -179,7 +177,6 @@ void shdAttachVtx(Shader *shd, char *pth)
 			exit(1);
 		}
 		glAttachShader(shd->prog, shd->vshdr);
-		printf("Added vertex-shader\n");
 	}
 	else {
 		printf("Failed to load %s\n", path);
@@ -217,7 +214,6 @@ void shdAttachFrg(Shader *shd, char *pth)
 			exit(1);
 		}
 		glAttachShader(shd->prog, shd->fshdr);
-		printf("Added fragment-shader\n");
 
 	}
 	else {

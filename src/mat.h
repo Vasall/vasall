@@ -1,6 +1,9 @@
 #ifndef _MAT_H_
 #define _MAT_H_
 
+#define MAT3_SIZE (sizeof(float)*9)
+typedef float Mat3[9];
+
 #define MAT4_SIZE (sizeof(float)*16)
 typedef float Mat4[16];
 

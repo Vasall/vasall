@@ -13,6 +13,8 @@
 #include "setup.h"
 #include "handle.h"
 
+#define PAD_LEN 30
+
 void handle_events(void);
 void update(void);
 void render(void);
@@ -21,73 +23,98 @@ float f = 0.0;
 
 int main(int argc, char **argv)
 {
+	int n;
+	Vec3 pos = {0.0, 1.0, 0.0};
+
 	if(argc) {/* Prevent warning for not using argc */}
 
-	printf("Initialize XSDL-subsystem\n");
+	n = printf("Initialize XSDL-subsystem...");
+	for(n = PAD_LEN - n; n >= 0; n--) printf(".");
 	if(XSDL_Init(XSDL_INIT_EVERYTHING) < 0) {                                                    
-		printf("[!] XSDL could not initialize! (%s)\n", 
-				SDL_GetError());
+		printf("failed!\n");
+		printf("%s\n", SDL_GetError());
 		goto exit;
 	}
-	XSDL_ShowVersions();
+	printf("done\n");
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-	printf("Initialize core-wrapper\n");
-	if((core = gloCreate()) == NULL) {
-		printf("Failed to initialize core-wrapper.\n");
+	n = printf("Initialize core-wrapper...");
+	for(n = PAD_LEN - n; n >= 0; n--) printf(".");
+	if(gloInit() < 0) {
+		printf("failed!\n");
+		printf("%s\n", gloGetError());
 		goto cleanup_enud;
 	}
+	printf("done\n");
 
-	printf("Initialize window\n");
+	n = printf("Initialize window...");
+	for(n = PAD_LEN - n; n >= 0; n--) printf(".");
 	if((core->window = initWindow()) == NULL) {
-		printf("[!] Failed to create window! (%s)\n", 
-				XSDL_GetError());
+		printf("failed!\n");
+		printf("%s\n", XSDL_GetError());
 		goto cleanup_core;
 	}
+	printf("done\n");
 
-	printf("Initialize OpenGL\n");
+	n = printf("Initialize OpenGL...");
+	for(n = PAD_LEN - n; n >= 0; n--) printf(".");
 	if(initGL() < 0) {
-		printf("[!] Failed to initialize OpenGL.\n");
+		printf("failed!\n");
 		goto cleanup_window;
 	}
-	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
+	printf("done\n");
 
-	printf("Initialize UI-context\n");
+	n = printf("Initialize UI-context...");
+	for(n = PAD_LEN - n; n >= 0; n--) printf(".");
 	if((core->uicontext = XSDL_CreateUIContext(core->window)) == NULL) {
-		printf("[!] Failed to setup ui-context.\n");
+		printf("failed!\n");
 		goto cleanup_gl;
 	}
 	core->uiroot = core->uicontext->root;
+	printf("done\n");
 
 	core->bindir = XSDL_GetBinDir(argv[0]);
 
-	printf("Load resources\n");
+	printf("Load resources:\n");
 	if(loadResources() < 0) {
-		printf("[!] Failed to load resources.\n");
+		printf("failed!\n");
 		goto cleanup_ui;
 	}
 
-	printf("Initialize userinterface\n");
+	n = printf("Initialize UI...");
+	for(n = PAD_LEN - n; n >= 0; n--) printf(".");
 	if(initUI() < 0) {
-		printf("[!] Failed to setup ui.\n");
+		printf("failed!\n");
 		goto cleanup_ui;
 	}
+	printf("done\n");
 
-	printf("Initialize camera\n");
+	n = printf("Initialize camera...");
+	for(n = PAD_LEN - n; n >= 0; n--) printf(".");
 	if((core->camera = camCreate(45.0, 800.0 / 600.0, 0.1, 1000.0)) == NULL) {
-		printf("[!] Failed ot setup camera.\n");
+		printf("failed!\n");
 		goto cleanup_ui;
 	}
 	camSetViewMat(core->camera, 0.0, 0.0, 0.0, 100.0, 100.0, 100.0);
+	printf("done\n");
 
-	printf("Initialize world-container\n");
+	n = printf("Initialize world...");
+	for(n = PAD_LEN - n; n >= 0; n--) printf(".");
 	if((core->world = wldCreate()) == NULL) {
-		printf("[!] Failed to initialize world.\n");
+		printf("failed!\n");
 		goto cleanup_camera;
 	}
+	printf("done\n");
+
+	printf("\n");	
+	XSDL_ShowVersions();
+	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
+
+	objPrint(core->player);
+	objSetModel(core->player, mdlRedCube(&core->player->pos, &core->player->rot));
 
 	try_login(NULL, NULL);	
 
@@ -121,7 +148,7 @@ cleanup_window:
 	XSDL_DestroyWindow(core->window);
 
 cleanup_core:
-	gloDestroy(core);
+	gloClose();
 
 cleanup_enud:
 	XSDL_Quit();

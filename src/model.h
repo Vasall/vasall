@@ -66,24 +66,6 @@ typedef struct Model {
 	Shader *shader;
 
 	/*
-	 * The translation-matrix of
-	 * the model.
-	 */
-	Mat4 trans_mat;
-		
-	/*
-	 * The rotation-matrix of the
-	 * model.
-	 */
-	Mat4 rot_mat;
-
-	/*
-	 * The scaling-matrix of the
-	 * model.
-	 */
-	Mat4 scl_mat;
-	
-	/*
 	 * A pointer to the position-vector
 	 * the model should be rendered at.
 	 */
@@ -119,12 +101,9 @@ void mdlAddBAO(Model *mdl, void *buf, int elsize, int num,
 void mdlCalcNormals(Model *mdl);
 
 /* Render a model */
-void mdlRender(Model *mdl);
+void mdlRender(Model *mdl, Mat4 mat);
 
-/* Get the model-matrix for rendering */
-void mdlGetMatrix(Model *mdl, Mat4 mat);
-
-/* Set the rotation of a model */
-void mdlSetRot(Model *mdl);
+/* Create a red-cube as a model (used for dev) */
+Model *mdlRedCube(Vec3 *pos, Vec3 *rot);
 
 #endif

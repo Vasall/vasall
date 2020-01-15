@@ -31,6 +31,18 @@ typedef struct Object {
 	 * The model of the object.
 	 */
 	Model *model;
+
+	/*
+	 * The vector to scale the object with.
+	 */
+	Vec3 scl;
+
+	/*
+	 * The model-matrix used for
+	 * convert the vertices from
+	 * model space to world space.
+	 */
+	Mat4 matrix;
 } Object;
 
 /* The global object-list */
@@ -80,5 +92,14 @@ void objAddVel(Object *obj, Vec3 del);
 
 /* Set the object-model */
 void objSetModel(Object *obj, Model *mod);
+
+/* Get the model-matrix for rendering */
+void objGetMatrix(Object *obj, Mat4 mat);
+
+/* Update model-matrix */
+void objUpdMatrix(Object *obj);
+
+/* Output info about the object in the terminal */
+void objPrint(Object *obj);
 
 #endif

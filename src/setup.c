@@ -73,7 +73,7 @@ int initGL(void)
 int loadResources(void)
 {
 	char path[512];
-	printf("Directory: %s\n", core->bindir);
+	/* printf("Directory: %s\n", core->bindir);*/
 
 	XSDL_CombinePath(path, core->bindir, "../res/fonts/mecha.ttf");
 	if(XSDL_LoadFont(path, 24) < 0)

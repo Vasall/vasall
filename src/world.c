@@ -31,8 +31,7 @@ World *wldCreate(void)
 	world->xsize = WORLD_SIZE;
 	world->zsize = WORLD_SIZE;
 	world->ptnum = (WORLD_SIZE * WORLD_SIZE);
-	world->heights = (float *)malloc((world->ptnum) * 
-			sizeof(float));
+	world->heights = (float *)malloc((world->ptnum) * sizeof(float));
 	if(world->heights == NULL) {
 		return(NULL);
 	}

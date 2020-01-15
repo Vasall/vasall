@@ -57,6 +57,9 @@ Object *objCreate(Vec3 pos)
 		}
 	}
 
+	/* Initialize the model-matrix */
+	mat4Idt(obj->matrix);
+
 failed:
 	return(NULL);
 
@@ -120,7 +123,7 @@ Object *objGet(uint32_t id)
 */
 void objRender(Object *obj)
 {
-	mdlRender(obj->model);	
+	mdlRender(obj->model, obj->matrix);
 }
 
 /* 
@@ -133,10 +136,11 @@ void objRender(Object *obj)
 void objGetPos(Object *obj, Vec3 pos)
 {
 	vecCpy(pos, obj->pos);
+	objUpdMatrix(obj);
 }
 
 /* 
- * Set the new position of the object and
+ * Set the position of the object and
  * copy the values of the given vector into
  * the position-vector of the object.
  *
@@ -146,6 +150,7 @@ void objGetPos(Object *obj, Vec3 pos)
 void objSetPos(Object *obj, Vec3 pos)
 {
 	vecCpy(obj->pos, pos);
+	objUpdMatrix(obj);
 }
 
 /* 
@@ -159,25 +164,147 @@ void objSetPos(Object *obj, Vec3 pos)
 void objAddPos(Object *obj, Vec3 del)
 {
 	vecAdd(obj->pos, del, obj->pos);
+	objUpdMatrix(obj);
 }
 
-/* Get the current rotation of the object */
-void objGetRot(Object *obj, Vec3 rot);
+/* 
+ * Get the current rotation of the object
+ * and copy the values to the given vector.
+ *
+ * @obj: Pointer to the object to get the rotation of
+ * @rot: The vector to write the rotation-values to
+*/
+void objGetRot(Object *obj, Vec3 rot)
+{
+	vecCpy(rot, obj->rot);
+	objUpdMatrix(obj);
+}
 
-/* Set the new rotation of the object */
-void objSetRot(Object *obj, Vec3 rot);
+/* 
+ * Set the rotation of the object and
+ * copy the values of the given vector to
+ * the rotation-vector of the object.
+ *
+ * @obj: Pointer to the object to set the rotation of
+ * @rot: The new rotation of the object
+ */
+void objSetRot(Object *obj, Vec3 rot)
+{
+	vecCpy(obj->rot, rot);
+	objUpdMatrix(obj);
+}
 
-/* Add a vector to the rotation */
-void objAddRot(Object *obj, Vec3 del);
+/*
+ * Add a vector to the rotation by adding 
+ * the values to the current rotation-vector
+ * of the object.
+ *
+ * @obj: Pointer to the object to change the rotation of
+ * @del: The vector to add to the rotation
+*/
+void objAddRot(Object *obj, Vec3 del)
+{
+	vecAdd(obj->rot, del, obj->rot);
+	objUpdMatrix(obj);
+}
 
-/* Get the current velocity of the object */
-void objGetVel(Object *obj, Vec3 vel);
+/* 
+ * Get the current velocity of the object
+ * and copy the values to the given vector.
+ *
+ * @obj: Pointer to the object to get the velocity of
+ * @vel: The vector to write the velocity-values to
+*/
+void objGetVel(Object *obj, Vec3 vel)
+{
+	vecCpy(vel, obj->vel);
+}
 
-/* Set the velocity of the object */
-void objSetVel(Object *obj, Vec3 vel);
+/* 
+ * Set the velocity of the object and
+ * copy the values of the given vector to
+ * the velocity-vector of the object.
+ *
+ * @obj: Pointer to the object to set the velocity of
+ * @rot: The new velocity of the object
+ */
+void objSetVel(Object *obj, Vec3 vel)
+{
+	vecCpy(obj->vel, vel);
+}
 
-/* Add a vector to the velocity*/
-void objAddVel(Object *obj, Vec3 del);
+/*
+ * Add a vector to the velocity by adding 
+ * the values to the current velocity-vector
+ * of the object.
+ *
+ * @obj: Pointer to the object to change the velocity of
+ * @del: The vector to add to the velocity
+*/
+void objAddVel(Object *obj, Vec3 del)
+{
+	vecAdd(obj->vel, del, obj->vel);
+}
 
-/* Set the object-model */
-void objSetModel(Object *obj, Model *mod);
+/* 
+ * Set the model of the object, by replacing
+ * the current model-pointer with a new one.
+ *
+ * @obj: Pointer to the object to set the model of
+ * @mod: Pointer to the model
+ */
+void objSetModel(Object *obj, Model *mod)
+{
+	obj->model = mod;
+}
+
+/*
+ * Get the modelmatrix for rendering.
+ * This function will combine all 3
+ * model-matrices and return the result
+ * as a new matrix.
+ *
+ * @obj: Pointer to the model
+ * @mat: The matrix to write the model-matrix to
+ */
+void objGetMatrix(Object *obj, Mat4 mat)
+{
+	mat4Cpy(mat, obj->matrix);
+}
+
+/*
+ * Update the model-matrix of a
+ * given model.
+ *
+ * @mdl: The model to update the mode-matrix for
+ */
+void objUpdMatrix(Object *mdl)
+{
+	obj->rot[0] *= DEGTORAD;
+	obj->rot[1] *= DEGTORAD;
+	obj->rot[2] *= DEGTORAD;
+
+	mat4Idt(obj->matrix);
+
+	obj->matrix[0x0] = cos(obj->rot[1]);
+	obj->matrix[0x2] = -sin(obj->rot[1]);
+	obj->matrix[0x8] = sin(obj->rot[1]);
+	obj->matrix[0xa] = cos(obj->rot[1]);
+
+	obj->matrix[0xc] = obj->pos[0];
+	obj->matrix[0xd] = obj->pos[1];
+	obj->matrix[0xe] = obj->pos[2];
+}
+
+/* 
+ * Output info about the object in the terminal
+ *
+ * @obj: Pointer to the object to display data about
+*/
+void objPrint(Object *obj)
+{
+	printf("Id: %d\n", obj->id);
+	printf("Pos: "); vecPrint(obj->pos); printf("\n");
+	printf("Rot: "); vecPrint(obj->rot); printf("\n");
+	printf("Vel: "); vecPrint(obj->vel); printf("\n");
+}

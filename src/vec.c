@@ -132,3 +132,13 @@ void vecCross(Vec3 v1, Vec3 v2, Vec3 res)
 	res[1] = (v1[2] * v2[0]) - (v1[0] * v2[2]);
 	res[2] = (v1[0] * v2[1]) - (v1[1] * v2[0]);
 }
+
+/*
+ * Print a vector in the terminal.
+ *
+ * @v: The vector to display
+ */
+void vecPrint(Vec3 v)
+{
+	printf("%.2f/%.2f/%.2f", v[0], v[1], v[2]);
+}

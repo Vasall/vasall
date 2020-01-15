@@ -159,23 +159,8 @@ void vecRotAxis(Vec3 v, float angle, Vec3 axis, Vec3 res)
 	rmat[0x6] = 2 * (q3 * q1 - q0 * q2);
 	rmat[0x7] = 2 * (q3 * q2 + q0 * q1);
 	rmat[0x8] = q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3;
-	
-/*
-	c = cos(angle);
-	s = sin(angle);
 
-	rmat[0x0] = c + axis[0] * axis[0] * (1 - c);
-	rmat[0x1] = axis[0] * axis[1] * (1 - c) - axis[2] * s;
-	rmat[0x2] = axis[0] * axis[2] * (1 - c) + axis[1] * s;
-	rmat[0x3] = axis[0] * axis[1] * (1 - c) + axis[2] * s;
-	rmat[0x4] = c + axis[1] * axis[1] * (1 - c);
-	rmat[0x5] = axis[1] * axis[2] * (1 - c) + axis[0] * s;
-	rmat[0x6] = axis[0] * axis[2] * (1 - c) - axis[1] * s;
-	rmat[0x7] = axis[1] * axis[2] * (1 - c) + axis[0] * s;
-	rmat[0x8] = c + axis[2] * axis[2] * (1 - c);
-*/
 	vecTransf(v, rmat, res);
-
 }
 
 void vecTransf(Vec3 v, Mat3 mat, Vec3 res)

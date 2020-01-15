@@ -46,6 +46,14 @@ void game_procevt(XSDL_Event *evt)
 			camZoom(core->camera, evt->wheel.y);
 			break;
 
+		case(XSDL_MOUSEMOTION):
+			if(evt->motion.state == SDL_BUTTON_LMASK) {
+				/* If left mouse button pressed */
+				camRot(core->camera, evt->motion.xrel / 50.0,
+						evt->motion.yrel / 50.0);
+			}
+			break;
+
 		case(XSDL_KEYDOWN):
 			mod = evt->key.keysym.mod;
 			if(evt->key.keysym.scancode == 20 && mod & KMOD_CTRL) {

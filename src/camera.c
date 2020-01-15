@@ -36,7 +36,7 @@ Camera *camCreate(float aov, float asp, float near, float far)
 	cam->dir[2] = 0.6;
 
 	/* Set the sensitivity of the mouse */
-	cam->sensitivity = 0.2;
+	cam->sens = 0.2;
 
 	/* Create the projection matrix */
 	mat4Idt(cam->proj);
@@ -165,6 +165,9 @@ void camZoom(Camera *cam, int val)
 void camRot(Camera *cam, float d_yaw, float d_pitch) {
 	Vec3 left, stdup;
 	vecSet(stdup, 0.0, 1.0, 0.0);
+	
+	d_yaw *= cam->sens;
+	d_pitch *= cam->sens;
 
 	if(d_yaw != 0.0)
 		vecRotY(cam->dir, d_yaw, cam->dir);

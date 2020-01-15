@@ -33,6 +33,9 @@ void vecRotY(Vec3 v, float angle, Vec3 res);
 /* Rotate a vector around the z axis */
 void vecRotZ(Vec3 v, float angle, Vec3 res);
 
+/* Rotates a vector around a specified axis */
+void vecRotAxis(Vec3 v, float angle, Vec3 axis, Vec3 res);
+
 /* Transform a vector using a 3x3 transformation matrix */
 void vecTransf(Vec3 v, Mat3 mat, Vec3 res);
 

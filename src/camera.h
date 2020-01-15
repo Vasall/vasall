@@ -106,6 +106,8 @@ void camMouseMoved(Camera *cam, int delx, int dely);
 /* Adjust the zoom of the camera */
 void camZoom(Camera *cam, int val);
 
+void camRot(Camera *cam, float d_yaw, float d_pitch);
+
 void camMovDir(Camera *cam, Direction dir);
 
 /* Moves the camera freely, when no target entity is set */

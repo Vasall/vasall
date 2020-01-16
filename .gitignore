@@ -10,5 +10,8 @@
 /tools
 /dev
 
+# for ctags vim
+/tags
+
 # Just to be safe
 *.o

@@ -4,10 +4,9 @@
 #include <string.h>
 #include <math.h>
 
-
 /* Redefine external variables */
-Object **objects;
-
+Object **object_array = NULL;
+int object_number = 0;
 
 /* 
  * Initialize the object-array and allocate
@@ -20,7 +19,7 @@ int objInit(void)
 {
 	int i;
 
-	objects = malloc(OBJ_LIMIT * sizeof(Object *));
+	objects = malloc(sizeof(Object *) * OBJ_LIMIT);
 	if(objects == NULL) return(-1);
 
 	for(i = 0; i < OBJ_LIMIT; i++) {
@@ -119,18 +118,6 @@ Object *objGet(uint32_t id)
 	}
 
 	return(obj);
-}
-
-
-/* 
- * Update the object and use physics
- * to calculate the updated attrbutes.
- *
- * obj: Pointer to the object to update
-*/
-void objUpdate(Object *obj)
-{
-	if(obj) {}
 }
 
 /* 

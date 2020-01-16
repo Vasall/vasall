@@ -16,7 +16,8 @@ typedef struct Player {
 } Player;
 
 /* The external player-container */
-extern Player **players;
+extern Player **player_array;
+extern int player_number;
 
 typedef struct Enemy {
 	/*
@@ -30,7 +31,8 @@ typedef struct Enemy {
 } Enemy;
 
 /* The external enemy-container */
-extern Enemy **enemy;
+extern Enemy **enemy_array;
+extern int enemy_number;
 
 typedef struct Thing {
 	/*
@@ -40,6 +42,7 @@ typedef struct Thing {
 } Thing;
 
 /* The external thing-container */
-extern Thing **things;
+extern Thing **thing_array;
+extern int thing_number;
 
 #endif

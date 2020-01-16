@@ -201,10 +201,14 @@ void handle_events(void)
  */
 void update(void)
 {
+	int i;
+
 	/* Run specified update-function */
 	if(core->update != NULL) {
 		core->update();
 	}
+
+	for(i = 0; i < )	
 
 	/*mdlSetRot(core->world->model, 0.0, f, 0.0);
 	  f += 0.1;*/

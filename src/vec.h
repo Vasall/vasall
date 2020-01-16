@@ -9,6 +9,9 @@
 #define VEC3_SIZE (sizeof(float)*3)
 typedef float Vec3[3];
 
+#define VEC2_SIZE (sizeof(float)*2)
+typedef float Vec2[2];
+
 /* Set the values of a 3d-vector */
 void vecSet(Vec3 v, float x, float y, float z);
 

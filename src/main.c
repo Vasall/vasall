@@ -122,7 +122,7 @@ int main(int argc, char **argv)
 
 
 	XSDL_CombinePath(pth, core->bindir, "../res/objects/human.obj");
-	ldMdl(pth);
+	ldMdl(NULL, pth);
 
 
 

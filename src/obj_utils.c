@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "obj_utils.h"
+#include "model.h"
 #include "vec.h"
 
 /*
@@ -15,34 +16,91 @@
  * Returns: The new models index in the model cache,
  * or -1 on any error
  */
-int ldMdl(char *pth)
+int ldMdl(Model *mdl, char *pth)
 {
 	FILE *fd = fopen(pth, "r");
-	char *line_buf = malloc(256 * sizeof(char));
+	char *char_buf = malloc(256 * sizeof(char));
 
 	Vec3 *vertex_buf = malloc(BUF_ALLOC_STEP * VEC3_SIZE);
-	int *index_buf = malloc(BUF_ALLOC_STEP * sizeof(int));
+	int vertex_count = 0;
+
 	Vec3 *normal_buf = malloc(BUF_ALLOC_STEP * VEC3_SIZE);
+	int normal_count = 0;	
 
-	float f0, f1, f2;
+	Vec2 *tex_buf = malloc(BUF_ALLOC_STEP * VEC2_SIZE);
+	int tex_count = 0;
 
-	while(fscanf(fd, "%s", line_buf) != EOF) {
-		if(strstr(line_buf, "vt") != NULL) {
+	int *index_buf = malloc(BUF_ALLOC_STEP * sizeof(int));
+	int *normal_index_buf = malloc(BUF_ALLOC_STEP * sizeof(int));
+	int *tex_index_buf = malloc(BUF_ALLOC_STEP * sizeof(int));
+	int index_count = 0;
+
+	int i;
+
+	while(fscanf(fd, "%s", char_buf) != EOF) {
+		if(strstr(char_buf, "vt") != NULL) {
+			float f;
 			/* texture data */
-			
-		} else if(strstr(line_buf, "vn") != NULL) {
+			fscanf(fd, "%f", &f);
+			fscanf(fd, "%f", &f);
+
+		} else if(strstr(char_buf, "vn") != NULL) {
 			/* normal data*/
+			fscanf(fd, "%f %f %f", &normal_buf[normal_count][0],
+					&normal_buf[normal_count][1],
+					&normal_buf[normal_count][2]);
+			
+			if(normal_count % BUF_ALLOC_STEP ==
+					BUF_ALLOC_STEP - 1) {
+				normal_buf = realloc(normal_buf,
+							(normal_count /
+							BUF_ALLOC_STEP + 2) *
+							VEC3_SIZE);
+			}
+			normal_count++;
 
-		} else if(strstr(line_buf, "v") != NULL) {
-			/* vector data*/
+		} else if(strstr(char_buf, "v") != NULL) {
+			/* vertex data*/
+			fscanf(fd, "%f %f %f", &vertex_buf[vertex_count][0],
+					&vertex_buf[vertex_count][1],
+					&vertex_buf[vertex_count][2]);
+			
+			if(vertex_count % BUF_ALLOC_STEP ==
+					BUF_ALLOC_STEP - 1) {
+				vertex_buf = realloc(vertex_buf,
+							(vertex_count /
+							BUF_ALLOC_STEP + 2) *
+							VEC3_SIZE);
+			}
+			vertex_count++;
 
-		} else if(strstr(line_buf, "f")) {
-			/* Index data */
 
+		} else if(strstr(char_buf, "f") != NULL) {
+			/* index data */
+			for(i = 0; i < 3; i++) {
+				fscanf(fd, "%s", char_buf);
+				sscanf(char_buf, "%d/%d/%d",
+						&index_buf[index_count],
+						&tex_index_buf[index_count],
+						&normal_index_buf[index_count]);
+				index_count++;
+			}
+			
 		}
 	}
 
-	free(line_buf);
+	mdlSetMesh(mdl, vertex_buf, vertex_count, index_buf, index_count, 1);
+
+	printf("Finished parsing %s\n", pth);
+
+	fclose(fd);
+	free(char_buf);
+	free(vertex_buf);
+	free(normal_buf);
+	free(tex_buf);
+	free(index_buf);
+	free(normal_index_buf);
+	free(tex_index_buf);
 
 	return 0;
 }

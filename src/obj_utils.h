@@ -3,6 +3,8 @@
 
 #define BUF_ALLOC_STEP 1024
 
-int ldMdl(char *pth);
+#include "model.h"
+
+int ldMdl(Model *mdl, char *pth);
 
 #endif

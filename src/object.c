@@ -70,11 +70,9 @@ failed:
 	return(NULL);
 
 success:
-	obj->scl[0] = 1.0;
-	obj->scl[1] = 1.0;
-	obj->scl[2] = 1.0;
-
+	vecSet(obj->scl, 1.0, 1.0, 1.0);
 	objUpdMatrix(obj);
+	object_number += 1;
 	
 	return(obj);	
 }

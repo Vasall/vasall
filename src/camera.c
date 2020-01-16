@@ -129,6 +129,13 @@ void camZoom(Camera *cam, int val)
 {
 	Vec3 tmp;
 
+	cam->dist += val;
+	if(cam->dist < 0.5)
+		cam->dist = 0.5;
+
+	camUpdate(cam);
+	return;
+
 	if(cam->trg_obj != NULL) {
 		cam->dist += val;
 		if(cam->dist < 0.5)
@@ -177,14 +184,7 @@ void camRot(Camera *cam, float d_yaw, float d_pitch)
 	}
 	vecNrm(cam->dir, cam->dir);
 
-	if(cam->trg_obj != NULL) {
-		/* Rotate around target object */
-		Vec3 tmp;
-		vecScl(cam->dir, cam->dist, tmp);
-		vecAdd(cam->trg_obj->pos, tmp, cam->pos);
-	}
-
-	camUpdViewMat(cam);
+	camUpdate(cam);
 }
 
 /*
@@ -257,8 +257,9 @@ void camMov(Camera *cam, Vec3 mov)
 void camLookAt(Camera *cam, Vec3 trg)
 {
 	if(cam->pos[0] == trg[0] &&
-		cam->pos[1] == trg[1] &&
-		cam->pos[2] == trg[2]) {
+			cam->pos[1] == trg[1] &&
+			cam->pos[2] == trg[2]) {
+		printf("Target equal to cam position!\n");
 		vecSet(cam->dir, 1.0, 0.0, 0.0);
 		return;
 	}
@@ -355,5 +356,28 @@ void camSet(Camera *cam, Vec3 pos, Vec3 trg)
 	vecSub(pos, trg, cam->dir);
 	vecNrm(cam->dir, cam->dir);
 
+	camUpdViewMat(cam);
+}
+
+/*
+ * Updates the camera according to it's set attributes.
+ * This function may change the camera's position when a
+ * target entity is set.
+ *
+ * @cam: The camera to update
+ */
+void camUpdate(Camera *cam)
+{
+	Vec3 tmp;
+
+	if(cam->trg_obj != NULL) {
+		vecNrm(cam->dir, cam->dir);
+		vecScl(cam->dir, cam->dist, tmp);
+		vecAdd(cam->trg_obj->pos, tmp, cam->pos);
+		/* TODO do not target postion of object, but
+		 * specific target point relative to it */
+	} else {
+		
+	}
 	camUpdViewMat(cam);
 }

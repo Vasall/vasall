@@ -18,21 +18,27 @@ typedef struct Object {
 	Vec3 pos;
 
 	/*
-	 * The current rotation of the 
-	 * object.
-	 */
-	Vec3 rot;
-
-	/*
 	 * The current velocity of the
 	 * object.
 	 */
 	Vec3 vel;
 
 	/*
+	 * The current facing-direction of
+	 * the object.
+	 */
+	Vec3 dir;
+
+	/*
 	 * The model of the object.
 	 */
 	Model *model;
+	
+	/*
+	 * The current rotation of the 
+	 * object.
+	 */
+	Vec3 rot;
 
 	/*
 	 * The vector to scale the object with.
@@ -62,6 +68,9 @@ void objDestory(Object *obj);
 
 /* Get an object via the object-id */
 Object *objGet(uint32_t id);
+
+/* Update an object and adjust the attributes */
+void objUpdate(Object *obj);
 
 /* Render an object on the screen */
 void objRender(Object *obj);

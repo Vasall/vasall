@@ -19,12 +19,14 @@ int objInit(void)
 {
 	int i;
 
-	objects = malloc(sizeof(Object *) * OBJ_LIMIT);
-	if(objects == NULL) return(-1);
+	object_array = malloc(sizeof(Object *) * OBJ_LIMIT);
+	if(object_array == NULL) return(-1);
 
 	for(i = 0; i < OBJ_LIMIT; i++) {
-		objects[i] = NULL;
+		object_array[i] = NULL;
 	}
+
+	object_number = 0;
 
 	return(0);
 }
@@ -51,10 +53,15 @@ Object *objCreate(Vec3 pos)
 	/* Set the position */
 	vecCpy(obj->pos, pos);
 
+	/* Set the velocity */
+
+	/* Set the direction */
+	vecSet(obj->dir, 1.0, 1.0, 1.0);
+
 	for(i = 0; i < OBJ_LIMIT; i++) {
-		if(objects[i] == NULL) {
+		if(object_array[i] == NULL) {
 			obj->id = (uint32_t)i;
-			objects[i] = obj;
+			object_array[i] = obj;
 			goto success;
 		}
 	}
@@ -85,15 +92,15 @@ void objDestory(Object *obj)
 	if(obj != NULL) return;
 		
 	for(i = 0; i < OBJ_LIMIT; i++) {
-		if(objects[i]->id == obj->id) {
+		if(object_array[i]->id == obj->id) {
 			p = i;
 			break;	
 		}
 	}
 
 	if(p != -1) {
-		free(objects[p]);
-		objects[p] = NULL;
+		free(object_array[p]);
+		object_array[p] = NULL;
 	}
 }
 
@@ -111,13 +118,24 @@ Object *objGet(uint32_t id)
 	Object *obj = NULL;
 
 	for(i = 0; i < OBJ_LIMIT; i++) {
-		if(objects[i] != NULL && objects[i]->id == id) {
-			obj = objects[i];
+		if(object_array[i] != NULL && object_array[i]->id == id) {
+			obj = object_array[i];
 			break;
 		}
 	}
 
 	return(obj);
+}
+
+/*
+ * Update an object and use pyhsical calculations
+ * to adjust the attributes of the object.
+ *
+ * @obj: Pointer to the object to update
+ */
+void objUpdate(Object *obj)
+{
+	
 }
 
 /* 

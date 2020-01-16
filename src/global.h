@@ -5,6 +5,7 @@
 #include "camera.h"
 #include "world.h"
 #include "object.h"
+#include "entity.h"
 
 /*
  * This is a struct used as a global-wrapper.

@@ -63,7 +63,23 @@ typedef struct gloWrapper {
 	 */
 	Object **objs;
 
-	Object *player;
+	/* 
+	 * A reference to the global player
+	 * container.
+	 */
+	Player **players;
+
+	/*
+	 * A reference to the global enemy
+	 * container.
+	 */
+	Enemy **enemies;
+
+	/* 
+	 * A reference to the global thing
+	 * container.
+	 */
+	Thing **things;
 
 	/*
 	 * The absolute path to the directory

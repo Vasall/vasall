@@ -4,7 +4,6 @@
 #include "vec.h"
 #include "mat.h"
 #include "object.h"
-
 #include "XSDL/xsdl.h"
 
 typedef enum {LEFT, RIGHT, FORWARD, BACK} Direction;
@@ -109,6 +108,7 @@ void camZoom(Camera *cam, int val);
 /* Rotates the camera, adjusting yaw and pitch */
 void camRot(Camera *cam, float d_yaw, float d_pitch);
 
+/*  */
 void camMovDir(Camera *cam, Direction dir);
 
 /* Moves the camera freely, when no target entity is set */

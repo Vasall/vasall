@@ -1,8 +1,7 @@
+#include "camera.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-
-#include "camera.h"
 
 /*
  * Create a new camera and initialize the
@@ -25,13 +24,10 @@ Camera *camCreate(float aov, float asp, float near, float far)
 	if(cam == NULL) return(NULL);
 
 	/* Set the default position of the camera */
-	cam->pos[0] = 20.0;
-	cam->pos[1] = 20.0;
-	cam->pos[2] = 20.0;
+	vecSet(cam->pos, 0.0, 0.0, 0.0);
 
-	cam->dir[0] = 0.6;
-	cam->dir[1] = 0.4;
-	cam->dir[2] = 0.6;
+	/* Set the direction-vector */
+	vecSet(cam->dir, 1.0, 0.0, 0.0);
 
 	/* Set the sensitivity of the mouse */
 	cam->sens = 0.5;

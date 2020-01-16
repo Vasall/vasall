@@ -7,8 +7,11 @@
 
 #define OBJ_LIMIT 128
 
+
 typedef struct Object {
-	/* The id of this object in the object-array */
+	/* 
+	 * The id of this object in the object-array.
+	*/
 	unsigned int id;
 
 	/*
@@ -47,8 +50,10 @@ typedef struct Object {
 	Mat4 matrix;
 } Object;
 
+
 /* The global object-list */
 extern Object **objects;
+
 
 /* Initialize the object-array */
 int objInit(void);
@@ -61,6 +66,9 @@ void objDestory(Object *obj);
 
 /* Get an object via the object-id */
 Object *objGet(uint32_t id);
+
+/* Update the object */
+void objUpdate(Object *obj);
 
 /* Render an object on the screen */
 void objRender(Object *obj);

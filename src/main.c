@@ -129,6 +129,11 @@ int main(int argc, char **argv)
 
 	try_login(NULL, NULL);	
 
+	/*
+	XSDL_CombinePath(pth, core->bindir, "../res/objects/human.obj");
+	ldMdl(NULL, pth);
+	*/
+
 	/* 
 	 * Mark the game as running and
 	 * then proceed to jump into the

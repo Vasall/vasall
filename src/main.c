@@ -25,7 +25,7 @@ void render(void);
 int main(int argc, char **argv)
 {
 	int n;
-	char pth[256];
+	char pth[512];
 	Player *plr;
 	Vec3 pos = {0.0, 1.0, 0.0};
 

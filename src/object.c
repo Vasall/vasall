@@ -4,32 +4,9 @@
 #include <string.h>
 #include <math.h>
 
-/* Redefine external variables */
+/* Redefine global variables */
 Object **object_array = NULL;
-int object_number = 0;
-
-/* 
- * Initialize the object-array and allocate
- * the necessary memory.
- *
- * Returns: Either 0 on success or -1
- * 	if an error occurred
-*/
-int objInit(void)
-{
-	int i;
-
-	object_array = malloc(sizeof(Object *) * OBJ_LIMIT);
-	if(object_array == NULL) return(-1);
-
-	for(i = 0; i < OBJ_LIMIT; i++) {
-		object_array[i] = NULL;
-	}
-
-	object_number = 0;
-
-	return(0);
-}
+short object_number = 0;
 
 /* 
  * Create a new object at the given position and 
@@ -62,6 +39,7 @@ Object *objCreate(Vec3 pos)
 		if(object_array[i] == NULL) {
 			obj->id = (uint32_t)i;
 			object_array[i] = obj;
+			object_number += 1;
 			goto success;
 		}
 	}
@@ -69,10 +47,9 @@ Object *objCreate(Vec3 pos)
 failed:
 	return(NULL);
 
-success:
+success:	
 	vecSet(obj->scl, 1.0, 1.0, 1.0);
 	objUpdMatrix(obj);
-	object_number += 1;
 	
 	return(obj);	
 }

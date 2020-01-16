@@ -16,7 +16,7 @@
  * Returns: The new models index in the model cache,
  * or -1 on any error
  */
-int ldMdl(Model *mdl, char *pth)
+int mdlLoad(Model *mdl, char *pth)
 {
 	FILE *fd = fopen(pth, "r");
 	char *char_buf = malloc(256 * sizeof(char));

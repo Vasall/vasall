@@ -37,7 +37,7 @@ void menu_update(void)
 
 void game_procevt(XSDL_Event *evt)
 {
-	int mod, mod_ctrl, mod_shift;
+	int mod, mod_ctrl;
 
 	if(mod_ctrl) {/* Prevent warning for not using mod_ctrl */}
 
@@ -62,7 +62,6 @@ void game_procevt(XSDL_Event *evt)
 			}
 
 			mod_ctrl = mod & (KMOD_LCTRL | KMOD_RCTRL);
-			mod_shift = mod & (KMOD_LSHIFT | KMOD_RSHIFT);
 			switch(evt->key.keysym.sym) {
 				case(SDLK_w):
 					camMovDir(core->camera, FORWARD);
@@ -101,15 +100,23 @@ void game_procevt(XSDL_Event *evt)
 
 void game_update(void)
 {
+	int i;
 
+	for(i = 0; i < *core->object_num; i++) {
+		objUpdate(core->objects[i]);
+	}
 }
 
 void game_render(void)
 {
+	int i;
+
 	/* Render the world */
 	camUpdViewMat(core->camera);
 	wldRender(core->world);
 
 	/* Render the player */
-	objRender(core->player);
+	for(i = 0; i < *core->object_num; i++) {
+		objRender(core->objects[i]);			
+	}
 }

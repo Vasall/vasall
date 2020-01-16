@@ -135,7 +135,7 @@ Object *objGet(uint32_t id)
  */
 void objUpdate(Object *obj)
 {
-	
+	if(obj) {}	
 }
 
 /* 

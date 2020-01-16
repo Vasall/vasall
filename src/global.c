@@ -55,10 +55,20 @@ int gloInit(void)
 		gloSetError("Failed to initialize object-array");
 		return(-1);
 	}
-	core->objs = objects;
+	core->objects = object_array;
+	core->object_num = &object_number;
 
-	core->player = objCreate(pos);
-	if(core->player == NULL) return(-1);
+	entInit();	
+
+	core->players = player_array;
+	core->player_num = &player_number;
+	core->enemies = enemy_array;
+	core->enemy_num = &enemy_number;
+	core->things = thing_array;
+	core->thing_num = &thing_number;
+
+	core->players[0] = plrCreate(pos);
+	if(core->players[0] == NULL) return(-1);
 
 	return(0);
 }

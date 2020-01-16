@@ -3,6 +3,8 @@
 
 #include "object.h"
 
+#define ENTITY_LIMIT 32
+
 typedef struct Player {
 	/*
 	 * Pointer to the underlying object.
@@ -46,5 +48,11 @@ typedef struct Thing {
 /* The external thing-container */
 extern Thing **thing_array;
 extern int thing_number;
+
+/* Initialize the entity-arrays */
+int entInit(void);
+
+/* Create a new player */
+Player *plrCreate(Vec3 pos);
 
 #endif

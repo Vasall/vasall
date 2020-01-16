@@ -24,7 +24,6 @@ void render(void);
 int main(int argc, char **argv)
 {
 	int n;
-	Mat4 mat;
 
 	if(argc) {/* Prevent warning for not using argc */}
 
@@ -113,8 +112,8 @@ int main(int argc, char **argv)
 	XSDL_ShowVersions();
 	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
 
-	objSetModel(core->player, mdlRedCube());
-	core->camera->trg_obj = core->player;
+	objSetModel(core->players[0]->obj, mdlRedCube());
+	core->camera->trg_obj = core->players[0]->obj;
 
 	try_login(NULL, NULL);	
 
@@ -201,17 +200,10 @@ void handle_events(void)
  */
 void update(void)
 {
-	int i;
-
 	/* Run specified update-function */
 	if(core->update != NULL) {
 		core->update();
 	}
-
-	for(i = 0; i < )	
-
-	/*mdlSetRot(core->world->model, 0.0, f, 0.0);
-	  f += 0.1;*/
 }
 
 /*

@@ -62,25 +62,29 @@ typedef struct gloWrapper {
 	 * Pointer to the object array containing
 	 * all objects on the map.
 	 */
-	Object **objs;
+	Object **objects;
+	int *object_num;
 
 	/* 
 	 * A reference to the global player
 	 * container.
 	 */
 	Player **players;
+	int *player_num;
 
 	/*
 	 * A reference to the global enemy
 	 * container.
 	 */
 	Enemy **enemies;
+	int *enemy_num;
 
 	/* 
 	 * A reference to the global thing
 	 * container.
 	 */
 	Thing **things;
+	int *thing_num;
 
 	/*
 	 * The absolute path to the directory

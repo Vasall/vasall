@@ -34,7 +34,9 @@ Camera *camCreate(float aov, float asp, float near, float far)
 	cam->dir[2] = 0.6;
 
 	/* Set the sensitivity of the mouse */
-	cam->sens = 0.2;
+	cam->sens = 0.5;
+
+	cam->dist = vecMag(cam->pos);
 
 	/* Create the projection matrix */
 	mat4Idt(cam->proj);
@@ -133,9 +135,12 @@ void camZoom(Camera *cam, int val)
 
 	if(cam->trg_obj != NULL) {
 		cam->dist += val;
+		if(cam->dist < 0.5)
+			cam->dist = 0.5;
+
 		camLookAt(cam, cam->trg_obj->pos);
-		vecNrm(cam->dir, tmp);
-		vecScl(tmp, -cam->dist, tmp);
+		vecNrm(cam->dir, cam->dir);
+		vecScl(cam->dir, cam->dist, tmp);
 		vecAdd(cam->trg_obj->pos, tmp, cam->pos);
 	} else {
 		/* FIXME this is not a zoom, but movement
@@ -158,7 +163,8 @@ void camZoom(Camera *cam, int val)
  * @d_yaw: the yaw delta in radians
  * @d_pitch: the pitch delta in radians
  */
-void camRot(Camera *cam, float d_yaw, float d_pitch) {
+void camRot(Camera *cam, float d_yaw, float d_pitch)
+{
 	Vec3 left, stdup;
 	vecSet(stdup, 0.0, 1.0, 0.0);
 	
@@ -175,13 +181,10 @@ void camRot(Camera *cam, float d_yaw, float d_pitch) {
 	}
 	vecNrm(cam->dir, cam->dir);
 
-	printf("Cam-Dir: %6.2f | %6.2f | %6.2f\n", cam->dir[0], cam->dir[1], cam->dir[2]);
-	printf("Cam-Pos: %6.2f | %6.2f | %6.2f\n", cam->pos[0], cam->pos[1], cam->pos[2]);
-
 	if(cam->trg_obj != NULL) {
 		/* Rotate around target object */
 		Vec3 tmp;
-		vecScl(tmp, -cam->dist, tmp);
+		vecScl(cam->dir, cam->dist, tmp);
 		vecAdd(cam->trg_obj->pos, tmp, cam->pos);
 	}
 
@@ -236,7 +239,8 @@ void camMovDir(Camera *cam, Direction dir)
  * @cam: The camera to move
  * @mov: The movement vector
  */
-void camMov(Camera *cam, Vec3 mov) {
+void camMov(Camera *cam, Vec3 mov)
+{
 	if(cam->trg_obj != NULL) {
 		printf("Trying to move camera freely with target entity set.\n");
 		return;
@@ -254,8 +258,15 @@ void camMov(Camera *cam, Vec3 mov) {
  * @cam: The camera
  * @trg: The target position to look at
  */
-void camLookAt(Camera *cam, Vec3 trg) {
-	vecSub(trg, cam->pos, cam->dir);
+void camLookAt(Camera *cam, Vec3 trg)
+{
+	if(cam->pos[0] == trg[0] &&
+		cam->pos[1] == trg[1] &&
+		cam->pos[2] == trg[2]) {
+		vecSet(cam->dir, 1.0, 0.0, 0.0);
+		return;
+	}
+	vecSub(cam->pos, trg, cam->dir);
 }
 
 /*

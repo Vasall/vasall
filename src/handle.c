@@ -49,8 +49,8 @@ void game_procevt(XSDL_Event *evt)
 		case(XSDL_MOUSEMOTION):
 			if(evt->motion.state == SDL_BUTTON_LMASK) {
 				/* If left mouse button pressed */
-				camRot(core->camera, evt->motion.xrel / 50.0,
-						evt->motion.yrel / 50.0);
+				camRot(core->camera, -evt->motion.xrel / 50.0,
+						-evt->motion.yrel / 50.0);
 			}
 			break;
 
@@ -83,16 +83,16 @@ void game_procevt(XSDL_Event *evt)
 					camZoom(core->camera, -1);
 					break;
 				case(XSDLK_UP):
-					camRot(core->camera, 0.0, 0.1);
-					break;
-				case(XSDLK_DOWN):
 					camRot(core->camera, 0.0, -0.1);
 					break;
+				case(XSDLK_DOWN):
+					camRot(core->camera, 0.0, 0.1);
+					break;
 				case(XSDLK_RIGHT):
-					camRot(core->camera, -0.1, 0.0);
+					camRot(core->camera, 0.1, 0.0);
 					break;
 				case(XSDLK_LEFT):
-					camRot(core->camera, 0.1, 0.0);
+					camRot(core->camera, -0.1, 0.0);
 					break;
 			}
 			break;

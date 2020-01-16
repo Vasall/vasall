@@ -114,6 +114,7 @@ int main(int argc, char **argv)
 	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
 
 	objSetModel(core->player, mdlRedCube());
+	core->camera->trg_obj = core->player;
 
 	try_login(NULL, NULL);	
 

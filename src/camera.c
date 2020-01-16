@@ -6,9 +6,7 @@
 
 /*
  * Create a new camera and initialize the
- * values of the struct with the default
- * settings and set the position of the
- * camera.
+ * members of the struct with default values.
  *
  * @aov: The angle of view
  * @asp: The current aspect ratio
@@ -27,12 +25,12 @@ Camera *camCreate(float aov, float asp, float near, float far)
 	if(cam == NULL) return(NULL);
 
 	/* Set the default position of the camera */
-	cam->pos[0] = 2.0;
-	cam->pos[1] = 2.0;
-	cam->pos[2] = 2.0;
+	cam->pos[0] = 20.0;
+	cam->pos[1] = 20.0;
+	cam->pos[2] = 20.0;
 
 	cam->dir[0] = 0.6;
-	cam->dir[1] = 0.3;
+	cam->dir[1] = 0.4;
 	cam->dir[2] = 0.6;
 
 	/* Set the sensitivity of the mouse */
@@ -44,7 +42,7 @@ Camera *camCreate(float aov, float asp, float near, float far)
 
 	/* Create the view-matrix */
 	mat4Idt(cam->view);
-	camSetViewMat(cam);
+	camUpdViewMat(cam);
 
 	cam->trg_obj = NULL;
 
@@ -110,9 +108,7 @@ void camSetPos(Camera *cam, Vec3 pos)
 }
 
 /* 
- * Get the direction the camera is looking.
- * This function will return the normalvector
- * pointing from the camera to the target.
+ * Get the normalized direction the camera is looking.
  *
  * @cam: Pointer to the camera
  * @dir: The vector to write the direction
@@ -124,13 +120,12 @@ void camGetDir(Camera *cam, Vec3 dir)
 }
 
 /*
- * Change the zoom of the camera,
- * when scrolling. This function
- * will then also reposition the 
- * camera and update the view-matrix.
+ * Zoom the camera in or out and
+ * update the view matrix.
+ * This may change the camera's position
  *
  * @cam: Pointer to the camera to modify
- * @val: The scrolling-value
+ * @val: The zoom-value
  */
 void camZoom(Camera *cam, int val)
 {
@@ -152,16 +147,16 @@ void camZoom(Camera *cam, int val)
 		vecAdd(cam->pos, tmp, cam->pos);
 	}
 
-	camUpdPos(cam);
+	camUpdViewMat(cam);
 }
 
 /*
- * Rotates the camera according to a yaw and pitch.
- * Angles are in radians
+ * Rotate the camera according to a yaw and pitch delta
+ * and update the view matrix
  *
  * @cam: The camera to rotate
- * @d_yaw: the yaw angle to rotate by (so delta yaw)
- * @d_pitch: the pitch delta
+ * @d_yaw: the yaw delta in radians
+ * @d_pitch: the pitch delta in radians
  */
 void camRot(Camera *cam, float d_yaw, float d_pitch) {
 	Vec3 left, stdup;
@@ -190,16 +185,16 @@ void camRot(Camera *cam, float d_yaw, float d_pitch) {
 		vecAdd(cam->trg_obj->pos, tmp, cam->pos);
 	}
 
-	camUpdPos(cam);
+	camUpdViewMat(cam);
 }
 
 /*
  * Move the camera in a certain direction
+ * and update the view matrix
  *
  * @cam: The camera to move
- * @dir: The direction to move the camera in
- * @mov_trg: Boolean flag, whether the target point should
- * 	also be moved
+ * @dir: The direction to move the camera in.
+ * 	(FORWARD, BACK, LEFT, RIGHT)
  */
 void camMovDir(Camera *cam, Direction dir)
 {
@@ -236,9 +231,10 @@ void camMovDir(Camera *cam, Direction dir)
 }
 
 /*
- * Moves the camera by a specified vector
+ * Moves the camera according to vector
  *
  * @cam: The camera to move
+ * @mov: The movement vector
  */
 void camMov(Camera *cam, Vec3 mov) {
 	if(cam->trg_obj != NULL) {
@@ -248,17 +244,7 @@ void camMov(Camera *cam, Vec3 mov) {
 
 	vecAdd(cam->pos, mov, cam->pos);
 
-	camUpdPos(cam);
-}
-
-/* 
- * Update the position of a camera.
- *
- * @cam: Pointer to the camera to modify
-*/
-void camUpdPos(Camera *cam)
-{
-	camSetViewMat(cam);
+	camUpdViewMat(cam);
 }
 
 /*
@@ -317,7 +303,7 @@ void camSetProjMat(Camera *cam, float aov, float asp, float near,
  *
  * @cam: The camera to update the view matrix of
  */
-void camSetViewMat(Camera *cam)
+void camUpdViewMat(Camera *cam)
 {
 	Vec3 forw, left, up, stdup;
 
@@ -348,23 +334,19 @@ void camSetViewMat(Camera *cam)
 }
 
 /* 
- * Set the camera by first copying the position
- * of the camera and then calculating the direction.
- * Then update the view-matrix.
+ * Set the camera's position and it's direction, so
+ * it looks at the specified target
  *
  * @cam: Pointer to the camera
  * @pos: The new position of the camera
  * @trg: The new target to focus on
 */
 void camSet(Camera *cam, Vec3 pos, Vec3 trg)
-{
-	Vec3 del;
-	
+{	
 	vecCpy(cam->pos, pos);
 	
-	vecSub(pos, trg, del);
-	vecNrm(del, del);
-	vecCpy(cam->dir, del);
+	vecSub(pos, trg, cam->dir);
+	vecNrm(cam->dir, cam->dir);
 
-	camSetViewMat(cam);
+	camUpdViewMat(cam);
 }

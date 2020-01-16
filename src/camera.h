@@ -114,15 +114,12 @@ void camMovDir(Camera *cam, Direction dir);
 /* Moves the camera freely, when no target entity is set */
 void camMov(Camera *cam, Vec3 mov);
 
-/* Update the position of a camera */
-void camUpdPos(Camera *cam);
-
 /* Create a new projection matrix */
 void camSetProjMat(Camera* cam, float aov, float asp, 
 		float near, float far);
 
 /* Create a new view-matrix */
-void camSetViewMat(Camera *cam);
+void camUpdViewMat(Camera *cam);
 
 /* Sets the cameras direction to look at a point */
 void camLookAt(Camera *cam, Vec3 trg);

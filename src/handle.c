@@ -107,7 +107,7 @@ void game_update(void)
 void game_render(void)
 {
 	/* Render the world */
-	camUpdPos(core->camera);
+	camUpdViewMat(core->camera);
 	wldRender(core->world);
 
 	/* Render the player */

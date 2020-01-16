@@ -19,7 +19,7 @@ void handle_events(void);
 void update(void);
 void render(void);
 
-float f = 0.0;
+/*float f = 0.0;*/
 
 int main(int argc, char **argv)
 {
@@ -98,7 +98,7 @@ int main(int argc, char **argv)
 		printf("failed!\n");
 		goto cleanup_ui;
 	}
-	camSetViewMat(core->camera);
+	camUpdViewMat(core->camera);
 	printf("done\n");
 
 	n = printf("Initialize world...");

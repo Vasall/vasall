@@ -9,10 +9,12 @@ typedef struct Player {
 	 */
 	Object *obj;
 
+#ifdef DEBUG
 	/*
 	 * The client-connection-info.
 	 */
 	struct sockaddr_in6 addr;
+#endif
 } Player;
 
 /* The external player-container */

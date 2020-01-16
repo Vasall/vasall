@@ -12,6 +12,7 @@
 #include "global.h"
 #include "setup.h"
 #include "handle.h"
+#include "obj_utils.h"
 
 #define PAD_LEN 30
 
@@ -24,6 +25,7 @@ void render(void);
 int main(int argc, char **argv)
 {
 	int n;
+	char pth[256];
 
 	if(argc) {/* Prevent warning for not using argc */}
 
@@ -116,6 +118,13 @@ int main(int argc, char **argv)
 	core->camera->trg_obj = core->players[0]->obj;
 
 	try_login(NULL, NULL);	
+
+
+
+	XSDL_CombinePath(pth, core->bindir, "../res/objects/human.obj");
+	ldMdl(pth);
+
+
 
 	/* 
 	 * Mark the game as running and

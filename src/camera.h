@@ -127,4 +127,7 @@ void camLookAt(Camera *cam, Vec3 trg);
 /* Set the camera */
 void camSet(Camera *cam, Vec3 pos, Vec3 trg);
 
+/* Updates the camera */
+void camUpdate(Camera *cam);
+
 #endif

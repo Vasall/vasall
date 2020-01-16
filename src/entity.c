@@ -11,18 +11,21 @@ int thing_number = 0;
 
 /* 
  * Initialize the entity-arrays.
+ *
+ * Returns: Either 0 on success or -1
+ * 	if an error occurred
  */
 int entInit(void)
 {
-	player_array = malloc(sizeof(Player *) * ENTITY_LIMIT);
+	player_array = malloc(ENTITY_LIMIT * sizeof(Player *));
 	if(object_array == NULL) return(-1);
 	object_number = 0;
 
-	enemy_array = malloc(sizeof(Enemy *) * ENTITY_LIMIT);
+	enemy_array = malloc(ENTITY_LIMIT * sizeof(Enemy *));
 	if(enemy_array == NULL) return(-1);
 	enemy_number = 0;
 
-	thing_array = malloc(sizeof(Thing *) * ENTITY_LIMIT);
+	thing_array = malloc(ENTITY_LIMIT * sizeof(Thing *));
 	if(thing_array == NULL) return(-1);
 	thing_number = 0;
 

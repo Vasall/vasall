@@ -33,7 +33,14 @@ typedef struct Object {
 	 * The model of the object.
 	 */
 	Model *model;
-	
+
+	/*
+	 * The model-matrix used for
+	 * convert the vertices from
+	 * model space to world space.
+	 */
+	Mat4 matrix;
+
 	/*
 	 * The current rotation of the 
 	 * object.
@@ -44,18 +51,10 @@ typedef struct Object {
 	 * The vector to scale the object with.
 	 */
 	Vec3 scl;
-
-	/*
-	 * The model-matrix used for
-	 * convert the vertices from
-	 * model space to world space.
-	 */
-	Mat4 matrix;
 } Object;
 
-/* The global object-list */
 extern Object **object_array;
-extern int object_number;
+extern short object_number;
 
 /* Initialize the object-array */
 int objInit(void);

@@ -95,7 +95,7 @@ int main(int argc, char **argv)
 
 	n = printf("Initialize camera...");
 	for(n = PAD_LEN - n; n >= 0; n--) printf(".");
-	if((core->camera = camCreate(45.0, 800.0 / 600.0, 0.1, 1000.0)) == NULL) {
+	if((camera = camCreate(45.0, 800.0 / 600.0, 0.1, 1000.0)) == NULL) {
 		printf("failed!\n");
 		goto cleanup_ui;
 	}
@@ -104,7 +104,7 @@ int main(int argc, char **argv)
 
 	n = printf("Initialize world...");
 	for(n = PAD_LEN - n; n >= 0; n--) printf(".");
-	if((core->world = wldCreate()) == NULL) {
+	if((world = wldCreate()) == NULL) {
 		printf("failed!\n");
 		goto cleanup_camera;
 	}
@@ -114,8 +114,9 @@ int main(int argc, char **argv)
 	XSDL_ShowVersions();
 	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
 
-	objSetModel(core->players[0]->obj, mdlRedCube());
-	core->camera->trg_obj = core->players[0]->obj;
+
+	objSetModel(player_array[0]->obj, mdlRedCube());
+	core->camera->trg_obj = player_array[0]->obj;
 
 	try_login(NULL, NULL);	
 

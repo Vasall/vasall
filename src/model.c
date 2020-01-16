@@ -231,8 +231,8 @@ void mdlRender(Model *mdl, Mat4 mat)
 	Mat4 mod, vie, pro;
 
 	mat4Cpy(mod, mat);
-	camGetView(core->camera, vie);
-	camGetProj(core->camera, pro);
+	camGetView(vie);
+	camGetProj(pro);
 
 	glBindVertexArray(mdl->vao);
 	glUseProgram(mdl->shader->prog);

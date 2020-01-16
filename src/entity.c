@@ -42,6 +42,7 @@ Player *plrCreate(Vec3 pos)
 
 	/* Create the underlying object */
 	plr->obj = objCreate(pos);
+	if(plr->obj == NULL) return(NULL);
 
 	return(plr);
 }

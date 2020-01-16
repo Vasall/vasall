@@ -26,6 +26,8 @@ int main(int argc, char **argv)
 {
 	int n;
 	char pth[256];
+	Player *plr;
+	Vec3 pos = {0.0, 1.0, 0.0};
 
 	if(argc) {/* Prevent warning for not using argc */}
 
@@ -95,16 +97,16 @@ int main(int argc, char **argv)
 
 	n = printf("Initialize camera...");
 	for(n = PAD_LEN - n; n >= 0; n--) printf(".");
-	if((camera = camCreate(45.0, 800.0 / 600.0, 0.1, 1000.0)) == NULL) {
+	if((camCreate(45.0, 800.0 / 600.0, 0.1, 1000.0)) < 0) {
 		printf("failed!\n");
 		goto cleanup_ui;
 	}
-	camUpdViewMat(core->camera);
+	camUpdViewMat();
 	printf("done\n");
 
 	n = printf("Initialize world...");
 	for(n = PAD_LEN - n; n >= 0; n--) printf(".");
-	if((world = wldCreate()) == NULL) {
+	if(wldCreate() < 0) {
 		printf("failed!\n");
 		goto cleanup_camera;
 	}
@@ -114,18 +116,18 @@ int main(int argc, char **argv)
 	XSDL_ShowVersions();
 	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
 
+	plr = plrCreate(pos);
+	if(plr == NULL) {
+		printf("Failed\n");
+		exit(1);
+	}
 
+	player_array[0] = plr;
+	player_number = 1;
 	objSetModel(player_array[0]->obj, mdlRedCube());
-	core->camera->trg_obj = player_array[0]->obj;
+	camera->trg_obj = player_array[0]->obj;
 
 	try_login(NULL, NULL);	
-
-
-
-	XSDL_CombinePath(pth, core->bindir, "../res/objects/human.obj");
-	ldMdl(pth);
-
-
 
 	/* 
 	 * Mark the game as running and
@@ -140,12 +142,12 @@ int main(int argc, char **argv)
 	}
 
 
-	wldDestroy(core->world);
+	wldDestroy();
 
 	XSDL_ClearFontCache();
 
 cleanup_camera:
-	camDestroy(core->camera);
+	camDestroy();
 
 cleanup_ui:
 	XSDL_DeleteUIContext(core->uicontext);

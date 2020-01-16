@@ -8,6 +8,25 @@
 Object **object_array = NULL;
 short object_number = 0;
 
+/*
+ * Initialize the global object-array.
+ *
+ * Returns: Either 0 on success or -1
+ * 	if an error occurred
+ */
+int objInit(void)
+{
+	int i;
+
+	object_array = malloc(OBJ_LIMIT * sizeof(Object *));
+	if(object_array == NULL) return(-1);
+
+	for(i = 0; i < OBJ_LIMIT; i++) object_array[i] = NULL;
+	object_number = 0;
+
+	return(0);
+}
+
 /* 
  * Create a new object at the given position and 
  * insert it into  the object-array, if there is 

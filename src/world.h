@@ -6,18 +6,9 @@
 
 #define WORLD_SIZE 256
 
-typedef struct Field {
-	char *fid;
-
-	int x;
-	int y;
-
-	GLuint vao;
-	GLuint vbo;
-
-	float *heights;
-} Field;
-
+/*
+ * 
+ */
 typedef struct World {
 	/*
 	 * The x-size and the z-size
@@ -55,19 +46,24 @@ typedef struct World {
 	Model *terrain;
 } World;
 
+
+/* The global world-struct */
+extern World *world;
+
+
 /* Create and initialize a new world */
-World *wldCreate(void);
+int wldCreate(void);
 
 /* Destroy a world */
-void wldDestroy(World *world);
+void wldDestroy(void);
 
 /* Generate the terrain of the world */
-int wldGenTerrain(World *world);
+int wldGenTerrain(void);
 
 /* Render the world */
-void wldRender(World *world);
+void wldRender(void);
 
 /* Get the height of the terrain at the given position */
-float wldGetHeight(World *world, float x, float z);
+float wldGetHeight(float x, float z);
 
 #endif

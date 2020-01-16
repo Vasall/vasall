@@ -36,8 +36,6 @@ char *gloGetError(void)
 */
 int gloInit(void)
 {
-	Vec3 pos = {0.0, 1.0, 0.0};
-
 	core = calloc(1, sizeof(gloWrapper));
 	if(core == NULL) {
 		gloSetError("Failed to create global wrapper");

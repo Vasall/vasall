@@ -46,19 +46,6 @@ typedef struct gloWrapper {
 	XSDL_Node *uiroot;
 
 	/*
-	 * Pointer to the camera, which is
-	 * used to manage the current view.
-	*/
-	Camera *camera;
-
-	/*
-	 * Pointer to the world, which contains
-	 * the tilemaps/heightmaps and the objects
-	 * in the area of interest.
-	*/
-	World *world;
-
-	/*
 	 * The absolute path to the directory
 	 * the binary is in.
 	*/

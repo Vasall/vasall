@@ -11,30 +11,27 @@
 #include "loader.h"
 #include "world_utils.h"
 
-/*
- * Initialize a default world-struct.
- *
- * Returns: Either a pointer to the created
- * 	struct or NULL if an error occurred
- */
-World *wldCreate(void)
-{
-	World *world;
+/* Redefine external variables */
+World *world = NULL;
 
+/*
+ * Initialize the global world-struct
+ *
+ * Returns: Either 0 on success or -1
+ * 	if an error occurred
+ */
+int wldCreate(void)
+{
 	/* Allocate space for the world-struct */
 	world = (World *)malloc(sizeof(World));
-	if(world == NULL) {
-		return(NULL);
-	}
+	if(world == NULL) return(-1);
 
 	/* Allocate space for the heightmap */
 	world->xsize = WORLD_SIZE;
 	world->zsize = WORLD_SIZE;
 	world->ptnum = (WORLD_SIZE * WORLD_SIZE);
-	world->heights = (float *)malloc((world->ptnum) * sizeof(float));
-	if(world->heights == NULL) {
-		return(NULL);
-	}
+	world->heights = (float *)malloc(sizeof(float) * (world->ptnum));
+	if(world->heights == NULL) return(-1);
 
 	memset(world->heights, 0, world->ptnum);
 
@@ -45,9 +42,9 @@ World *wldCreate(void)
 	world->terrain = NULL;
 
 	/* Generate the terrain */
-	wldGenTerrain(world);
+	wldGenTerrain();
 
-	return(world);
+	return(0);
 }
 
 /*
@@ -56,7 +53,7 @@ World *wldCreate(void)
  * @world: Pointer to the world
  * 	to delete
  */
-void wldDestroy(World *world)
+void wldDestroy(void)
 {
 	/* Free the heightmap  */
 	free(world->heights);
@@ -69,13 +66,10 @@ void wldDestroy(World *world)
  * Generate a new terrain and write it
  * to the world-struct.
  *
- * @world: Pointer to the world to create a
- * 	terrain for
- *
  * Returns: Either 0 on success or -1
  * 	if an error occurred
  */
-int wldGenTerrain(World *world)
+int wldGenTerrain(void)
 {   
 	int vtxnum, x, z, w, idx, i, j;
 	float **hImg, *heights, xpos, zpos;
@@ -113,7 +107,6 @@ int wldGenTerrain(World *world)
 			heights[i] = (40.0 * hImg[x][z] + 10.0) * 0.0;
 		}
 	}
-
 	lastRow = malloc((world->xsize - 1) * VEC3_SIZE * 2);
 
 	/* Iterate over all points in the heightmap */
@@ -132,7 +125,6 @@ int wldGenTerrain(World *world)
 			ctr[0] = xpos + 1.0;
 			ctr[1] = heights[twodim(x + 1, z, world->xsize)];
 			ctr[2] = zpos;
-
 
 			cbl[0] = xpos;
 			cbl[1] = heights[twodim(x, z + 1, world->xsize)];
@@ -238,7 +230,7 @@ int wldGenTerrain(World *world)
  *
  * @world: A pointer to the world to draw
  */
-void wldRender(World *world) 
+void wldRender(void) 
 {
 	Mat4 idt;
 	mat4Idt(idt);

@@ -78,56 +78,60 @@ typedef struct Camera  {
 
 } Camera;
 
+
+/* The global camera-struct */
+extern Camera *camera;
+
+
 /* Create a new camera and set the position */
-Camera *camCreate(float aov, float asp, float near, float far);
+int camCreate(float aov, float asp, float near, float far);
 
 /* Destroy a camera */
-void camDestroy(Camera *cam);
+void camDestroy(void);
 
 /* Get the projection matrix of the camera */
-void camGetProj(Camera *cam, Mat4 mat);
+void camGetProj(Mat4 mat);
 
 /* Get the view matrix of the camera */
-void camGetView(Camera *cam, Mat4 mat);
+void camGetView(Mat4 mat);
 
 /* Get the position of the camera */
-void camGetPos(Camera *cam, Vec3 pos);
+void camGetPos(Vec3 pos);
 
 /* Set the position of the camera */
-void camSetPos(Camera *cam, Vec3 pos);
+void camSetPos(Vec3 pos);
 
 /* Get the direction the camera is looking */
-void camGetDir(Camera *cam, Vec3 dir);
+void camGetDir(Vec3 dir);
 
 /* Change the rotation of the camera */
-void camMouseMoved(Camera *cam, int delx, int dely);
+void camMouseMoved(int delx, int dely);
 
 /* Adjust the zoom of the camera */
-void camZoom(Camera *cam, int val);
+void camZoom(int val);
 
 /* Rotates the camera, adjusting yaw and pitch */
-void camRot(Camera *cam, float d_yaw, float d_pitch);
+void camRot(float d_yaw, float d_pitch);
 
 /*  */
-void camMovDir(Camera *cam, Direction dir);
+void camMovDir(Direction dir);
 
 /* Moves the camera freely, when no target entity is set */
-void camMov(Camera *cam, Vec3 mov);
+void camMov(Vec3 mov);
 
 /* Create a new projection matrix */
-void camSetProjMat(Camera* cam, float aov, float asp, 
-		float near, float far);
+void camSetProjMat(float aov, float asp, float near, float far);
 
 /* Create a new view-matrix */
-void camUpdViewMat(Camera *cam);
+void camUpdViewMat(void);
 
 /* Sets the cameras direction to look at a point */
-void camLookAt(Camera *cam, Vec3 trg);
+void camLookAt(Vec3 trg);
 
 /* Set the camera */
-void camSet(Camera *cam, Vec3 pos, Vec3 trg);
+void camSet(Vec3 pos, Vec3 trg);
 
 /* Updates the camera */
-void camUpdate(Camera *cam);
+void camUpdate(void);
 
 #endif

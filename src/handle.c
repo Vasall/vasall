@@ -22,7 +22,7 @@ void handle_resize(XSDL_Event *evt)
 
 	/* Update projection matrix */
 	ratio = (double)ctx->win_w / (double)ctx->win_h;
-	camSetProjMat(core->camera, 45.0, ratio, 0.1, 1000.0);
+	camSetProjMat(45.0, ratio, 0.1, 1000.0);
 }
 
 
@@ -43,13 +43,13 @@ void game_procevt(XSDL_Event *evt)
 
 	switch(evt->type) {
 		case(XSDL_MOUSEWHEEL):
-			camZoom(core->camera, evt->wheel.y);
+			camZoom(evt->wheel.y);
 			break;
 
 		case(XSDL_MOUSEMOTION):
 			if(evt->motion.state == SDL_BUTTON_LMASK) {
 				/* If left mouse button pressed */
-				camRot(core->camera, -evt->motion.xrel / 50.0,
+				camRot(-evt->motion.xrel / 50.0,
 						-evt->motion.yrel / 50.0);
 			}
 			break;
@@ -64,34 +64,34 @@ void game_procevt(XSDL_Event *evt)
 			mod_ctrl = mod & (KMOD_LCTRL | KMOD_RCTRL);
 			switch(evt->key.keysym.sym) {
 				case(SDLK_w):
-					camMovDir(core->camera, FORWARD);
+					camMovDir(FORWARD);
 					break;
 				case(XSDLK_s):
-					camMovDir(core->camera, BACK);
+					camMovDir(BACK);
 					break;
 				case(XSDLK_a):
-					camMovDir(core->camera, LEFT);
+					camMovDir(LEFT);
 					break;
 				case(XSDLK_d):
-					camMovDir(core->camera, RIGHT);
+					camMovDir(RIGHT);
 					break;
 				case(XSDLK_q):
-					camZoom(core->camera, 1);
+					camZoom(1);
 					break;
 				case(XSDLK_e):
-					camZoom(core->camera, -1);
+					camZoom(-1);
 					break;
 				case(XSDLK_UP):
-					camRot(core->camera, 0.0, -0.1);
+					camRot(0.0, -0.1);
 					break;
 				case(XSDLK_DOWN):
-					camRot(core->camera, 0.0, 0.1);
+					camRot(0.0, 0.1);
 					break;
 				case(XSDLK_RIGHT):
-					camRot(core->camera, 0.1, 0.0);
+					camRot(0.1, 0.0);
 					break;
 				case(XSDLK_LEFT):
-					camRot(core->camera, -0.1, 0.0);
+					camRot(-0.1, 0.0);
 					break;
 			}
 			break;
@@ -112,8 +112,8 @@ void game_render(void)
 	int i;
 
 	/* Render the world */
-	camUpdViewMat(core->camera);
-	wldRender(core->world);
+	camUpdViewMat();
+	wldRender();
 
 	/* Render the player */
 	for(i = 0; i < object_number; i++) {

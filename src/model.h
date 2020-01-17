@@ -13,7 +13,7 @@
 #define MESH_ERR_SHADER         -3
 #define MESH_ERR_FINISHING      -4
 
-typedef struct Model {
+struct model {
 	/*
 	 * The vertex-array-object
 	 * attached to the model.
@@ -63,35 +63,35 @@ typedef struct Model {
 	 * The shader attached to this
 	 * model.
 	 */
-	Shader *shader;
+	struct shader *shader;
 
 	/*
 	 * The status of the model.
 	 */
 	uint8_t status;
-} Model;
+};
 
 /* Start creating a new model and fill struct with default values */
-Model *mdlCreate(void);
+struct model *mdlCreate(void);
 
 /* Finish creating the new model */
-int mdlFinish(Model *mdl);
+int mdlFinish(struct model *mdl);
 
 /* Set the vertices and indices of the model */
-void mdlSetMesh(Model *mdl, Vec3 *vtxbuf, int vtxlen, 
+void mdlSetMesh(struct model *mdl, Vec3 *vtxbuf, int vtxlen, 
 		uint32_t *idxbuf, int idxlen, uint8_t nrmflg);
 
 /* Attach a new buffer to the model */
-void mdlAddBAO(Model *mdl, void *buf, int elsize, int num, 
+void mdlAddBAO(struct model *mdl, void *buf, int elsize, int num, 
 		uint8_t bindflg, uint8_t bindsz);
 
 /* Calculate the normal-vectors for the model */
-void mdlCalcNormals(Model *mdl);
+void mdlCalcNormals(struct model *mdl);
 
 /* Render a model */
-void mdlRender(Model *mdl, Mat4 mat);
+void mdlRender(struct model *mdl, Mat4 mat);
 
 /* Create a red-cube as a model (used for dev) */
-Model *mdlRedCube(void);
+struct model *mdlRedCube(void);
 
 #endif

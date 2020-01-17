@@ -36,7 +36,7 @@ struct object {
 	/*
 	 * The model of the object.
 	 */
-	Model *model;
+	struct model *model;
 
 	/*
 	 * The model-matrix used for
@@ -107,7 +107,7 @@ void objSetVel(struct object *obj, Vec3 vel);
 void objAddVel(struct object *obj, Vec3 del);
 
 /* Set the object-model */
-void objSetModel(struct object *obj, Model *mod);
+void objSetModel(struct object *obj, struct model *mod);
 
 /* Get the model-matrix for rendering */
 void objGetMatrix(struct object *obj, Mat4 mat);

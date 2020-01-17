@@ -7,7 +7,7 @@
 #define SHADER_ERR_COMPILE	2
 #define SHADER_ERR_LINK		4
 
-typedef struct Shader {
+struct shader {
 	/*
 	 * The shader-program.
 	 */
@@ -27,24 +27,24 @@ typedef struct Shader {
 	 * The status of the shader.
 	 */
 	uint8_t status;
-} Shader;
+};
 
 /* Create a new shader program */
-Shader *shdCreate(char *vtx_shd, char *frg_shd);
+struct shader *shdCreate(char *vtx_shd, char *frg_shd);
 
 /* Begin the creation of a new shader */
-Shader *shdBegin(void);
+struct shader *shdBegin(void);
 
 /* Finish the creation of a new shader */
-int shdFinish(Shader *shd);
+int shdFinish(struct shader *shd);
 
 /* Attach a vertex-shader to the program */
-void shdAttachVtx(Shader *shd, char *pth);
+void shdAttachVtx(struct shader *shd, char *pth);
 
 /* Attach a fragment-shader to the program */
-void shdAttachFrg(Shader *shd, char *pth);
+void shdAttachFrg(struct shader *shd, char *pth);
 
 /* Bind an attribute-location */
-void shdBindAttrib(Shader *shd, int idx, char *name);
+void shdBindAttrib(struct shader *shd, int idx, char *name);
 
 #endif

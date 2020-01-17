@@ -5,6 +5,6 @@
 
 #include "model.h"
 
-int mdlLoad(Model *mdl, char *pth);
+int mdlLoad(struct model *mdl, char *pth);
 
 #endif

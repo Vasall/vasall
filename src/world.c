@@ -12,7 +12,7 @@
 #include "world_utils.h"
 
 /* Redefine external variables */
-World *world = NULL;
+struct world *world = NULL;
 
 /*
  * Initialize the global world-struct
@@ -23,7 +23,7 @@ World *world = NULL;
 int wldCreate(void)
 {
 	/* Allocate space for the world-struct */
-	world = (World *)malloc(sizeof(World));
+	world = (struct world *)malloc(sizeof(struct world));
 	if(world == NULL) return(-1);
 
 	/* Allocate space for the heightmap */
@@ -77,7 +77,7 @@ int wldGenTerrain(void)
 	ColorRGB *colors;
 	uint32_t *indices;
 	int indlen;
-	Model *mdl;
+	struct model *mdl;
 
 	w = world->xsize;
 

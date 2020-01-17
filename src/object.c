@@ -249,7 +249,7 @@ void objAddVel(struct object *obj, Vec3 del)
  * @obj: Pointer to the object to set the model of
  * @mod: Pointer to the model
  */
-void objSetModel(struct object *obj, Model *mod)
+void objSetModel(struct object *obj, struct model *mod)
 {
 	obj->model = mod;
 }

@@ -21,11 +21,11 @@
  * Returns: Either a pointer to the new
  * 	model of NULL
  */
-Model *mdlCreate(void)
+struct model *mdlCreate(void)
 {
-	Model *mdl = NULL;
+	struct model *mdl = NULL;
 
-	mdl = malloc(sizeof(Model));
+	mdl = malloc(sizeof(struct model));
 	if(mdl == NULL) {
 		printf("Failed to allocate space for model.\n");
 		return(NULL);
@@ -62,7 +62,7 @@ Model *mdlCreate(void)
  *
  * Returns: The current status of the model
  */
-int mdlFinish(Model *mdl)
+int mdlFinish(struct model *mdl)
 {
 	/* Finish shader-program */
 	glLinkProgram(mdl->shader->prog);
@@ -85,7 +85,7 @@ int mdlFinish(Model *mdl)
  * @idxlen: The length of the index-buffer
  * @nrmflg: This flag indicates, if the normales should be calculated
  */
-void mdlSetMesh(Model *mdl, Vec3 *vtxbuf, int vtxlen, 
+void mdlSetMesh(struct model *mdl, Vec3 *vtxbuf, int vtxlen, 
 		uint32_t *idxbuf, int idxlen, uint8_t nrmflg)
 {
 	uint32_t vbo, ibo;
@@ -176,7 +176,7 @@ void mdlSetMesh(Model *mdl, Vec3 *vtxbuf, int vtxlen,
  * @en: Should the buffer be bound and to what index
  * @sz: The number of float values per element(or 0 when en=0)
  */
-void mdlAddBAO(Model *mdl, void *buf, int elsize, int num, 
+void mdlAddBAO(struct model *mdl, void *buf, int elsize, int num, 
 		uint8_t bindflg, uint8_t bindsz)
 {
 	uint32_t bao;
@@ -212,7 +212,7 @@ void mdlAddBAO(Model *mdl, void *buf, int elsize, int num,
  * @mdl: Pointer to the model to 
  * 	calculate the normals for 
  */
-void mdlCalcNormals(Model *mdl)
+void mdlCalcNormals(struct model *mdl)
 {
 	if(mdl) {}
 }
@@ -224,7 +224,7 @@ void mdlCalcNormals(Model *mdl)
  * @mdl: Pointer to the model to render
  * @mat: The matrix that should be used for transformation
  */
-void mdlRender(Model *mdl, Mat4 mat)
+void mdlRender(struct model *mdl, Mat4 mat)
 {
 	int err, model, view, proj;
 
@@ -267,9 +267,9 @@ void mdlRender(Model *mdl, Mat4 mat)
  * Returns: Either a model containing a red cube
  * 	or NULL if an error occurred
  */
-Model *mdlRedCube(void)
+struct model *mdlRedCube(void)
 {
-	Model *mdl;
+	struct model *mdl;
 	Vec3 *vtx;
 	uint32_t *idx;
 	ColorRGB *col;

@@ -46,13 +46,13 @@ char* filetobuf(char *file)
  * Returns: Either a pointer to the created shader-program
  * 	or NULL if an error occurred
  */
-Shader *shdCreate(char *vtx_shd, char *frg_shd)
+struct shader *shdCreate(char *vtx_shd, char *frg_shd)
 {
 	int success;
 	char path[512], *vtxsrc, *frgsrc, infoLog[512];
-	Shader *shd;
+	struct shader *shd;
 
-	shd = calloc(1, sizeof(Shader));
+	shd = calloc(1, sizeof(struct shader));
 	if(shd == NULL) {
 		return(NULL);
 	}
@@ -115,11 +115,11 @@ Shader *shdCreate(char *vtx_shd, char *frg_shd)
  * Returns: Either a new shader or
  * 	NULL if an error occurred
  */
-Shader *shdBegin(void)
+struct shader *shdBegin(void)
 {
-	Shader *shd;
+	struct shader *shd;
 
-	shd = calloc(1, sizeof(Shader));
+	shd = calloc(1, sizeof(struct shader));
 	if(shd == NULL) {
 		return(NULL);
 	}
@@ -139,7 +139,7 @@ Shader *shdBegin(void)
  *
  * @shd: Pointer to the shader to finish
  */
-int shdFinish(Shader *shd)
+int shdFinish(struct shader *shd)
 {
 	if(shd->status != 0) {
 		printf("Error during shader-creation.\n");
@@ -157,7 +157,7 @@ int shdFinish(Shader *shd)
  * @shd: Pointer to the the shader
  * @pth: Relative path to the shader-file
  */
-void shdAttachVtx(Shader *shd, char *pth)
+void shdAttachVtx(struct shader *shd, char *pth)
 {
 	int success;
 	char path[512], *vtxsrc, infoLog[512];
@@ -194,7 +194,7 @@ void shdAttachVtx(Shader *shd, char *pth)
  * @shd: Pointer to the shader
  * @pth: Relative path the the shader-file
  */
-void shdAttachFrg(Shader *shd, char *pth)
+void shdAttachFrg(struct shader *shd, char *pth)
 {
 	int success;
 	char path[512], infoLog[512], *frgsrc;
@@ -230,7 +230,7 @@ void shdAttachFrg(Shader *shd, char *pth)
  * @idx: Index to bind to
  * @name: The name to bind to the index
  */
-void shdBindAttrib(Shader *shd, int idx, char *name)
+void shdBindAttrib(struct shader *shd, int idx, char *name)
 {
 	glBindAttribLocation(shd->prog, idx, name);
 }

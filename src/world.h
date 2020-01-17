@@ -6,10 +6,7 @@
 
 #define WORLD_SIZE 256
 
-/*
- * 
- */
-typedef struct World {
+struct world {
 	/*
 	 * The x-size and the z-size
 	 * of the world. 
@@ -43,12 +40,12 @@ typedef struct World {
 	 * The underlying model for
 	 * the terrain.
 	 */
-	Model *terrain;
-} World;
+	struct model *terrain;
+};
 
 
 /* The global world-struct */
-extern World *world;
+extern struct world *world;
 
 
 /* Create and initialize a new world */

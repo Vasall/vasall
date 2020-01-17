@@ -93,7 +93,7 @@ int lstAdd(struct ptr_list *lst, void **ptr, int size)
 {
 	if(lst == NULL) return(-1);
 
-	if(lst->num + 1 >= lst->limit) return(-1);
+	if(lst->num + 1 > lst->limit) return(-1);
 
 	*ptr = malloc(size);
 	if(*ptr == NULL) return(-1);
@@ -106,7 +106,8 @@ int lstAdd(struct ptr_list *lst, void **ptr, int size)
 
 /* 
  * Remove a pointer from the list, free the allocated 
- * memory and set the slot to NULL. 
+ * memory and set the slot to NULL. Then reorder the 
+ * left elements, to fill in empty holes in the list. 
  *
  * @lst: Pointer to remove the pointer from
  * @ptr: The pointer to remove
@@ -135,7 +136,16 @@ void lstRemv(struct ptr_list *lst, void *ptr)
  */
 void lstOrder(struct ptr_list *lst)
 {
-	if(lst) {}	
+	int i;
+	
+	for(i = 1; i < lst->limit; i++) {
+		if(i != 0 && lst->arr[i - 1] == NULL && lst->arr[i] != NULL) {
+			printf("%d\n", i);
+			lst->arr[i - 1] = lst->arr[i];
+			lst->arr[i] = NULL;
+			i = 1;
+		}
+	}	
 }
 
 /* 

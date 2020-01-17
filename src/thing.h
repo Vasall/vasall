@@ -25,4 +25,6 @@ extern struct ptr_list *thing_list;
 /* Initialize the thing-array */
 int thiInit(void);
 
+
+
 #endif

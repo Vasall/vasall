@@ -61,6 +61,7 @@ struct object {
 /* The global object-list */
 extern struct ptr_list *object_list;
 
+
 /* Initialize the object-array */
 int objInit(void);
 

@@ -17,13 +17,13 @@
 
 #define PAD_LEN 30
 
+void pad_printf(char *str);
 void handle_events(void);
 void update(void);
 void render(void);
 
 int main(int argc, char **argv)
 {
-	int n;
 	char pth[512];
 	struct player_object *plr;
 	Vec3 pos = {0.0, 1.0, 0.0};
@@ -33,8 +33,7 @@ int main(int argc, char **argv)
 	/* Randomize numbers */
 	srand(time(0));	
 
-	n = printf("Initialize XSDL-subsystem...");
-	for(n = PAD_LEN - n; n >= 0; n--) printf(".");
+	pad_printf("Initialize XSDL-subsystem");
 	if(XSDL_Init(XSDL_INIT_EVERYTHING) < 0) {                                                    
 		printf("failed!\n");
 		printf("%s\n", SDL_GetError());
@@ -46,8 +45,7 @@ int main(int argc, char **argv)
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-	n = printf("Initialize core-wrapper...");
-	for(n = PAD_LEN - n; n >= 0; n--) printf(".");
+	pad_printf("Initialize core-wrapper");
 	if(gloInit() < 0) {
 		printf("failed!\n");
 		printf("%s\n", gloGetError());
@@ -55,8 +53,7 @@ int main(int argc, char **argv)
 	}
 	printf("done\n");
 
-	n = printf("Initialize window...");
-	for(n = PAD_LEN - n; n >= 0; n--) printf(".");
+	pad_printf("Initialize window");
 	if((core->window = initWindow()) == NULL) {
 		printf("failed!\n");
 		printf("%s\n", XSDL_GetError());
@@ -64,16 +61,14 @@ int main(int argc, char **argv)
 	}
 	printf("done\n");
 
-	n = printf("Initialize OpenGL...");
-	for(n = PAD_LEN - n; n >= 0; n--) printf(".");
+	pad_printf("Initialize OpenGL");
 	if(initGL() < 0) {
 		printf("failed!\n");
 		goto cleanup_window;
 	}
 	printf("done\n");
 
-	n = printf("Initialize UI-context...");
-	for(n = PAD_LEN - n; n >= 0; n--) printf(".");
+	pad_printf("Initialize UI-context");
 	if((core->uicontext = XSDL_CreateUIContext(core->window)) == NULL) {
 		printf("failed!\n");
 		goto cleanup_gl;
@@ -89,25 +84,22 @@ int main(int argc, char **argv)
 		goto cleanup_ui;
 	}
 
-	n = printf("Initialize UI...");
-	for(n = PAD_LEN - n; n >= 0; n--) printf(".");
+	pad_printf("Initialize UI");
 	if(initUI() < 0) {
 		printf("failed!\n");
 		goto cleanup_ui;
 	}
 	printf("done\n");
 
-	n = printf("Initialize camera...");
-	for(n = PAD_LEN - n; n >= 0; n--) printf(".");
-	if((camCreate(45.0, 800.0 / 600.0, 0.1, 1000.0)) < 0) {
+	pad_printf("Initialize camera");
+	if(camCreate(45.0, 800.0 / 600.0, 0.1, 1000.0) < 0) {
 		printf("failed!\n");
 		goto cleanup_ui;
 	}
 	camUpdViewMat();
 	printf("done\n");
 
-	n = printf("Initialize world...");
-	for(n = PAD_LEN - n; n >= 0; n--) printf(".");
+	pad_printf("Initialize world");
 	if(wldCreate() < 0) {
 		printf("failed!\n");
 		goto cleanup_camera;
@@ -143,31 +135,61 @@ int main(int argc, char **argv)
 		render();
 	}
 
-cleanup_world:
-	wldDestroy();
+	printf("\n");
 
+cleanup_world:
+	pad_printf("Destroy world");
+	wldDestroy();
+	printf("done\n");
+
+	pad_printf("Clear caches");
 	XSDL_ClearFontCache();
+	printf("done\n");
 
 cleanup_camera:
+	pad_printf("Destroy camera");
 	camDestroy();
+	printf("done\n");
 
 cleanup_ui:
+	pad_printf("Destroy UI-context");
 	XSDL_DeleteUIContext(core->uicontext);
+	printf("done\n");
 
 cleanup_gl:
+	pad_printf("Cleanup OpenGL");
 	XSDL_GL_DeleteContext(core->glcontext);
+	printf("done\n");
 
 cleanup_window:
+	pad_printf("Destroy window");
 	XSDL_DestroyWindow(core->window);
+	printf("done\n");
 
 cleanup_core:
+	pad_printf("Destroy the core-struct");
 	gloClose();
+	printf("done\n");
 
 cleanup_enud:
+	pad_printf("Shutdown XSDL-subsystem");
 	XSDL_Quit();
+	printf("done\n");
 
 exit:
 	return(0);
+}
+
+/*
+ * Print a padded message in the terminal
+ * and set the rest to dots.
+ *
+ * @str: The message to print in the console
+ */
+void pad_printf(char *str)
+{
+	int n = printf("%s", str);
+	for(n = PAD_LEN - n; n >= 0; n--) printf(".");
 }
 
 /*

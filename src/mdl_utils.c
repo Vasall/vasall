@@ -13,8 +13,7 @@
  * @mdl: The model struct to set the mash of
  * @pth: The path to the models .obj file
  *
- * Returns: The new models index in the model cache,
- * or -1 on any error
+ * Returns: 0 on success, -1 on any error
  */
 int mdlLoad(struct model *mdl, char *pth)
 {
@@ -36,6 +35,21 @@ int mdlLoad(struct model *mdl, char *pth)
 	int index_count = 0;
 
 	int i;
+	int n_sz;
+
+	if(mdl == NULL) {
+		/* TODO check before allocating */
+		printf("Model was NULL!\n");
+		fclose(fd);
+		free(char_buf);
+		free(vertex_buf);
+		free(normal_buf);
+		free(tex_buf);
+		free(index_buf);
+		free(normal_index_buf);
+		free(tex_index_buf);
+		return -1;
+	}
 
 	while(1) {
 		fscanf(fd, "%s", char_buf);
@@ -56,14 +70,13 @@ int mdlLoad(struct model *mdl, char *pth)
 					&normal_buf[normal_count][1],
 					&normal_buf[normal_count][2]);
 			
-			if(normal_count % BUF_ALLOC_STEP ==
-					BUF_ALLOC_STEP - 1) {
-				normal_buf = realloc(normal_buf,
-							(normal_count /
-							BUF_ALLOC_STEP + 2) *
-							VEC3_SIZE);
-			}
 			normal_count++;
+			if(normal_count % BUF_ALLOC_STEP == 0) {
+				n_sz = normal_count / BUF_ALLOC_STEP + 1;
+				n_sz *= BUF_ALLOC_STEP;
+				normal_buf = realloc(normal_buf,
+						n_sz * VEC3_SIZE);
+			}
 
 		} else if(strstr(char_buf, "v") == char_buf) {
 			/* vertex data*/
@@ -71,48 +84,46 @@ int mdlLoad(struct model *mdl, char *pth)
 					&vertex_buf[vertex_count][1],
 					&vertex_buf[vertex_count][2]);
 			
-			if(vertex_count % BUF_ALLOC_STEP ==
-					BUF_ALLOC_STEP - 1) {
-				vertex_buf = realloc(vertex_buf,
-							(vertex_count /
-							BUF_ALLOC_STEP + 2) *
-							VEC3_SIZE);
-			}
 			vertex_count++;
+			if(vertex_count % BUF_ALLOC_STEP == 0) {
+				n_sz = vertex_count / BUF_ALLOC_STEP + 1;
+				n_sz *= BUF_ALLOC_STEP;
+				vertex_buf = realloc(vertex_buf,
+						n_sz * VEC3_SIZE);
+			}
 
 
 		} else if(strstr(char_buf, "f") == char_buf) {
 			/* index data */
 			for(i = 0; i < 3; i++) {
-				fscanf(fd, "%s", char_buf);
-				sscanf(char_buf, "%d/%d/%d",
+				fscanf(fd, "%d/%d/%d",
 						&index_buf[index_count],
 						&tex_index_buf[index_count],
 						&normal_index_buf[index_count]);
+				
 				index_count++;
+				if(index_count % BUF_ALLOC_STEP == 0) {
+					n_sz = index_count / BUF_ALLOC_STEP + 1;
+					n_sz *= BUF_ALLOC_STEP;
+	
+					index_buf = realloc(index_buf,
+							n_sz * sizeof(int));
+					normal_index_buf = realloc(normal_index_buf,
+							n_sz * sizeof(int));
+					tex_index_buf = realloc(tex_index_buf,
+							n_sz * sizeof(int));
+				}
 			}
 			
 		}
 	}
-	
-	if(mdl != NULL)
-		mdlSetMesh(mdl, vertex_buf, vertex_count, (uint32_t *) index_buf, index_count, 1);
 
 	printf("Finished parsing %s\n", pth);
 
-	for(i = 0; i < vertex_count; i++) {
-		printf("Vertex: ( %f | %f | %f)\n", vertex_buf[i][0],
-				vertex_buf[i][1], vertex_buf[i][2]);
-	}
+	mdlSetMesh(mdl, vertex_buf, vertex_count, (uint32_t *) index_buf, index_count, 1);
 
 	fclose(fd);
 	free(char_buf);
-	free(vertex_buf);
-	free(normal_buf);
-	free(tex_buf);
-	free(index_buf);
-	free(normal_index_buf);
-	free(tex_index_buf);
 
 	return 0;
 }

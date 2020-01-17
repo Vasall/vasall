@@ -119,17 +119,19 @@ int main(int argc, char **argv)
 	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
 
 	if((plr = plrCreate(pos)) == NULL) goto cleanup_world;
-	objSetModel(plr->obj, mdlRedCube());
+/*	objSetModel(plr->obj, mdlRedCube());*/
+
+
+	XSDL_CombinePath(pth, core->bindir, "../res/objects/weird.obj");
+	struct model *test = mdlCreate();
+	mdlLoad(test, pth);
+
+	objSetModel(plr->obj, test);
+
 
 	camTargetObj(plr->obj);
 
 	try_login(NULL, NULL);	
-
-	
-	XSDL_CombinePath(pth, core->bindir, "../res/objects/human.obj");
-	/* TODO Mdl obviously cannot be NULL */
-	mdlLoad(NULL, pth);
-	
 
 	/* 
 	 * Mark the game as running and

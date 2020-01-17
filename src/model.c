@@ -89,7 +89,7 @@ void mdlSetMesh(struct model *mdl, Vec3 *vtxbuf, int vtxlen,
 		uint32_t *idxbuf, int idxlen, uint8_t nrmflg)
 {
 	uint32_t vbo, ibo;
-
+	
 	/* Bind vertex array object */
 	glBindVertexArray(mdl->vao);
 
@@ -129,7 +129,7 @@ void mdlSetMesh(struct model *mdl, Vec3 *vtxbuf, int vtxlen,
 		int i;
 		Vec3 *normals;
 
-		normals = calloc(vtxlen, sizeof(Vec3));
+		normals = calloc(vtxlen, VEC3_SIZE);
 
 		for(i = 0; i < idxlen - 2; i += 3) {
 			Vec3 v1, v2, v3, del1, del2, nrm;
@@ -151,7 +151,7 @@ void mdlSetMesh(struct model *mdl, Vec3 *vtxbuf, int vtxlen,
 
 		/* Copy our normals into a buffer for OpenGL to use */
 		glBindBuffer(GL_ARRAY_BUFFER, nbo);
-		glBufferData(GL_ARRAY_BUFFER, vtxlen * sizeof(Vec3), 
+		glBufferData(GL_ARRAY_BUFFER, vtxlen * VEC3_SIZE, 
 				normals, GL_STATIC_DRAW);
 
 		/* 2st attribute buffer : normals */

@@ -36,14 +36,20 @@ int mdlLoad(Model *mdl, char *pth)
 
 	int i;
 
+	while(1) {
+		fscanf(fd, "%s", char_buf);
+		if(strncmp(char_buf, "o", 1) == 0)
+			break;
+	}
+
 	while(fscanf(fd, "%s", char_buf) != EOF) {
-		if(strstr(char_buf, "vt") != NULL) {
+		if(strstr(char_buf, "vt") == char_buf) {
 			float f;
 			/* texture data */
 			fscanf(fd, "%f", &f);
 			fscanf(fd, "%f", &f);
 
-		} else if(strstr(char_buf, "vn") != NULL) {
+		} else if(strstr(char_buf, "vn") == char_buf) {
 			/* normal data*/
 			fscanf(fd, "%f %f %f", &normal_buf[normal_count][0],
 					&normal_buf[normal_count][1],
@@ -58,7 +64,7 @@ int mdlLoad(Model *mdl, char *pth)
 			}
 			normal_count++;
 
-		} else if(strstr(char_buf, "v") != NULL) {
+		} else if(strstr(char_buf, "v") == char_buf) {
 			/* vertex data*/
 			fscanf(fd, "%f %f %f", &vertex_buf[vertex_count][0],
 					&vertex_buf[vertex_count][1],
@@ -74,7 +80,7 @@ int mdlLoad(Model *mdl, char *pth)
 			vertex_count++;
 
 
-		} else if(strstr(char_buf, "f") != NULL) {
+		} else if(strstr(char_buf, "f") == char_buf) {
 			/* index data */
 			for(i = 0; i < 3; i++) {
 				fscanf(fd, "%s", char_buf);
@@ -87,10 +93,16 @@ int mdlLoad(Model *mdl, char *pth)
 			
 		}
 	}
-
-	mdlSetMesh(mdl, vertex_buf, vertex_count, index_buf, index_count, 1);
+	
+	if(mdl != NULL)
+		mdlSetMesh(mdl, vertex_buf, vertex_count, (uint32_t *) index_buf, index_count, 1);
 
 	printf("Finished parsing %s\n", pth);
+
+	for(i = 0; i < vertex_count; i++) {
+		printf("Vertex: ( %f | %f | %f)\n", vertex_buf[i][0],
+				vertex_buf[i][1], vertex_buf[i][2]);
+	}
 
 	fclose(fd);
 	free(char_buf);

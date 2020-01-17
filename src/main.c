@@ -21,8 +21,6 @@ void handle_events(void);
 void update(void);
 void render(void);
 
-/*float f = 0.0;*/
-
 int main(int argc, char **argv)
 {
 	int n;
@@ -127,10 +125,11 @@ int main(int argc, char **argv)
 
 	try_login(NULL, NULL);	
 
-	/*
+	
 	XSDL_CombinePath(pth, core->bindir, "../res/objects/human.obj");
-	ldMdl(NULL, pth);
-	*/
+	/* TODO Mdl obviously cannot be NULL */
+	mdlLoad(NULL, pth);
+	
 
 	/* 
 	 * Mark the game as running and

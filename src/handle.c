@@ -102,8 +102,8 @@ void game_update(void)
 {
 	int i;
 
-	for(i = 0; i < object_number; i++) {
-		objUpdate(object_array[i]);
+	for(i = 0; i < object_list->num; i++) {
+		objUpdate(object_list->arr[i]);
 	}
 }
 
@@ -116,7 +116,7 @@ void game_render(void)
 	wldRender();
 
 	/* Render the player */
-	for(i = 0; i < object_number; i++) {
-		objRender(object_array[i]);			
+	for(i = 0; i < object_list->num; i++) {
+		objRender(object_list->arr[i]);			
 	}
 }

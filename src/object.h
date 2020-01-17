@@ -3,13 +3,17 @@
 
 #include "vec.h"
 #include "mat.h"
+#include "list.h"
 #include "model.h"
+#include <stdint.h>
 
 #define OBJ_LIMIT 128
 
-typedef struct Object {
-	/* The id of this object in the object-array */
-	unsigned int id;
+struct object {
+	/* 
+	 * The id of this object in the object-array.
+	 */
+	uint16_t id;
 
 	/*
 	 * The current position of the
@@ -51,66 +55,67 @@ typedef struct Object {
 	 * The vector to scale the object with.
 	 */
 	Vec3 scl;
-} Object;
+};
 
-extern Object **object_array;
-extern short object_number;
+
+/* The global object-list */
+extern struct ptr_list *object_list;
 
 /* Initialize the object-array */
 int objInit(void);
 
 /* Create a new object and attach it to the object-array */
-Object *objCreate(Vec3 pos);
+struct object *objCreate(Vec3 pos);
 
 /* Destory an existing object */
-void objDestory(Object *obj);
+void objDestroy(struct object *obj);
 
 /* Get an object via the object-id */
-Object *objGet(uint32_t id);
+struct object *objGet(uint16_t id);
 
 /* Update an object and adjust the attributes */
-void objUpdate(Object *obj);
+void objUpdate(struct object *obj);
 
 /* Render an object on the screen */
-void objRender(Object *obj);
+void objRender(struct object *obj);
 
 /* Get the current position of the object */
-void objGetPos(Object *obj, Vec3 pos);
+void objGetPos(struct object *obj, Vec3 pos);
 
 /* Set the new position of the object */
-void objSetPos(Object *obj, Vec3 pos);
+void objSetPos(struct object *obj, Vec3 pos);
 
 /* Add a vector to the position */
-void objAddPos(Object *obj, Vec3 del);
+void objAddPos(struct object *obj, Vec3 del);
 
 /* Get the current rotation of the object */
-void objGetRot(Object *obj, Vec3 rot);
+void objGetRot(struct object *obj, Vec3 rot);
 
 /* Set the new rotation of the object */
-void objSetRot(Object *obj, Vec3 rot);
+void objSetRot(struct object *obj, Vec3 rot);
 
 /* Add a vector to the rotation */
-void objAddRot(Object *obj, Vec3 del);
+void objAddRot(struct object *obj, Vec3 del);
 
 /* Get the current velocity of the object */
-void objGetVel(Object *obj, Vec3 vel);
+void objGetVel(struct object *obj, Vec3 vel);
 
 /* Set the velocity of the object */
-void objSetVel(Object *obj, Vec3 vel);
+void objSetVel(struct object *obj, Vec3 vel);
 
 /* Add a vector to the velocity*/
-void objAddVel(Object *obj, Vec3 del);
+void objAddVel(struct object *obj, Vec3 del);
 
 /* Set the object-model */
-void objSetModel(Object *obj, Model *mod);
+void objSetModel(struct object *obj, Model *mod);
 
 /* Get the model-matrix for rendering */
-void objGetMatrix(Object *obj, Mat4 mat);
+void objGetMatrix(struct object *obj, Mat4 mat);
 
 /* Update model-matrix */
-void objUpdMatrix(Object *obj);
+void objUpdMatrix(struct object *obj);
 
 /* Output info about the object in the terminal */
-void objPrint(Object *obj);
+void objPrint(struct object *obj);
 
 #endif

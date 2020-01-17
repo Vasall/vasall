@@ -5,8 +5,7 @@
 #include <math.h>
 
 /* Redefine global variables */
-Object **object_array = NULL;
-short object_number = 0;
+struct ptr_list *object_list = NULL;
 
 /*
  * Initialize the global object-array.
@@ -16,13 +15,8 @@ short object_number = 0;
  */
 int objInit(void)
 {
-	int i;
-
-	object_array = malloc(OBJ_LIMIT * sizeof(Object *));
-	if(object_array == NULL) return(-1);
-
-	for(i = 0; i < OBJ_LIMIT; i++) object_array[i] = NULL;
-	object_number = 0;
+	object_list = lstCreate(OBJ_LIMIT);
+	if(object_list == NULL) return(-1);
 
 	return(0);
 }
@@ -38,39 +32,37 @@ int objInit(void)
  * Returns: Either a pointer to the created object
  * 	or NULL if an error occurred
 */
-Object *objCreate(Vec3 pos)
+struct object *objCreate(Vec3 pos)
 {
-	int i;
-	Object *obj;
+	struct object *obj;
 
-	obj = calloc(1, sizeof(Object));
+	lstAdd(object_list, (void **)&obj, sizeof(struct object));
 	if(obj == NULL) goto failed;
+
+	memset(obj, 0, sizeof(struct object));
 
 	/* Set the position */
 	vecCpy(obj->pos, pos);
 
 	/* Set the velocity */
+	vecSet(obj->vel, 0.0, 0.0, 0.0);
 
 	/* Set the direction */
 	vecSet(obj->dir, 1.0, 1.0, 1.0);
 
-	for(i = 0; i < OBJ_LIMIT; i++) {
-		if(object_array[i] == NULL) {
-			obj->id = (uint32_t)i;
-			object_array[i] = obj;
-			object_number += 1;
-			goto success;
-		}
-	}
-	
-failed:
-	return(NULL);
-
-success:	
+	/* Set the scaling-vector */
 	vecSet(obj->scl, 1.0, 1.0, 1.0);
+
+	/* Set the rotation-values */
+	vecSet(obj->rot, 0.0, 0.0, 0.0);
+
+	/* Calculate the model-matrix */
 	objUpdMatrix(obj);
 	
 	return(obj);	
+
+failed:
+	return(NULL);
 }
 
 /* Destory an existing object and remove
@@ -79,23 +71,9 @@ success:
  *
  * @obj: Pointer to the object to destroy
 */
-void objDestory(Object *obj)
+void objDestroy(struct object *obj)
 {
-	int i, p = -1;
-
-	if(obj != NULL) return;
-		
-	for(i = 0; i < OBJ_LIMIT; i++) {
-		if(object_array[i]->id == obj->id) {
-			p = i;
-			break;	
-		}
-	}
-
-	if(p != -1) {
-		free(object_array[p]);
-		object_array[p] = NULL;
-	}
+	lstRemv(object_list, obj);
 }
 
 /* 
@@ -106,14 +84,15 @@ void objDestory(Object *obj)
  * Returns: Either the object with the given id
  * 	or NULL if an error occurred
 */
-Object *objGet(uint32_t id)
+struct object *objGet(uint16_t id)
 {
 	int i;
-	Object *obj = NULL;
+	struct object *obj = NULL, *ptr;
 
-	for(i = 0; i < OBJ_LIMIT; i++) {
-		if(object_array[i] != NULL && object_array[i]->id == id) {
-			obj = object_array[i];
+	for(i = 0; i < object_list->num; i++) {
+		ptr = object_list->arr[i];
+		if(ptr->id == id) {
+			obj = ptr;
 			break;
 		}
 	}
@@ -127,7 +106,7 @@ Object *objGet(uint32_t id)
  *
  * @obj: Pointer to the object to update
  */
-void objUpdate(Object *obj)
+void objUpdate(struct object *obj)
 {
 	if(obj) {}	
 }
@@ -138,7 +117,7 @@ void objUpdate(Object *obj)
  *
  * obj: Pointer to the object to render
 */
-void objRender(Object *obj)
+void objRender(struct object *obj)
 {
 	mdlRender(obj->model, obj->matrix);
 }
@@ -150,7 +129,7 @@ void objRender(Object *obj)
  * @obj: Pointer to the object to get the position of
  * @pos: The vector to copy the values into
 */
-void objGetPos(Object *obj, Vec3 pos)
+void objGetPos(struct object *obj, Vec3 pos)
 {
 	vecCpy(pos, obj->pos);
 	objUpdMatrix(obj);
@@ -164,7 +143,7 @@ void objGetPos(Object *obj, Vec3 pos)
  * @obj: Pointer to the object to set the position of
  * @pos: The new position of the object
  */
-void objSetPos(Object *obj, Vec3 pos)
+void objSetPos(struct object *obj, Vec3 pos)
 {
 	vecCpy(obj->pos, pos);
 	objUpdMatrix(obj);
@@ -178,7 +157,7 @@ void objSetPos(Object *obj, Vec3 pos)
  * @obj: Pointer to the object to change the position of
  * @vec: The vector to add to the position-vector
  */
-void objAddPos(Object *obj, Vec3 del)
+void objAddPos(struct object *obj, Vec3 del)
 {
 	vecAdd(obj->pos, del, obj->pos);
 	objUpdMatrix(obj);
@@ -191,7 +170,7 @@ void objAddPos(Object *obj, Vec3 del)
  * @obj: Pointer to the object to get the rotation of
  * @rot: The vector to write the rotation-values to
 */
-void objGetRot(Object *obj, Vec3 rot)
+void objGetRot(struct object *obj, Vec3 rot)
 {
 	vecCpy(rot, obj->rot);
 	objUpdMatrix(obj);
@@ -205,7 +184,7 @@ void objGetRot(Object *obj, Vec3 rot)
  * @obj: Pointer to the object to set the rotation of
  * @rot: The new rotation of the object
  */
-void objSetRot(Object *obj, Vec3 rot)
+void objSetRot(struct object *obj, Vec3 rot)
 {
 	vecCpy(obj->rot, rot);
 	objUpdMatrix(obj);
@@ -219,7 +198,7 @@ void objSetRot(Object *obj, Vec3 rot)
  * @obj: Pointer to the object to change the rotation of
  * @del: The vector to add to the rotation
 */
-void objAddRot(Object *obj, Vec3 del)
+void objAddRot(struct object *obj, Vec3 del)
 {
 	vecAdd(obj->rot, del, obj->rot);
 	objUpdMatrix(obj);
@@ -232,7 +211,7 @@ void objAddRot(Object *obj, Vec3 del)
  * @obj: Pointer to the object to get the velocity of
  * @vel: The vector to write the velocity-values to
 */
-void objGetVel(Object *obj, Vec3 vel)
+void objGetVel(struct object *obj, Vec3 vel)
 {
 	vecCpy(vel, obj->vel);
 }
@@ -245,7 +224,7 @@ void objGetVel(Object *obj, Vec3 vel)
  * @obj: Pointer to the object to set the velocity of
  * @rot: The new velocity of the object
  */
-void objSetVel(Object *obj, Vec3 vel)
+void objSetVel(struct object *obj, Vec3 vel)
 {
 	vecCpy(obj->vel, vel);
 }
@@ -258,7 +237,7 @@ void objSetVel(Object *obj, Vec3 vel)
  * @obj: Pointer to the object to change the velocity of
  * @del: The vector to add to the velocity
 */
-void objAddVel(Object *obj, Vec3 del)
+void objAddVel(struct object *obj, Vec3 del)
 {
 	vecAdd(obj->vel, del, obj->vel);
 }
@@ -270,7 +249,7 @@ void objAddVel(Object *obj, Vec3 del)
  * @obj: Pointer to the object to set the model of
  * @mod: Pointer to the model
  */
-void objSetModel(Object *obj, Model *mod)
+void objSetModel(struct object *obj, Model *mod)
 {
 	obj->model = mod;
 }
@@ -284,7 +263,7 @@ void objSetModel(Object *obj, Model *mod)
  * @obj: Pointer to the model
  * @mat: The matrix to write the model-matrix to
  */
-void objGetMatrix(Object *obj, Mat4 mat)
+void objGetMatrix(struct object *obj, Mat4 mat)
 {
 	mat4Cpy(mat, obj->matrix);
 }
@@ -295,7 +274,7 @@ void objGetMatrix(Object *obj, Mat4 mat)
  *
  * @obj: The model to update the mode-matrix for
  */
-void objUpdMatrix(Object *obj)
+void objUpdMatrix(struct object *obj)
 {
 	Vec3 rot;
 
@@ -320,7 +299,7 @@ void objUpdMatrix(Object *obj)
  *
  * @obj: Pointer to the object to display data about
 */
-void objPrint(Object *obj)
+void objPrint(struct object *obj)
 {
 	printf("Id: %d\n", obj->id);
 	printf("Pos: "); vecPrint(obj->pos); printf("\n");

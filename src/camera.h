@@ -8,7 +8,7 @@
 
 typedef enum {LEFT, RIGHT, FORWARD, BACK} Direction;
 
-typedef struct Camera  {
+struct camera {
 	/*
 	 * The current position of the
 	 * camera in the world.
@@ -74,13 +74,12 @@ typedef struct Camera  {
 	 * The target entity. When this is not NULL, the camera will
 	 * always follow this entity
 	 */
-	Object *trg_obj;
-
-} Camera;
+	struct object *trg_obj;
+};
 
 
 /* The global camera-struct */
-extern Camera *camera;
+extern struct camera *camera;
 
 
 /* Create a new camera and set the position */
@@ -130,6 +129,9 @@ void camLookAt(Vec3 trg);
 
 /* Set the camera */
 void camSet(Vec3 pos, Vec3 trg);
+
+/* Set an object as the target-point */
+void camTargetObj(struct object *obj);
 
 /* Updates the camera */
 void camUpdate(void);

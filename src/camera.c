@@ -4,7 +4,7 @@
 #include <math.h>
 
 /* Redefine external variable */
-Camera *camera;
+struct camera *camera;
 
 /*
  * Initialize the global camera-instance.
@@ -21,7 +21,7 @@ int camCreate(float aov, float asp, float near, float far)
 {
 
 	/* Initialize the camera-struct */
-	camera = calloc(1, sizeof(Camera));
+	camera = calloc(1, sizeof(struct camera));
 	if(camera == NULL) return(-1);
 
 	/* Set the default position of the camera */
@@ -341,6 +341,16 @@ void camSet(Vec3 pos, Vec3 trg)
 	vecNrm(camera->dir, camera->dir);
 
 	camUpdViewMat();
+}
+
+/*
+ * Set an object as the target-point.
+ *
+ * @obj: Pointer to the object, to focus on
+ */
+void camTargetObj(struct object *obj)
+{	
+	camera->trg_obj = obj;
 }
 
 /*

@@ -48,16 +48,12 @@ int gloInit(void)
 	core->render = NULL;
 
 	/* Initialize the object-array */
-	if(objInit() < 0) {
-		gloSetError("Failed to initialize object-array");
-		return(-1);
-	}
+	if(objInit() < 0) return(-1);
 
-	/* Initialize the different entity-arrays */
-	if(entInit() < 0) {
-		gloSetError("Failed to initialize entity-arrays");
-		return(-1);
-	}
+	/* Initialize the instance-arrays */
+	if(plrInit() < 0) return(-1);
+	if(enmInit() < 0) return(-1);
+	if(thiInit() < 0) return(-1);
 
 	return(0);
 }

@@ -12,7 +12,8 @@
 #include "global.h"
 #include "setup.h"
 #include "handle.h"
-#include "obj_utils.h"
+#include "mdl_utils.h"
+#include "list.h"
 
 #define PAD_LEN 30
 
@@ -26,10 +27,13 @@ int main(int argc, char **argv)
 {
 	int n;
 	char pth[512];
-	Player *plr;
+	struct player_object *plr;
 	Vec3 pos = {0.0, 1.0, 0.0};
 
 	if(argc) {/* Prevent warning for not using argc */}
+
+	/* Randomize numbers */
+	srand(time(0));	
 
 	n = printf("Initialize XSDL-subsystem...");
 	for(n = PAD_LEN - n; n >= 0; n--) printf(".");
@@ -116,16 +120,10 @@ int main(int argc, char **argv)
 	XSDL_ShowVersions();
 	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
 
-	plr = plrCreate(pos);
-	if(plr == NULL) {
-		printf("Failed\n");
-		exit(1);
-	}
+	if((plr = plrCreate(pos)) == NULL) goto cleanup_world;
+	objSetModel(plr->obj, mdlRedCube());
 
-	player_array[0] = plr;
-	player_number = 1;
-	objSetModel(player_array[0]->obj, mdlRedCube());
-	camera->trg_obj = player_array[0]->obj;
+	camTargetObj(plr->obj);
 
 	try_login(NULL, NULL);	
 
@@ -146,7 +144,7 @@ int main(int argc, char **argv)
 		render();
 	}
 
-
+cleanup_world:
 	wldDestroy();
 
 	XSDL_ClearFontCache();
@@ -218,9 +216,7 @@ void handle_events(void)
 void update(void)
 {
 	/* Run specified update-function */
-	if(core->update != NULL) {
-		core->update();
-	}
+	if(core->update != NULL) core->update();
 }
 
 /*
@@ -230,14 +226,12 @@ void update(void)
  */
 void render(void)
 {
+	/* Clear the screen */
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	/* Run current render-function */
-	if(core->render != NULL) {
-		core->render();
-	}
+	if(core->render != NULL) core->render();
 
-	/* XSDL_RenderPipe(core->uicontext); */
-
+	/* Render the buffer on the screen */
 	XSDL_GL_SwapWindow(core->window);
 }

@@ -10,12 +10,13 @@
  * The model gets added to the model cache and
  * the index is returned.
  *
+ * @mdl: The model struct to set the mash of
  * @pth: The path to the models .obj file
  *
  * Returns: The new models index in the model cache,
  * or -1 on any error
  */
-int mdlLoad(Model *mdl, char *pth)
+int mdlLoad(struct model *mdl, char *pth)
 {
 	FILE *fd = fopen(pth, "r");
 	char *char_buf = malloc(256 * sizeof(char));

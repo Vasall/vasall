@@ -27,6 +27,9 @@ int main(int argc, char **argv)
 	char pth[512];
 	struct player_object *plr;
 	Vec3 pos = {0.0, 1.0, 0.0};
+	struct model *test;
+	int i;
+	ColorRGB col[8];
 
 	if(argc) {/* Prevent warning for not using argc */}
 
@@ -111,14 +114,26 @@ int main(int argc, char **argv)
 	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
 
 	if((plr = plrCreate(pos)) == NULL) goto cleanup_world;
-/*	objSetModel(plr->obj, mdlRedCube());*/
+	/* objSetModel(plr->obj, mdlRedCube()); */
 
 
-	XSDL_CombinePath(pth, core->bindir, "../res/objects/weird.obj");
-	struct model *test = mdlCreate();
-	mdlLoad(test, pth);
+	for(i = 0; i < 8; i++) {
+		col[i].r = 1.0;
+		col[i].g = 0.0;
+		col[i].b = 0.0;
+	}	
 
+	XSDL_CombinePath(pth, core->bindir, "../res/models/cube.obj");
+	if((test = mdlCreate()) == NULL) goto cleanup_world;
+	if(mdlLoad(test, pth) < 0) goto cleanup_world;
+	mdlAddBAO(test, col, sizeof(ColorRGB), 8, 2, 3);
+	shdAttachVtx(test->shader, "../res/shaders/flat.vert");
+	shdAttachFrg(test->shader, "../res/shaders/flat.frag");
 	objSetModel(plr->obj, test);
+	glBindAttribLocation(test->shader->prog, 0, "vtxPos");
+	glBindAttribLocation(test->shader->prog, 1, "vtxNrm");
+	glBindAttribLocation(test->shader->prog, 2, "vtxCol");
+	if(mdlFinish(test) < 0) goto cleanup_world;
 
 
 	camTargetObj(plr->obj);

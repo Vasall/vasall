@@ -5,6 +5,7 @@
 
 #include "model.h"
 
+/* Load a obj-file into a model-struct */
 int mdlLoad(struct model *mdl, char *pth);
 
 #endif

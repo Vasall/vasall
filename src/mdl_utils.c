@@ -4,6 +4,7 @@
 #include <string.h>
 #include "model.h"
 #include "vec.h"
+#include "list.h"
 
 /*
  * Loads a model from a wavefront .obj file.
@@ -17,113 +18,97 @@
  */
 int mdlLoad(struct model *mdl, char *pth)
 {
-	FILE *fd = fopen(pth, "r");
-	char *char_buf = malloc(256 * sizeof(char));
+	int ret = 0, i;
+	FILE *fd;
+	char char_buf[256];
+	struct dyn_stack *vertices, *normals, *textures;
+	struct dyn_stack *indices, *normal_indices, *tex_indices;
 
-	Vec3 *vertex_buf = malloc(BUF_ALLOC_STEP * VEC3_SIZE);
-	int vertex_count = 0;
+	if(mdl == NULL) return(-1);
 
-	Vec3 *normal_buf = malloc(BUF_ALLOC_STEP * VEC3_SIZE);
-	int normal_count = 0;	
+	fd = fopen(pth, "r");
 
-	Vec2 *tex_buf = malloc(BUF_ALLOC_STEP * VEC2_SIZE);
-	int tex_count = 0;
-
-	int *index_buf = malloc(BUF_ALLOC_STEP * sizeof(int));
-	int *normal_index_buf = malloc(BUF_ALLOC_STEP * sizeof(int));
-	int *tex_index_buf = malloc(BUF_ALLOC_STEP * sizeof(int));
-	int index_count = 0;
-
-	int i;
-	int n_sz;
-
-	if(mdl == NULL) {
-		/* TODO check before allocating */
-		printf("Model was NULL!\n");
-		fclose(fd);
-		free(char_buf);
-		free(vertex_buf);
-		free(normal_buf);
-		free(tex_buf);
-		free(index_buf);
-		free(normal_index_buf);
-		free(tex_index_buf);
-		return -1;
-	}
-
-	while(1) {
-		fscanf(fd, "%s", char_buf);
-		if(strncmp(char_buf, "o", 1) == 0)
-			break;
-	}
+	if((vertices = stcCreate(VEC3_SIZE)) == NULL) { ret = -1; goto cleanup; }
+	if((normals = stcCreate(VEC3_SIZE)) == NULL) { ret = -1; goto cleanup; }
+	if((textures = stcCreate(VEC2_SIZE)) == NULL)  { ret = -1; goto cleanup; }
+	
+	if((indices = stcCreate(sizeof(int))) == NULL)  { ret = -1; goto cleanup; }
+	if((normal_indices = stcCreate(sizeof(int))) == NULL) { ret = -1; goto cleanup; }
+	if((tex_indices = stcCreate(sizeof(int))) == NULL)  { ret = -1; goto cleanup; }
 
 	while(fscanf(fd, "%s", char_buf) != EOF) {
-		if(strstr(char_buf, "vt") == char_buf) {
+		if(strcmp(char_buf, "vt") == 0) {
 			float f;
 			/* texture data */
 			fscanf(fd, "%f", &f);
 			fscanf(fd, "%f", &f);
 
-		} else if(strstr(char_buf, "vn") == char_buf) {
-			/* normal data*/
-			fscanf(fd, "%f %f %f", &normal_buf[normal_count][0],
-					&normal_buf[normal_count][1],
-					&normal_buf[normal_count][2]);
-			
-			normal_count++;
-			if(normal_count % BUF_ALLOC_STEP == 0) {
-				n_sz = normal_count / BUF_ALLOC_STEP + 1;
-				n_sz *= BUF_ALLOC_STEP;
-				normal_buf = realloc(normal_buf,
-						n_sz * VEC3_SIZE);
-			}
+		}
+		else if(strcmp(char_buf, "vn") == 0) {
+			Vec3 nrm;
 
-		} else if(strstr(char_buf, "v") == char_buf) {
-			/* vertex data*/
-			fscanf(fd, "%f %f %f", &vertex_buf[vertex_count][0],
-					&vertex_buf[vertex_count][1],
-					&vertex_buf[vertex_count][2]);
-			
-			vertex_count++;
-			if(vertex_count % BUF_ALLOC_STEP == 0) {
-				n_sz = vertex_count / BUF_ALLOC_STEP + 1;
-				n_sz *= BUF_ALLOC_STEP;
-				vertex_buf = realloc(vertex_buf,
-						n_sz * VEC3_SIZE);
-			}
-
-
-		} else if(strstr(char_buf, "f") == char_buf) {
-			/* index data */
-			for(i = 0; i < 3; i++) {
-				fscanf(fd, "%d/%d/%d",
-						&index_buf[index_count],
-						&tex_index_buf[index_count],
-						&normal_index_buf[index_count]);
-				
-				index_count++;
-				if(index_count % BUF_ALLOC_STEP == 0) {
-					n_sz = index_count / BUF_ALLOC_STEP + 1;
-					n_sz *= BUF_ALLOC_STEP;
+			/* Read the normal-vector */
+			fscanf(fd, "%f %f %f", 
+					&nrm[0], &nrm[1], &nrm[2]);
 	
-					index_buf = realloc(index_buf,
-							n_sz * sizeof(int));
-					normal_index_buf = realloc(normal_index_buf,
-							n_sz * sizeof(int));
-					tex_index_buf = realloc(tex_index_buf,
-							n_sz * sizeof(int));
-				}
+			/* Push the normal into the normal-stack */	
+			stcPush(normals, &nrm);
+		}
+		else if(strcmp(char_buf, "v") == 0) {
+			Vec3 vtx;
+
+			/* Read the vector-position */
+			fscanf(fd, "%f %f %f", 
+					&vtx[0], &vtx[1], &vtx[2]);
+
+			printf("%d: %1.2f/%1.2f/%1.2f\n", vertices->num,
+					vtx[0], vtx[1], vtx[2]);
+
+			/* Push the vertex into the vertex-array */
+			stcPush(vertices, &vtx);
+		}
+		else if(strcmp(char_buf, "f") == 0) {
+			int idx[3];
+
+			/* Read the different indices */
+			for(i = 0; i < 3; i++) {
+				fscanf(fd, "%d/%d/%d", 
+						&idx[0], &idx[1], &idx[2]);
+				
+				/* Push the indices into the proper stacks */
+				stcPush(indices, &idx[0]);
+				stcPush(normal_indices, &idx[1]);
+				stcPush(tex_indices, &idx[2]);
 			}
 			
 		}
 	}
 
-	printf("Finished parsing %s\n", pth);
+#ifdef DEBUF
+	for(i = 0; i < indices->num; i++) {
+		float vtx[3];
+		int idx = ((int *)indices->buf)[i];
+	
+		memcpy(vtx, (float *)vertices->buf + idx * 3 * sizeof(float),
+				sizeof(float) * 3);
 
-	mdlSetMesh(mdl, vertex_buf, vertex_count, (uint32_t *) index_buf, index_count, 1);
+		printf("%d: %d (%1.2f/%1.2f/%1.2f)\n", i, idx,
+				vtx[0], vtx[1], vtx[2]);
+	}
+#endif
 
+	mdlSetMesh(mdl, vertices->buf, vertices->num, 
+			(uint32_t *)indices->buf, indices->num, 1);
+
+cleanup:
+	stcDestroy(vertices);
+	stcDestroy(normals);
+	stcDestroy(textures);
+	stcDestroy(indices);
+	stcDestroy(normal_indices);
+	stcDestroy(tex_indices);
+	
 	fclose(fd);
-	free(char_buf);
 
-	return 0;
+	return (ret);
 }

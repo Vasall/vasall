@@ -74,7 +74,9 @@ int mdlLoad(struct model *mdl, char *pth)
 			for(i = 0; i < 3; i++) {
 				fscanf(fd, "%d/%d/%d", 
 						&idx[0], &idx[1], &idx[2]);
-				
+			
+				idx[0] -= 1;
+
 				/* Push the indices into the proper stacks */
 				stcPush(indices, &idx[0]);
 				stcPush(normal_indices, &idx[1]);

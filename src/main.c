@@ -13,7 +13,7 @@
 #include "setup.h"
 #include "handle.h"
 #include "mdl_utils.h"
-#include "list.h"
+#include "input.h"
 
 #define PAD_LEN 30
 
@@ -29,7 +29,10 @@ int main(int argc, char **argv)
 	Vec3 pos = {0.0, 1.0, 0.0};
 	struct model *test;
 	int i;
+	struct bao_entry *bao;
+	ColorRGB red = {1.0, 0.0, 0.0};
 	ColorRGB col[8];
+	for(i = 0; i < 8; i++) memcpy(&col[i], &red, sizeof(ColorRGB));
 
 	if(argc) {/* Prevent warning for not using argc */}
 
@@ -113,28 +116,21 @@ int main(int argc, char **argv)
 	XSDL_ShowVersions();
 	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
 
-	if((plr = plrCreate(pos)) == NULL) goto cleanup_world;
-	/* objSetModel(plr->obj, mdlRedCube()); */
-
-
-	for(i = 0; i < 8; i++) {
-		col[i].r = 1.0;
-		col[i].g = 0.0;
-		col[i].b = 0.0;
-	}	
+	if((plr = plrCreate(pos)) == NULL) goto cleanup_world;	
 
 	XSDL_CombinePath(pth, core->bindir, "../res/models/cube.obj");
 	if((test = mdlCreate()) == NULL) goto cleanup_world;
-	if(mdlLoad(test, pth) < 0) goto cleanup_world;
-	mdlAddBAO(test, col, sizeof(ColorRGB), 8, 2, 3);
 	shdAttachVtx(test->shader, "../res/shaders/flat.vert");
 	shdAttachFrg(test->shader, "../res/shaders/flat.frag");
-	objSetModel(plr->obj, test);
-	glBindAttribLocation(test->shader->prog, 0, "vtxPos");
-	glBindAttribLocation(test->shader->prog, 1, "vtxNrm");
-	glBindAttribLocation(test->shader->prog, 2, "vtxCol");
-	if(mdlFinish(test) < 0) goto cleanup_world;
+	mdlLoadObj(test, pth);
+	mdlAddBAO(test, 0, col, sizeof(ColorRGB), 8, 2, 3, 0, "vtxCol");
 
+
+	printf("Rec: %d\n", ((struct bao_entry **)test->bao->buf)[1]->ele_num);
+
+	if(mdlFinish(test) < 0) goto cleanup_world;
+	
+	objSetModel(plr->obj, test);
 
 	camTargetObj(plr->obj);
 

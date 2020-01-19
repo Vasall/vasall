@@ -12,6 +12,9 @@
 
 #define DEGTORAD 3.14/180.0
 
+/* Redefine external variables */
+struct model **model_cache = NULL;
+
 /* 
  * Start the creation of a new model. 
  * First push a new model struct into 
@@ -24,34 +27,31 @@
 struct model *mdlCreate(void)
 {
 	struct model *mdl = NULL;
-
+	
+	/* Allocate memory for the model-struct */
 	mdl = malloc(sizeof(struct model));
-	if(mdl == NULL) {
-		printf("Failed to allocate space for model.\n");
-		return(NULL);
-	}
+	if(mdl == NULL) goto failed;
 
+	/* Create a vao */
 	glGenVertexArrays(1, &mdl->vao);
 
-	memset(mdl->bia, 0, 16 * sizeof(uint32_t));
-	mdl->bia_num = 0;
+	/* Initialize the stack for the baos */
+	mdl->bao = stcCreate(sizeof(struct bao_entry *));
+	if(mdl->bao == NULL) goto failed;
 
-	memset(mdl->bea, 0, 16 * sizeof(int8_t));
-	mdl->bea_num = 0;
-
-	mdl->vtx_len = 0;
-	mdl->idx_len = 0;
-
+	/*  Create the shader */
 	mdl->shader = shdBegin();
-	if(mdl->shader == NULL) { 
-		mdl->status = MESH_ERR_CREATING;
-		return(NULL);
-	}
+	if(mdl->shader == NULL) goto failed;
 
-	/* Set the status on  */
+	/* Set the status to OK */
 	mdl->status = MESH_OK;
 
 	return(mdl);
+
+failed:
+	/* Set the status to FAILED */
+	mdl->status = MESH_ERR_CREATING;
+	return(NULL);
 }
 
 /*
@@ -60,16 +60,17 @@ struct model *mdlCreate(void)
  *
  * @mdl: Pointer to the model to finish
  *
- * Returns: The current status of the model
+ * Returns: The current final status of the model
  */
 int mdlFinish(struct model *mdl)
 {
+	int i;	
+	for(i = 0; i < mdl->bao->num; i++) {
+		printf("%d: %p\n", i, ((struct bao_entry **)mdl->bao->buf)[i]);
+	}
+
 	/* Finish shader-program */
 	glLinkProgram(mdl->shader->prog);
-
-	if(mdl->status != 0) {
-		mdl->status = MESH_ERR_FINISHING;
-	}	
 
 	return(mdl->status);
 }
@@ -88,81 +89,32 @@ int mdlFinish(struct model *mdl)
 void mdlSetMesh(struct model *mdl, Vec3 *vtxbuf, int vtxlen, 
 		uint32_t *idxbuf, int idxlen, uint8_t nrmflg)
 {
-	uint32_t vbo, ibo;
+	int i;
+	Vec3 *nrmbuf;
 	
-	/* Bind vertex array object */
-	glBindVertexArray(mdl->vao);
+	if(mdl->status != MESH_OK) return;
 
-	/* ======= VERTICES ======== */
-	/* Create vertex buffer object */
-	glGenBuffers(1, &vbo);
+	mdlAddBAO(mdl, 0, vtxbuf, VEC3_SIZE, vtxlen, 0, 3, 0, "vtxPos");
+	mdlAddBAO(mdl, 1, idxbuf, sizeof(uint32_t), idxlen, -1, 0, 0, NULL);
 
-	/* Copy our vertices array in a vertex buffer for OpenGL to use */
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, vtxlen * VEC3_SIZE, 
-			vtxbuf, GL_STATIC_DRAW);
+	nrmbuf = calloc(vtxlen, VEC3_SIZE);
 
-	/* 1st attribute buffer : vertices */
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	for(i = 0; i < idxlen - 2; i += 3) {
+		Vec3 v1, v2, v3, del1, del2, nrm;
 
-	mdl->vtx_len = vtxlen;
+		vecCpy(v1, vtxbuf[idxbuf[i]]);
+		vecCpy(v2, vtxbuf[idxbuf[i + 1]]);
+		vecCpy(v3, vtxbuf[idxbuf[i + 2]]);
+		vecSub(v2, v1, del1);
+		vecSub(v2, v3, del2);
+		vecCross(del1, del2, nrm);
+		vecNrm(nrm, nrm);
 
-	mdl->bia[mdl->bia_num] = vbo;
-	mdl->bia_num++;
-
-	/* ======== INDEX ========== */
-	/* Create an element buffer object */
-	glGenBuffers(1, &ibo);
-
-	/* Copy our index array in a element buffer for OpenGL to use */
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, idxlen * sizeof(unsigned int), 
-			idxbuf, GL_STATIC_DRAW);
-
-	mdl->idx_len = idxlen;
-
-	mdl->bia[mdl->bia_num] = ibo;
-	mdl->bia_num++;
-
-	if(nrmflg) {
-		uint32_t nbo;
-		int i;
-		Vec3 *normals;
-
-		normals = calloc(vtxlen, VEC3_SIZE);
-
-		for(i = 0; i < idxlen - 2; i += 3) {
-			Vec3 v1, v2, v3, del1, del2, nrm;
-
-			vecCpy(v1, vtxbuf[idxbuf[i]]);
-			vecCpy(v2, vtxbuf[idxbuf[i + 1]]);
-			vecCpy(v3, vtxbuf[idxbuf[i + 2]]);
-			vecSub(v2, v1, del1);
-			vecSub(v2, v3, del2);
-			vecCross(del1, del2, nrm);
-			vecNrm(nrm, nrm);
-
-			vecCpy(normals[idxbuf[i]], nrm);
-		}
-
-		/* ======== NORMALS ======== */
-		/* Create normals buffer object */
-		glGenBuffers(1, &nbo);
-
-		/* Copy our normals into a buffer for OpenGL to use */
-		glBindBuffer(GL_ARRAY_BUFFER, nbo);
-		glBufferData(GL_ARRAY_BUFFER, vtxlen * VEC3_SIZE, 
-				normals, GL_STATIC_DRAW);
-
-		/* 2st attribute buffer : normals */
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-		mdl->bia[mdl->bia_num] = vbo;
-		mdl->bia_num++;
+		vecCpy(nrmbuf[idxbuf[i]], nrm);
 	}
-
-	/* Unbind vao */
-	glBindVertexArray(0);
+	
+	if(nrmflg)
+		mdlAddBAO(mdl, 0, nrmbuf, VEC3_SIZE, vtxlen, 1, 3, 0, "vtxNrm");
 }
 
 /* 
@@ -170,53 +122,81 @@ void mdlSetMesh(struct model *mdl, Vec3 *vtxbuf, int vtxlen,
  * if specified enable the buffer.
  *
  * @mdl: Pointer to the model
+ * @flg: The type of array to add
+ * 	- 0: GL_ARRAY_BUFFER
+ * 	- 1: GL_ELEMENT_ARRAY_BUFFER
  * @buf: The buffer to insert
  * @elsize: The size of one element in the buffer
  * @num: The number of elements in the buffer
- * @en: Should the buffer be bound and to what index
- * @sz: The number of float values per element(or 0 when en=0)
+ * @bindflg: Should the buffer be bound and to what index
+ * @bindsz: The number of float values per element
+ * @btype: The type of data used
+ * 	- 0: GL_FLOAT
+ * @var: The name of the variable to bind the bao to
  */
-void mdlAddBAO(struct model *mdl, void *buf, int elsize, int num, 
-		uint8_t bindflg, uint8_t bindsz)
+void mdlAddBAO(struct model *mdl, uint8_t atype, void *buf, int elsize,
+		int num, int8_t bflag, uint8_t bsize, uint8_t btype, 
+		char *bname);
+
 {
-	uint32_t bao;
+	uint32_t bao, tmp;
+	struct bao_entry *bao_stc = NULL;
+	GLenum target;
+	
+	/* Allocate memory for the bao-struct */
+	if((bao_stc = malloc(sizeof(struct bao_entry))) == NULL) goto failed;
+
+	/* Allocate memory for the data-buffer */
+	bao_stc->ele_size = elsize;
+	bao_stc->ele_num = num;
+	tmp = bao_stc->ele_num * bao_stc->ele_size;
+	if((bao_stc->buf = malloc(tmp)) == NULL) goto failed;
+
+	/* Copy the data into the buffer */
+	memcpy(bao_stc->buf, buf, tmp);
 
 	/* Bind vertex-array-object */
 	glBindVertexArray(mdl->vao);
 
 	/* Create a buffer-array-object */
 	glGenBuffers(1, &bao);
+	bao_stc->index = bao;
 
-	/* Copy our color attay in a different one for OpenGL to use */
-	glBindBuffer(GL_ARRAY_BUFFER, bao);
-	glBufferData(GL_ARRAY_BUFFER, num * elsize, buf, GL_STATIC_DRAW);
+	/* Determit which array-type to use */
+	target = (!atype) ? (GL_ARRAY_BUFFER) : (GL_ELEMENT_ARRAY_BUFFER);
 
-	if(bindflg) {
-		glVertexAttribPointer(bindflg, bindsz, GL_FLOAT, 
+	/* Copy the array into a different one */
+	glBindBuffer(target, bao);
+	glBufferData(target, tmp, cpy_buf, GL_STATIC_DRAW);
+
+	bao_stc->attr_ptr = -1;
+
+	/* If the bao should be bound to an index */
+	if(bindflg >= 0) {
+		GLenum data_type = (!btype) ? (GL_FLOAT) : (0);
+
+		bao_stc->attr_ptr = bindflg;
+		strcpy(bao_stc->attr_name, var);
+
+		glVertexAttribPointer(bindflg, bindsz, data_type, 
 				GL_FALSE, 0, NULL);
+
+		shdBindAttr(mdl->shader, bindflg, var);
 	}
 
-	/* Add the bao to the buffer-index-array */
-	mdl->bia[mdl->bia_num] = bao;
-	mdl->bia_num++;
+	/* Push the bao into the bao-stack */
+	stcPush(mdl->bao, &bao_stc);
 
 	/* Unbind vao */
 	glBindVertexArray(0);
-}
 
-/* 
- * Calculate the normal-vectors 
- * for the model and create a new
- * buffer-object.
- *
- * @mdl: Pointer to the model to 
- * 	calculate the normals for 
- */
-void mdlCalcNormals(struct model *mdl)
-{
-	if(mdl) {}
-}
+	return;
 
+failed:
+	free(cpy_buf);
+
+	free(bao_stc);
+}
 
 /*
  * Render a model.
@@ -227,6 +207,7 @@ void mdlCalcNormals(struct model *mdl)
 void mdlRender(struct model *mdl, Mat4 mat)
 {
 	int err, model, view, proj;
+	int idxnum = 0;
 
 	Mat4 mod, vie, pro;
 
@@ -254,10 +235,12 @@ void mdlRender(struct model *mdl, Mat4 mat)
 	err = glGetError();
 	if(err != 0) printf("Error: %x\n", err);
 
-	glDrawElements(GL_TRIANGLES, mdl->idx_len, GL_UNSIGNED_INT, 0);
+	idxnum = ((struct bao_entry **)mdl->bao->buf)[1]->ele_num;
+	glDrawElements(GL_TRIANGLES, idxnum, GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 }
 
+#ifdef DEBUG
 /*
  * Create a red-cube as a model (used for dev).
  *
@@ -312,10 +295,11 @@ struct model *mdlRedCube(void)
 	mdlAddBAO(mdl, col, sizeof(ColorRGB), 8, 2, 3);
 	shdAttachVtx(mdl->shader, "../res/shaders/flat.vert");
 	shdAttachFrg(mdl->shader, "../res/shaders/flat.frag");
-	glBindAttribLocation(mdl->shader->prog, 0, "vtxPos");
-	glBindAttribLocation(mdl->shader->prog, 1, "vtxNrm");
-	glBindAttribLocation(mdl->shader->prog, 2, "vtxCol");
+	shdBindAttr(mdl->shader, 0, "vtxPos");
+	shdBindAttr(mdl->shader, 1, "vtxNrm");
+	shdBindAttr(mdl->shader, 2, "vtxCol");
 	if(mdlFinish(mdl) < 0) return(NULL);
 
 	return(mdl);
 }
+#endif

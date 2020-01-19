@@ -45,6 +45,6 @@ void shdAttachVtx(struct shader *shd, char *pth);
 void shdAttachFrg(struct shader *shd, char *pth);
 
 /* Bind an attribute-location */
-void shdBindAttrib(struct shader *shd, int idx, char *name);
+void shdBindAttr(struct shader *shd, int idx, char *name);
 
 #endif

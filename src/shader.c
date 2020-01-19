@@ -230,7 +230,7 @@ void shdAttachFrg(struct shader *shd, char *pth)
  * @idx: Index to bind to
  * @name: The name to bind to the index
  */
-void shdBindAttrib(struct shader *shd, int idx, char *name)
+void shdBindAttr(struct shader *shd, int idx, char *name)
 {
 	glBindAttribLocation(shd->prog, idx, name);
 }

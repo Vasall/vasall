@@ -2,9 +2,13 @@
 #define _GLOBAL_H_
 
 #include "XSDL/xsdl.h"
+#include "vec.h"
+#include "mat.h"
+#include "list.h"
 #include "camera.h"
-#include "world.h"
+#include "model.h"
 #include "object.h"
+#include "world.h"
 #include "player.h"
 #include "enemy.h"
 #include "thing.h"

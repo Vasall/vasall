@@ -13,6 +13,49 @@
 #define MESH_ERR_SHADER         -3
 #define MESH_ERR_FINISHING      -4
 
+/*
+ * A struct used to store data for
+ * a single buffer-array-object.
+ */
+struct bao_entry {
+	/*
+	 * The index of the bao, with which
+	 * it is bound to the vao.
+	 */
+	int index;
+
+	/*
+	 * A stack containing all data for this
+	 * bao.
+	 */
+	void *buf;
+	
+	/* 
+	 * Both the size of a single element and the
+	 * number of elements in the data-buffer.
+	 */
+	int ele_size;
+	int ele_num;
+
+	/*
+	 * The attribute-pointer or -1 if
+	 * the bao is not bound.
+	 */
+	int attr_ptr;
+
+	/*
+	 * The name of the variable to bind
+	 * the bao to.
+	 */
+	char attr_name[24];
+};
+
+/*
+ * A struct used to store data about a single
+ * model, which will then be pushed into the
+ * model-cache, to enable crossreferncing from
+ * multible objects at the same time.
+ */
 struct model {
 	/*
 	 * The vertex-array-object
@@ -21,43 +64,11 @@ struct model {
 	uint32_t vao;
 
 	/*
-	 * The buffer-index-array, 
-	 * containing the indices 
-	 * of the buffers attached 
-	 * to the vao.
+	 * A list containing both the
+	 * active index and the specific
+	 * attr-pointer.
 	 */
-	uint32_t bia[16];
-
-	/*
-	 * The number of buffers in
-	 * the buffer-index-array.
-	 */
-	int8_t bia_num;
-
-	/*
-	 * The buffer-emable array,
-	 * containing the buffers to
-	 * enable for the vao.
-	 */
-	int8_t bea[16];
-
-	/*
-	 * The number of elements in
-	 * the bea.
-	 */
-	int8_t bea_num;
-
-	/* 
-	 * The amount of vertices in
-	 * the vertex-buffer-object.
-	 */
-	int vtx_len;
-
-	/*
-	 * The amount of indices in
-	 * the index-buffer-object.
-	 */
-	int idx_len;
+	struct dyn_stack *bao;
 
 	/*
 	 * The shader attached to this
@@ -71,6 +82,17 @@ struct model {
 	uint8_t status;
 };
 
+
+/* The global model-cache used to store all models */
+extern struct model **model_cache;
+
+
+/* Initialize the model-cache */
+int mdlInit(void);
+
+/* Close the model-cache */
+void mdlClose(void);
+
 /* Start creating a new model and fill struct with default values */
 struct model *mdlCreate(void);
 
@@ -82,11 +104,9 @@ void mdlSetMesh(struct model *mdl, Vec3 *vtxbuf, int vtxlen,
 		uint32_t *idxbuf, int idxlen, uint8_t nrmflg);
 
 /* Attach a new buffer to the model */
-void mdlAddBAO(struct model *mdl, void *buf, int elsize, int num, 
-		uint8_t bindflg, uint8_t bindsz);
-
-/* Calculate the normal-vectors for the model */
-void mdlCalcNormals(struct model *mdl);
+void mdlAddBAO(struct model *mdl, uint8_t atype, void *buf, int elsize,
+		int num, int8_t bflag, uint8_t bsize, uint8_t btype, 
+		char *bname);
 
 /* Render a model */
 void mdlRender(struct model *mdl, Mat4 mat);

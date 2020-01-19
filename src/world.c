@@ -212,12 +212,9 @@ int wldGenTerrain(void)
 
 	if((mdl = mdlCreate()) == NULL) return(-1);
 	mdlSetMesh(mdl, vertices, vtxnum, indices, indlen, 1);
-	mdlAddBAO(mdl, colors, sizeof(ColorRGB), vtxnum, 2, 3);
+	mdlAddBAO(mdl, 0, colors, sizeof(ColorRGB), vtxnum, 2, 3, 0, "vtxCol");
 	shdAttachVtx(mdl->shader, "../res/shaders/terrain.vert");
 	shdAttachFrg(mdl->shader, "../res/shaders/terrain.frag");
-	glBindAttribLocation(mdl->shader->prog, 0, "vtxPos");
-	glBindAttribLocation(mdl->shader->prog, 1, "vtxNrm");
-	glBindAttribLocation(mdl->shader->prog, 2, "vtxCol");
 	if(mdlFinish(mdl) < 0) return(-1);
 
 	world->terrain = mdl;

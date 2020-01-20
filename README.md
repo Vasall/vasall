@@ -1,2 +1,2 @@
 # vasall-client
-A multiplayer-RTS-game. Still in developement.
+A coop-hunting-game similar to Monster Hunter. Still in developement.

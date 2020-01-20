@@ -144,7 +144,7 @@ void gloSetError(char *err);
 char *gloGetError(void);
 
 /* Initialize the global-wrapper */
-int gloInit(void);
+int gloInit(int argc, char **argv);
 
 /* Destroy the global-wrapper */
 void gloClose(void);

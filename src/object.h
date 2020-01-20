@@ -9,6 +9,11 @@
 
 #define OBJ_LIMIT 128
 
+/* 
+ * A container used to manage a single object.
+ * Each object will be later written to the
+ * object-buffer.
+ */
 struct object {
 	/* 
 	 * The id of this object in the object-array.
@@ -39,36 +44,42 @@ struct object {
 	struct model *model;
 
 	/*
-	 * The model-matrix used for
-	 * convert the vertices from
-	 * model space to world space.
+	 * The model-matrix used for convert 
+	 * the vertices from model space to 
+	 * world space.
 	 */
 	Mat4 matrix;
 
 	/*
-	 * The current rotation of the 
-	 * object.
+	 * The current rotation of the object. 
+	 * Used when calculating the model-matrix 
+	 * for this object.
 	 */
 	Vec3 rot;
 
 	/*
-	 * The vector to scale the object with.
+	 * The vector to scale the object
+	 * with. Used when calculating the
+	 * model-matrix for this object.
 	 */
 	Vec3 scl;
 };
 
 
-/* The global object-list */
+/* The global object-list containing all active objects */
 extern struct ptr_list *object_list;
 
 
-/* Initialize the object-array */
+/* Initialize the object-list */
 int objInit(void);
 
-/* Create a new object and attach it to the object-array */
+/* Close the object-list */
+void objClose(void);
+
+/* Create a new object and insert it into the object-list */
 struct object *objCreate(Vec3 pos);
 
-/* Destory an existing object */
+/* Destory an existing object and remove it from the object-list*/
 void objDestroy(struct object *obj);
 
 /* Get an object via the object-id */

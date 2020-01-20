@@ -33,30 +33,29 @@ int main(int argc, char **argv)
 	ColorRGB *col;
 	int vtx_count;
 
-	if(argc) {/* Prevent warning for not using argc */}
-
 	/* Randomize numbers */
 	srand(time(0));	
 
 	pad_printf("Initialize XSDL-subsystem");
-	if(XSDL_Init(XSDL_INIT_EVERYTHING) < 0) {                                                    
+	if(XSDL_Init(XSDL_INIT_EVERYTHING) < 0) {
 		printf("failed!\n");
 		printf("%s\n", SDL_GetError());
 		goto exit;
 	}
 	printf("done\n");
 
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-
 	pad_printf("Initialize core-wrapper");
-	if(gloInit() < 0) {
+	if(gloInit(argc, argv) < 0) {
 		printf("failed!\n");
 		printf("%s\n", gloGetError());
 		goto cleanup_enud;
 	}
 	printf("done\n");
+
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+			SDL_GL_CONTEXT_PROFILE_CORE);
 
 	pad_printf("Initialize window");
 	if((core->window = initWindow()) == NULL) {
@@ -80,8 +79,6 @@ int main(int argc, char **argv)
 	}
 	core->uiroot = core->uicontext->root;
 	printf("done\n");
-
-	core->bindir = XSDL_GetBinDir(argv[0]);
 
 	printf("Load resources:\n");
 	if(loadResources() < 0) {

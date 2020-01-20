@@ -4,7 +4,7 @@
 #include "mat.h"
 
 #define M_PI 3.141592654
-#define TO_RADS 3.141592654/180.0
+#define TO_RADS (3.14/180.0)
 
 #define VEC3_SIZE (sizeof(float)*3)
 typedef float Vec3[3];

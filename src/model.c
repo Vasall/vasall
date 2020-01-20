@@ -179,6 +179,8 @@ void mdlAddBAO(struct model *mdl, uint8_t atype, void *buf, int size, int num,
 		bao_stc->attr_ptr = -1;
 	}
 
+	printf("Binding buffer %s to index %d\n", bname, bindex);
+
 	/* Push the bao into the bao-stack */
 	stcPush(mdl->bao, &bao_stc);
 

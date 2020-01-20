@@ -30,8 +30,8 @@ int main(int argc, char **argv)
 	struct model *test;
 	int i;
 	ColorRGB red = {1.0, 0.0, 0.0};
-	ColorRGB col[8];
-	for(i = 0; i < 8; i++) memcpy(&col[i], &red, sizeof(ColorRGB));
+	ColorRGB *col;
+	int vtx_count;
 
 	if(argc) {/* Prevent warning for not using argc */}
 
@@ -117,12 +117,19 @@ int main(int argc, char **argv)
 
 	if((plr = plrCreate(pos)) == NULL) goto cleanup_world;	
 
-	XSDL_CombinePath(pth, core->bindir, "../res/models/cube.obj");
+	XSDL_CombinePath(pth, core->bindir, "../res/models/sphere.obj");
 	if((test = mdlCreate()) == NULL) goto cleanup_world;
-	shdAttachVtx(test->shader, "../res/shaders/flat.vert");
-	shdAttachFrg(test->shader, "../res/shaders/flat.frag");
+	shdAttachVtx(test->shader, "../res/shaders/terrain.vert");
+	shdAttachFrg(test->shader, "../res/shaders/terrain.frag");
 	mdlLoadObj(test, pth);
-	mdlAddBAO(test, 0, col, sizeof(ColorRGB), 8, 2, 3, 0, "vtxCol");
+	
+	vtx_count = ((struct bao_entry *) (test->bao->buf))->ele_num;
+	col = malloc(vtx_count * sizeof(ColorRGB));
+	for(i = 0; i < vtx_count; i++)
+		memcpy(&col[i], &red, sizeof(ColorRGB));
+
+	mdlAddBAO(test, 0, col, sizeof(ColorRGB), vtx_count,
+			2, 3, 0, "vtxCol");
 	if(mdlFinish(test) < 0) goto cleanup_world;
 	
 	objSetModel(plr->obj, test);

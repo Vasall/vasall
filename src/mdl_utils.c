@@ -23,6 +23,7 @@ int mdlLoadObj(struct model *mdl, char *pth)
 	char char_buf[256];
 	struct dyn_stack *vertices, *normals, *textures;
 	struct dyn_stack *indices, *normal_indices, *tex_indices;
+	Vec3 *nrm_buf;
 
 	if(mdl == NULL || mdl->status != MDL_OK) return(-1);
 
@@ -102,7 +103,22 @@ int mdlLoadObj(struct model *mdl, char *pth)
 	}
 
 	mdlSetMesh(mdl, vertices->buf, vertices->num, 
-			(uint32_t *)indices->buf, indices->num, 1);
+			(uint32_t *)indices->buf, indices->num, 0);
+
+	
+	nrm_buf = calloc(vertices->num, VEC3_SIZE);
+	for(i = 0; i < indices->num - 2; i += 3) {
+		Vec3 nrm;
+		int vtx_idx;
+		int nrm_idx;
+		vtx_idx = ((int *) (indices->buf))[i];
+		nrm_idx = ((int *) (normal_indices->buf))[i];
+
+		memcpy(nrm, ((Vec3 *) (normals->buf))[nrm_idx], VEC3_SIZE);
+		memcpy(nrm_buf + vtx_idx, nrm, VEC3_SIZE);
+	}
+	mdlAddBAO(mdl, 0, (void *) nrm_buf, VEC3_SIZE, vertices->num,
+			1, 3, 0, "vtxNrm");
 
 cleanup:
 	stcDestroy(vertices);

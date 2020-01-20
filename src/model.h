@@ -7,11 +7,12 @@
 #include "shader.h"
 #include "utils.h"
 
-#define MESH_OK                  0
-#define MESH_ERR_CREATING       -1
-#define MESH_ERR_ADD_BAO        -2
-#define MESH_ERR_SHADER         -3
-#define MESH_ERR_FINISHING      -4
+#define MDL_OK                  0
+#define MDL_ERR_CREATING       -1
+#define MDL_ERR_LOADING        -2
+#define MDL_ERR_ADD_BAO        -3
+#define MDL_ERR_SHADER         -4
+#define MDL_ERR_FINISHING      -5
 
 /*
  * A struct used to store data for

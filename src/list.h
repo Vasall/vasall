@@ -42,7 +42,7 @@ struct dyn_stack {
 	int alloc;
 
 	/* The size of one single element in the array */
-	int ele_size;
+	int size;
 
 	/* The data-buffer */
 	void *buf;

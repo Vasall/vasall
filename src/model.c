@@ -44,13 +44,13 @@ struct model *mdlCreate(void)
 	if(mdl->shader == NULL) goto failed;
 
 	/* Set the status to OK */
-	mdl->status = MESH_OK;
+	mdl->status = MDL_OK;
 
 	return(mdl);
 
 failed:
 	/* Set the status to FAILED */
-	mdl->status = MESH_ERR_CREATING;
+	mdl->status = MDL_ERR_CREATING;
 	return(NULL);
 }
 
@@ -87,7 +87,7 @@ void mdlSetMesh(struct model *mdl, Vec3 *vtxbuf, int vtxlen,
 	int i;
 	Vec3 *nrmbuf;
 	
-	if(mdl->status != MESH_OK) return;
+	if(mdl->status != MDL_OK) return;
 
 	mdlAddBAO(mdl, 0, vtxbuf, VEC3_SIZE, vtxlen, 0, 3, 0, "vtxPos");
 	mdlAddBAO(mdl, 1, idxbuf, sizeof(uint32_t), idxlen, -1, 0, 0, NULL);
@@ -192,7 +192,7 @@ failed:
 	free(bao_stc);
 
 	/* Set the status to failed */
-	mdl->status = MESH_ERR_ADD_BAO;
+	mdl->status = MDL_ERR_ADD_BAO;
 }
 
 /*
@@ -205,8 +205,9 @@ void mdlRender(struct model *mdl, Mat4 mat)
 {
 	int err, model, view, proj;
 	int idxnum = 0;
-
 	Mat4 mod, vie, pro;
+
+	if(mdl->status != MDL_OK) return;
 
 	mat4Cpy(mod, mat);
 	camGetView(vie);

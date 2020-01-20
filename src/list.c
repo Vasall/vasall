@@ -174,16 +174,16 @@ void lstPrint(struct ptr_list *lst)
  */
 struct dyn_stack *stcCreate(int elesz)
 {
-	struct dyn_stack *stc;
+	struct dyn_stack *stc = NULL;
 
 	stc = malloc(sizeof(struct dyn_stack));
 	if(stc == NULL) return(NULL);
 
 	stc->num = 0;
 	stc->alloc = 10;
-	stc->ele_size = elesz;
+	stc->size = elesz;
 
-	stc->buf = malloc(stc->alloc * stc->ele_size);
+	stc->buf = malloc(stc->alloc * stc->size);
 	if(stc->buf == NULL) {
 		free(stc);
 		return(NULL);
@@ -215,19 +215,17 @@ void stcDestroy(struct dyn_stack *stc)
  */
 int stcPush(struct dyn_stack *stc, void *in)
 {
-	void *ptr;
+	void *ptr = NULL;
 
 	if(stc->num + 1 > stc->alloc) {
 		stc->alloc += 10;
 
-		stc->buf = realloc(stc->buf, stc->alloc * stc->ele_size);
-		if(stc->buf == NULL) {
-			return(-1);
-		}
+		stc->buf = realloc(stc->buf, stc->alloc * stc->size);
+		if(stc->buf == NULL) return(-1);
 	}
 
-	ptr = (uint8_t *)stc->buf + stc->num * stc->ele_size;
-	memcpy(ptr, in, stc->ele_size);
+	ptr = (uint8_t *)stc->buf + stc->num * stc->size;
+	memcpy(ptr, in, stc->size);
 	stc->num += 1;
 
 	return(0);
@@ -245,18 +243,18 @@ int stcPush(struct dyn_stack *stc, void *in)
  */
 int stcPull(struct dyn_stack *stc, void *out)
 {
-	void *ptr;
+	void *ptr = NULL;
 
 	if(stc->num < 1) return(-1);
 
-	ptr = (uint8_t *)stc->buf + (stc->num - 1) * stc->ele_size;
-	memcpy(out, ptr, stc->ele_size);
+	ptr = (uint8_t *)stc->buf + (stc->num - 1) * stc->size;
+	memcpy(out, ptr, stc->size);
 	stc->num -= 1;
 
 	if(stc->num < stc->alloc - 10 && stc->alloc > 10) {
 		stc->alloc -= 10;
 
-		stc->buf = realloc(stc->buf, stc->alloc * stc->ele_size);
+		stc->buf = realloc(stc->buf, stc->alloc * stc->size);
 		if(stc->buf == NULL) {
 			return(-1);
 		}
@@ -274,13 +272,13 @@ int stcPull(struct dyn_stack *stc, void *out)
 void stcPrint(struct dyn_stack *stc)
 {
 	int i;
-	unsigned char val;
+	uint8_t val;
 
 	printf("Number: %d | Allocated: %d\n", stc->num, stc->alloc);
 
 	for(i = 0; i < stc->num; i++) {
 		printf("%d: ", i);
-		val = *((unsigned char *)stc->buf + (i * stc->ele_size));
+		val = *((uint8_t *)stc->buf + (i * stc->size));
 		printf("%x ", val);
 			
 		printf("\n");

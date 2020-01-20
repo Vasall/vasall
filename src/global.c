@@ -29,13 +29,19 @@ char *gloGetError(void)
 
 
 /*
- * Initialize the global-wrapper.
+ * Initialize the global-wrapper and setup the
+ * core instances and prepare the attributes.
+ *
+ * @argc: The number of arguments passed to main
+ * @argv: The argument-buffer passed to main
  *
  * Returns: Either 0 on success or -1
  * 	if an error occurred
 */
-int gloInit(void)
+int gloInit(int argc, char **argv)
 {
+	if(argc) {/* Prevent warning for not using argc */ }
+
 	core = calloc(1, sizeof(gloWrapper));
 	if(core == NULL) {
 		gloSetError("Failed to create global wrapper");
@@ -54,6 +60,8 @@ int gloInit(void)
 	if(plrInit() < 0) return(-1);
 	if(enmInit() < 0) return(-1);
 	if(thiInit() < 0) return(-1);
+	
+	core->bindir = XSDL_GetBinDir(argv[0]);
 
 	return(0);
 }

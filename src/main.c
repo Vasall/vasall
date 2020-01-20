@@ -33,8 +33,6 @@ int main(int argc, char **argv)
 	ColorRGB col[8];
 	for(i = 0; i < 8; i++) memcpy(&col[i], &red, sizeof(ColorRGB));
 
-	if(argc) {/* Prevent warning for not using argc */}
-
 	/* Randomize numbers */
 	srand(time(0));	
 
@@ -46,17 +44,17 @@ int main(int argc, char **argv)
 	}
 	printf("done\n");
 
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-
 	pad_printf("Initialize core-wrapper");
-	if(gloInit() < 0) {
+	if(gloInit(argc, argv) < 0) {
 		printf("failed!\n");
 		printf("%s\n", gloGetError());
 		goto cleanup_enud;
 	}
 	printf("done\n");
+
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
 	pad_printf("Initialize window");
 	if((core->window = initWindow()) == NULL) {
@@ -80,8 +78,6 @@ int main(int argc, char **argv)
 	}
 	core->uiroot = core->uicontext->root;
 	printf("done\n");
-
-	core->bindir = XSDL_GetBinDir(argv[0]);
 
 	printf("Load resources:\n");
 	if(loadResources() < 0) {
@@ -117,10 +113,10 @@ int main(int argc, char **argv)
 
 	if((plr = plrCreate(pos)) == NULL) goto cleanup_world;	
 
-	XSDL_CombinePath(pth, core->bindir, "../res/models/cube.obj");
 	if((test = mdlCreate()) == NULL) goto cleanup_world;
 	shdAttachVtx(test->shader, "../res/shaders/flat.vert");
 	shdAttachFrg(test->shader, "../res/shaders/flat.frag");
+	XSDL_CombinePath(pth, core->bindir, "../res/models/finn.obj");
 	mdlLoadObj(test, pth);
 	mdlAddBAO(test, 0, col, sizeof(ColorRGB), 8, 2, 3, 0, "vtxCol");
 	if(mdlFinish(test) < 0) goto cleanup_world;

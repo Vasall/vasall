@@ -10,8 +10,6 @@
 #include "model.h"
 #include "global.h"
 
-#define DEGTORAD 3.14/180.0
-
 /* Redefine external variables */
 struct model **model_cache = NULL;
 
@@ -203,7 +201,7 @@ failed:
  */
 void mdlRender(struct model *mdl, Mat4 mat)
 {
-	int err, model, view, proj;
+	int i, attr, err, model, view, proj;
 	int idxnum = 0;
 	Mat4 mod, vie, pro;
 
@@ -215,9 +213,11 @@ void mdlRender(struct model *mdl, Mat4 mat)
 
 	glBindVertexArray(mdl->vao);
 	glUseProgram(mdl->shader->prog);
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glEnableVertexAttribArray(2);
+	
+	for(i = 0; i < mdl->bao->num; i++) {
+		attr = 	((struct bao_entry **)mdl->bao->buf)[i]->attr_ptr;
+		if(attr != -1) glEnableVertexAttribArray(attr);
+	}
 
 	model = glGetUniformLocation(mdl->shader->prog, "model");
 	if(model == -1) { return; }

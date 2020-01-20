@@ -24,7 +24,7 @@ int mdlLoadObj(struct model *mdl, char *pth)
 	struct dyn_stack *vertices, *normals, *textures;
 	struct dyn_stack *indices, *normal_indices, *tex_indices;
 
-	if(mdl == NULL) return(-1);
+	if(mdl == NULL || mdl->status != MESH_OK) return(-1);
 
 	fd = fopen(pth, "r");
 

@@ -4,7 +4,7 @@
 #include "vec.h"
 #include "global.h"
 
-extern struct input_binds {
+struct input_binds {
 	/*
 	 * The current movement-direction.
 	 */
@@ -18,6 +18,9 @@ extern struct input_binds *input;
 
 /* Initialize the input-handler */
 int inpInit(void);
+
+/* Close the input-handler */
+void inpClose(void);
 
 /* Update the current inputs */
 void inpUpdate(void);

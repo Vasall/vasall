@@ -64,11 +64,6 @@ failed:
  */
 int mdlFinish(struct model *mdl)
 {
-	int i;	
-	for(i = 0; i < mdl->bao->num; i++) {
-		printf("%d: %p\n", i, ((struct bao_entry **)mdl->bao->buf)[i]);
-	}
-
 	/* Finish shader-program */
 	glLinkProgram(mdl->shader->prog);
 
@@ -113,8 +108,9 @@ void mdlSetMesh(struct model *mdl, Vec3 *vtxbuf, int vtxlen,
 		vecCpy(nrmbuf[idxbuf[i]], nrm);
 	}
 	
-	if(nrmflg)
+	if(nrmflg) {
 		mdlAddBAO(mdl, 0, nrmbuf, VEC3_SIZE, vtxlen, 1, 3, 0, "vtxNrm");
+	}
 }
 
 /* 
@@ -122,22 +118,20 @@ void mdlSetMesh(struct model *mdl, Vec3 *vtxbuf, int vtxlen,
  * if specified enable the buffer.
  *
  * @mdl: Pointer to the model
- * @flg: The type of array to add
+ * @atype: The type of array to add
  * 	- 0: GL_ARRAY_BUFFER
  * 	- 1: GL_ELEMENT_ARRAY_BUFFER
  * @buf: The buffer to insert
- * @elsize: The size of one element in the buffer
+ * @size: The size of one element in the buffer
  * @num: The number of elements in the buffer
- * @bindflg: Should the buffer be bound and to what index
- * @bindsz: The number of float values per element
+ * @bindex: Should the buffer be bound and to what index
+ * @bsize: The number of float values per element
  * @btype: The type of data used
  * 	- 0: GL_FLOAT
- * @var: The name of the variable to bind the bao to
+ * @bname: The name of the variable to bind the bao to
  */
-void mdlAddBAO(struct model *mdl, uint8_t atype, void *buf, int elsize,
-		int num, int8_t bflag, uint8_t bsize, uint8_t btype, 
-		char *bname);
-
+void mdlAddBAO(struct model *mdl, uint8_t atype, void *buf, int size, int num, 
+		int8_t bindex, uint8_t bsize, uint8_t btype, char *bname)
 {
 	uint32_t bao, tmp;
 	struct bao_entry *bao_stc = NULL;
@@ -147,7 +141,7 @@ void mdlAddBAO(struct model *mdl, uint8_t atype, void *buf, int elsize,
 	if((bao_stc = malloc(sizeof(struct bao_entry))) == NULL) goto failed;
 
 	/* Allocate memory for the data-buffer */
-	bao_stc->ele_size = elsize;
+	bao_stc->ele_size = size;
 	bao_stc->ele_num = num;
 	tmp = bao_stc->ele_num * bao_stc->ele_size;
 	if((bao_stc->buf = malloc(tmp)) == NULL) goto failed;
@@ -165,23 +159,24 @@ void mdlAddBAO(struct model *mdl, uint8_t atype, void *buf, int elsize,
 	/* Determit which array-type to use */
 	target = (!atype) ? (GL_ARRAY_BUFFER) : (GL_ELEMENT_ARRAY_BUFFER);
 
-	/* Copy the array into a different one */
+	/* Copy the array into the bao-buffer */
 	glBindBuffer(target, bao);
-	glBufferData(target, tmp, cpy_buf, GL_STATIC_DRAW);
-
-	bao_stc->attr_ptr = -1;
+	glBufferData(target, tmp, bao_stc->buf, GL_STATIC_DRAW);
 
 	/* If the bao should be bound to an index */
-	if(bindflg >= 0) {
+	if(bindex >= 0) {
 		GLenum data_type = (!btype) ? (GL_FLOAT) : (0);
 
-		bao_stc->attr_ptr = bindflg;
-		strcpy(bao_stc->attr_name, var);
+		bao_stc->attr_ptr = bindex;
+		strcpy(bao_stc->attr_name, bname);
 
-		glVertexAttribPointer(bindflg, bindsz, data_type, 
+		glVertexAttribPointer(bindex, bsize, data_type, 
 				GL_FALSE, 0, NULL);
 
-		shdBindAttr(mdl->shader, bindflg, var);
+		shdBindAttr(mdl->shader, bindex, bname);
+	}
+	else {
+		bao_stc->attr_ptr = -1;
 	}
 
 	/* Push the bao into the bao-stack */
@@ -193,9 +188,11 @@ void mdlAddBAO(struct model *mdl, uint8_t atype, void *buf, int elsize,
 	return;
 
 failed:
-	free(cpy_buf);
-
+	free(bao_stc->buf);
 	free(bao_stc);
+
+	/* Set the status to failed */
+	mdl->status = MESH_ERR_ADD_BAO;
 }
 
 /*

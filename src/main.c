@@ -29,7 +29,6 @@ int main(int argc, char **argv)
 	Vec3 pos = {0.0, 1.0, 0.0};
 	struct model *test;
 	int i;
-	struct bao_entry *bao;
 	ColorRGB red = {1.0, 0.0, 0.0};
 	ColorRGB col[8];
 	for(i = 0; i < 8; i++) memcpy(&col[i], &red, sizeof(ColorRGB));
@@ -124,10 +123,6 @@ int main(int argc, char **argv)
 	shdAttachFrg(test->shader, "../res/shaders/flat.frag");
 	mdlLoadObj(test, pth);
 	mdlAddBAO(test, 0, col, sizeof(ColorRGB), 8, 2, 3, 0, "vtxCol");
-
-
-	printf("Rec: %d\n", ((struct bao_entry **)test->bao->buf)[1]->ele_num);
-
 	if(mdlFinish(test) < 0) goto cleanup_world;
 	
 	objSetModel(plr->obj, test);

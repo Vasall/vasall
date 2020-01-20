@@ -104,9 +104,8 @@ void mdlSetMesh(struct model *mdl, Vec3 *vtxbuf, int vtxlen,
 		uint32_t *idxbuf, int idxlen, uint8_t nrmflg);
 
 /* Attach a new buffer to the model */
-void mdlAddBAO(struct model *mdl, uint8_t atype, void *buf, int elsize,
-		int num, int8_t bflag, uint8_t bsize, uint8_t btype, 
-		char *bname);
+void mdlAddBAO(struct model *mdl, uint8_t atype, void *buf, int size, int num, 
+		int8_t bindex, uint8_t bsize, uint8_t btype, char *bname);
 
 /* Render a model */
 void mdlRender(struct model *mdl, Mat4 mat);

@@ -273,7 +273,7 @@ int stcPull(struct dyn_stack *stc, void *out)
  */
 void stcPrint(struct dyn_stack *stc)
 {
-	int i, j;
+	int i;
 	unsigned char val;
 
 	printf("Number: %d | Allocated: %d\n", stc->num, stc->alloc);

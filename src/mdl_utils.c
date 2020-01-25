@@ -18,12 +18,12 @@
  */
 int mdlLoadObj(struct model *mdl, char *pth)
 {
-	int ret = 0, i, j;
+	int ret = 0, i, j, tmp;
 	FILE *fd;
 	char char_buf[256];
-	struct dyn_stack *vertices, *normals, *textures;
-	struct dyn_stack *indices, *normal_indices, *tex_indices;
-	Vec3 *nrm_buf;
+	struct dyn_stack *vtx_in = NULL, *nrm_in = NULL, *tex_in = NULL;
+	struct dyn_stack *vtx_out = NULL, *nrm_out = NULL, *tex_out = NULL;
+	struct dyn_stack *idx_in = NULL, *idx_conv = NULL, *idx_out = NULL;
 
 	if(mdl == NULL || mdl->status != MDL_OK) return(-1);
 
@@ -32,30 +32,26 @@ int mdlLoadObj(struct model *mdl, char *pth)
 		ret = -1; goto close; 
 	}
 
-	if((vertices = stcCreate(VEC3_SIZE)) == NULL) { 
-		ret = -1; goto cleanup; 
-	}
-	if((normals = stcCreate(VEC3_SIZE)) == NULL) { 
-		ret = -1; goto cleanup; 
-	}
-	if((textures = stcCreate(VEC2_SIZE)) == NULL)  { 
-		ret = -1; goto cleanup;
-	}
+	/* Create buffers to read input data into */
+	if((vtx_in = stcCreate(VEC3_SIZE)) == NULL) goto failed;
+	if((nrm_in = stcCreate(VEC3_SIZE)) == NULL) goto failed;
+	if((tex_in = stcCreate(VEC2_SIZE)) == NULL) goto failed;
 
-	if((indices = stcCreate(sizeof(int))) == NULL)  { 
-		ret = -1; goto cleanup; 
-	}
-	if((normal_indices = stcCreate(sizeof(int))) == NULL) { 
-		ret = -1; goto cleanup; 
-	}
-	if((tex_indices = stcCreate(sizeof(int))) == NULL) { 
-		ret = -1; goto cleanup; 
-	}
+	/* Create buffers to write output data to */
+	if((vtx_out = stcCreate(VEC3_SIZE)) == NULL) goto failed;
+	if((nrm_out = stcCreate(VEC3_SIZE)) == NULL) goto failed;
+	if((tex_out = stcCreate(VEC2_SIZE)) == NULL) goto failed;
 
+	/* Create buffers to store the indices */
+	if((idx_in = stcCreate(INT3)) == NULL) goto failed;
+	if((idx_conv = stcCreate(INT3)) == NULL) goto failed;
+	if((idx_out = stcCreate(sizeof(int))) == NULL) goto failed;
+
+	/* Read the data from the obj-file */
 	while(fscanf(fd, "%s", char_buf) != EOF) {
 		if(strcmp(char_buf, "vt") == 0) {
 			float f;
-			
+
 			/* Texture data */
 			fscanf(fd, "%f", &f);
 			fscanf(fd, "%f", &f);
@@ -69,7 +65,7 @@ int mdlLoadObj(struct model *mdl, char *pth)
 					&nrm[0], &nrm[1], &nrm[2]);
 
 			/* Push the normal into the normal-stack */	
-			stcPush(normals, &nrm);
+			stcPush(nrm_in, &nrm);
 		}
 		else if(strcmp(char_buf, "v") == 0) {
 			Vec3 vtx;
@@ -79,7 +75,7 @@ int mdlLoadObj(struct model *mdl, char *pth)
 					&vtx[0], &vtx[1], &vtx[2]);
 
 			/* Push the vertex into the vertex-array */
-			stcPush(vertices, &vtx);
+			stcPush(vtx_in, &vtx);
 		}
 		else if(strcmp(char_buf, "f") == 0) {
 			int idx[3];
@@ -94,39 +90,106 @@ int mdlLoadObj(struct model *mdl, char *pth)
 					idx[j] -= 1;
 				}
 
-				/* Push the indices into the proper stacks */
-				stcPush(indices, &idx[0]);
-				stcPush(normal_indices, &idx[1]);
-				stcPush(tex_indices, &idx[2]);
+				/* Push the indices into stack */
+				stcPush(idx_in, idx);
 			}
 		}
 	}
 
-	mdlSetMesh(mdl, vertices->buf, vertices->num, 
-			(uint32_t *)indices->buf, indices->num, 0);
+	/* Convert the data into a form usable for OpenGL */
+	for(i = 0; i < idx_in->num; i++) {
+		int cur[3], chk[3];
+		uint8_t push = 1, same = 0;
+		void *ptr;
 
-	
-	nrm_buf = calloc(vertices->num, VEC3_SIZE);
-	for(i = 0; i < indices->num - 2; i += 3) {
-		Vec3 nrm;
-		int vtx_idx;
-		int nrm_idx;
-		vtx_idx = ((int *) (indices->buf))[i];
-		nrm_idx = ((int *) (normal_indices->buf))[i];
+		tmp = i;
 
-		memcpy(nrm, ((Vec3 *) (normals->buf))[nrm_idx], VEC3_SIZE);
-		memcpy(nrm_buf + vtx_idx, nrm, VEC3_SIZE);
+		/* Copy the current indices into the cur-buffer */
+		memcpy(cur, stcGet(idx_in, i), INT3);
+
+		/* Check for similar vertices */
+		for(j = 0; j < idx_conv->num; j++) {
+			if(memcmp(cur, stcGet(idx_conv, j), INT3) == 0) {
+				same = 1;
+
+				tmp = j;
+				stcPush(idx_out, &tmp);
+				push = 0;
+
+				break;
+			}
+		}
+
+		if(!same) {
+			for(j = 0; j < idx_conv->num; j++) {
+				memcpy(chk, stcGet(idx_conv, j), INT3);
+
+				/* If it's the same vertex */
+				if(chk[0] == cur[0]) {
+					/* Not the same normal-vector */
+					if(chk[2] != cur[2] || 
+							chk[2] != cur[2]) {
+						/* Push the vertex to the end */
+						tmp = stcPush(idx_conv, cur);
+
+						/* Push the index into the index_list */
+						stcPush(idx_out, &tmp);
+
+						/* Prevent pushing again */
+						push = 0;
+						break;
+					}
+				}
+			}
+		}
+
+		/* If pushing is enabled */
+		if(push) {
+			/* Push the indices into the list */
+			tmp = stcPush(idx_conv, cur);
+
+			/* Push the index into the index_list */
+			stcPush(idx_out, &tmp);
+		}
 	}
-	mdlAddBAO(mdl, 0, (void *) nrm_buf, VEC3_SIZE, vertices->num,
+
+	/* Push the data into the different arrays */
+	for(i = 0; i < idx_conv->num; i++) {
+		int cur[3];
+		Vec3 vtx, nrm;
+
+		memcpy(cur, stcGet(idx_conv, i), INT3);
+
+		memcpy(vtx, stcGet(vtx_in, cur[0]), VEC3_SIZE);
+		memcpy(nrm, stcGet(nrm_in, cur[2]), VEC3_SIZE);
+
+		stcPush(vtx_out, vtx);
+		stcPush(nrm_out, nrm);
+	}
+
+	mdlSetMesh(mdl, vtx_out->buf, vtx_out->num, 
+			(uint32_t *)idx_out->buf, idx_out->num, 0);
+
+	mdlAddBAO(mdl, 0, nrm_out->buf, VEC3_SIZE, nrm_out->num, 
 			1, 3, 0, "vtxNrm");
 
+	goto cleanup;
+
+failed:
+	ret = -1;
+
 cleanup:
-	stcDestroy(vertices);
-	stcDestroy(normals);
-	stcDestroy(textures);
-	stcDestroy(indices);
-	stcDestroy(normal_indices);
-	stcDestroy(tex_indices);
+	stcDestroy(vtx_in);
+	stcDestroy(nrm_in);
+	stcDestroy(tex_in);
+
+	stcDestroy(vtx_out);
+	stcDestroy(nrm_out);
+	stcDestroy(tex_out);
+
+	stcDestroy(idx_in);
+	stcDestroy(idx_conv);
+	stcDestroy(idx_out);
 
 close:
 	fclose(fd);

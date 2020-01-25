@@ -194,13 +194,19 @@ struct dyn_stack *stcCreate(int elesz)
 
 /* 
  * Destroy a dynamic stack and free the
- * allocated memory.
+ * allocated memory. Note that the elements
+ * contain allocated memory themself have 
+ * to be freed manually before calling
+ * this function.
  *
  * @stc: Pointer to the stack to destroy
  */
 void stcDestroy(struct dyn_stack *stc)
 {
+	/* Free the element-buffer */
 	free(stc->buf);
+
+	/* Free the struct-memory */
 	free(stc);
 }
 
@@ -210,8 +216,8 @@ void stcDestroy(struct dyn_stack *stc)
  * @stc: Pointer to the stack
  * @in: Pointer to the element to push into the stack
  *
- * Returns: Either 0 on success or -1
- * 	if an error occurred
+ * Returns: Either the index of the new element
+ * 	on success or -1 if an error occurred
  */
 int stcPush(struct dyn_stack *stc, void *in)
 {
@@ -228,7 +234,7 @@ int stcPush(struct dyn_stack *stc, void *in)
 	memcpy(ptr, in, stc->size);
 	stc->num += 1;
 
-	return(0);
+	return(stc->num - 1);
 }
 
 /* 
@@ -238,8 +244,9 @@ int stcPush(struct dyn_stack *stc, void *in)
  * @stc: Pointer to the stack
  * @out: Pointer to the memory to write the element to
  *
- * Returns: Either 0 on success or -1
- * 	if an error occurred
+ * Returns: Either the new number of elements 
+ * 	in  the stack on success or -1 if an 
+ * 	error occurred
  */
 int stcPull(struct dyn_stack *stc, void *out)
 {
@@ -260,7 +267,49 @@ int stcPull(struct dyn_stack *stc, void *out)
 		}
 	}
 
-	return(0);
+	return(stc->num);
+}
+
+/* 
+ * Clone an element and push it to the end
+ * of the stack. 
+ *
+ * @stc: Pointer to the stack
+ * @idx: The index of the element in the buffer
+ *
+ * Returns: The index of the cloned element in the stack
+ * 	or -1 if an error occurred
+ */
+int stcCopy(struct dyn_stack *stc, int idx)
+{
+	uint8_t *ptr;
+	int ret = -1;
+
+	ptr = (uint8_t *)stc->buf + (idx * stc->size);
+	ret = stcPush(stc, ptr);
+
+	return(ret);
+}
+
+/* 
+ * Get the content at a specific index and 
+ * return a pointer to the buffer-position.
+ *
+ * @stc: Pointer to the stack
+ * @idx: The index of the element to get
+ *
+ * Return: Either a pointer to the element or
+ * 	NULL if an error occurred
+ */
+void *stcGet(struct dyn_stack *stc, int idx)
+{
+	uint8_t *ptr = NULL;
+
+	if(idx >= stc->num || idx < 0) return(NULL);
+
+	ptr = ((uint8_t *)stc->buf + (idx * stc->size));
+
+	return(ptr);
 }
 
 /*

@@ -10,7 +10,7 @@ uniform mat4 proj;
 
 flat out vec3 color;
 
-vec3 LIGHT_VEC = vec3(0.259, -0.864, 0.432);
+vec3 LIGHT_VEC = -vec3(0.259, -0.864, 0.432);
 vec3 LIGHT_COL = vec3(1.0, 0.8, 0.8);
 vec2 LIGHT_BIAS = vec2(0.2, 0.8);
 

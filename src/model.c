@@ -101,13 +101,15 @@ void mdlSetMesh(struct model *mdl, Vec3 *vtxbuf, int vtxlen,
 		vecSub(v2, v1, del1);
 		vecSub(v2, v3, del2);
 		vecCross(del1, del2, nrm);
+		vecScl(nrm, -1, nrm);
 		vecNrm(nrm, nrm);
 
 		vecCpy(nrmbuf[idxbuf[i]], nrm);
 	}
 	
 	if(nrmflg) {
-		mdlAddBAO(mdl, 0, nrmbuf, VEC3_SIZE, vtxlen, 1, 3, 0, "vtxNrm");
+		mdlAddBAO(mdl, 0, nrmbuf, VEC3_SIZE, vtxlen, 
+				1, 3, 0, "vtxNrm");
 	}
 }
 
@@ -176,8 +178,6 @@ void mdlAddBAO(struct model *mdl, uint8_t atype, void *buf, int size, int num,
 	else {
 		bao_stc->attr_ptr = -1;
 	}
-
-	printf("Binding buffer %s to index %d\n", bname, bindex);
 
 	/* Push the bao into the bao-stack */
 	stcPush(mdl->bao, &bao_stc);

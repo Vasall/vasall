@@ -33,9 +33,9 @@ int main(int argc, char **argv)
 	ColorRGB *col;
 	int vtx_count;
 
-	/* Randomize numbers */
+	/* Update the rand-seed */
 	srand(time(0));	
-
+		
 	pad_printf("Initialize XSDL-subsystem");
 	if(XSDL_Init(XSDL_INIT_EVERYTHING) < 0) {
 		printf("failed!\n");
@@ -54,7 +54,7 @@ int main(int argc, char **argv)
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 
 			SDL_GL_CONTEXT_PROFILE_CORE);
 
 	pad_printf("Initialize window");
@@ -118,7 +118,7 @@ int main(int argc, char **argv)
 	if((test = mdlCreate()) == NULL) goto cleanup_world;
 	shdAttachVtx(test->shader, "../res/shaders/terrain.vert");
 	shdAttachFrg(test->shader, "../res/shaders/terrain.frag");
-	mdlLoadObj(test, pth);
+	if(mdlLoadObj(test, pth) < 0) goto cleanup_world;
 	
 	vtx_count = ((struct bao_entry *) (test->bao->buf))->ele_num;
 	col = malloc(vtx_count * sizeof(ColorRGB));
@@ -127,7 +127,7 @@ int main(int argc, char **argv)
 
 	mdlAddBAO(test, 0, col, sizeof(ColorRGB), vtx_count,
 			2, 3, 0, "vtxCol");
-	if(mdlFinish(test) < 0) goto cleanup_world;
+	mdlFinish(test);
 	
 	objSetModel(plr->obj, test);
 

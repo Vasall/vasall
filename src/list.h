@@ -60,6 +60,12 @@ int stcPush(struct dyn_stack *stc, void *in);
 /* Pull the last element of a stack */
 int stcPull(struct dyn_stack *stc, void *out);
 
+/* Clone an element and push it to the stack */
+int stcCopy(struct dyn_stack *stc, int idx);
+
+/* Get the content at a specific index */
+void *stcGet(struct dyn_stack *stc, int idx);
+
 /* Print all elements in the stack */
 void stcPrint(struct dyn_stack *stc);
 

@@ -210,6 +210,7 @@ int wldGenTerrain(void)
 		memcpy(&colors[indices[j]], &col, sizeof(ColorRGB));
 	}
 
+#ifdef DEBUG
 	if((mdl = mdlCreate()) == NULL) return(-1);
 	mdlSetMesh(mdl, vertices, vtxnum, indices, indlen, 1);
 	mdlAddBAO(mdl, 0, colors, sizeof(ColorRGB), vtxnum, 2, 3, 0, "vtxCol");
@@ -218,7 +219,7 @@ int wldGenTerrain(void)
 	if(mdlFinish(mdl) < 0) return(-1);
 
 	world->terrain = mdl;
-
+#endif
 	return(0);
 }
 

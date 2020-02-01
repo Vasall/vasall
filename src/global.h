@@ -5,12 +5,11 @@
 #include "vec.h"
 #include "mat.h"
 #include "list.h"
+#include "hashtable.h"
 #include "camera.h"
 #include "model.h"
 #include "object.h"
 #include "world.h"
-#include "player.h"
-#include "enemy.h"
 #include "thing.h"
 
 /*
@@ -97,6 +96,9 @@ typedef struct gloWrapper {
 	 * function on every render-call.
 	*/
 	void (*render)(void);
+
+	struct object *obj;
+	struct object *obj1;
 } gloWrapper;
 
 /*
@@ -148,5 +150,8 @@ int gloInit(int argc, char **argv);
 
 /* Destroy the global-wrapper */
 void gloClose(void);
+
+/* Read the include-register and import all resources */
+int gloLoad(char *pth);
 
 #endif

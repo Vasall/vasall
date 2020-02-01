@@ -4,52 +4,20 @@
 #include <stdint.h>
 #include "vec.h"
 #include "mat.h"
+#include "texture.h"
 #include "shader.h"
 #include "utils.h"
 
+#define MDL_KEY_LEN             5
+#define MDL_SLOTS               8
+
 #define MDL_OK                  0
-#define MDL_ERR_CREATING       -1
-#define MDL_ERR_LOADING        -2
-#define MDL_ERR_ADD_BAO        -3
-#define MDL_ERR_SHADER         -4
-#define MDL_ERR_FINISHING      -5
-
-/*
- * A struct used to store data for
- * a single buffer-array-object.
- */
-struct bao_entry {
-	/*
-	 * The index of the bao, with which
-	 * it is bound to the vao.
-	 */
-	int index;
-
-	/*
-	 * A stack containing all data for this
-	 * bao.
-	 */
-	void *buf;
-	
-	/* 
-	 * Both the size of a single element and the
-	 * number of elements in the data-buffer.
-	 */
-	int ele_size;
-	int ele_num;
-
-	/*
-	 * The attribute-pointer or -1 if
-	 * the bao is not bound.
-	 */
-	int attr_ptr;
-
-	/*
-	 * The name of the variable to bind
-	 * the bao to.
-	 */
-	char attr_name[24];
-};
+#define MDL_ERR_CREATING        1
+#define MDL_ERR_MESH            2
+#define MDL_ERR_TEXTURE         3
+#define MDL_ERR_LOADING         4
+#define MDL_ERR_SHADER          5
+#define MDL_ERR_FINISHING       6
 
 /*
  * A struct used to store data about a single
@@ -59,17 +27,57 @@ struct bao_entry {
  */
 struct model {
 	/*
+	 * The key of this model.
+	 */
+	char key[8];
+	
+	/*
 	 * The vertex-array-object
 	 * attached to the model.
 	 */
 	uint32_t vao;
 
 	/*
-	 * A list containing both the
-	 * active index and the specific
-	 * attr-pointer.
+	 * The index-bao, index-buffer and
+	 * number of indices in the buffer.
 	 */
-	struct dyn_stack *bao;
+	uint32_t idx_bao;
+	int idx_num;
+	int *idx_buf;
+
+	/*
+	 * The number of vertices attached
+	 * to this model.
+	 */
+	int vtx_num;
+
+	/*
+	 * The vertex-buffer and
+	 * vertex-bao.
+	 */
+	uint32_t vtx_bao;
+	Vec3 *vtx_buf;
+
+	/*
+	 * The normal-buffer and
+	 * normal-bao.
+	 */
+	uint32_t nrm_bao;
+	Vec3 *nrm_buf;
+
+	/*
+	 * The uv-buffer and
+	 * uv-bao.
+	 */
+	uint32_t uv_bao;
+	Vec2 *uv_buf;
+
+
+	/*
+	 * The texture attached to this
+	 * model.
+	 */
+	struct texture *tex;
 
 	/*
 	 * The shader attached to this
@@ -78,40 +86,50 @@ struct model {
 	struct shader *shader;
 
 	/*
-	 * The status of the model.
+	 * The current status of the model.
 	 */
 	uint8_t status;
 };
 
 
-/* The global model-cache used to store all models */
-extern struct model **model_cache;
+/* The global model-table used to store all models */
+extern struct ht_t *model_table;
 
 
-/* Initialize the model-cache */
+/* Create and nitialize the model-table */
 int mdlInit(void);
 
-/* Close the model-cache */
+/* Destroy and close the model-table */
 void mdlClose(void);
 
-/* Start creating a new model and fill struct with default values */
-struct model *mdlCreate(void);
+/* Create a new model */
+struct model *mdlCreate(char *key);
 
-/* Finish creating the new model */
+/* Attach a mesh to the model */
+void mdlSetMesh(struct model *mdl, int idxnum, int *idx, 
+		int vtxnum, Vec3 *vtx, Vec3 *nrm, Vec2 *uv);
+
+/* Attach a texture to the model */
+void mdlSetTex(struct model *mdl, char *tex);
+
+/* Attach a shader to the model */
+void mdlSetShader(struct model *mdl, char *shd);
+
+/* Finish the model and push it into the model-table */
 int mdlFinish(struct model *mdl);
 
-/* Set the vertices and indices of the model */
-void mdlSetMesh(struct model *mdl, Vec3 *vtxbuf, int vtxlen, 
-		uint32_t *idxbuf, int idxlen, uint8_t nrmflg);
+/* Create a new model and push it into the model-table */
+int mdlLoad(char *key, char *obj, char *tex, char *shd);
 
-/* Attach a new buffer to the model */
-void mdlAddBAO(struct model *mdl, uint8_t atype, void *buf, int size, int num, 
-		int8_t bindex, uint8_t bsize, uint8_t btype, char *bname);
+/* Get a model from the model-table using a key */
+struct model *mdlGet(char *key);
 
-/* Render a model */
+/* Delete a model and remove it from the model-table */
+void mdlDel(char *key);
+
+/* Render a model using a given model-matrix */
 void mdlRender(struct model *mdl, Mat4 mat);
 
-/* Create a red-cube as a model (used for dev) */
-struct model *mdlRedCube(void);
-
+int mdlLoadObj(char *pth, int *idxnum, int **idx, int *vtxnum,
+		Vec3 **vtx, Vec3 **nrm, Vec2 **uv);
 #endif

@@ -3,12 +3,13 @@
 
 #include <stdint.h>
 
+#define SHD_SLOTS               8
+
 #define SHADER_ERR_LOAD		1
 #define SHADER_ERR_COMPILE	2
 #define SHADER_ERR_LINK		4
 
-struct shader {
-	/*
+struct shader {	/*
 	 * The shader-program.
 	 */
 	uint32_t prog;
@@ -29,22 +30,24 @@ struct shader {
 	uint8_t status;
 };
 
-/* Create a new shader program */
-struct shader *shdCreate(char *vtx_shd, char *frg_shd);
 
-/* Begin the creation of a new shader */
-struct shader *shdBegin(void);
+/* A list containing all active shaders */
+extern struct ht_t *shader_table;
 
-/* Finish the creation of a new shader */
-int shdFinish(struct shader *shd);
 
-/* Attach a vertex-shader to the program */
-void shdAttachVtx(struct shader *shd, char *pth);
+/* Initialize the shader-table */
+int shdInit(void);
 
-/* Attach a fragment-shader to the program */
-void shdAttachFrg(struct shader *shd, char *pth);
+/* Destroy the shader-table */
+void shdClose(void);
 
-/* Bind an attribute-location */
-void shdBindAttr(struct shader *shd, int idx, char *name);
+/* Create a new shader and attach it to the shader-table */
+int shdSet(char *key, char *vtx_shd, char *frg_shd);
+
+/* Get a shader from the shader-table */
+struct shader *shdGet(char *key);
+
+/* Delete a shader an remove it from the shader-table */
+void shdDel(char *key);
 
 #endif

@@ -11,10 +11,13 @@
 #include "global.h"
 #include "XSDL/xsdl.h"
 
-char* filetobuf(char *file);
+
+/* A list containing all active shaders */
+struct ht_t *shader_table = NULL;
+
 
 /* A simple function that will read a file into an allocated char pointer buffer */
-char* filetobuf(char *file)
+static char* filetobuf(char *file)
 {
 	FILE *fptr;
 	long length;
@@ -35,202 +38,116 @@ char* filetobuf(char *file)
 	return (buf);
 }
 
-
 /* 
- * Create a new shader program, and load both the
- * vertex-shader and fragment-shader.
+ * Initialize the shader-table and allocate the
+ * necessary memory.
  *
- * @vtx_shd: The relative path to the vertex-shader-file
- * @frg_shd: The rlative path to the fragment-shader-file
- *
- * Returns: Either a pointer to the created shader-program
- * 	or NULL if an error occurred
+ * Returns: Either 0 on success or -1
+ * 	if an error occurred
  */
-struct shader *shdCreate(char *vtx_shd, char *frg_shd)
+int shdInit(void)
 {
-	int success;
-	char path[512], *vtxsrc, *frgsrc, infoLog[512];
-	struct shader *shd;
-
-	shd = calloc(1, sizeof(struct shader));
-	if(shd == NULL) {
-		return(NULL);
-	}
-
-	shd->prog = glCreateProgram();
-
-	if(vtx_shd != NULL) {
-		XSDL_CombinePath(path, core->bindir, vtx_shd);
-		vtxsrc = filetobuf(path);
-		if(vtxsrc != NULL) {
-			shd->vshdr = glCreateShader(GL_VERTEX_SHADER);
-			glShaderSource(shd->vshdr, 1, (const GLchar**)&vtxsrc, NULL);
-			glCompileShader(shd->vshdr);
-
-			glGetShaderiv(shd->vshdr, GL_COMPILE_STATUS, &success);
-			if(!success) {
-				glGetShaderInfoLog(shd->vshdr, 512, NULL, infoLog);
-				printf("Failed to compile shader %s: %s\n",
-						path, infoLog);
-				exit(1);
-			}
-			glAttachShader(shd->prog, shd->vshdr);
-		}
-		else {
-			printf("Failed to load %s\n", path);
-			exit(1);
-		}
-		free(vtxsrc);
-	}
-
-	if(frg_shd != NULL) {
-		XSDL_CombinePath(path, core->bindir, frg_shd);
-		frgsrc = filetobuf(path);
-		if(frgsrc != NULL) {
-			shd->fshdr = glCreateShader(GL_FRAGMENT_SHADER);
-			glShaderSource(shd->fshdr, 1, (const GLchar**)&frgsrc, NULL);
-			glCompileShader(shd->fshdr);
-
-			glGetShaderiv(shd->fshdr, GL_COMPILE_STATUS, &success);
-			if(!success) {
-				glGetShaderInfoLog(shd->fshdr, 512, NULL, infoLog);
-				printf("Failed to compile shader %s: %s\n", path, infoLog);
-				exit(1);
-			}
-			glAttachShader(shd->prog, shd->fshdr);
-
-		}
-		else {
-			printf("Failed to load %s\n", path);
-			exit(1);
-		}
-	}
-
-	return(shd);
-}
-
-/* 
- * Begin the creation of a new shader.
- *
- * Returns: Either a new shader or
- * 	NULL if an error occurred
- */
-struct shader *shdBegin(void)
-{
-	struct shader *shd;
-
-	shd = calloc(1, sizeof(struct shader));
-	if(shd == NULL) {
-		return(NULL);
-	}
-
-	shd->prog = glCreateProgram();
-
-	shd->vshdr = 0;
-	shd->fshdr = 0;
-	shd->status = 0;
-
-	return(shd);
-}
-
-/* 
- * Finish the creation of a new shader by linking
- * the shader-program.
- *
- * @shd: Pointer to the shader to finish
- */
-int shdFinish(struct shader *shd)
-{
-	if(shd->status != 0) {
-		printf("Error during shader-creation.\n");
-		return(-1);
-	}
+	shader_table = htCreate(SHD_SLOTS);
+	if(shader_table == NULL) return(-1);
 
 	return(0);
 }
 
 /* 
- * Attach a vertex-shader to the program
- * by first loading and then compiling the
- * specified shader-file.
- *
- * @shd: Pointer to the the shader
- * @pth: Relative path to the shader-file
+ * Destroy the shader-table and free the allocated
+ * memory.
  */
-void shdAttachVtx(struct shader *shd, char *pth)
+void shdClose(void)
 {
+
+}
+
+/* 
+ * Create a new shader and load both the vertex- and
+ * fragment-shader-files. The compile the code and
+ * push the finished shader-program into the table.
+ */
+int shdSet(char *key, char *vtx_shd, char *frg_shd)
+{
+	struct shader *shd = NULL;
 	int success;
-	char path[512], *vtxsrc, infoLog[512];
+	char *vtxsrc = NULL, *frgsrc = NULL, infoLog[512];
 
-	XSDL_CombinePath(path, core->bindir, pth);
-	vtxsrc = filetobuf(path);
-	if(vtxsrc != NULL) {
-		shd->vshdr = glCreateShader(GL_VERTEX_SHADER);
-		glShaderSource(shd->vshdr, 1, (const GLchar**)&vtxsrc, NULL);
-		glCompileShader(shd->vshdr);
+	if(vtx_shd == NULL || frg_shd == NULL) return(-1);
 
-		glGetShaderiv(shd->vshdr, GL_COMPILE_STATUS, &success);
-		if(!success) {
-			glGetShaderInfoLog(shd->vshdr, 512, NULL, infoLog);
-			printf("Failed to compile shader %s: %s\n",
-					path, infoLog);
-			exit(1);
-		}
-		glAttachShader(shd->prog, shd->vshdr);
+	shd = malloc(sizeof(struct shader));
+	if(shd == NULL) return(-1);
+
+	shd->prog = glCreateProgram();
+
+	/* Load vertex-shader */	
+	vtxsrc = filetobuf(vtx_shd);
+	if(vtxsrc == NULL) goto failed;
+
+	shd->vshdr = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(shd->vshdr, 1, (const GLchar **)&vtxsrc, NULL);
+	glCompileShader(shd->vshdr);
+
+	glGetShaderiv(shd->vshdr, GL_COMPILE_STATUS, &success);
+	if(!success) {
+		glGetShaderInfoLog(shd->vshdr, 512, NULL, infoLog);
+		printf("Failed to compile shader %s: %s\n", vtx_shd, infoLog);
+		goto failed;
 	}
-	else {
-		printf("Failed to load %s\n", path);
-		exit(1);
+	
+	glAttachShader(shd->prog, shd->vshdr);
+
+	/* Load fragment-shader */
+	frgsrc = filetobuf(frg_shd);
+	if(frgsrc == NULL) goto failed;
+
+	shd->fshdr = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(shd->fshdr, 1, (const GLchar **)&frgsrc, NULL);
+	glCompileShader(shd->fshdr);
+
+	glGetShaderiv(shd->fshdr, GL_COMPILE_STATUS, &success);
+	if(!success) {
+		glGetShaderInfoLog(shd->fshdr, 512, NULL, infoLog);
+		printf("Failed to compile shader %s: %s\n", frg_shd, infoLog);
+		goto failed;
 	}
+		
+	glAttachShader(shd->prog, shd->fshdr);
+
+	glBindAttribLocation(shd->prog, 0, "vtxPos");
+	glBindAttribLocation(shd->prog, 1, "vtxNrm");
+	glBindAttribLocation(shd->prog, 2, "vtxUV");
+	
+	glLinkProgram(shd->prog);
+
+	htSet(shader_table, key, (const uint8_t *)shd, sizeof(struct shader));
+	
+
 	free(vtxsrc);
+	free(frgsrc);
+
+	return(0);
+
+failed:
+	free(vtxsrc);
+	free(frgsrc);
+	free(shd);
+
+	return(-1);
+			
 }
 
-
-/*
- * Attach a fragment-shader to the program
- * by first loading and then compiling the
- * fragment-shader.
- *
- * @shd: Pointer to the shader
- * @pth: Relative path the the shader-file
- */
-void shdAttachFrg(struct shader *shd, char *pth)
+/* Get a shader from the shader-table */
+struct shader *shdGet(char *key)
 {
-	int success;
-	char path[512], infoLog[512], *frgsrc;
+	struct shader *ptr;
 
-
-	XSDL_CombinePath(path, core->bindir, pth);
-	frgsrc = filetobuf(path);
-	if(frgsrc != NULL) {
-		shd->fshdr = glCreateShader(GL_FRAGMENT_SHADER);
-		glShaderSource(shd->fshdr, 1, (const GLchar**)&frgsrc, NULL);
-		glCompileShader(shd->fshdr);
-
-		glGetShaderiv(shd->fshdr, GL_COMPILE_STATUS, &success);
-		if(!success) {
-			glGetShaderInfoLog(shd->fshdr, 512, NULL, infoLog);
-			printf("Failed to compile shader %s: %s\n", path, infoLog);
-			exit(1);
-		}
-		glAttachShader(shd->prog, shd->fshdr);
-
+	if(htGet(shader_table, key, (uint8_t **)&ptr, NULL) < 0) {
+		return(NULL);
 	}
-	else {
-		printf("Failed to load %s\n", path);
-		exit(1);
-	}
+	
+	return(ptr);
 }
 
-/*
- * Bind the location of an attribute to
- * a given name in the shader-file.
- *
- * @shd: Pointer to the shader
- * @idx: Index to bind to
- * @name: The name to bind to the index
- */
-void shdBindAttr(struct shader *shd, int idx, char *name)
-{
-	glBindAttribLocation(shd->prog, idx, name);
-}
+/* Delete a shader an remove it from the shader-table */
+void shdDel(char *key);

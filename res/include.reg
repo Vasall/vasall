@@ -1,0 +1,5 @@
+tex cube texture/cube.png
+
+shd flat shader/flat.vert shader/flat.frag
+
+mdl cube model/tanne.obj cube flat

@@ -5,7 +5,7 @@
 #include <math.h>
 
 /* Redefine global variables */
-struct ptr_list *object_list = NULL;
+struct ht_t *object_table = NULL;
 
 /*
  * Initialize the global object-array.
@@ -15,31 +15,31 @@ struct ptr_list *object_list = NULL;
  */
 int objInit(void)
 {
-	object_list = lstCreate(OBJ_LIMIT);
-	if(object_list == NULL) return(-1);
+	object_table = htCreate(OBJ_SLOTS);
+	if(object_table == NULL) return(-1);
 
 	return(0);
 }
 
-/* 
- * Create a new object at the given position and 
- * insert it into  the object-array, if there is 
- * still space left. If the limit has been
- * met, return NULL.
- *
- * @pos: The position to create the object at
- *
- * Returns: Either a pointer to the created object
- * 	or NULL if an error occurred
-*/
-struct object *objCreate(Vec3 pos)
+void objClose(void)
 {
-	struct object *obj;
 
-	lstAdd(object_list, (void **)&obj, sizeof(struct object));
-	if(obj == NULL) goto failed;
+}
+
+int objSet(char *key, char* mdl, Vec3 pos)
+{
+	int r;
+	struct object *obj = NULL;
+
+	obj = malloc(sizeof(struct object));
+	if(obj == NULL) return(-1);
+
+	printf("aa\n");
 
 	memset(obj, 0, sizeof(struct object));
+
+	/* Copy the key of the model */
+	strcpy(obj->key, key);
 
 	/* Set the position */
 	vecCpy(obj->pos, pos);
@@ -56,46 +56,46 @@ struct object *objCreate(Vec3 pos)
 	/* Set the rotation-values */
 	vecSet(obj->rot, 0.0, 0.0, 0.0);
 
+	/* Set the model */
+	obj->model = mdlGet(mdl);
+	if(obj->model == NULL) goto failed;
+
 	/* Calculate the model-matrix */
 	objUpdMatrix(obj);
-	
-	return(obj);	
+
+	/* Insert the object into the object-table */
+	r = htSet(object_table, key, (uint8_t *)obj, sizeof(struct object));
+	if(r < 0) goto failed;
+
+	return(0);	
 
 failed:
-	return(NULL);
+	free(obj);
+
+	return(-1);
+
 }
 
-/* Destory an existing object and remove
- * it from the object-array. Then free the
- * allocated memory.
- *
- * @obj: Pointer to the object to destroy
-*/
-void objDestroy(struct object *obj)
+void objDel(char *key)
 {
-	lstRemv(object_list, obj);
+	if(key) {}
 }
 
 /* 
  * Get an object via the object-id.
  *
- * id: The id of the object to search for
+ * key: The key of this object
  *
  * Returns: Either the object with the given id
  * 	or NULL if an error occurred
 */
-struct object *objGet(uint16_t id)
+struct object *objGet(char *key)
 {
-	int i;
-	struct object *obj = NULL, *ptr;
+	int r;
+	struct object *obj;
 
-	for(i = 0; i < object_list->num; i++) {
-		ptr = object_list->arr[i];
-		if(ptr->id == id) {
-			obj = ptr;
-			break;
-		}
-	}
+	r = htGet(object_table, key, (uint8_t **)&obj, NULL);
+	if(r < 0) return(NULL);
 
 	return(obj);
 }
@@ -247,11 +247,11 @@ void objAddVel(struct object *obj, Vec3 del)
  * the current model-pointer with a new one.
  *
  * @obj: Pointer to the object to set the model of
- * @mod: Pointer to the model
+ * @mdl: The key of the model to attach
  */
-void objSetModel(struct object *obj, struct model *mod)
+void objSetModel(struct object *obj, char *mdl)
 {
-	obj->model = mod;
+	obj->model = mdlGet(mdl);
 }
 
 /*
@@ -301,7 +301,7 @@ void objUpdMatrix(struct object *obj)
 */
 void objPrint(struct object *obj)
 {
-	printf("Id: %d\n", obj->id);
+	printf("Key: %s\n", obj->key);
 	printf("Pos: "); vecPrint(obj->pos); printf("\n");
 	printf("Rot: "); vecPrint(obj->rot); printf("\n");
 	printf("Vel: "); vecPrint(obj->vel); printf("\n");

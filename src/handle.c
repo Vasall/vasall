@@ -1,4 +1,5 @@
 #include "handle.h"
+#include "object.h"
 #include "XSDL/xsdl.h"
 
 /*
@@ -100,23 +101,14 @@ void game_procevt(XSDL_Event *evt)
 
 void game_update(void)
 {
-	int i;
-
-	for(i = 0; i < object_list->num; i++) {
-		objUpdate(object_list->arr[i]);
-	}
 }
 
 void game_render(void)
 {
-	int i;
-
 	/* Render the world */
 	camUpdViewMat();
 	wldRender();
 
-	/* Render the player */
-	for(i = 0; i < object_list->num; i++) {
-		objRender(object_list->arr[i]);			
-	}
+	objRender(core->obj);
+	objRender(core->obj1);
 }

@@ -12,7 +12,6 @@
 #include "global.h"
 #include "setup.h"
 #include "handle.h"
-#include "mdl_utils.h"
 #include "input.h"
 
 #define PAD_LEN 30
@@ -24,18 +23,13 @@ void render(void);
 
 int main(int argc, char **argv)
 {
-	char pth[512];
-	struct player_object *plr;
-	Vec3 pos = {0.0, 1.0, 0.0};
-	struct model *test;
-	int i;
-	ColorRGB red = {1.0, 0.0, 0.0};
-	ColorRGB *col;
-	int vtx_count;
+	Vec3 pos = {0.0, 0.0, 0.0};
+	Vec3 pos1 = {3.0, 0.0, 0.0};
+	Vec3 pos2 = {10.0, 10.0, 10.0};
 
 	/* Update the rand-seed */
 	srand(time(0));	
-		
+
 	pad_printf("Initialize XSDL-subsystem");
 	if(XSDL_Init(XSDL_INIT_EVERYTHING) < 0) {
 		printf("failed!\n");
@@ -80,10 +74,10 @@ int main(int argc, char **argv)
 	core->uiroot = core->uicontext->root;
 	printf("done\n");
 
-	printf("Load resources:\n");
-	if(loadResources() < 0) {
+	printf("Import resources:\n");
+	if(gloLoad("../res") < 0) {
 		printf("failed!\n");
-		goto cleanup_ui;
+		goto cleanup_ui;	
 	}
 
 	pad_printf("Initialize UI");
@@ -98,6 +92,7 @@ int main(int argc, char **argv)
 		printf("failed!\n");
 		goto cleanup_ui;
 	}
+	camSet(pos2, pos);
 	camUpdViewMat();
 	printf("done\n");
 
@@ -112,27 +107,25 @@ int main(int argc, char **argv)
 	XSDL_ShowVersions();
 	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
 
-	if((plr = plrCreate(pos)) == NULL) goto cleanup_world;	
+	objSet("demo", "cube", pos);
+	objSet("demo1", "cube", pos1);
 
-	XSDL_CombinePath(pth, core->bindir, "../res/models/sphere.obj");
-	if((test = mdlCreate()) == NULL) goto cleanup_world;
-	shdAttachVtx(test->shader, "../res/shaders/terrain.vert");
-	shdAttachFrg(test->shader, "../res/shaders/terrain.frag");
-	if(mdlLoadObj(test, pth) < 0) goto cleanup_world;
-	
-	vtx_count = ((struct bao_entry *) (test->bao->buf))->ele_num;
-	col = malloc(vtx_count * sizeof(ColorRGB));
-	for(i = 0; i < vtx_count; i++)
-		memcpy(&col[i], &red, sizeof(ColorRGB));
+	core->obj = objGet("demo");
+	if(core->obj == NULL) goto cleanup_world;
 
-	mdlAddBAO(test, 0, col, sizeof(ColorRGB), vtx_count,
-			2, 3, 0, "vtxCol");
-	mdlFinish(test);
-	
-	objSetModel(plr->obj, test);
+	core->obj1 = objGet("demo1");
+	if(core->obj1 == NULL) goto cleanup_world;
 
-	camTargetObj(plr->obj);
+	printf("Shader:\n");
+	htDump(shader_table);
 
+	printf("Models:\n");
+	htDump(model_table);
+
+	printf("Objects:\n");
+	htDump(object_table);
+
+	/* TODO: Remove when implementing the login again */
 	try_login(NULL, NULL);	
 
 	/* 

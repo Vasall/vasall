@@ -7,7 +7,7 @@
 #include "model.h"
 #include <stdint.h>
 
-#define OBJ_LIMIT 128
+#define OBJ_SLOTS 16
 
 /* 
  * A container used to manage a single object.
@@ -18,7 +18,7 @@ struct object {
 	/* 
 	 * The id of this object in the object-array.
 	 */
-	uint16_t id;
+	char key[5];
 
 	/*
 	 * The current position of the
@@ -39,7 +39,8 @@ struct object {
 	Vec3 dir;
 
 	/*
-	 * The model of the object.
+	 * A pointer to the model attached
+	 * to this object.
 	 */
 	struct model *model;
 
@@ -67,7 +68,7 @@ struct object {
 
 
 /* The global object-list containing all active objects */
-extern struct ptr_list *object_list;
+extern struct ht_t *object_table;
 
 
 /* Initialize the object-list */
@@ -77,13 +78,13 @@ int objInit(void);
 void objClose(void);
 
 /* Create a new object and insert it into the object-list */
-struct object *objCreate(Vec3 pos);
+int objSet(char *key, char* mdl, Vec3 pos);
 
 /* Destory an existing object and remove it from the object-list*/
-void objDestroy(struct object *obj);
+void objDel(char *key);
 
-/* Get an object via the object-id */
-struct object *objGet(uint16_t id);
+/* Get an object via the object-key */
+struct object *objGet(char *key);
 
 /* Update an object and adjust the attributes */
 void objUpdate(struct object *obj);
@@ -119,7 +120,7 @@ void objSetVel(struct object *obj, Vec3 vel);
 void objAddVel(struct object *obj, Vec3 del);
 
 /* Set the object-model */
-void objSetModel(struct object *obj, struct model *mod);
+void objSetModel(struct object *obj, char *mdl);
 
 /* Get the model-matrix for rendering */
 void objGetMatrix(struct object *obj, Mat4 mat);

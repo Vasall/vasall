@@ -3,63 +3,47 @@
 #include <stdlib.h>
 
 /*
- * Convert a 2d-position to a 1d-position
- * in a single-dimension-array.
+ * This function will open a file and then
+ * read it's content into an allocated buffer.
  *
- * @x: The x-position in the array
- * @y: The y-position in the array
- * @w: The width of the array
+ * @pth: The absolute path to the file
+ * @buf: An unallocated ptr
+ * @len: A pointer to write the length of the buffer to
+ *
+ * Returns: Either 0 on success or -1
+ * 	if an error occurred
  */
-int twodim(int x, int y, int w)
+int readFile(char *pth, uint8_t **buf, long *len)
 {
-	return(x + (y * w));
-}
+	FILE *fd;
+	long length;
+	uint8_t *data;
 
-/*
- * Create a new color-struct and set
- * the rgb-values. The given values will
- * be divided by 255, as opengl wants
- * floating-point-values between 0 and 1.
- * The transparency will be set to 1.
- *
- * @r: The red-value ranging from 0-255
- * @g: The green-value ranging from 0-255
- * @b: The blue-value ranging from 0-255
- *
- * Returns: A new color-struct containing
- * 	the specified values as floats
- */
-Color colFromRGB(int r, int g, int b)
-{
-	Color col;
-	col.r = r / 255;
-	col.g = g / 255;
-	col.b = b / 255;
-	col.a = 1.0;
-	return(col);
-}
+	/* Open the file */
+	fd = fopen(pth, "rb");
+	if(fd == NULL) return(-1);
 
-/*
- * Create a new color-struct and set
- * the rgba-values. The given values will
- * be divided by 255, as opengl wants
- * floating-point-values between 0 and 1.
- *
- * @r: The red-value ranging from 0-255
- * @g: The green-value ranging from 0-255
- * @b: The blue-value ranging from 0-255
- * @a: The tranparency ranging from 0-255
- *
- * Returns: A new color-struct containing
- * 	the specified values as floats
- */
-Color colFromRGBA(int r, int g, int b, int a)
-{
-	Color col;
-	col.r = r / 255;
-	col.g = g / 255;
-	col.b = b / 255;
-	col.a = a / 255;
-	return(col);	
-}
+	/* Get the length of the file */
+	fseek(fd, 0, SEEK_END);
+	length = ftell(fd);
+	
+	/* Allocate a buffer */
+	data = malloc(length);
+	if(data == NULL) {
+		fclose(fd);
+		return(0);
+	}
 
+	/* Read the content into the buffer */
+	fseek(fd, 0, SEEK_SET);
+	fread(data, length, 1, fd);
+
+	/* Close the file */
+	fclose(fd);
+
+	/* Set the output-variables */
+	*buf = data;
+	*len = length;
+
+	return(0);
+}

@@ -1,5 +1,7 @@
-tex cube texture/cube.png
+tex col_ texture/finn2.png
+tex colr texture/col_red.png
 
 shd flat shader/flat.vert shader/flat.frag
 
-mdl cube model/tanne.obj cube flat
+mdl tree model/tanne.obj colr flat
+mdl cube model/finn.obj col_ flat

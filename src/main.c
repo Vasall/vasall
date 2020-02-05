@@ -23,6 +23,7 @@ void render(void);
 
 int main(int argc, char **argv)
 {
+	int r;
 	Vec3 pos = {0.0, 0.0, 0.0};
 	Vec3 pos1 = {3.0, 0.0, 0.0};
 	Vec3 pos2 = {10.0, 10.0, 10.0};
@@ -107,7 +108,7 @@ int main(int argc, char **argv)
 	XSDL_ShowVersions();
 	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
 
-	objSet("demo", "cube", pos);
+	objSet("demo", "tree", pos);
 	objSet("demo1", "cube", pos1);
 
 	core->obj = objGet("demo");
@@ -115,6 +116,8 @@ int main(int argc, char **argv)
 
 	core->obj1 = objGet("demo1");
 	if(core->obj1 == NULL) goto cleanup_world;
+
+	camTargetObj(core->obj);
 
 	printf("Shader:\n");
 	htDump(shader_table);

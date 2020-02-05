@@ -49,29 +49,9 @@ struct model {
 	 * The number of vertices attached
 	 * to this model.
 	 */
-	int vtx_num;
-
-	/*
-	 * The vertex-buffer and
-	 * vertex-bao.
-	 */
 	uint32_t vtx_bao;
-	Vec3 *vtx_buf;
-
-	/*
-	 * The normal-buffer and
-	 * normal-bao.
-	 */
-	uint32_t nrm_bao;
-	Vec3 *nrm_buf;
-
-	/*
-	 * The uv-buffer and
-	 * uv-bao.
-	 */
-	uint32_t uv_bao;
-	Vec2 *uv_buf;
-
+	int vtx_num;
+	float *vtx_buf;
 
 	/*
 	 * The texture attached to this
@@ -105,6 +85,9 @@ void mdlClose(void);
 /* Create a new model */
 struct model *mdlCreate(char *key);
 
+/* Destroy a model */
+void mdlDestroy(struct model *mdl);
+
 /* Attach a mesh to the model */
 void mdlSetMesh(struct model *mdl, int idxnum, int *idx, 
 		int vtxnum, Vec3 *vtx, Vec3 *nrm, Vec2 *uv);
@@ -117,9 +100,6 @@ void mdlSetShader(struct model *mdl, char *shd);
 
 /* Finish the model and push it into the model-table */
 int mdlFinish(struct model *mdl);
-
-/* Create a new model and push it into the model-table */
-int mdlLoad(char *key, char *obj, char *tex, char *shd);
 
 /* Get a model from the model-table using a key */
 struct model *mdlGet(char *key);

@@ -8,6 +8,7 @@
 #include "hashtable.h"
 #include "camera.h"
 #include "model.h"
+#include "model_utils.h"
 #include "object.h"
 #include "world.h"
 #include "thing.h"

@@ -28,7 +28,24 @@ int texInit(void)
  */
 void texClose(void)
 {
+	int i;
+	struct ht_entry *ptr;
+	struct texture *tex;
 
+	for(i = 0; i < tex_table->size; i++) {
+		ptr = tex_table->entries[i];
+
+		while(ptr != NULL) {
+			tex = (struct texture *)ptr->buf;
+
+			glDeleteTextures(1, &tex->id);
+			free(tex->buf);
+
+			ptr = ptr->next;
+		}
+	}
+
+	htDestroy(tex_table);
 }
 
 /* 
@@ -48,6 +65,7 @@ int texSet(char *key, uint8_t *buf, int w, int h)
 {
 	struct texture *tex;
 	int r, size = (w * h) * sizeof(uint8_t) * 3;
+	int i, j;
 
 	tex = malloc(sizeof(struct texture));
 	if(tex == NULL) return(-1);
@@ -74,8 +92,7 @@ int texSet(char *key, uint8_t *buf, int w, int h)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	
 	/* Transfer the pixel-data to OpenGL */
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, 
-			GL_UNSIGNED_BYTE, tex->buf);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, tex->buf);
 
 	/* Unbind current texture */
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -83,6 +100,9 @@ int texSet(char *key, uint8_t *buf, int w, int h)
 	/* Add the texture to the table */
 	r = htSet(tex_table, key, (const uint8_t *)tex, sizeof(struct texture));
 	if(r < 0) return(-1);
+
+	/* Delete this instance, as it has been copied into the table */
+	free(tex);
 
 	return(0);
 }
@@ -98,21 +118,13 @@ int texSet(char *key, uint8_t *buf, int w, int h)
  */
 int texLoad(char *key, char *pth)
 {
-	int i;
+	int w, h;
 	uint8_t *buf;
 
-	if(pth) {}
+	/* Load the PNG-file */
+	texLoadPNG(pth, &buf, &w, &h);
 
-	buf = malloc(32 * 32 * 3 * sizeof(uint8_t));
-	if(buf == NULL) return(-1);
-
-	for(i = 0; i < 32 * 32 * 3 * sizeof(uint8_t); i += 3) {
-		buf[i] = 255;
-		buf[i + 1] = 0;
-		buf[i + 2] = 0;
-	}
-
-	return(texSet(key, buf, 32, 32));
+	return(texSet(key, buf, w, h));
 }
 
 /* 

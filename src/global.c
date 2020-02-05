@@ -80,6 +80,8 @@ void gloClose(void)
 	if(core == NULL) return;
 
 	mdlClose();
+	shdClose();
+	texClose();
 
 	free(core);
 }
@@ -115,38 +117,42 @@ int gloLoad(char *pth)
 		if(strcmp(opt, "tex") == 0) {
 			char key[5], pth[128];
 
+			/* Read the key of the texture */
 			fscanf(fd, "%s", key);
 			printf("[%s] : ", key);
 
+			/* Read the path to the texture */
 			fscanf(fd, "%s", pth);
 			printf("%s", pth);
 			XSDL_CombinePath(pth, dir, pth);
 
+			/* Load the pixel-data */
 			if(texLoad(key, pth) < 0) {
+				printf("failed!\n");
 				return(-1);
 			}
 		}
 
 		/* Load a shader */
 		else if(strcmp(opt, "shd") == 0) {
-			char key[5], vec_pth[256], frg_pth[256];
+			char key[5], vert_pth[256], frag_pth[256];
 
-			/* Read the name of the model */
+			/* Read the key of the model */
 			fscanf(fd, "%s", key);
 			printf("[%s] : ", key);
 
-			/* Read the path to the obj-file */
-			fscanf(fd, "%s", vec_pth);
-			printf("%s - ", vec_pth);
-			XSDL_CombinePath(vec_pth, dir, vec_pth);
+			/* Read the path to the vertex-shader */
+			fscanf(fd, "%s", vert_pth);
+			printf("%s - ", vert_pth);
+			XSDL_CombinePath(vert_pth, dir, vert_pth);
 
-			/* Read the path to the tex-file */
-			fscanf(fd, "%s", frg_pth);
-			printf("%s ", frg_pth);
-			XSDL_CombinePath(frg_pth, dir, frg_pth);
+			/* Read the path to the fragment-shader */
+			fscanf(fd, "%s", frag_pth);
+			printf("%s ", frag_pth);
+			XSDL_CombinePath(frag_pth, dir, frag_pth);
 
-			/* Load the shader from the file */
-			if(shdSet(key, vec_pth, frg_pth) < 0) {
+			/* Load the shader from the files */
+			if(shdSet(key, vert_pth, frag_pth) < 0) {
 				return(-1);
 			}
 		}
@@ -169,7 +175,7 @@ int gloLoad(char *pth)
 			fscanf(fd, "%s", tex);
 			printf("%s - ", tex);
 
-			/* Read the path to the tex-file */
+			/* Read the path to the shader-file */
 			fscanf(fd, "%s", shd);
 			printf("%s", shd);
 
@@ -178,7 +184,7 @@ int gloLoad(char *pth)
 			}
 		}
 
-		printf("\n");	
+		printf("\n");
 	}
 				
 	fclose(fd);

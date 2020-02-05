@@ -32,7 +32,7 @@ CFLAGS     := -g -O0 -ansi -std=c89 -pedantic -I. -I./$(LIB_PTH)/ \
 
 LINKER     := gcc
 # Linking flags here
-LFLAGS     := -Wall -I. $(LIBS) -lm -lGL -lGLU -lglut \
+LFLAGS     := -Wall -I. $(LIBS) -lm -lGL -lGLU -lglut -lpng \
 	$(shell pkg-config --cflags --libs sdl2 SDL2_ttf SDL2_image)
 
 # Change these to proper directories where each file should be

@@ -70,7 +70,8 @@ void wldDestroy(void)
  * 	if an error occurred
  */
 int wldGenTerrain(void)
-{   
+{
+#ifdef DEBUF	
 	int vtxnum, x, z, w, idx, i, j;
 	float **hImg, *heights, xpos, zpos;
 	Vec3 *vertices, *lastRow;
@@ -210,7 +211,6 @@ int wldGenTerrain(void)
 		memcpy(&colors[indices[j]], &col, sizeof(ColorRGB));
 	}
 
-#ifdef DEBUG
 	if((mdl = mdlCreate()) == NULL) return(-1);
 	mdlSetMesh(mdl, vertices, vtxnum, indices, indlen, 1);
 	mdlAddBAO(mdl, 0, colors, sizeof(ColorRGB), vtxnum, 2, 3, 0, "vtxCol");

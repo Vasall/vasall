@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "vec.h"
 #include "hashtable.h"
+#include "tex_utils.h"
 
 #define TEX_SLOTS 8
 

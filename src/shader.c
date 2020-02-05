@@ -59,7 +59,23 @@ int shdInit(void)
  */
 void shdClose(void)
 {
+	int i;
+	struct ht_entry *ptr;
+	struct shader *shd;
 
+	for(i = 0; i < tex_table->size; i++) {
+		ptr = shader_table->entries[i];
+
+		while(ptr != NULL) {
+			shd = (struct shader *)ptr->buf;
+
+			glDeleteProgram(shd->prog);
+
+			ptr = ptr->next;
+		}
+	}
+
+	htDestroy(shader_table);
 }
 
 /* 

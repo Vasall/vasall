@@ -89,11 +89,29 @@ failed:
 /* 
  * Destroy a hash-table and free allocated memory.
  *
- * @table: Pointer to the table to destroy
+ * @tbl: Pointer to the table to destroy
  */
-void htDestroy(struct ht_t *table)
+void htDestroy(struct ht_t *tbl)
 {
-	if(table) {}
+	int i;
+	struct ht_entry *ptr, *next;
+
+	for(i = 0; i < tbl->size; i++) {
+		ptr = tbl->entries[i];
+
+		while(ptr != NULL) {
+			next = ptr->next;
+
+			free(ptr->key);		
+			free(ptr->buf);
+			free(ptr);
+
+			ptr = next;
+		}
+	}
+
+	free(tbl->entries);
+	free(tbl);
 }
 
 /*
@@ -107,18 +125,18 @@ void htDestroy(struct ht_t *table)
  * Returns: Either 0 on success or -1
  * 	if an error occurred
  */
-int htSet(struct ht_t *table, const char *key, const uint8_t *buf, int size)
+int htSet(struct ht_t *tbl, const char *key, const uint8_t *buf, int size)
 {
 	struct ht_entry *entry, *prev;
-	unsigned int slot = hash(key, table->size);
+	unsigned int slot = hash(key, tbl->size);
 
 	/* Try to look up an entry set */
-	entry = table->entries[slot];
+	entry = tbl->entries[slot];
 
 	/* No entry means slot empty, insert immediately */
 	if (entry == NULL) {
-		table->entries[slot] = htPair(key, buf, size);
-		if(table->entries[slot] == NULL) return(-1);
+		tbl->entries[slot] = htPair(key, buf, size);
+		if(tbl->entries[slot] == NULL) return(-1);
 
 		return(0);
 	}
@@ -145,13 +163,13 @@ int htSet(struct ht_t *table, const char *key, const uint8_t *buf, int size)
 	return(0);
 }
 
-int htGet(struct ht_t *table, const char *key, uint8_t **ptr, int *size)
+int htGet(struct ht_t *tbl, const char *key, uint8_t **ptr, int *size)
 {
 	struct ht_entry *entry;
-	unsigned int slot = hash(key, table->size);
+	unsigned int slot = hash(key, tbl->size);
 
 	/* Try to find a valid slot */
-	entry = table->entries[slot];
+	entry = tbl->entries[slot];
 	if (entry == NULL) return(-1);
 
 	while(entry != NULL) {
@@ -170,23 +188,23 @@ int htGet(struct ht_t *table, const char *key, uint8_t **ptr, int *size)
 	return(-1);
 }
 
-void htDel(struct ht_t *table, const char *key)
+void htDel(struct ht_t *tbl, const char *key)
 {
 	struct ht_entry *entry, *prev;
 	int idx = 0;
-	unsigned int bucket = hash(key, table->size);
+	unsigned int bucket = hash(key, tbl->size);
 
-	entry = table->entries[bucket];
+	entry = tbl->entries[bucket];
 	if (entry == NULL) return;
 
 	while (entry != NULL) {
 		if (strcmp(entry->key, key) == 0) {
 			if (entry->next == NULL && idx == 0) {
-				table->entries[bucket] = NULL;
+				tbl->entries[bucket] = NULL;
 			}
 
 			if (entry->next != NULL && idx == 0) {
-				table->entries[bucket] = entry->next;
+				tbl->entries[bucket] = entry->next;
 			}
 
 			if (entry->next == NULL && idx != 0) {
@@ -211,15 +229,15 @@ void htDel(struct ht_t *table, const char *key)
 	}
 }
 
-void htDump(struct ht_t *table)
+void htDump(struct ht_t *tbl)
 {
 	int i = 0;
 	struct ht_entry *entry = NULL;
 
-	for(; i < table->size; i++) {
+	for(; i < tbl->size; i++) {
 		printf("[%2x] ", i);
 
-		entry = table->entries[i];
+		entry = tbl->entries[i];
 
 		while(entry != NULL) {
 			printf("%s ", entry->key);

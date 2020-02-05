@@ -1,32 +1,26 @@
 #ifndef _UTILS_H_
 #define _UTILS_H_
 
-#include "vec.h"
+#include <stdint.h>
 
-/* 
- * This is a struct containing 
- * four float-values representing
- * an rgb-color with an optional
- * alpha-value. 
-*/
-typedef struct Color {
-	float r;
-	float g;
-	float b;
-	float a;
-} Color;
+#ifdef __unix__
+#include <byteswap.h>
+#endif
 
-typedef struct ColorRGB {
-	float r;
-	float g;
-	float b;
-} ColorRGB;
+#ifndef __bswap_16
+uint16_t __bswap_16(uint16_t val)
+{
+    return (val << 8) | (val >> 8 );
+}
 
-/* Convert a 2d-position to a 1d-position */
-int twodim(int x, int y, int w);
+uint32_t __bswap_32(uint32_t val)
+{
+    val = ((val << 8) & 0xFF00FF00 ) | ((val >> 8) & 0xFF00FF ); 
+    return (val << 16) | (val >> 16);
+}
+#endif
 
-/* Create an opengl-color */
-Color colFromRGB(int r, int g, int b);
-Color colFromRGBA(int r, int g, int b, int a);
+/* Read a file into a buffer */
+int readFile(char *pth, uint8_t **buf, long *len);
 
 #endif

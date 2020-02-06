@@ -65,7 +65,6 @@ int texSet(char *key, uint8_t *buf, int w, int h)
 {
 	struct texture *tex;
 	int r, size = (w * h) * sizeof(uint8_t) * 3;
-	int i, j;
 
 	tex = malloc(sizeof(struct texture));
 	if(tex == NULL) return(-1);

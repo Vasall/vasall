@@ -99,7 +99,6 @@ typedef struct gloWrapper {
 	void (*render)(void);
 
 	struct object *obj;
-	struct object *obj1;
 } gloWrapper;
 
 /*

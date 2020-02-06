@@ -48,6 +48,6 @@ int shdSet(char *key, char *vtx_shd, char *frg_shd);
 struct shader *shdGet(char *key);
 
 /* Delete a shader an remove it from the shader-table */
-void shdDel(char *key);
+void shdRemv(char *key);
 
 #endif

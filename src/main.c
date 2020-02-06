@@ -23,10 +23,8 @@ void render(void);
 
 int main(int argc, char **argv)
 {
-	int r;
-	Vec3 pos = {0.0, 0.0, 0.0};
-	Vec3 pos1 = {3.0, 0.0, 0.0};
-	Vec3 pos2 = {10.0, 10.0, 10.0};
+	Vec3 pos = {0.0, 2.2, 0.0};
+	Vec3 vel = {1.0, 0.0, 0.0};
 
 	/* Update the rand-seed */
 	srand(time(0));	
@@ -77,7 +75,6 @@ int main(int argc, char **argv)
 
 	printf("Import resources:\n");
 	if(gloLoad("../res") < 0) {
-		printf("failed!\n");
 		goto cleanup_ui;	
 	}
 
@@ -93,7 +90,6 @@ int main(int argc, char **argv)
 		printf("failed!\n");
 		goto cleanup_ui;
 	}
-	camSet(pos2, pos);
 	camUpdViewMat();
 	printf("done\n");
 
@@ -108,25 +104,14 @@ int main(int argc, char **argv)
 	XSDL_ShowVersions();
 	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
 
-	objSet("demo", "tree", pos);
-	objSet("demo1", "cube", pos1);
-
+	/* Add a demo-dummy */
+	objSet("demo", "cube", pos);
 	core->obj = objGet("demo");
 	if(core->obj == NULL) goto cleanup_world;
 
-	core->obj1 = objGet("demo1");
-	if(core->obj1 == NULL) goto cleanup_world;
+	objSetVel(core->obj, vel);
 
 	camTargetObj(core->obj);
-
-	printf("Shader:\n");
-	htDump(shader_table);
-
-	printf("Models:\n");
-	htDump(model_table);
-
-	printf("Objects:\n");
-	htDump(object_table);
 
 	/* TODO: Remove when implementing the login again */
 	try_login(NULL, NULL);	

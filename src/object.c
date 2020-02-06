@@ -105,10 +105,20 @@ struct object *objGet(char *key)
  * to adjust the attributes of the object.
  *
  * @obj: Pointer to the object to update
+ * @delt: The time since the last frame
  */
-void objUpdate(struct object *obj)
+void objUpdate(struct object *obj, float delt)
 {
-	if(obj) {}	
+	Vec3 del;
+	float height;
+	
+	vecCpy(del, obj->vel);
+	vecScl(del, delt, del);
+
+	objAddPos(obj, del);
+
+	height = wldGetHeight(obj->pos[0], obj->pos[2]);
+	obj->pos[1] = height + 2.2;
 }
 
 /* 
@@ -119,6 +129,7 @@ void objUpdate(struct object *obj)
 */
 void objRender(struct object *obj)
 {
+	/* Just render the attached model */
 	mdlRender(obj->model, obj->matrix);
 }
 
@@ -145,8 +156,8 @@ void objGetPos(struct object *obj, Vec3 pos)
  */
 void objSetPos(struct object *obj, Vec3 pos)
 {
-	vecCpy(obj->pos, pos);
 	objUpdMatrix(obj);
+	vecCpy(obj->pos, pos);
 }
 
 /* 

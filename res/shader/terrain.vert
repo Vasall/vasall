@@ -1,8 +1,8 @@
 #version 330 core
 
 in vec3 vtxPos;
-in vec3 vtxCol;
 in vec3 vtxNrm;
+in vec3 vtxUV;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -25,5 +25,5 @@ void main()
 	gl_Position = proj * view * model * vec4(vtxPos, 1.0);
 
 	vec3 val = calculateLighting();
-	color = vtxCol * val;
+	color = vtxUV * val;
 }

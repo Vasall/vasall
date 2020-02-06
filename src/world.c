@@ -14,6 +14,8 @@
 /* Redefine external variables */
 struct world *world = NULL;
 
+int twodim(int x, int y, int w) {return(y * w + x);}
+
 /*
  * Initialize the global world-struct
  *
@@ -30,7 +32,7 @@ int wldCreate(void)
 	world->xsize = WORLD_SIZE;
 	world->zsize = WORLD_SIZE;
 	world->ptnum = (WORLD_SIZE * WORLD_SIZE);
-	world->heights = (float *)malloc(sizeof(float) * (world->ptnum));
+	world->heights = malloc(sizeof(float) * (world->ptnum));
 	if(world->heights == NULL) return(-1);
 
 	memset(world->heights, 0, world->ptnum);
@@ -71,13 +73,9 @@ void wldDestroy(void)
  */
 int wldGenTerrain(void)
 {
-#ifdef DEBUF	
-	int vtxnum, x, z, w, idx, i, j;
-	float **hImg, *heights, xpos, zpos;
-	Vec3 *vertices, *lastRow;
-	ColorRGB *colors;
-	uint32_t *indices;
-	int indlen;
+	int vtxnum, x, z, w, count, i, j, idxnum, *idx = NULL;
+	float **hImg = NULL, *heights = NULL, xpos, zpos;
+	Vec3 *vtx = NULL, *lastRow = NULL, *nrm = NULL, *col = NULL;
 	struct model *mdl;
 
 	w = world->xsize;
@@ -86,32 +84,28 @@ int wldGenTerrain(void)
 	vtxnum = calcVertexNum(w);
 
 	/* Initialize the vertex-array */
-	vertices = calloc(vtxnum, VEC3_SIZE);
-	if(vertices == NULL) {
-		printf("Failed to allocate space for vertices.\n");
-		return(-1);
-	}
-
+	vtx = calloc(vtxnum, VEC3_SIZE);
+	if(vtx == NULL) return(-1);
 
 	/* Create an array for all vertice-colors */
-	colors = calloc(vtxnum, sizeof(ColorRGB));
-	if(colors == NULL) {
-		printf("Failed to allocate space for colors.\n");
-		return(-1);
-	}
+	col = calloc(vtxnum, VEC3_SIZE);
+	if(col == NULL) return(-1);
+
+	nrm = calloc(vtxnum, VEC3_SIZE);
 
 	hImg = loadPPMHeightmap("../res/images/heightmap_256.ppm", 1, 256);
 	heights = world->heights;
 	for(x = 0; x < world->xsize; x++) {
 		for(z = 0; z < world->zsize; z++) {
 			i = twodim(z, x, world->zsize);
-			heights[i] = (40.0 * hImg[x][z] + 10.0) * 0.0;
+			heights[i] = (40.0 * hImg[x][z] + 10.0) * 1.0;
 		}
 	}
 	lastRow = malloc((world->xsize - 1) * VEC3_SIZE * 2);
+	if(lastRow == NULL) return(-1);
 
 	/* Iterate over all points in the heightmap */
-	idx = 0;
+	count = 0;
 	for(z = 0; z < world->zsize - 1; z++) {
 		for(x = 0; x < world->xsize - 1; x++) {
 			Vec3 ctl, ctr, cbl, cbr;
@@ -135,12 +129,12 @@ int wldGenTerrain(void)
 			cbr[1] = heights[twodim(x + 1, z + 1, world->xsize)];
 			cbr[2] = zpos + 1.0;
 
-			vecCpy(vertices[idx], ctl);
-			idx++;
+			vecCpy(vtx[count], ctl);
+			count++;
 
 			if(z != world->zsize - 2 || x == world->xsize - 2) {	
-				vecCpy(vertices[idx], ctr);
-				idx++;
+				vecCpy(vtx[count], ctr);
+				count++;
 			}
 
 			if(z == world->zsize - 2) {
@@ -156,71 +150,71 @@ int wldGenTerrain(void)
 		vecCpy(right, lastRow[j * 2 + 1]);
 
 		if(left[0] == 0 || right[0] == 1) {
-			vecCpy(vertices[idx], left);
-			idx++;
+			vecCpy(vtx[count], left);
+			count++;
 		}
 
-		vecCpy(vertices[idx], right);
-		idx++;
+		vecCpy(vtx[count], right);
+		count++;
 	}
 
-	indices = genIndexBuf(world->xsize, &indlen);
-	if(indices == NULL) {
-		printf("Failed to get indices.\n");
-		return(-1);
-	}
+	idx = (int *)genIndexBuf(world->xsize, &idxnum);
+	if(idx == NULL) return(-1);
 
 	/* Calculate the colors for the vertices */
-	for(j = 0; j < indlen - 2; j += 3) {
-		ColorRGB col;
+	for(j = 0; j < idxnum - 2; j += 3) {
+		Vec3 col_tmp;
 		Vec3 v, mid;
 		vecSet(mid, 0.0, 0.0, 0.0);
 
 		for(i = 0; i < 3; i++) {
-			vecCpy(v, vertices[indices[j + i]]);
+			vecCpy(v, vtx[idx[j + i]]);
 			vecAdd(mid, v, mid);
 		}
 		vecInvScl(mid, 3, mid);
 
 		if (mid[1] <= 15) {
-			col.r = 0.79;
-			col.g = 0.69;
-			col.b = 0.39;	
+			col_tmp[0] = 0.79;
+			col_tmp[1] = 0.69;
+			col_tmp[2] = 0.39;	
 		}
 		else if (mid[1] > 15 && mid[1] <= 20) {
-			col.r = 0.53;
-			col.g = 0.72;
-			col.b = 0.32;
+			col_tmp[0] = 0.53;
+			col_tmp[1] = 0.72;
+			col_tmp[2] = 0.32;
 		}
 		else if (mid[1] > 20 && mid[1] <= 30) {
-			col.r = 0.31;
-			col.g = 0.67;
-			col.b = 0.36;
+			col_tmp[0] = 0.31;
+			col_tmp[1] = 0.67;
+			col_tmp[2] = 0.36;
 		}
 		else if (mid[1] > 30 && mid[1] <= 35) {
-			col.r = 0.47;
-			col.g = 0.47;
-			col.b = 0.47;
+			col_tmp[0] = 0.47;
+			col_tmp[1] = 0.47;
+			col_tmp[2] = 0.47;
 		}
 		else {	
-			col.r = 0.78;
-			col.g = 0.78;
-			col.b = 0.82;
+			col_tmp[0] = 0.78;
+			col_tmp[1] = 0.78;
+			col_tmp[2] = 0.82;
 		}
 
-		memcpy(&colors[indices[j]], &col, sizeof(ColorRGB));
+		memcpy(col[idx[j]], col_tmp, VEC3_SIZE);
 	}
 
-	if((mdl = mdlCreate()) == NULL) return(-1);
-	mdlSetMesh(mdl, vertices, vtxnum, indices, indlen, 1);
-	mdlAddBAO(mdl, 0, colors, sizeof(ColorRGB), vtxnum, 2, 3, 0, "vtxCol");
-	shdAttachVtx(mdl->shader, "../res/shaders/terrain.vert");
-	shdAttachFrg(mdl->shader, "../res/shaders/terrain.frag");
-	if(mdlFinish(mdl) < 0) return(-1);
+	/* Allocate memory for the model-struct */
+	if((mdl = mdlCreate("wld_")) == NULL) goto failed;
+	mdlSetShader(mdl, "wld_");
+	mdlSetMesh(mdl, idxnum, (int32_t *)idx, vtxnum, vtx, nrm, col, 0);
+	if(mdlFinish(mdl) < 0) goto failed;
 
-	world->terrain = mdl;
-#endif
+	world->terrain = mdlGet("wld_");
+	if(world->terrain == NULL) goto failed;
+
 	return(0);
+
+failed:
+	return(-1);
 }
 
 /*
@@ -233,4 +227,10 @@ void wldRender(void)
 	Mat4 idt;
 	mat4Idt(idt);
 	mdlRender(world->terrain, idt);
+}
+
+float wldGetHeight(float x, float z)
+{
+	if(x || z) return(0);
+	return(0);
 }

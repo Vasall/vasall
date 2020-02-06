@@ -40,13 +40,10 @@ char *gloGetError(void)
 */
 int gloInit(int argc, char **argv)
 {
-	if(argc) {/* Prevent warning for not using argc */ }
+	if(argc) {/* Prevent warning for not using argc */}
 
 	core = calloc(1, sizeof(gloWrapper));
-	if(core == NULL) {
-		gloSetError("Failed to create global wrapper");
-		return(-1);
-	}
+	if(core == NULL) return(-1);
 
 	/* Just to be save */
 	core->procevt = NULL;
@@ -69,20 +66,21 @@ int gloInit(int argc, char **argv)
 
 /*
  * Destroy a global-wrapper and free the
- * allocated space. Note that this function
- * will just skip everything if the ptr is
- * NULL.
- *
- * @ptr: The pointer to the wrapper
+ * allocated space.
 */
 void gloClose(void)
 {
 	if(core == NULL) return;
 
+	/* Close the different tables */
 	mdlClose();
 	shdClose();
 	texClose();
 
+	/* Clear the object-array */
+	objClose();
+
+	/* Free the core-struct */
 	free(core);
 }
 
@@ -98,9 +96,7 @@ void gloClose(void)
 int gloLoad(char *pth)
 {
 	FILE *fd;
-	char dir[128];
-	char rel[256];
-	char opt[4];
+	char dir[128], rel[256], opt[4];
 
 	XSDL_CombinePath(dir, core->bindir, pth);
 	XSDL_CombinePath(rel, dir, "include.reg");
@@ -113,7 +109,7 @@ int gloLoad(char *pth)
 	while(fscanf(fd, "%s", opt) != EOF) {
 		printf("%s > ", opt);
 
-		/* Load a texture */
+		/* Load a texture and push it into the texture-table */
 		if(strcmp(opt, "tex") == 0) {
 			char key[5], pth[128];
 
@@ -128,12 +124,11 @@ int gloLoad(char *pth)
 
 			/* Load the pixel-data */
 			if(texLoad(key, pth) < 0) {
-				printf("failed!\n");
-				return(-1);
+				goto failed;
 			}
 		}
 
-		/* Load a shader */
+		/* Load a shader and push it into the shader-table */
 		else if(strcmp(opt, "shd") == 0) {
 			char key[5], vert_pth[256], frag_pth[256];
 
@@ -153,14 +148,13 @@ int gloLoad(char *pth)
 
 			/* Load the shader from the files */
 			if(shdSet(key, vert_pth, frag_pth) < 0) {
-				return(-1);
+				goto failed;
 			}
 		}
 
-		/* Load a model */
+		/* Load a model and push it into model-table */
 		else if(strcmp(opt, "mdl") == 0) {
 			char tmp[64], key[5], obj_pth[256], tex[5], shd[5];
-			struct model *mdl;
 
 			/* Read the name of the model */
 			fscanf(fd, "%s", key);
@@ -180,7 +174,7 @@ int gloLoad(char *pth)
 			printf("%s", shd);
 
 			if(mdlLoad(key, obj_pth, tex, shd) < 0) {
-				return(-1);
+				goto failed;
 			}
 		}
 
@@ -190,4 +184,9 @@ int gloLoad(char *pth)
 	fclose(fd);
 
 	return(0);
+
+failed:
+	fclose(fd);
+
+	return(-1);
 }

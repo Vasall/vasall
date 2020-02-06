@@ -87,7 +87,7 @@ void objDel(char *key);
 struct object *objGet(char *key);
 
 /* Update an object and adjust the attributes */
-void objUpdate(struct object *obj);
+void objUpdate(struct object *obj, float delt);
 
 /* Render an object on the screen */
 void objRender(struct object *obj);

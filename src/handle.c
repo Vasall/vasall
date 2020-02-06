@@ -101,6 +101,11 @@ void game_procevt(XSDL_Event *evt)
 
 void game_update(void)
 {
+	/* Update the object */
+	objUpdate(core->obj, 1.0);
+
+	/* Update the camera-position */
+	camUpdate();
 }
 
 void game_render(void)
@@ -110,5 +115,4 @@ void game_render(void)
 	wldRender();
 
 	objRender(core->obj);
-	objRender(core->obj1);
 }

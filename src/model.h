@@ -85,12 +85,10 @@ void mdlClose(void);
 /* Create a new model */
 struct model *mdlCreate(char *key);
 
-/* Destroy a model */
-void mdlDestroy(struct model *mdl);
-
 /* Attach a mesh to the model */
 void mdlSetMesh(struct model *mdl, int idxnum, int *idx, 
-		int vtxnum, Vec3 *vtx, Vec3 *nrm, Vec2 *uv);
+		int vtxnum, Vec3 *vtx, Vec3 *nrm, void *col,
+		uint8_t col_flg);
 
 /* Attach a texture to the model */
 void mdlSetTex(struct model *mdl, char *tex);
@@ -104,8 +102,11 @@ int mdlFinish(struct model *mdl);
 /* Get a model from the model-table using a key */
 struct model *mdlGet(char *key);
 
+/* Destroy a model-struct */
+void mdlDel(struct model *mdl);
+
 /* Delete a model and remove it from the model-table */
-void mdlDel(char *key);
+void mdlRemv(char *key);
 
 /* Render a model using a given model-matrix */
 void mdlRender(struct model *mdl, Mat4 mat);

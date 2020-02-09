@@ -4,6 +4,7 @@
 #include <GL/gl.h>
 
 #include "world.h"
+#include <math.h>
 #include "global.h"
 #include "vec.h"
 #include "utils.h"
@@ -14,7 +15,8 @@
 /* Redefine external variables */
 struct world *world = NULL;
 
-int twodim(int x, int y, int w) {return(y * w + x);}
+static int twodim(int x, int y, int w) {return(y * w + x);}
+static float _abs(float val) {return(val < 0) ? (-val) : (val);}
 
 /*
  * Initialize the global world-struct
@@ -24,20 +26,33 @@ int twodim(int x, int y, int w) {return(y * w + x);}
  */
 int wldCreate(void)
 {
+	Vec2 del;
+
 	/* Allocate space for the world-struct */
 	world = (struct world *)malloc(sizeof(struct world));
 	if(world == NULL) return(-1);
 
 	/* Allocate space for the heightmap */
-	world->xsize = WORLD_SIZE;
-	world->zsize = WORLD_SIZE;
+	world->size[0] = WORLD_SIZE;
+	world->size[1] = WORLD_SIZE;
+
+	del[0] = world->size[0] / 2.0;
+	del[1] = world->size[1] / 2.0;	
+
+	memset(world->pos, 0, VEC3_SIZE);
+
+	world->min_pos[0] = world->pos[0] - del[0];
+	world->min_pos[1] = world->pos[2] - del[1];
+	
+	world->max_pos[0] = world->pos[0] + del[0];
+	world->max_pos[1] = world->pos[2] + del[1];
+	
 	world->ptnum = (WORLD_SIZE * WORLD_SIZE);
 	world->heights = malloc(sizeof(float) * (world->ptnum));
 	if(world->heights == NULL) return(-1);
 
 	memset(world->heights, 0, world->ptnum);
 
-	memset(&world->pos, 0, sizeof(Vec3));
 	memset(&world->rot, 0, sizeof(Vec3));
 
 	/* Set the terrain-model-pointer to NULL */
@@ -65,6 +80,99 @@ void wldDestroy(void)
 }
 
 /*
+ * Draw a world using OpenGL.
+ *
+ * @world: A pointer to the world to draw
+ */
+void wldRender(void) 
+{
+	Mat4 idt;
+	mat4Idt(idt);
+	mdlRender(world->terrain, idt);
+}
+
+/*
+ * Get the height of the world at a
+ * given position.
+ *
+ * @x: The x-position in the world
+ * @z: The z-position in the world
+ *
+ * Returns: The height at the given position
+ */
+float wldGetHeight(float x, float z)
+{
+	float ret = 0.0;
+
+	Vec2 rel_pos, coord;
+	Int2 map_idx;
+	float heights[4];
+
+	rel_pos[0] = _abs(world->min_pos[0] - x);
+	rel_pos[1] = _abs(world->min_pos[1] - z);
+
+	map_idx[0] = floor(rel_pos[0]);
+	map_idx[1] = floor(rel_pos[1]);
+
+	/* Check if the position is in range */
+	if(map_idx[0] < 0 || map_idx[0] >= world->size[0] ||
+				map_idx[1] < 0 || map_idx[1] >= world->size[1]) {
+		return(0);
+	}
+
+	heights[0] = world->heights[twodim(map_idx[0], 
+			map_idx[1], world->size[0])];
+	heights[1] = world->heights[twodim(map_idx[0] + 1, 
+			map_idx[1], world->size[0])];
+	heights[2] = world->heights[twodim(map_idx[0], 
+			map_idx[1] + 1, world->size[0])];
+	heights[3] = world->heights[twodim(map_idx[0] + 1, 
+			map_idx[1] + 1, world->size[0])];
+
+	coord[0] = rel_pos[0] - floor(rel_pos[0]);
+	coord[1] = rel_pos[1] - floor(rel_pos[1]);
+
+	if(coord[0] <= (1 - coord[1])) {
+		Vec3 v1, v2, v3;
+	       	
+		v1[0] = 0.0;
+		v1[1] = heights[0];
+		v1[2] = 0.0;
+
+		v2[0] = 1.0;
+		v2[1] = heights[1];
+		v2[2] = 0.0;
+
+		v3[0] = 0.0;
+		v3[1] = heights[2];
+		v3[2] = 1.0;
+
+		ret = vecBarryCentric(v1, v2, v3, coord);
+	}
+	else {
+		Vec3 v1, v2, v3;
+	       	
+		v1[0] = 1.0;
+		v1[1] = heights[1];
+		v1[2] = 0.0;
+
+		v2[0] = 1.0;
+		v2[1] = heights[3];
+		v2[2] = 1.0;
+
+		v3[0] = 0.0;
+		v3[1] = heights[2];
+		v3[2] = 1.0;
+		
+		ret = vecBarryCentric(v1, v2, v3, coord);
+
+	}
+
+
+	return(ret);
+}
+
+/*
  * Generate a new terrain and write it
  * to the world-struct.
  *
@@ -78,7 +186,7 @@ int wldGenTerrain(void)
 	Vec3 *vtx = NULL, *lastRow = NULL, *nrm = NULL, *col = NULL;
 	struct model *mdl;
 
-	w = world->xsize;
+	w = (int)world->size[0];
 
 	/* Calculate the amount of vertices */
 	vtxnum = calcVertexNum(w);
@@ -92,59 +200,60 @@ int wldGenTerrain(void)
 	if(col == NULL) return(-1);
 
 	nrm = calloc(vtxnum, VEC3_SIZE);
+	if(nrm == NULL) return(-1);
 
 	hImg = loadPPMHeightmap("../res/images/heightmap_256.ppm", 1, 256);
 	heights = world->heights;
-	for(x = 0; x < world->xsize; x++) {
-		for(z = 0; z < world->zsize; z++) {
-			i = twodim(z, x, world->zsize);
+	for(x = 0; x < world->size[0]; x++) {
+		for(z = 0; z < world->size[1]; z++) {
+			i = twodim(z, x, world->size[1]);
 			heights[i] = (40.0 * hImg[x][z] + 10.0) * 1.0;
 		}
 	}
-	lastRow = malloc((world->xsize - 1) * VEC3_SIZE * 2);
+	lastRow = malloc(((int)world->size[0] - 1) * VEC3_SIZE * 2);
 	if(lastRow == NULL) return(-1);
 
 	/* Iterate over all points in the heightmap */
 	count = 0;
-	for(z = 0; z < world->zsize - 1; z++) {
-		for(x = 0; x < world->xsize - 1; x++) {
+	for(z = 0; z < world->size[1] - 1; z++) {
+		for(x = 0; x < world->size[0] - 1; x++) {
 			Vec3 ctl, ctr, cbl, cbr;
 			
 			xpos = x - 128.0;
 			zpos = z - 128.0;
 
 			ctl[0] = xpos;
-			ctl[1] = heights[twodim(x, z, world->xsize)];
+			ctl[1] = heights[twodim(x, z, world->size[0])];
 		       	ctl[2] = zpos;
 
 			ctr[0] = xpos + 1.0;
-			ctr[1] = heights[twodim(x + 1, z, world->xsize)];
+			ctr[1] = heights[twodim(x + 1, z, world->size[0])];
 			ctr[2] = zpos;
 
 			cbl[0] = xpos;
-			cbl[1] = heights[twodim(x, z + 1, world->xsize)];
+			cbl[1] = heights[twodim(x, z + 1, world->size[0])];
 			cbl[2] = zpos + 1.0;
 
 			cbr[0] = xpos + 1.0;
-			cbr[1] = heights[twodim(x + 1, z + 1, world->xsize)];
+			cbr[1] = heights[twodim(x + 1, z + 1, world->size[0])];
 			cbr[2] = zpos + 1.0;
 
 			vecCpy(vtx[count], ctl);
 			count++;
 
-			if(z != world->zsize - 2 || x == world->xsize - 2) {	
+			if(z != world->size[1] - 2 || x == world->size[0] - 2) {	
 				vecCpy(vtx[count], ctr);
 				count++;
 			}
 
-			if(z == world->zsize - 2) {
+			if(z == world->size[1] - 2) {
 				vecCpy(lastRow[x * 2], cbl);
 				vecCpy(lastRow[x * 2 + 1], cbr);
 			}
 		}
 	}
 
-	for(j = 0; j < world->xsize  - 1; j++) {
+	for(j = 0; j < world->size[0] - 1; j++) {
 		Vec3 left, right;
 		vecCpy(left, lastRow[j * 2]);
 		vecCpy(right, lastRow[j * 2 + 1]);
@@ -158,7 +267,7 @@ int wldGenTerrain(void)
 		count++;
 	}
 
-	idx = (int *)genIndexBuf(world->xsize, &idxnum);
+	idx = (int *)genIndexBuf(world->size[0], &idxnum);
 	if(idx == NULL) return(-1);
 
 	/* Calculate the colors for the vertices */
@@ -202,6 +311,24 @@ int wldGenTerrain(void)
 		memcpy(col[idx[j]], col_tmp, VEC3_SIZE);
 	}
 
+	/* Calculate the normal-vectors */
+	for(i = 0; i < idxnum - 2; i += 3) {
+		Vec3 v1, v2, v3, del1, del2, nrm_tmp;
+		
+		vecCpy(v1, vtx[idx[i]]);
+		vecCpy(v2, vtx[idx[i + 1]]);
+		vecCpy(v3, vtx[idx[i + 2]]);
+
+		vecSub(v2, v1, del1);
+		vecSub(v2, v3, del2);
+
+		vecCross(del1, del2, nrm_tmp);
+		vecNrm(nrm_tmp, nrm_tmp);
+		vecScl(nrm_tmp, -1, nrm_tmp);
+
+		memcpy(nrm[idx[i]], nrm_tmp, VEC3_SIZE);
+	}
+
 	/* Allocate memory for the model-struct */
 	if((mdl = mdlCreate("wld_")) == NULL) goto failed;
 	mdlSetShader(mdl, "wld_");
@@ -217,20 +344,3 @@ failed:
 	return(-1);
 }
 
-/*
- * Draw a world using OpenGL.
- *
- * @world: A pointer to the world to draw
- */
-void wldRender(void) 
-{
-	Mat4 idt;
-	mat4Idt(idt);
-	mdlRender(world->terrain, idt);
-}
-
-float wldGetHeight(float x, float z)
-{
-	if(x || z) return(0);
-	return(0);
-}

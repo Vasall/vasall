@@ -11,9 +11,18 @@ struct world {
 	 * The x-size and the z-size
 	 * of the world. 
 	 */
-	int xsize;
-	int zsize;
+	Int2 size;
 	int ptnum;
+
+	
+	/*
+	 * The relative position of
+	 * the terrain.
+	 */	
+	Vec3 pos;
+
+	/*  Both the absolute min- and max-positions */
+	Vec2 min_pos, max_pos;
 
 	/*
 	 * The heightmap, containing
@@ -21,13 +30,6 @@ struct world {
 	 * of the terrain.
 	 */
 	float *heights;
-
-	/*
-	 * The relative position of
-	 * the terrain, which will be
-	 * passed to the model.
-	 */	
-	Vec3 pos;
 
 	/*
 	 * The relative rotation of
@@ -54,13 +56,13 @@ int wldCreate(void);
 /* Destroy a world */
 void wldDestroy(void);
 
-/* Generate the terrain of the world */
-int wldGenTerrain(void);
-
 /* Render the world */
 void wldRender(void);
 
 /* Get the height of the terrain at the given position */
 float wldGetHeight(float x, float z);
+
+/* Generate the terrain of the world */
+int wldGenTerrain(void);
 
 #endif

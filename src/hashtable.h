@@ -16,6 +16,9 @@ struct ht_t {
 	int size;
 };
 
+/* Hash a key */
+uint32_t hash(const char *key, int size);
+
 /* Create a new hash-table-entry with this key and data-buffer */
 struct ht_entry *htPair(const char *key, const uint8_t *buf, int size);
 
@@ -34,6 +37,7 @@ int htGet(struct ht_t *tbl, const char *key, uint8_t **ptr, int *size);
 /* Remove an entry from the table */
 void htDel(struct ht_t *tbl, const char *key);
 
+/* Dump info about a hashtable into the terminal */
 void htDump(struct ht_t *tbl);
 
 #endif

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "world.h"
 
 /* Redefine global variables */
 struct ht_t *object_table = NULL;
@@ -34,8 +35,6 @@ int objSet(char *key, char* mdl, Vec3 pos)
 	obj = malloc(sizeof(struct object));
 	if(obj == NULL) return(-1);
 
-	printf("aa\n");
-
 	memset(obj, 0, sizeof(struct object));
 
 	/* Copy the key of the model */
@@ -60,7 +59,7 @@ int objSet(char *key, char* mdl, Vec3 pos)
 	obj->model = mdlGet(mdl);
 	if(obj->model == NULL) goto failed;
 
-	/* Calculate the model-matrix */
+	/* Initialize the model-matrix */
 	objUpdMatrix(obj);
 
 	/* Insert the object into the object-table */
@@ -73,8 +72,8 @@ failed:
 	free(obj);
 
 	return(-1);
-
 }
+
 
 void objDel(char *key)
 {
@@ -117,8 +116,14 @@ void objUpdate(struct object *obj, float delt)
 
 	objAddPos(obj, del);
 
-	height = wldGetHeight(obj->pos[0], obj->pos[2]);
-	obj->pos[1] = height + 2.2;
+	obj->pos[1] = wldGetHeight(obj->pos[0], obj->pos[2]) + 2.2; 
+		
+	if(obj->pos[0] >= 20.0) {
+		obj->vel[0] = -0.1;
+	}
+	else if(obj->pos[0] <= -20.0) {
+		obj->vel[0] = 0.1;
+	}
 }
 
 /* 

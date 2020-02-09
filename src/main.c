@@ -24,7 +24,7 @@ void render(void);
 int main(int argc, char **argv)
 {
 	Vec3 pos = {0.0, 2.2, 0.0};
-	Vec3 vel = {1.0, 0.0, 0.0};
+	Vec3 vel = {0.1, 0.0, 0.0};
 
 	/* Update the rand-seed */
 	srand(time(0));	

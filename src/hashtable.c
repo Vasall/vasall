@@ -3,7 +3,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-static unsigned int hash(const char *key, int size)
+/*
+ * Hash a key and consider the amount of
+ * slots in a table.
+ *
+ * @key: The null-terminated key to be hashed
+ * @size: The number of slots in a table
+ *
+ * Returns: The hashed-key
+ */
+uint32_t hash(const char *key, int size)
 {
 	unsigned long int value = 0;
 	unsigned int i = 0;
@@ -20,6 +29,19 @@ static unsigned int hash(const char *key, int size)
 	return(value);
 }
 
+/*
+ * Create a new hashtable-entry and bind
+ * both the key and the buffer to it. The
+ * returned pointer can then be inserted into
+ * the table.
+ *
+ * @key: The key of this entry
+ * @buf: The data-buffer to attach
+ * @size: The size of the buffer in bytes
+ *
+ * Returns: Either a pointer to a new entry
+ * 	or NULL if an error occurred
+ */
 struct ht_entry *htPair(const char *key, const uint8_t *buf, int size)
 {
 	struct ht_entry *entry;
@@ -163,6 +185,19 @@ int htSet(struct ht_t *tbl, const char *key, const uint8_t *buf, int size)
 	return(0);
 }
 
+/*
+ * Retrieve data from a hashtable. The pointer to the
+ * buffer and the size of the buffer in bytes will be
+ * written to the parameters.
+ *
+ * @tbl: Pointer to the table
+ * @key: The key of the entry to get
+ * @ptr: A pointer to write the buffer-address to
+ * @size: A pointer to write the buffer-size to(can be NULL)
+ *
+ * Returns: Either 0 on success or -1
+ * 	if an error occurred
+ */
 int htGet(struct ht_t *tbl, const char *key, uint8_t **ptr, int *size)
 {
 	struct ht_entry *entry;
@@ -188,6 +223,12 @@ int htGet(struct ht_t *tbl, const char *key, uint8_t **ptr, int *size)
 	return(-1);
 }
 
+/*
+ * Delete and remove an entry from the hashtable.
+ *
+ * @tbl: Pointer to the table
+ * @key: The key of the entry
+ */
 void htDel(struct ht_t *tbl, const char *key)
 {
 	struct ht_entry *entry, *prev;
@@ -229,6 +270,12 @@ void htDel(struct ht_t *tbl, const char *key)
 	}
 }
 
+/*
+ * Dump info about a hashtable into
+ * the terminal.
+ *
+ * @tbl: Pointer to the table to dump
+ */
 void htDump(struct ht_t *tbl)
 {
 	int i = 0;

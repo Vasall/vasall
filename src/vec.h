@@ -12,6 +12,9 @@ typedef float Vec3[3];
 #define VEC2_SIZE (sizeof(float)*2)
 typedef float Vec2[2];
 
+#define INT2 (sizeof(int)*2)
+typedef int Int2[2];
+
 #define INT3 (sizeof(int)*3)
 typedef int Int3[3];
 
@@ -59,5 +62,7 @@ void vecCross(Vec3 v1, Vec3 v2, Vec3 res);
 
 /* Output a vector in the terminal */
 void vecPrint(Vec3 v);
+
+float vecBarryCentric(Vec3 p1, Vec3 p2, Vec3 p3, Vec2 pos);
 
 #endif

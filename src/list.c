@@ -203,6 +203,8 @@ struct dyn_stack *stcCreate(int elesz)
  */
 void stcDestroy(struct dyn_stack *stc)
 {
+	if(stc == NULL) return;
+
 	/* Free the element-buffer */
 	free(stc->buf);
 

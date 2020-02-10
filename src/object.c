@@ -9,7 +9,7 @@
 struct ht_t *object_table = NULL;
 
 /*
- * Initialize the global object-array.
+ * Initialize the global object-list.
  *
  * Returns: Either 0 on success or -1
  * 	if an error occurred
@@ -22,6 +22,10 @@ int objInit(void)
 	return(0);
 }
 
+/*
+ * Clear the object-list, destroy all objects
+ * and free the allocated memory.
+ */
 void objClose(void)
 {
 
@@ -109,7 +113,6 @@ struct object *objGet(char *key)
 void objUpdate(struct object *obj, float delt)
 {
 	Vec3 del;
-	float height;
 	
 	vecCpy(del, obj->vel);
 	vecScl(del, delt, del);
@@ -137,6 +140,10 @@ void objRender(struct object *obj)
 	/* Just render the attached model */
 	mdlRender(obj->model, obj->matrix);
 }
+
+/* =============================================== */
+/*                     POSITION                    */
+/* =============================================== */
 
 /* 
  * Get the current position of the object
@@ -179,6 +186,10 @@ void objAddPos(struct object *obj, Vec3 del)
 	objUpdMatrix(obj);
 }
 
+/* =============================================== */
+/*                     ROTATION                    */
+/* =============================================== */
+
 /* 
  * Get the current rotation of the object
  * and copy the values to the given vector.
@@ -220,6 +231,10 @@ void objAddRot(struct object *obj, Vec3 del)
 	objUpdMatrix(obj);
 }
 
+/* =============================================== */
+/*                     VELOCITY                    */
+/* =============================================== */
+
 /* 
  * Get the current velocity of the object
  * and copy the values to the given vector.
@@ -257,6 +272,39 @@ void objAddVel(struct object *obj, Vec3 del)
 {
 	vecAdd(obj->vel, del, obj->vel);
 }
+
+/* =============================================== */
+/*                     DIRECTION                   */
+/* =============================================== */
+
+/* 
+ * Set the facing-direction of the object and copy 
+ * the given vector-values in the direction-vector.
+ *
+ * @obj: Pointer to the object
+ * @dir: The new direction-vector
+ */
+void objSetDir(struct object *obj, Vec3 dir)
+{
+	vecCpy(obj->dir, dir);
+	vecNrm(obj->dir, obj->dir);
+}
+
+/* 
+ * Get the facing-direction of the object and copy
+ * the values into the given vector.
+ * 
+ * @obj: Pointer to the object
+ * @dir: A vector to copy the values into
+ */
+void objGetDir(struct object *obj, Vec3 dir)
+{
+	vecCpy(dir, obj->dir);
+}
+
+/* =============================================== */
+/*                       MODEL                     */
+/* =============================================== */
 
 /* 
  * Set the model of the object, by replacing

@@ -1,5 +1,6 @@
 #include "handle.h"
 #include "object.h"
+#include "input.h"
 #include "XSDL/xsdl.h"
 
 /*
@@ -39,10 +40,25 @@ void menu_update(void)
 void game_procevt(XSDL_Event *evt)
 {
 	int mod, mod_ctrl;
+	uint8_t axis;
+	float val;
 
 	if(mod_ctrl) {/* Prevent warning for not using mod_ctrl */}
 
 	switch(evt->type) {
+		case(XSDL_CONTROLLERAXISMOTION):
+			axis = evt->caxis.axis;
+			val = evt->caxis.value * 0.000001;
+
+			if(axis == 2) {
+				inp_map->camera[0] = val;
+			}
+			else if(axis == 3) {
+				inp_map->camera[1] = val;
+			}
+
+			break;
+
 		case(XSDL_MOUSEWHEEL):
 			camZoom(evt->wheel.y);
 			break;
@@ -101,6 +117,8 @@ void game_procevt(XSDL_Event *evt)
 
 void game_update(void)
 {
+	camRot(inp_map->camera[0], inp_map->camera[1]);
+
 	/* Update the object */
 	objUpdate(core->obj, 1.0);
 

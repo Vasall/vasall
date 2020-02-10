@@ -74,13 +74,13 @@ extern struct ht_t *object_table;
 /* Initialize the object-list */
 int objInit(void);
 
-/* Close the object-list */
+/* Clear the object-list */
 void objClose(void);
 
 /* Create a new object and insert it into the object-list */
 int objSet(char *key, char* mdl, Vec3 pos);
 
-/* Destory an existing object and remove it from the object-list*/
+/* Destory an existing object and remove it from the object-list */
 void objDel(char *key);
 
 /* Get an object via the object-key */
@@ -92,6 +92,10 @@ void objUpdate(struct object *obj, float delt);
 /* Render an object on the screen */
 void objRender(struct object *obj);
 
+/* --------------------------------------- */
+/*                POSITION                 */
+/* --------------------------------------- */
+
 /* Get the current position of the object */
 void objGetPos(struct object *obj, Vec3 pos);
 
@@ -100,6 +104,10 @@ void objSetPos(struct object *obj, Vec3 pos);
 
 /* Add a vector to the position */
 void objAddPos(struct object *obj, Vec3 del);
+
+/* --------------------------------------- */
+/*                ROTATION                 */
+/* --------------------------------------- */
 
 /* Get the current rotation of the object */
 void objGetRot(struct object *obj, Vec3 rot);
@@ -110,14 +118,32 @@ void objSetRot(struct object *obj, Vec3 rot);
 /* Add a vector to the rotation */
 void objAddRot(struct object *obj, Vec3 del);
 
+/* --------------------------------------- */
+/*                VELOCITY                 */
+/* --------------------------------------- */
+
 /* Get the current velocity of the object */
 void objGetVel(struct object *obj, Vec3 vel);
 
 /* Set the velocity of the object */
 void objSetVel(struct object *obj, Vec3 vel);
 
-/* Add a vector to the velocity*/
+/* Add a vector to the velocity */
 void objAddVel(struct object *obj, Vec3 del);
+
+/* --------------------------------------- */
+/*                DIRECTION                */
+/* --------------------------------------- */
+
+/* Set the facing-direction of the object */
+void objSetDir(struct object *obj, Vec3 dir);
+
+/* Get the facing-direction of the object */
+void objGetDir(struct object *obj, Vec3 dir);
+
+/* --------------------------------------- */
+/*                  MODEL                  */
+/* --------------------------------------- */
 
 /* Set the object-model */
 void objSetModel(struct object *obj, char *mdl);

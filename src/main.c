@@ -73,6 +73,16 @@ int main(int argc, char **argv)
 	core->uiroot = core->uicontext->root;
 	printf("done\n");
 
+	pad_printf("Init inputs");
+	if(inpInit() < 0) {
+		goto cleanup_ui;
+	}
+
+	printf("Load devices:\n");
+	if(inpLoadDevices() < 0) {
+		goto cleanup_ui;
+	}
+
 	printf("Import resources:\n");
 	if(gloLoad("../res") < 0) {
 		goto cleanup_ui;	

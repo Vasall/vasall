@@ -2,10 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "global.h"
-#include "XSDL/xsdl.h"
 
-GLubyte* loadPPM(char* fileName, int8_t pathRelative, 
+GLubyte* loadPPM(char* fileName, int8_t pathRelative,
 	int* width, int* height)
 {
 	FILE *file;
@@ -80,7 +78,7 @@ failed:
 	exit(0);
 }
 
-float **loadPPMHeightmap(char* fileName, int8_t pathRelative, int terrainSize) 
+float **loadPPMHeightmap(char* fileName, int8_t pathRelative, int terrainSize)
 {
 	/* Load the image */
 	int width, height, i, j;
@@ -119,8 +117,8 @@ float **loadPPMHeightmap(char* fileName, int8_t pathRelative, int terrainSize)
 	/* Convert image to 2D float array, averaging RGB values */
 	for (i = 0; i < terrainSize; i++) {
 		for (j = 0; j < terrainSize; j++) {
-			int subscript = (int)(3 * (i * terrainSize + j) + 
-					3 *(i * terrainSize + j) + 1 + 3 * 
+			int subscript = (int)(3 * (i * terrainSize + j) +
+					3 *(i * terrainSize + j) + 1 + 3 *
 					(i * terrainSize + j) + 2) / 3.0;
 			heightmapImage[i][j] = img[subscript]/255.0;
 		}
@@ -129,7 +127,7 @@ float **loadPPMHeightmap(char* fileName, int8_t pathRelative, int terrainSize)
 	return (heightmapImage);
 }
 
-void loadPPMTexture(char* fileName, int8_t pathRelative, GLuint* textures) 
+void loadPPMTexture(char* fileName, int8_t pathRelative, GLuint* textures)
 {
 	/* Load the image from the file */
 	int width, height;

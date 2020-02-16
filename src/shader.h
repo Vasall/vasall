@@ -2,6 +2,7 @@
 #define _SHADER_H_
 
 #include <stdint.h>
+#include "global.h"
 
 #define SHD_SLOTS               8
 

@@ -8,8 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include "global.h"
-#include "XSDL/xsdl.h"
 
 
 /* A list containing all active shaders */
@@ -38,7 +36,7 @@ static char* filetobuf(char *file)
 	return (buf);
 }
 
-/* 
+/*
  * Initialize the shader-table and allocate the
  * necessary memory.
  *
@@ -53,7 +51,7 @@ int shdInit(void)
 	return(0);
 }
 
-/* 
+/*
  * Destroy the shader-table and free the allocated
  * memory.
  */
@@ -79,7 +77,7 @@ void shdClose(void)
 	htDestroy(shader_table);
 }
 
-/* 
+/*
  * Create a new shader and load both the vertex- and
  * fragment-shader-files. The compile the code and
  * push the finished shader-program into the table.
@@ -106,7 +104,7 @@ int shdSet(char *key, char *vtx_shd, char *frg_shd)
 	shd->prog = glCreateProgram();
 	if(shd->prog == 0) goto failed;
 
-	/* Load vertex-shader and attach the vertex-shader */	
+	/* Load vertex-shader and attach the vertex-shader */
 	vtxsrc = filetobuf(vtx_shd);
 	if(vtxsrc == NULL) goto failed;
 
@@ -120,7 +118,7 @@ int shdSet(char *key, char *vtx_shd, char *frg_shd)
 		printf("\nFailed to compile shader %s: %s\n", vtx_shd, infoLog);
 		goto failed;
 	}
-	
+
 	glAttachShader(shd->prog, shd->vshdr);
 
 	/* Load and attach the fragment-shader */
@@ -137,7 +135,7 @@ int shdSet(char *key, char *vtx_shd, char *frg_shd)
 		printf("\nFailed to compile shader %s: %s\n", frg_shd, infoLog);
 		goto failed;
 	}
-		
+
 	glAttachShader(shd->prog, shd->fshdr);
 
 	/* Bind the vertex-attributes */
@@ -145,7 +143,7 @@ int shdSet(char *key, char *vtx_shd, char *frg_shd)
 	glBindAttribLocation(shd->prog, 1, "vtxNrm");
 	glBindAttribLocation(shd->prog, 2, "vtxCol");
 
-	/* Link the shader-program */	
+	/* Link the shader-program */
 	glLinkProgram(shd->prog);
 
 	/* Detach and destroy shaders */
@@ -158,7 +156,7 @@ int shdSet(char *key, char *vtx_shd, char *frg_shd)
 	shd->fshdr = 0;
 
 	/* Insert the shader into the tabel */
-	if(htSet(shader_table, key, (const uint8_t *)shd, 
+	if(htSet(shader_table, key, (const uint8_t *)shd,
 			sizeof(struct shader)) < 0) {
 		goto failed;
 	}
@@ -203,11 +201,11 @@ struct shader *shdGet(char *key)
 	if(htGet(shader_table, key, (uint8_t **)&ptr, NULL) < 0) {
 		return(NULL);
 	}
-	
+
 	return(ptr);
 }
 
-/* 
+/*
  * Unbind everything from OpenGL, destroy the shader
  * and remove it from the shader-table.
  *

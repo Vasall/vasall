@@ -1,10 +1,10 @@
 #ifndef _CAMERA_H_
 #define _CAMERA_H_
 
+#include "global.h"
 #include "vec.h"
 #include "mat.h"
 #include "object.h"
-#include "XSDL/xsdl.h"
 
 typedef enum {LEFT, RIGHT, FORWARD, BACK} Direction;
 
@@ -16,13 +16,13 @@ struct camera {
 	Vec3 pos;
 
 	/*
-	 * The vector representing the
-	 * current direction of the camera.
-	 * Note taht this vector is flipped.
-	 * To actually get the direction of the
-	 * camera, scale the vector by -1.
+	 * The direction vectors for the camera,
+	 * where forwards points in the direction,
+	 * the camera is looking at, while right is
+	 * left-vector to the forward-vector.
 	 */
-	Vec3 dir;
+	Vec3 forward;
+	Vec3 right;
 
 	/*
 	 * The distance between the target and
@@ -59,7 +59,7 @@ struct camera {
 	 * checking for clipping.
 	 */
 	float far;
-	
+
 	/*
 	 * The projection matrix.
 	 */

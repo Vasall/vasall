@@ -1,7 +1,6 @@
 #include "handle.h"
 #include "object.h"
 #include "input.h"
-#include "XSDL/xsdl.h"
 
 /*
  * This function is used as a
@@ -13,7 +12,7 @@
 void handle_resize(XSDL_Event *evt)
 {
 	double ratio;
-	XSDL_UIContext *ctx = core->uicontext;	
+	XSDL_UIContext *ctx = core->uicontext;
 
 	if(evt){/* Prevent warning for not using evt */}
 
@@ -50,7 +49,14 @@ void game_procevt(XSDL_Event *evt)
 			axis = evt->caxis.axis;
 			val = evt->caxis.value * 0.000001;
 
-			if(axis == 2) {
+			if(axis == 0) {
+				inp_map->movement[0] = val;
+			}
+			else if(axis == 1) {
+				inp_map->movement[1] = val;
+			}
+
+			else if(axis == 2) {
 				inp_map->camera[0] = val;
 			}
 			else if(axis == 3) {
@@ -117,8 +123,30 @@ void game_procevt(XSDL_Event *evt)
 
 void game_update(void)
 {
+	Vec3 vel, forw, right;
+
+	/* Rotate the camera */	
 	camRot(inp_map->camera[0], inp_map->camera[1]);
 
+
+	printf("%f - %f\n", inp_map->movement[0], inp_map->movement[1]);
+
+	/* Set player-velocity */
+	vecCpy(forw, camera->forward);
+	forw[1] = 0.0;
+	vecNrm(forw, forw);
+
+	vecCpy(right, camera->right);
+	right[1] = 0.0;
+	vecNrm(right, right);
+
+	vecScl(forw, inp_map->movement[1], forw);
+	vecScl(right, inp_map->movement[0], right);
+
+	vecAdd(forw, right, vel);
+
+	objSetVel(core->obj, vel);
+		
 	/* Update the object */
 	objUpdate(core->obj, 1.0);
 

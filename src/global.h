@@ -1,7 +1,20 @@
 #ifndef _GLOBAL_H_
 #define _GLOBAL_H_
 
-#include "XSDL/xsdl.h"
+#include "XSDL/XSDL.h"
+#include "XSDL/XSDL_cache.h"
+#include "XSDL/XSDL_context.h"
+#include "XSDL/XSDL_img.h"
+#include "XSDL/XSDL_init.h"
+#include "XSDL/XSDL_input.h"
+#include "XSDL/XSDL_list.h"
+#include "XSDL/XSDL_node.h"
+#include "XSDL/XSDL_render.h"
+#include "XSDL/XSDL_stdnodes.h"
+#include "XSDL/XSDL_struct.h"
+#include "XSDL/XSDL_text.h"
+#include "XSDL/XSDL_utf8.h"
+#include "XSDL/XSDL_utils.h"
 #include "vec.h"
 #include "mat.h"
 #include "list.h"
@@ -116,7 +129,7 @@ extern uint8_t zero;
  * this variable can be changed any time,
  * to enable things like fullscreen.
  */
-extern int g_win_flgs; 
+extern int g_win_flgs;
 
 /*
  * The one global-wrapper used to
@@ -132,7 +145,7 @@ extern gloWrapper *core;
  * project which contains the most
  * recent error-message. This buffer
  * should never be set or read manually,
- * but rather through the use of the 
+ * but rather through the use of the
  * glSetError() and glGetError()
  * functions as doing otherwise can lead
  * to undefind behavior.

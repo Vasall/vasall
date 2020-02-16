@@ -3,11 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include "global.h"
-#include "XSDL/xsdl.h"
 
+/* Redefine external variables */
 struct ht_t *tex_table = NULL;
 
-/* 
+/*
  * Initialize the texture-table and
  * allocate the necessary memory.
  *
@@ -22,7 +22,7 @@ int texInit(void)
 	return(0);
 }
 
-/* 
+/*
  * Close the texture-table, delete all
  * textures and free the allocated memory.
  */
@@ -48,7 +48,7 @@ void texClose(void)
 	htDestroy(tex_table);
 }
 
-/* 
+/*
  * Create a new texture and push it
  * into the texture-table, with the
  * given key.
@@ -64,7 +64,7 @@ void texClose(void)
 int texSet(char *key, uint8_t *buf, int w, int h)
 {
 	struct texture *tex;
-	int r, size = (w * h) * sizeof(uint8_t) * 3;
+	int r, size = (w * h) * sizeof(uint8_t) * 4;
 
 	tex = malloc(sizeof(struct texture));
 	if(tex == NULL) return(-1);
@@ -85,13 +85,13 @@ int texSet(char *key, uint8_t *buf, int w, int h)
 	glBindTexture(GL_TEXTURE_2D, tex->id);
 
 	/* Configure the texture */
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	
+
 	/* Transfer the pixel-data to OpenGL */
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, tex->buf);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex->buf);
 
 	/* Unbind current texture */
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -106,7 +106,7 @@ int texSet(char *key, uint8_t *buf, int w, int h)
 	return(0);
 }
 
-/* 
+/*
  * Load a texture from a file and
  * push the created structure into
  * the texture-table, with the given
@@ -126,7 +126,7 @@ int texLoad(char *key, char *pth)
 	return(texSet(key, buf, w, h));
 }
 
-/* 
+/*
  * Get a texture from the table and
  * return a pointer to the struct.
  *
@@ -139,14 +139,14 @@ struct texture *texGet(char *key)
 {
 	struct texture *tex;
 	int r;
-	
+
 	r = htGet(tex_table, key, (uint8_t **)&tex, NULL);
 	if(r < 0) return(NULL);
 
 	return(tex);
 }
 
-/* 
+/*
  * Delete a texture, remove it from
  * the table and free the allocated memory.
  *

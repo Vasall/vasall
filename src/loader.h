@@ -10,6 +10,8 @@
 #include <GL/gl.h>
 #endif
 
+#include "global.h"
+
 GLubyte* loadPPM(char* fileName, int8_t pathRelative, int* width, int* height);
 void loadPPMTexture(char* fileName, int8_t pathRelative, GLuint* textures);
 float **loadPPMHeightmap(char* fileName, int8_t pathRelative, int terrainSize);

@@ -2,6 +2,7 @@
 #define _TEXTURE_H_
 
 #include <stdint.h>
+#include "global.h"
 #include "vec.h"
 #include "hashtable.h"
 #include "tex_utils.h"

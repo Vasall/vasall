@@ -119,14 +119,9 @@ void objUpdate(struct object *obj, float delt)
 
 	objAddPos(obj, del);
 
-	obj->pos[1] = wldGetHeight(obj->pos[0], obj->pos[2]) + 2.2; 
-		
-	if(obj->pos[0] >= 20.0) {
-		obj->vel[0] = -0.1;
-	}
-	else if(obj->pos[0] <= -20.0) {
-		obj->vel[0] = 0.1;
-	}
+	obj->pos[1] = wldGetHeight(obj->pos[0], obj->pos[2]) + 2.2;
+
+	objUpdMatrix(obj);
 }
 
 /* 

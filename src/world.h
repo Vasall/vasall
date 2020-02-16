@@ -1,24 +1,24 @@
 #ifndef _WORLD_H_
 #define _WORLD_H_
 
+#include "global.h"
 #include "model.h"
-#include "XSDL/xsdl.h"
 
 #define WORLD_SIZE 256
 
 struct world {
 	/*
 	 * The x-size and the z-size
-	 * of the world. 
+	 * of the world.
 	 */
 	Int2 size;
 	int ptnum;
 
-	
+
 	/*
 	 * The relative position of
 	 * the terrain.
-	 */	
+	 */
 	Vec3 pos;
 
 	/*  Both the absolute min- and max-positions */

@@ -2,15 +2,15 @@
 # Generic Makefile, capable of including static
 # libraries
 #
-# Modified by:      admin@enudstudios.com        
-# Date:             2020-01-09 
+# Modified by:      admin@enudstudios.com
+# Date:             2020-01-09
 #
 # Original Author:  yanick.rochon@gmail.com
 # Date:             2011-08-10
 # ------------------------------------------------
 
 # Name of the created executable
-TARGET     := vasall-client 
+TARGET     := vasall-client
 
 # Get the absolute path to the directory this makefile is in
 MKFILE_PTH := $(abspath $(lastword $(MAKEFILE_LIST)))
@@ -21,18 +21,18 @@ LIB_PTH    := lib
 LIB_DIRS   := $(sort $(dir $(wildcard $(MKFILE_DIR)$(LIB_PTH)/*/)))
 
 # Set static libararies
-LIBS       :=  
+LIBS       :=  ./$(LIB_PTH)/XSDL/lib/xsdl.a
 
 CC         := gcc
 # Error flags for compiling
 ERRFLAGS   := -Wall -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wold-style-definition
 # Compiling flags here
-CFLAGS     := -g -O0 -ansi -std=c89 -pedantic -I. -I./$(LIB_PTH)/ \
-       	$(shell pkg-config --cflags --libs sdl2 SDL2_ttf SDL2_image)
+CFLAGS     := -g -O0 -ansi -std=c89 -pedantic -I. -I./$(LIB_PTH)/  \
+	$(shell pkg-config --cflags --libs sdl2 SDL2_ttf SDL2_image)
 
 LINKER     := gcc
 # Linking flags here
-LFLAGS     := -Wall -I. $(LIBS) -lm -lGL -lGLU -lglut -lpng \
+LFLAGS     := -Wall -I. $(LIBS) -lm -lGL -lGLU -lglut \
 	$(shell pkg-config --cflags --libs sdl2 SDL2_ttf SDL2_image)
 
 # Change these to proper directories where each file should be

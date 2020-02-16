@@ -5,10 +5,6 @@
 #include <unistd.h>
 #include <limits.h>
 
-#define XSDL_IMPLEMENTATION
-#define XSDL_DEFINE_LIB
-#define XSDL_DEFINE_ONCE
-#include "XSDL/xsdl.h"
 #include "global.h"
 #include "setup.h"
 #include "handle.h"
@@ -24,10 +20,9 @@ void render(void);
 int main(int argc, char **argv)
 {
 	Vec3 pos = {0.0, 2.2, 0.0};
-	Vec3 vel = {0.1, 0.0, 0.0};
 
 	/* Update the rand-seed */
-	srand(time(0));	
+	srand(time(0));
 
 	pad_printf("Initialize XSDL-subsystem");
 	if(XSDL_Init(XSDL_INIT_EVERYTHING) < 0) {
@@ -47,7 +42,7 @@ int main(int argc, char **argv)
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
 			SDL_GL_CONTEXT_PROFILE_CORE);
 
 	pad_printf("Initialize window");
@@ -78,14 +73,9 @@ int main(int argc, char **argv)
 		goto cleanup_ui;
 	}
 
-	printf("Load devices:\n");
-	if(inpLoadDevices() < 0) {
-		goto cleanup_ui;
-	}
-
 	printf("Import resources:\n");
 	if(gloLoad("../res") < 0) {
-		goto cleanup_ui;	
+		goto cleanup_ui;
 	}
 
 	pad_printf("Initialize UI");
@@ -110,7 +100,7 @@ int main(int argc, char **argv)
 	}
 	printf("done\n");
 
-	printf("\n");	
+	printf("\n");
 	XSDL_ShowVersions();
 	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
 
@@ -119,17 +109,15 @@ int main(int argc, char **argv)
 	core->obj = objGet("demo");
 	if(core->obj == NULL) goto cleanup_world;
 
-	objSetVel(core->obj, vel);
-
 	camTargetObj(core->obj);
 
 	/* TODO: Remove when implementing the login again */
-	try_login(NULL, NULL);	
+	try_login(NULL, NULL);
 
-	/* 
+	/*
 	 * Mark the game as running and
 	 * then proceed to jump into the
-	 * main game-loop. 
+	 * main game-loop.
 	 */
 	core->running = 1;
 	while(core->running) {
@@ -196,7 +184,7 @@ void pad_printf(char *str)
 }
 
 /*
- * Process and handle the current 
+ * Process and handle the current
  * events. Note that the custom
  * event-callback-function will be
  * skipped if the user interacts with
@@ -244,7 +232,7 @@ void update(void)
 }
 
 /*
- * Render the game-scene and the 
+ * Render the game-scene and the
  * user-interface and then execute the
  * render-callback-function.
  */

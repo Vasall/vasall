@@ -19,7 +19,11 @@ void render(void);
 
 int main(int argc, char **argv)
 {
-	Vec3 pos = {0.0, 2.2, 0.0};
+	Vec3 pos = {125.0, 0.0, 125.0};
+	Vec3 vel = {-0.5, 0.0, -0.5};
+	Vec3 dir = {1.0, 1.0, 1.0};
+
+	vecNrm(dir, dir);
 
 	/* Update the rand-seed */
 	srand(time(0));
@@ -110,6 +114,9 @@ int main(int argc, char **argv)
 	if(core->obj == NULL) goto cleanup_world;
 
 	camTargetObj(core->obj);
+
+	camera->dist = 10.0;
+	camSetDir(dir);
 
 	/* TODO: Remove when implementing the login again */
 	try_login(NULL, NULL);

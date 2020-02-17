@@ -128,8 +128,7 @@ void game_update(void)
 	/* Rotate the camera */	
 	camRot(inp_map->camera[0], inp_map->camera[1]);
 
-
-	printf("%f - %f\n", inp_map->movement[0], inp_map->movement[1]);
+	/*printf("%f - %f\n", inp_map->movement[0], inp_map->movement[1]);*/
 
 	/* Set player-velocity */
 	vecCpy(forw, camera->forward);
@@ -146,7 +145,7 @@ void game_update(void)
 	vecAdd(forw, right, vel);
 
 	objSetVel(core->obj, vel);
-		
+
 	/* Update the object */
 	objUpdate(core->obj, 1.0);
 

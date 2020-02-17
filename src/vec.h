@@ -57,6 +57,9 @@ float vecMag(Vec3 v);
 /* Normalize a vector */
 void vecNrm(Vec3 v, Vec3 res);
 
+/* Calculate the dot-product */
+float vecDot(Vec3 v1, Vec3 v2);
+
 /* Calculate the cross-product */
 void vecCross(Vec3 v1, Vec3 v2, Vec3 res);
 

@@ -120,6 +120,11 @@ void objUpdate(struct object *obj, float delt)
 	objAddPos(obj, del);
 
 	obj->pos[1] = wldGetHeight(obj->pos[0], obj->pos[2]) + 2.2;
+	
+	if(vecMag(del) > 0.0) {
+		vecNrm(del, obj->dir);
+		obj->rot[1] = atan2(-obj->dir[2], obj->dir[0]);
+	}
 
 	objUpdMatrix(obj);
 }
@@ -337,9 +342,7 @@ void objUpdMatrix(struct object *obj)
 {
 	Vec3 rot;
 
-	rot[0] = obj->rot[0] * TO_RADS;
-	rot[1] = obj->rot[1] * TO_RADS;
-	rot[2] = obj->rot[2] * TO_RADS;
+	vecCpy(rot, obj->rot);
 
 	mat4Idt(obj->matrix);
 

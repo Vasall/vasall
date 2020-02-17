@@ -103,6 +103,9 @@ void camSetPos(Vec3 pos);
 /* Get the direction the camera is looking */
 void camGetDir(Vec3 dir);
 
+/* Set the camera-direction */
+void camSetDir(Vec3 dir);
+
 /* Change the rotation of the camera */
 void camMouseMoved(int delx, int dely);
 

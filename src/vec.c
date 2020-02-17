@@ -218,6 +218,19 @@ void vecNrm(Vec3 v, Vec3 res)
 }
 
 /*
+ * Calculate the dot-product of two vectors.
+ *
+ * @v1: The first vector
+ * @v2: The second vector
+ *
+ * Returns: The resulting value
+ */
+float vecDot(Vec3 v1, Vec3 v2)
+{
+	return(v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]);	
+}
+
+/*
  * Calculate the cross-product of 
  * two vectors.
  *
@@ -242,7 +255,8 @@ void vecPrint(Vec3 v)
 	printf("%.2f/%.2f/%.2f", v[0], v[1], v[2]);
 }
 
-float vecBarryCentric(Vec3 p1, Vec3 p2, Vec3 p3, Vec2 pos) {
+float vecBarryCentric(Vec3 p1, Vec3 p2, Vec3 p3, Vec2 pos)
+{
 	float det = (p2[2] - p3[2]) * (p1[0] - p3[0]) + (p3[0] - p2[0]) * (p1[2] - p3[2]);
 	float l1 = ((p2[2] - p3[2]) * (pos[0] - p3[0]) + (p3[0] - p2[0]) * (pos[1] - p3[2])) / det;
 	float l2 = ((p3[2] - p1[2]) * (pos[0] - p3[0]) + (p1[0] - p3[0]) * (pos[1] - p3[2])) / det;

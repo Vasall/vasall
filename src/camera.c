@@ -109,7 +109,23 @@ void camSetPos(Vec3 pos)
 void camGetDir(Vec3 dir)
 {
 	vecCpy(dir, camera->forward);
-	vecNrm(dir, dir);
+}
+
+/* 
+ * Set the direction the camera is looking.
+ *
+ * @dir: The vector to read the direction from
+ */
+void camSetDir(Vec3 dir)
+{
+	Vec3 up = {0.0, 1.0, 0.0};
+
+	vecCpy(camera->forward, dir);
+	vecNrm(camera->forward, camera->forward);
+	
+	vecCross(up, camera->forward, camera->right);
+
+	camUpdViewMat();
 }
 
 /*

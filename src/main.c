@@ -20,7 +20,6 @@ void render(void);
 int main(int argc, char **argv)
 {
 	Vec3 pos = {125.0, 0.0, 125.0};
-	Vec3 vel = {-0.5, 0.0, -0.5};
 	Vec3 dir = {1.0, 1.0, 1.0};
 
 	vecNrm(dir, dir);

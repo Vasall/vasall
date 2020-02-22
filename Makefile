@@ -21,19 +21,24 @@ LIB_PTH    := lib
 LIB_DIRS   := $(sort $(dir $(wildcard $(MKFILE_DIR)$(LIB_PTH)/*/)))
 
 # Set static libararies
-LIBS       :=  ./$(LIB_PTH)/XSDL/lib/xsdl.a
+LIBS       := ./$(LIB_PTH)/XSDL/lib/xsdl.a
 
+# The compiler to use
 CC         := gcc
 # Error flags for compiling
 ERRFLAGS   := -Wall -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wold-style-definition
 # Compiling flags here
-CFLAGS     := -g -O0 -ansi -std=c89 -pedantic -I. -I./$(LIB_PTH)/  \
-	$(shell pkg-config --cflags --libs sdl2 SDL2_ttf SDL2_image)
+CFLAGS     := -g -O0 -ansi -std=c89 -pedantic -I. -I./$(LIB_PTH)/
+SDL_CFLAGS := $(shell pkg-config --cflags sdl2 SDL2_ttf SDL2_image)
+override CFLAGS += $(SDL_CFLAGS)
 
+
+# The linker to use
 LINKER     := gcc
 # Linking flags here
-LFLAGS     := -Wall -I. $(LIBS) -lm -lGL -lGLU -lglut \
-	$(shell pkg-config --cflags --libs sdl2 SDL2_ttf SDL2_image)
+LFLAGS     := -Wall -I. $(LIBS) -lm -lGL -lGLU -lglut
+SDL_LFLAGS  := $(shell pkg-config --libs sdl2 SDL2_ttf SDL2_image)
+override LFLAGS += $(SDL_LFLAGS)
 
 # Change these to proper directories where each file should be
 SRCDIR     := src
@@ -54,15 +59,7 @@ $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
 	@$(CC) $(CFLAGS) $(ERRFLAGS) -c $< -o $@
 	@echo "Compiled "$<" successfully!"
 
-subsdirs: $(LIB_DIRS)
-	$(MAKE) --directory=$@
-
-.PHONY: clean
-clean:
-	@$(rm) $(OBJECTS)
-	@echo "Cleanup complete!"
-
-.PHONY: remove
-remove: clean
-	@$(rm) $(BINDIR)/$(TARGET)
-	@echo "Executable removed!"
+# Build all modules in the lib-folder
+.PHONY: libs
+libs: ${LIB_DIRS}
+	@$(MAKE) -B -C $<

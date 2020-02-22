@@ -7,40 +7,29 @@ OBJ_DIR="${DIR}/obj"
 BIN_DIR="${DIR}/bin"
 LIB_DIR="${DIR}/lib"
 
-echo "Check OBJ-dir."
+# Check if the different folders already exist,
+# and if not, create them.
 if [ ! -d "${OBJ_DIR}" ]; then
 	echo "Create OBJ-dir."
 	mkdir -p "${OBJ_DIR}";
-else 
-	echo "OBJ-dir already exists."
 fi
 
-echo "Check BIN-dir."
 if [ ! -d "${BIN_DIR}" ]; then
 	echo "Create BIN-dir."
 	mkdir -p "${BIN_DIR}";
-else 
-	echo "BIN-dir already exists."
 fi
 
-echo "Check LIB-dir."
 if [ ! -d "${LIB_DIR}" ]; then
 	echo "Create LIB-dir."
 	mkdir -p "${LIB_DIR}";
-else 
-	echo "LIB-dir already exists."
 fi
 
-echo "Check XSDL-lib."
+# Check if the XSDL-library has already been cloned
 if [ ! -d "${LIB_DIR}/XSDL" ]; then
-	echo "Failed to find XSDL-lib."
-	echo "Run this command: git clone https://github.com/enudstudios/XSDL.git"
-	exit -1
-else 
-	echo "Found XSDL-lib."
+	echo "XSDL-lib missing."	
+	git clone https://github.com/enudstudios/XSDL.git ./lib/XSDL
 fi
 
 echo "Compile files."
-make -B
 
 echo "Finished building."

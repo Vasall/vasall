@@ -117,9 +117,6 @@ int main(int argc, char **argv)
 	camera->dist = 10.0;
 	camSetDir(dir);
 
-	/* TODO: Remove when implementing the login again */
-	try_login(NULL, NULL);
-
 	/*
 	 * Mark the game as running and
 	 * then proceed to jump into the
@@ -246,6 +243,8 @@ void render(void)
 {
 	/* Clear the screen */
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	XSDL_Render(core->uicontext);	
 
 	/* Run current render-function */
 	if(core->render != NULL) core->render();

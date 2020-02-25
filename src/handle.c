@@ -79,10 +79,6 @@ void game_procevt(XSDL_Event *evt)
 
 		case(XSDL_KEYDOWN):
 			mod = evt->key.keysym.mod;
-			if(evt->key.keysym.scancode == 20 && mod & KMOD_CTRL) {
-				core->running = 0;
-				break;
-			}
 
 			mod_ctrl = mod & (KMOD_LCTRL | KMOD_RCTRL);
 			switch(evt->key.keysym.sym) {

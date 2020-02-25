@@ -1,6 +1,11 @@
 #ifndef _GLOBAL_H_
 #define _GLOBAL_H_
 
+#define GL_GLEXT_PROTOTYPES
+#include <GL/glut.h>
+#include <GL/glext.h>
+#include <GL/gl.h>
+
 #include "XSDL/XSDL.h"
 #include "XSDL/XSDL_cache.h"
 #include "XSDL/XSDL_context.h"

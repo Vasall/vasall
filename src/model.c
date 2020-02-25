@@ -2,11 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define GL_GLEXT_PROTOTYPES
-#include <GL/glut.h>
-#include <GL/glext.h>
-#include <GL/gl.h>
-
 #include "model.h"
 #include "global.h"
 

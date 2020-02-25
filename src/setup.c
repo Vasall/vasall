@@ -148,24 +148,25 @@ int initUI(void)
 
 	/* Create the menu-sceen */
 	XSDL_CreateWrapper(core->uiroot, "mns", 0, 0, -100, -100);
-	XSDL_CreateWrapper(XSDL_Get(core->uiroot, "mns"), "mns_form",
-			-1, -1, 400, 380);
+	XSDL_CreateWrapper(XSDL_Get(core->uiroot, "mns"), "mns_form", -1, -1, 400, 380);
 
-	XSDL_CreateWrapper(XSDL_Get(core->uiroot, "mns_form"), "mns_title",
-			0, 0, 400, 80);
-	XSDL_CreateText(XSDL_Get(core->uiroot, "mns_title"), "label0", &body0,
-			"VASALL", &XSDL_WHITE, 3, 0);
+	XSDL_CreateWrapper(XSDL_Get(core->uiroot, "mns_form"), "mns_title", 0, 0, 400, 80);
+	XSDL_Node_EnableTex(XSDL_Get(core->uiroot, "mns_title"));
+	XSDL_CreateText(XSDL_Get(core->uiroot, "mns_title"), "label0", &body0, "VASALL", &XSDL_WHITE, 3, 0);
+	XSDL_Node_EnableTex(XSDL_Get(core->uiroot, "label0"));
 
-	XSDL_CreateText(XSDL_Get(core->uiroot, "mns_form"), "label1", &body1,"Email:", 
-			&XSDL_WHITE, 2, XSDL_TEXT_LEFT);
+	XSDL_CreateText(XSDL_Get(core->uiroot, "mns_form"), "label1", &body1,"Email:", &XSDL_WHITE, 2, XSDL_TEXT_LEFT);
+	XSDL_Node_EnableTex(XSDL_Get(core->uiroot, "label1"));
 	XSDL_CreateInput(XSDL_Get(core->uiroot, "mns_form"), "mns_user", 40, 120, 320, 40, "");
+	XSDL_Node_EnableTex(XSDL_Get(core->uiroot, "mns_user"));
 
-	XSDL_CreateText(XSDL_Get(core->uiroot, "mns_form"), "label2", &body2, "Password:", 
-			&XSDL_WHITE, 2, XSDL_TEXT_LEFT);
+	XSDL_CreateText(XSDL_Get(core->uiroot, "mns_form"), "label2", &body2, "Password:", &XSDL_WHITE, 2, XSDL_TEXT_LEFT);
+	XSDL_Node_EnableTex(XSDL_Get(core->uiroot, "label2"));
 	XSDL_CreateInput(XSDL_Get(core->uiroot, "mns_form"), "mns_pswd", 40, 200, 320, 40, "");
+	XSDL_Node_EnableTex(XSDL_Get(core->uiroot, "mns_pswd"));
 
-	XSDL_CreateButton(XSDL_Get(core->uiroot, "mns_form"), "mns_login", 40, 270, 320, 
-			40, "Login");
+	XSDL_CreateButton(XSDL_Get(core->uiroot, "mns_form"), "mns_login", 40, 270, 320, 40, "Login");
+	XSDL_Node_EnableTex(XSDL_Get(core->uiroot, "mns_login"));	
 
 	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_user"), XSDL_STY_VIS, &one);
 	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_user"), XSDL_STY_BCK, &one);
@@ -207,6 +208,5 @@ int initUI(void)
 	XSDL_ModStyle(XSDL_Get(core->uiroot, "gms_stats"), XSDL_STY_COR_RAD, &gms_stats_cor);
 
 	XSDL_ModFlag(XSDL_Get(core->uiroot, "gms"), XSDL_FLG_ACT, &zero);
-
 	return(0);
 }

@@ -16,16 +16,6 @@ struct shader {	/*
 	uint32_t prog;
 
 	/*
-	 * The vertex-shader.
-	 */
-	uint32_t vshdr;
-
-	/*
-	 * The fragment-shader.
-	 */
-	uint32_t fshdr;
-
-	/*
 	 * The status of the shader.
 	 */
 	uint8_t status;

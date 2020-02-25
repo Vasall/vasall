@@ -86,6 +86,7 @@ int shdSet(char *key, char *vtx_shd, char *frg_shd)
 {
 	int success;
 	struct shader *shd = NULL;
+	uint32_t fshd = 0, vshd = 0;
 	char *vtxsrc = NULL, *frgsrc = NULL, infoLog[512];
 
 	if(vtx_shd == NULL || frg_shd == NULL) return(-1);
@@ -96,8 +97,6 @@ int shdSet(char *key, char *vtx_shd, char *frg_shd)
 
 	/* Initialize the shader-values */
 	shd->prog = 0;
-	shd->vshdr = 0;
-	shd->fshdr = 0;
 	shd->status = 0;
 
 	/* Create a new shader-program */
@@ -108,35 +107,37 @@ int shdSet(char *key, char *vtx_shd, char *frg_shd)
 	vtxsrc = filetobuf(vtx_shd);
 	if(vtxsrc == NULL) goto failed;
 
-	shd->vshdr = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(shd->vshdr, 1, (const GLchar **)&vtxsrc, NULL);
-	glCompileShader(shd->vshdr);
+	/* Create and initialize the vertex-shader */
+	vshd = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vshd, 1, (const GLchar **)&vtxsrc, NULL);
+	glCompileShader(vshd);
 
-	glGetShaderiv(shd->vshdr, GL_COMPILE_STATUS, &success);
+	glGetShaderiv(vshd, GL_COMPILE_STATUS, &success);
 	if(!success) {
-		glGetShaderInfoLog(shd->vshdr, 512, NULL, infoLog);
+		glGetShaderInfoLog(vshd, 512, NULL, infoLog);
 		printf("\nFailed to compile shader %s: %s\n", vtx_shd, infoLog);
 		goto failed;
 	}
 
-	glAttachShader(shd->prog, shd->vshdr);
+	glAttachShader(shd->prog, vshd);
 
 	/* Load and attach the fragment-shader */
 	frgsrc = filetobuf(frg_shd);
 	if(frgsrc == NULL) goto failed;
 
-	shd->fshdr = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(shd->fshdr, 1, (const GLchar **)&frgsrc, NULL);
-	glCompileShader(shd->fshdr);
+	/* Create and initialize the fragment-shader */
+	fshd = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fshd, 1, (const GLchar **)&frgsrc, NULL);
+	glCompileShader(fshd);
 
-	glGetShaderiv(shd->fshdr, GL_COMPILE_STATUS, &success);
+	glGetShaderiv(fshd, GL_COMPILE_STATUS, &success);
 	if(!success) {
-		glGetShaderInfoLog(shd->fshdr, 512, NULL, infoLog);
+		glGetShaderInfoLog(fshd, 512, NULL, infoLog);
 		printf("\nFailed to compile shader %s: %s\n", frg_shd, infoLog);
 		goto failed;
 	}
 
-	glAttachShader(shd->prog, shd->fshdr);
+	glAttachShader(shd->prog, fshd);
 
 	/* Bind the vertex-attributes */
 	glBindAttribLocation(shd->prog, 0, "vtxPos");
@@ -147,13 +148,13 @@ int shdSet(char *key, char *vtx_shd, char *frg_shd)
 	glLinkProgram(shd->prog);
 
 	/* Detach and destroy shaders */
-	glDetachShader(shd->prog, shd->vshdr);
-	glDeleteShader(shd->vshdr);
-	shd->vshdr = 0;
+	glDetachShader(shd->prog, vshd);
+	glDeleteShader(vshd);
+	vshd = 0;
 
-	glDetachShader(shd->prog, shd->fshdr);
-	glDeleteShader(shd->fshdr);
-	shd->fshdr = 0;
+	glDetachShader(shd->prog, fshd);
+	glDeleteShader(fshd);
+	fshd = 0;
 
 	/* Insert the shader into the tabel */
 	if(htSet(shader_table, key, (const uint8_t *)shd,
@@ -169,13 +170,13 @@ int shdSet(char *key, char *vtx_shd, char *frg_shd)
 
 failed:
 	/* Detach and destroy the shaders */
-	if(shd->vshdr != 0) {
-		glDetachShader(shd->prog, shd->vshdr);
-		glDeleteShader(shd->vshdr);
+	if(vshd != 0) {
+		glDetachShader(shd->prog, vshd);
+		glDeleteShader(vshd);
 	}
-	if(shd->fshdr != 0) {
-		glDetachShader(shd->prog, shd->fshdr);
-		glDeleteShader(shd->fshdr);
+	if(fshd != 0) {
+		glDetachShader(shd->prog, fshd);
+		glDeleteShader(fshd);
 	}
 
 	/* Destroy the shader-program */
@@ -217,16 +218,6 @@ void shdRemv(char *key)
 
 	shd = shdGet(key);
 	if(shd == NULL) return;
-
-	/* Detach and destroy the shaders */
-	if(shd->vshdr != 0) {
-		glDetachShader(shd->prog, shd->vshdr);
-		glDeleteShader(shd->vshdr);
-	}
-	if(shd->fshdr != 0) {
-		glDetachShader(shd->prog, shd->fshdr);
-		glDeleteShader(shd->fshdr);
-	}
 
 	/* Destroy the shader-program */
 	if(shd->prog != 0) {

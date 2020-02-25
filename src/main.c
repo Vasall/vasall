@@ -200,8 +200,16 @@ void handle_events(void)
 	while(XSDL_PollEvent(&event)) {
 		if(event.type == XSDL_QUIT) {
 			core->running = 0;
-			break;
+			return;
 		}
+
+		if(event.type == XSDL_KEYDOWN && 
+				event.key.keysym.scancode == 20 &&
+				event.key.keysym.mod & KMOD_CTRL) {
+			core->running = 0;
+			return;
+		}
+
 
 		/* Process interactions with the UI */
 		if(XSDL_ProcEvent(core->uicontext, &event) > -1) {
@@ -244,6 +252,7 @@ void render(void)
 	/* Clear the screen */
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	/* Render the current userinterface */
 	XSDL_Render(core->uicontext);	
 
 	/* Run current render-function */

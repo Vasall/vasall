@@ -1,20 +1,16 @@
 #version 330 core
 
-// inputs
 in vec3 vtxPos;
 in vec3 vtxNrm;
 in vec2 vtxCol;
 
-// uniforms
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;
 
-// outputs
 out vec2 uv;
 out vec3 dark;
 
-// constant values
 vec3 LIGHT_VEC = -vec3(0.259, -0.864, 0.432);
 vec3 LIGHT_COL = vec3(1.0, 0.8, 0.8);
 vec2 LIGHT_BIAS = vec2(0.2, 0.8);

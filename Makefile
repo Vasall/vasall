@@ -62,4 +62,4 @@ $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
 # Build all modules in the lib-folder
 .PHONY: libs
 libs: ${LIB_DIRS}
-	@$(MAKE) -B -C $<
+	@$(MAKE) -C $<

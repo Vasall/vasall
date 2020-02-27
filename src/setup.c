@@ -20,7 +20,7 @@ int g_win_flgs = XSDL_WINDOW_RESIZABLE | XSDL_WINDOW_OPENGL;
  *
  * Returns: Either a pointer to the new window
  * 	of NULL if an error occurred
-*/
+ */
 XSDL_Window *initWindow(void)
 {
 	XSDL_Window *win;
@@ -44,7 +44,7 @@ XSDL_Window *initWindow(void)
  *
  * Returns: 0 on success and -1 
  * 	if an error occurred
-*/
+ */
 int initGL(void)
 {
 	/* Create the XSDL-OpenGL-context */
@@ -147,8 +147,9 @@ int initUI(void)
 	XSDL_Input *pswd_input;
 
 	/* Create the menu-sceen */
-	XSDL_CreateWrapper(core->uiroot, "mns", 0, 0, -100, -100);
-	XSDL_CreateWrapper(XSDL_Get(core->uiroot, "mns"), "mns_form", -1, -1, 400, 380);
+	XSDL_CreateWrapper(core->uiroot, "mns", 0, 0, 800, 600);
+	XSDL_Node_EnableTex(XSDL_Get(core->uiroot, "mns"));
+	XSDL_CreateWrapper(XSDL_Get(core->uiroot, "mns"), "mns_form", 200, 80, 400, 380);
 
 	XSDL_CreateWrapper(XSDL_Get(core->uiroot, "mns_form"), "mns_title", 0, 0, 400, 80);
 	XSDL_Node_EnableTex(XSDL_Get(core->uiroot, "mns_title"));
@@ -198,15 +199,17 @@ int initUI(void)
 	XSDL_BindEvent(XSDL_Get(core->uiroot, "mns_login"), XSDL_EVT_MOUSEDOWN, &try_login);
 
 	/* Create the game-sceen */
-	XSDL_CreateWrapper(core->uiroot, "gms", 0, 0, -100, -100);
+	XSDL_CreateWrapper(core->uiroot, "gms", 0, 0, 800, 600);
+	XSDL_Node_EnableTex(XSDL_Get(core->uiroot, "gms"));
 	XSDL_ModStyle(XSDL_Get(core->uiroot, "gms"), XSDL_STY_VIS, &one);
 
-	XSDL_CreateWrapper(XSDL_Get(core->uiroot, "gms"), "gms_stats", -1, 5, 790, 35);
+	XSDL_CreateWrapper(XSDL_Get(core->uiroot, "gms"), "gms_stats", 5, 5, 790, 35);
 	XSDL_ModStyle(XSDL_Get(core->uiroot, "gms_stats"), XSDL_STY_VIS, &one);
 	XSDL_ModStyle(XSDL_Get(core->uiroot, "gms_stats"), XSDL_STY_BCK, &one);
 	XSDL_ModStyle(XSDL_Get(core->uiroot, "gms_stats"), XSDL_STY_BCK_COL, &gms_stats_bck_col);
 	XSDL_ModStyle(XSDL_Get(core->uiroot, "gms_stats"), XSDL_STY_COR_RAD, &gms_stats_cor);
 
 	XSDL_ModFlag(XSDL_Get(core->uiroot, "gms"), XSDL_FLG_ACT, &zero);
+
 	return(0);
 }

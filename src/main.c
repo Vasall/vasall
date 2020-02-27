@@ -117,6 +117,13 @@ int main(int argc, char **argv)
 	camera->dist = 10.0;
 	camSetDir(dir);
 
+	XSDL_ShowNodes(core->uiroot);
+	printf("\n");
+
+	XSDL_ShowPipe(core->uicontext);
+
+	XSDL_PrerenderNode(core->uicontext, core->uiroot, core->uiroot);
+
 	/*
 	 * Mark the game as running and
 	 * then proceed to jump into the

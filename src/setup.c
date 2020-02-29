@@ -112,7 +112,6 @@ void try_login(XSDL_Node *n, XSDL_Event *e)
 
 	/* Switch from menuscreen to gamescreen */
 	XSDL_ModFlag(XSDL_Get(core->uiroot, "mns"), XSDL_FLG_ACT, &zero);
-	XSDL_ModFlag(XSDL_Get(core->uiroot, "gms"), XSDL_FLG_ACT, &one);	
 
 	XSDL_ShowNodes(core->uiroot);
 	printf("\n");
@@ -191,19 +190,6 @@ int initUI(void)
 	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_title"), XSDL_STY_COR_RAD, &mns_title_cor);
 
 	XSDL_BindEvent(XSDL_Get(core->uiroot, "mns_login"), XSDL_EVT_MOUSEDOWN, &try_login);
-
-	/* Create the game-sceen */
-	XSDL_CreateWrapper(core->uiroot, "gms", 0, 0, 800, 600);
-	XSDL_Node_EnableTex(XSDL_Get(core->uiroot, "gms"));
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "gms"), XSDL_STY_VIS, &zero);
-
-	XSDL_CreateWrapper(XSDL_Get(core->uiroot, "gms"), "gms_stats", 5, 5, 790, 35);
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "gms_stats"), XSDL_STY_VIS, &one);
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "gms_stats"), XSDL_STY_BCK, &one);
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "gms_stats"), XSDL_STY_BCK_COL, &gms_stats_bck_col);
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "gms_stats"), XSDL_STY_COR_RAD, &gms_stats_cor);
-
-	XSDL_ModFlag(XSDL_Get(core->uiroot, "gms"), XSDL_FLG_ACT, &zero);
 
 	XSDL_BuildPipe(core->uicontext->pipe, core->uiroot);
 

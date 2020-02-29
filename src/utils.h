@@ -7,7 +7,8 @@
 #include <byteswap.h>
 #endif
 
-#ifndef __bswap_16
+/* 
+#ifndef bswap_16
 uint16_t __bswap_16(uint16_t val)
 {
     return (val << 8) | (val >> 8 );
@@ -19,6 +20,7 @@ uint32_t __bswap_32(uint32_t val)
     return (val << 16) | (val >> 16);
 }
 #endif
+*/
 
 /* Read a file into a buffer */
 int readFile(char *pth, uint8_t **buf, long *len);

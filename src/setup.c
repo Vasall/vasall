@@ -11,7 +11,7 @@
 #include "global.h"
 #include "handle.h"
 
-/* ========= REDECLARE EXTERN VARIABLES ============== */
+/* Redefine external variables */
 int g_win_flgs = XSDL_WINDOW_RESIZABLE | XSDL_WINDOW_OPENGL;
 
 /*
@@ -76,21 +76,16 @@ int loadResources(void)
 	/* printf("Directory: %s\n", core->bindir);*/
 
 	XSDL_CombinePath(path, core->bindir, "../res/fonts/mecha.ttf");
-	if(XSDL_LoadFont(path, 24) < 0)
-		goto loadfailed;
+	if(XSDL_LoadFont(path, 24) < 0) goto loadfailed;
 
 	XSDL_CombinePath(path, core->bindir, "../res/fonts/unifont.ttf");
-	if(XSDL_LoadFont(path, 16) < 0)
-		goto loadfailed;
+	if(XSDL_LoadFont(path, 16) < 0) goto loadfailed;
 
 	XSDL_CombinePath(path, core->bindir, "../res/fonts/aller.ttf");
-	if(XSDL_LoadFont(path, 16) < 0)
-		goto loadfailed;
-
+	if(XSDL_LoadFont(path, 16) < 0) goto loadfailed;
 
 	XSDL_CombinePath(path, core->bindir, "../res/fonts/editundo.ttf");
-	if(XSDL_LoadFont(path, 48) < 0)
-		goto loadfailed;
+	if(XSDL_LoadFont(path, 48) < 0) goto loadfailed;
 
 	return(0);
 
@@ -118,6 +113,12 @@ void try_login(XSDL_Node *n, XSDL_Event *e)
 	/* Switch from menuscreen to gamescreen */
 	XSDL_ModFlag(XSDL_Get(core->uiroot, "mns"), XSDL_FLG_ACT, &zero);
 	XSDL_ModFlag(XSDL_Get(core->uiroot, "gms"), XSDL_FLG_ACT, &one);	
+
+	XSDL_ShowNodes(core->uiroot);
+	printf("\n");
+
+	XSDL_ShowPipe(core->uicontext);
+	printf("\n");
 
 	return;
 }
@@ -152,22 +153,15 @@ int initUI(void)
 	XSDL_CreateWrapper(XSDL_Get(core->uiroot, "mns"), "mns_form", 200, 80, 400, 380);
 
 	XSDL_CreateWrapper(XSDL_Get(core->uiroot, "mns_form"), "mns_title", 0, 0, 400, 80);
-	XSDL_Node_EnableTex(XSDL_Get(core->uiroot, "mns_title"));
 	XSDL_CreateText(XSDL_Get(core->uiroot, "mns_title"), "label0", &body0, "VASALL", &XSDL_WHITE, 3, 0);
-	XSDL_Node_EnableTex(XSDL_Get(core->uiroot, "label0"));
 
 	XSDL_CreateText(XSDL_Get(core->uiroot, "mns_form"), "label1", &body1,"Email:", &XSDL_WHITE, 2, XSDL_TEXT_LEFT);
-	XSDL_Node_EnableTex(XSDL_Get(core->uiroot, "label1"));
 	XSDL_CreateInput(XSDL_Get(core->uiroot, "mns_form"), "mns_user", 40, 120, 320, 40, "");
-	XSDL_Node_EnableTex(XSDL_Get(core->uiroot, "mns_user"));
 
 	XSDL_CreateText(XSDL_Get(core->uiroot, "mns_form"), "label2", &body2, "Password:", &XSDL_WHITE, 2, XSDL_TEXT_LEFT);
-	XSDL_Node_EnableTex(XSDL_Get(core->uiroot, "label2"));
 	XSDL_CreateInput(XSDL_Get(core->uiroot, "mns_form"), "mns_pswd", 40, 200, 320, 40, "");
-	XSDL_Node_EnableTex(XSDL_Get(core->uiroot, "mns_pswd"));
 
 	XSDL_CreateButton(XSDL_Get(core->uiroot, "mns_form"), "mns_login", 40, 270, 320, 40, "Login");
-	XSDL_Node_EnableTex(XSDL_Get(core->uiroot, "mns_login"));	
 
 	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_user"), XSDL_STY_VIS, &one);
 	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_user"), XSDL_STY_BCK, &one);
@@ -188,7 +182,7 @@ int initUI(void)
 	memcpy(&pswd_input->col, &mns_text_col, sizeof(XSDL_Color));
 
 	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_form"), XSDL_STY_VIS, &one);
-	/*XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_form"), XSDL_STY_BCK, &one);*/
+	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_form"), XSDL_STY_BCK, &one);
 	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_form"), XSDL_STY_BCK_COL, &mns_form_bck_col);
 	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_form"), XSDL_STY_COR_RAD, &mns_form_corners);
 
@@ -201,7 +195,7 @@ int initUI(void)
 	/* Create the game-sceen */
 	XSDL_CreateWrapper(core->uiroot, "gms", 0, 0, 800, 600);
 	XSDL_Node_EnableTex(XSDL_Get(core->uiroot, "gms"));
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "gms"), XSDL_STY_VIS, &one);
+	XSDL_ModStyle(XSDL_Get(core->uiroot, "gms"), XSDL_STY_VIS, &zero);
 
 	XSDL_CreateWrapper(XSDL_Get(core->uiroot, "gms"), "gms_stats", 5, 5, 790, 35);
 	XSDL_ModStyle(XSDL_Get(core->uiroot, "gms_stats"), XSDL_STY_VIS, &one);
@@ -210,6 +204,8 @@ int initUI(void)
 	XSDL_ModStyle(XSDL_Get(core->uiroot, "gms_stats"), XSDL_STY_COR_RAD, &gms_stats_cor);
 
 	XSDL_ModFlag(XSDL_Get(core->uiroot, "gms"), XSDL_FLG_ACT, &zero);
+
+	XSDL_BuildPipe(core->uicontext->pipe, core->uiroot);
 
 	return(0);
 }

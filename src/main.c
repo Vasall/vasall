@@ -81,6 +81,12 @@ int main(int argc, char **argv)
 		goto cleanup_ui;
 	}
 
+	pad_printf("Import more resources");
+	if(loadResources() < 0) {
+		goto cleanup_ui;
+	}
+	printf("done\n");
+
 	pad_printf("Initialize UI");
 	if(initUI() < 0) {
 		printf("failed!\n");
@@ -121,8 +127,7 @@ int main(int argc, char **argv)
 	printf("\n");
 
 	XSDL_ShowPipe(core->uicontext);
-
-	XSDL_PrerenderNode(core->uicontext, core->uiroot, core->uiroot);
+	printf("\n");
 
 	/*
 	 * Mark the game as running and
@@ -259,8 +264,10 @@ void render(void)
 	/* Clear the screen */
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	XSDL_PrerenderNode(core->uicontext, core->uiroot, core->uiroot);
+
 	/* Render the current userinterface */
-	XSDL_Render(core->uicontext);	
+	XSDL_Render(core->uicontext);
 
 	/* Run current render-function */
 	if(core->render != NULL) core->render();

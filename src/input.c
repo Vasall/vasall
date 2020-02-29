@@ -15,8 +15,6 @@ struct input_map *inp_map = NULL;
  */
 int inpInit(void)
 {
-	int i;
-
 	inp_map = calloc(1, sizeof(struct input_map));
 	if(inp_map == NULL) return(-1);
 

@@ -5,9 +5,9 @@ in vec3 dark;
 
 uniform sampler2D tex;
 
-out vec3 color;
+out vec4 FragColor;
 
 void main()
 {
-	color = texture(tex, uv).rgb * dark;
+	FragColor = vec4(texture(tex, uv).rgb * dark, 1.0);
 } 

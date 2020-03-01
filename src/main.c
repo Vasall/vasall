@@ -242,6 +242,8 @@ void handle_events(void)
 			core->procevt(&event);
 		}
 	}
+
+	XSDL_PrerenderNode(core->uicontext, core->uiroot, core->uiroot);
 }
 
 /*
@@ -264,13 +266,11 @@ void render(void)
 	/* Clear the screen */
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	XSDL_PrerenderNode(core->uicontext, core->uiroot, core->uiroot);
+	/* Run current render-function */
+	if(core->render != NULL) core->render();
 
 	/* Render the current userinterface */
 	XSDL_Render(core->uicontext);
-
-	/* Run current render-function */
-	if(core->render != NULL) core->render();
 
 	/* Render the buffer on the screen */
 	XSDL_GL_SwapWindow(core->window);

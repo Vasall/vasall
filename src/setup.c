@@ -54,10 +54,16 @@ int initGL(void)
 	}
 
 	/* Set clear-color */
-	glClearColor(1.0, 1.0, 1.0, 1.0);
+	glClearColor(0.06, 0.06, 0.06, 1.0);
 
+	/* Change provoking-vertex to first */
 	glProvokingVertex(GL_FIRST_VERTEX_CONVENTION);
 
+	/* Enable transparency */
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	/* Enable depth-test */
 	glEnable(GL_DEPTH_TEST);
 
 	return(0);
@@ -136,13 +142,12 @@ int initUI(void)
 	XSDL_Color mns_text_col = { 0xF9, 0xF9, 0xF9, 0xFF };
 	XSDL_Color mns_input_bck_col = {0x37, 0x37, 0x37, 0xFF};
 	XSDL_Color mns_input_bor_col = {0x28, 0x28, 0x28, 0xFF};
-	short mns_input_corners[] = {4, 4, 4, 4};
-	XSDL_Color mns_form_bck_col = {0x3D, 0x3B, 0x3C, 0xff};
-	short mns_form_corners[] = {5, 5, 5, 5};
+	short mns_input_corners[] = {10, 10, 10, 10};
+	XSDL_Color mns_form_bck_col = {0x3D, 0x3B, 0x3C, 0xfb};
+	short mns_form_corners[] = {8, 8, 8, 8};
 	XSDL_Color mns_title_bck_col = {0xd3, 0x34, 0x5a, 0xff};
+	XSDL_Color mns_login_bck_col = {0xff, 0x00, 0x00, 0xff};
 	short mns_title_cor[] = {5, 5, 0, 0};
-	XSDL_Color gms_stats_bck_col = { 0x2b, 0x2b, 0x36, 0xf8};
-	short gms_stats_cor[] = {3, 3, 3, 3};
 	XSDL_Input *user_input;
 	XSDL_Input *pswd_input;
 
@@ -152,15 +157,19 @@ int initUI(void)
 	XSDL_CreateWrapper(XSDL_Get(core->uiroot, "mns"), "mns_form", 200, 80, 400, 380);
 
 	XSDL_CreateWrapper(XSDL_Get(core->uiroot, "mns_form"), "mns_title", 0, 0, 400, 80);
-	XSDL_CreateText(XSDL_Get(core->uiroot, "mns_title"), "label0", &body0, "VASALL", &XSDL_WHITE, 3, 0);
+	XSDL_CreateText(XSDL_Get(core->uiroot, "mns_title"), "label0", &body0, "VASALL", 
+			&XSDL_WHITE, 3, 0);
 
-	XSDL_CreateText(XSDL_Get(core->uiroot, "mns_form"), "label1", &body1,"Email:", &XSDL_WHITE, 2, XSDL_TEXT_LEFT);
+	XSDL_CreateText(XSDL_Get(core->uiroot, "mns_form"), "label1", &body1,"Email:", 
+			&XSDL_WHITE, 2, XSDL_TEXT_LEFT);
 	XSDL_CreateInput(XSDL_Get(core->uiroot, "mns_form"), "mns_user", 40, 120, 320, 40, "");
 
-	XSDL_CreateText(XSDL_Get(core->uiroot, "mns_form"), "label2", &body2, "Password:", &XSDL_WHITE, 2, XSDL_TEXT_LEFT);
+	XSDL_CreateText(XSDL_Get(core->uiroot, "mns_form"), "label2", &body2, "Password:", 
+			&XSDL_WHITE, 2, XSDL_TEXT_LEFT);
 	XSDL_CreateInput(XSDL_Get(core->uiroot, "mns_form"), "mns_pswd", 40, 200, 320, 40, "");
 
-	XSDL_CreateButton(XSDL_Get(core->uiroot, "mns_form"), "mns_login", 40, 270, 320, 40, "Login");
+	XSDL_CreateButton(XSDL_Get(core->uiroot, "mns_form"), "mns_login", 40, 270, 320, 40, 
+			"Login");
 
 	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_user"), XSDL_STY_VIS, &one);
 	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_user"), XSDL_STY_BCK, &one);
@@ -190,6 +199,8 @@ int initUI(void)
 	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_title"), XSDL_STY_COR_RAD, &mns_title_cor);
 
 	XSDL_BindEvent(XSDL_Get(core->uiroot, "mns_login"), XSDL_EVT_MOUSEDOWN, &try_login);
+	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_login"), XSDL_STY_BCK, &one);
+	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_login"), XSDL_STY_BCK_COL, &mns_login_bck_col);
 
 	XSDL_BuildPipe(core->uicontext->pipe, core->uiroot);
 

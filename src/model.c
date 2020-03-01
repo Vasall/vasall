@@ -429,5 +429,6 @@ void mdlRender(struct model *mdl, Mat4 mat)
 
 	glDrawElements(GL_TRIANGLES, mdl->idx_num, GL_UNSIGNED_INT, 0);
 
+	glUseProgram(0);
 	glBindVertexArray(0);
 }

@@ -110,20 +110,15 @@ loadfailed:
  */
 void try_login(XSDL_Node *n, XSDL_Event *e)
 {
-	if(n||e){/* Prevent wraning for not using paameters */}
+	if(n||e){/* Prevent warning for not using paameters */}
 
+	/* Update core functions */
 	core->procevt = &game_procevt;
 	core->update = &game_update;
 	core->render = &game_render;
 
 	/* Switch from menuscreen to gamescreen */
 	XSDL_ModFlag(XSDL_Get(core->uiroot, "mns"), XSDL_FLG_ACT, &zero);
-
-	XSDL_ShowNodes(core->uiroot);
-	printf("\n");
-
-	XSDL_ShowPipe(core->uicontext);
-	printf("\n");
 
 	return;
 }
@@ -142,7 +137,6 @@ int initUI(void)
 	XSDL_Color mns_text_col = { 0xF9, 0xF9, 0xF9, 0xFF };
 	XSDL_Color mns_input_bck_col = {0x37, 0x37, 0x37, 0xFF};
 	XSDL_Color mns_input_bor_col = {0x28, 0x28, 0x28, 0xFF};
-	short mns_input_corners[] = {10, 10, 10, 10};
 	XSDL_Color mns_form_bck_col = {0x3D, 0x3B, 0x3C, 0xfb};
 	short mns_form_corners[] = {8, 8, 8, 8};
 	XSDL_Color mns_title_bck_col = {0xd3, 0x34, 0x5a, 0xff};
@@ -176,7 +170,6 @@ int initUI(void)
 	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_user"), XSDL_STY_BCK_COL, &mns_input_bck_col);
 	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_user"), XSDL_STY_BOR, &one);
 	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_user"), XSDL_STY_BOR_COL, &mns_input_bor_col);
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_user"), XSDL_STY_COR_RAD, &mns_input_corners);
 	user_input = XSDL_Get(core->uiroot, "mns_user")->element;
 	memcpy(&user_input->col, &mns_text_col, sizeof(XSDL_Color));
 
@@ -185,7 +178,6 @@ int initUI(void)
 	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_pswd"), XSDL_STY_BCK_COL, &mns_input_bck_col);
 	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_pswd"), XSDL_STY_BOR, &one);
 	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_pswd"), XSDL_STY_BOR_COL, &mns_input_bor_col);
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_pswd"), XSDL_STY_COR_RAD, &mns_input_corners);
 	pswd_input = XSDL_Get(core->uiroot, "mns_pswd")->element;
 	memcpy(&pswd_input->col, &mns_text_col, sizeof(XSDL_Color));
 

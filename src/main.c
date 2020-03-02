@@ -75,17 +75,17 @@ int main(int argc, char **argv)
 	if(inpInit() < 0) {
 		goto cleanup_ui;
 	}
+	printf("done\n");
 
-	printf("Import resources:\n");
+	printf("Import models, textures and shaders:\n");
 	if(gloLoad("../res") < 0) {
 		goto cleanup_ui;
 	}
 
-	pad_printf("Import more resources");
+	printf("Import fonts:\n");
 	if(loadResources() < 0) {
 		goto cleanup_ui;
 	}
-	printf("done\n");
 
 	pad_printf("Initialize UI");
 	if(initUI() < 0) {
@@ -122,12 +122,6 @@ int main(int argc, char **argv)
 
 	camera->dist = 10.0;
 	camSetDir(dir);
-
-	XSDL_ShowNodes(core->uiroot);
-	printf("\n");
-
-	XSDL_ShowPipe(core->uicontext);
-	printf("\n");
 
 	/*
 	 * Mark the game as running and
@@ -242,8 +236,6 @@ void handle_events(void)
 			core->procevt(&event);
 		}
 	}
-
-	XSDL_PrerenderNode(core->uicontext, core->uiroot, core->uiroot);
 }
 
 /*
@@ -268,6 +260,8 @@ void render(void)
 
 	/* Run current render-function */
 	if(core->render != NULL) core->render();
+
+	XSDL_PrerenderNode(core->uicontext, core->uiroot, core->uiroot);	
 
 	/* Render the current userinterface */
 	XSDL_Render(core->uicontext);

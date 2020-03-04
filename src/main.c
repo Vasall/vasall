@@ -123,6 +123,8 @@ int main(int argc, char **argv)
 	camera->dist = 10.0;
 	camSetDir(dir);
 
+	XSDL_ShowNodes(core->uicontext->root);
+
 	/*
 	 * Mark the game as running and
 	 * then proceed to jump into the
@@ -244,6 +246,8 @@ void handle_events(void)
  */
 void update(void)
 {
+	XSDL_UpdateUIContext(core->uicontext);
+
 	/* Run specified update-function */
 	if(core->update != NULL) core->update();
 }
@@ -260,8 +264,6 @@ void render(void)
 
 	/* Run current render-function */
 	if(core->render != NULL) core->render();
-
-	XSDL_PrerenderNode(core->uicontext, core->uiroot, core->uiroot);	
 
 	/* Render the current userinterface */
 	XSDL_Render(core->uicontext);

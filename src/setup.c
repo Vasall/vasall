@@ -147,7 +147,7 @@ int initUI(void)
 
 	/* Create the menu-sceen */
 	XSDL_CreateWrapper(core->uiroot, "mns", 0, 0, 800, 600);
-	XSDL_Node_EnableTex(XSDL_Get(core->uiroot, "mns"));
+	XSDL_EnableNodeTex(XSDL_Get(core->uiroot, "mns"));
 	XSDL_CreateWrapper(XSDL_Get(core->uiroot, "mns"), "mns_form", 200, 80, 400, 380);
 
 	XSDL_CreateWrapper(XSDL_Get(core->uiroot, "mns_form"), "mns_title", 0, 0, 400, 80);

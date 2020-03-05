@@ -9,5 +9,5 @@ A coop-hunting-game similar to Monster Hunter. Still in developement.
 - Change into the folder: ``cd vasall-client``
 - Create the necessary folders: ``mkdir lib``
 - Clone the XSDL-repository into the lib-folder: ``cd lib && git clone https://github.com/enudstudios/XSDL.git && cd ..``
-- Then start building: ``make libs && bash build.sh``
+- Then start building: ``make libs && bash build.sh && make -B``
 - Now you can run the code: ``./bin/vasall-client``

@@ -4,7 +4,7 @@ A coop-hunting-game similar to Monster Hunter. Still in developement.
 ## How to build the game yourself:
 
 ### Debian and Ubuntu
-- Install the necessary dependencies: ``sudo apt install git make libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev``
+- Install dependencies: ``sudo apt install git make libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev freeglut3-dev``
 - Clone the repository: ``git clone https://github.com/Vasall/vasall-client``
 - Change into the folder: ``cd vasall-client``
 - Create the necessary folders: ``mkdir lib``

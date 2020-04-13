@@ -119,7 +119,7 @@ void game_procevt(XSDL_Event *evt)
 
 void game_update(void)
 {
-	Vec3 vel, forw, right;
+	vec3_t vel, forw, right;
 
 	/* Rotate the camera */	
 	camRot(inp_map->camera[0], inp_map->camera[1]);
@@ -127,18 +127,18 @@ void game_update(void)
 	/*printf("%f - %f\n", inp_map->movement[0], inp_map->movement[1]);*/
 
 	/* Set player-velocity */
-	vecCpy(forw, camera->forward);
+	vec3_cpy(forw, camera->forward);
 	forw[1] = 0.0;
-	vecNrm(forw, forw);
+	vec3_nrm(forw, forw);
 
-	vecCpy(right, camera->right);
+	vec3_cpy(right, camera->right);
 	right[1] = 0.0;
-	vecNrm(right, right);
+	vec3_nrm(right, right);
 
-	vecScl(forw, inp_map->movement[1], forw);
-	vecScl(right, inp_map->movement[0], right);
+	vec3_scl(forw, inp_map->movement[1], forw);
+	vec3_scl(right, inp_map->movement[0], right);
 
-	vecAdd(forw, right, vel);
+	vec3_add(forw, right, vel);
 
 	objSetVel(core->obj, vel);
 

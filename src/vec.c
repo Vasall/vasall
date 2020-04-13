@@ -1,150 +1,118 @@
+#include "vec.h"
+#include "mat.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
 
-#include "vec.h"
-#include "mat.h"
-
-/* 
- * Set the values of a 3d-vector.
- *
- * @v: A pointer to the vector
- * @x: The new x-value
- * @y: The new y-value
- * @z: The new z-value
-*/
-void vecSet(Vec3 v, float x, float y, float z)
+void vec3_set(vec3_t v, float x, float y, float z)
 {
 	v[0] = x;
 	v[1] = y;
 	v[2] = z;
 }
 
-/* 
- * Copy the values from the second vector 
- * into the first.
- *
- * @v1: The vector to copy into
- * @v2: The vector to copy from
-*/
-void vecCpy(Vec3 dst, Vec3 src)
+void vec3_cpy(vec3_t dst, vec3_t src)
 {
 	memcpy(dst, src, VEC3_SIZE);
 }
 
-/* 
- * Add two vectors.
- *
- * @v1: The first vector
- * @v2: The second vector
- * @res: The resulting vector to write to
-*/
-void vecAdd(Vec3 v1, Vec3 v2, Vec3 res)
+void vec3_add(vec3_t v1, vec3_t v2, vec3_t res)
 {
 	res[0] = v1[0] + v2[0];
 	res[1] = v1[1] + v2[1];
 	res[2] = v1[2] + v2[2];
 }
 
-/* 
- * Subtract one vector from another. 
- *
- * @v1: The first vector
- * @v2: The second vector
- * @res: The resulting vector write to
-*/
-void vecSub(Vec3 v1, Vec3 v2, Vec3 res)
+void vec3_sub(vec3_t v1, vec3_t v2, vec3_t res)
 {
 	res[0] = v1[0] - v2[0];
 	res[1] = v1[1] - v2[1];
 	res[2] = v1[2] - v2[2];
 }
 
-/* 
- * Scale a vector by a factor.
- *
- * @v: A pointer to the vector to scale
- * @f: The scaling factor
- * @res: The resulting vector to write to
-*/
-void vecScl(Vec3 v, float f, Vec3 res)
+void vec3_scl(vec3_t v, float f, vec3_t res)
 {
 	res[0] = v[0] * f;
 	res[1] = v[1] * f;
 	res[2] = v[2] * f;
 }
 
-/*
- * Rotates the vector around the x axis by angle radians
- *
- * @v: The input vector
- * @angle: The angle to rotate by
- * @res: The resulting vector
- */
-void vecRotX(Vec3 v, float angle, Vec3 res)
+void vec3_inv_scl(vec3_t v, float f, vec3_t res)
 {
-	Mat3 rmat;
-	mat3Idt(rmat);
+	res[0] = v[0] / f;
+	res[1] = v[1] / f;
+	res[2] = v[2] / f;
+}
+
+float vec3_mag(vec3_t v)
+{
+	double len = (v[0] * v[0]) + (v[1] * v[1]) + (v[2] * v[2]);
+	return((float)sqrt(len));
+}
+
+void vec3_nrm(vec3_t v, vec3_t res)
+{
+	float len = vec3_mag(v);
+	res[0] = v[0] / len;
+	res[1] = v[1] / len;
+	res[2] = v[2] / len;
+}
+
+float vec3_dot(vec3_t v1, vec3_t v2)
+{
+	return(v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]);	
+}
+
+void vec3_cross(vec3_t v1, vec3_t v2, vec3_t res)
+{
+	res[0] = (v1[1] * v2[2]) - (v1[2] * v2[1]);
+	res[1] = (v1[2] * v2[0]) - (v1[0] * v2[2]);
+	res[2] = (v1[0] * v2[1]) - (v1[1] * v2[0]);
+}
+
+void vec3_rot_x(vec3_t v, float angle, vec3_t res)
+{
+	mat3_t rmat;
+	mat3_idt(rmat);
 	rmat[0x4] = cos(angle);
 	rmat[0x5] = -sin(angle);
 	rmat[0x7] = sin(angle);
 	rmat[0x8] = cos(angle);
 
-	vecTransf(v, rmat, res);
+	vec3_trans(v, rmat, res);
 }
 
-/*
- * Rotates the vector around the y axis by angle radians
- *
- * @v: The input vector
- * @angle: The angle to rotate by
- * @res: The resulting vector
- */
-void vecRotY(Vec3 v, float angle, Vec3 res)
+void vec3_rot_y(vec3_t v, float angle, vec3_t res)
 {
-	Mat3 rmat;
-	mat3Idt(rmat);
+	mat3_t rmat;
+	mat3_idt(rmat);
 	rmat[0x0] = cos(angle);
 	rmat[0x2] = sin(angle);
 	rmat[0x6] = -sin(angle);
 	rmat[0x8] = cos(angle);
 
-	vecTransf(v, rmat, res);
+	vec3_trans(v, rmat, res);
 }
 
-/*
- * Rotates the vector around the z axis by angle radians
- *
- * @v: The input vector
- * @angle: The angle to rotate by
- * @res: The resulting vector
- */
-void vecRotZ(Vec3 v, float angle, Vec3 res)
+void vec3_rot_z(vec3_t v, float angle, vec3_t res)
 {
-	Mat3 rmat;
-	mat3Idt(rmat);
+	mat3_t rmat;
+	mat3_idt(rmat);
 	rmat[0x0] = cos(angle);
 	rmat[0x1] = -sin(angle);
 	rmat[0x3] = sin(angle);
 	rmat[0x4] = cos(angle);
-	vecTransf(v, rmat, res);
+	vec3_trans(v, rmat, res);
 }
 
-/*
- * Rotates a vector around a specified axis
- *
- * @v: The input vector
- * @angle: The angle to rotate by
- * @axis: The rotation axis
- * @res: The destination vector to write to
- */
-void vecRotAxis(Vec3 v, float angle, Vec3 axis, Vec3 res)
+void vec3_rot_axes(vec3_t v, float angle, vec3_t axis, vec3_t res)
 {
-	Mat3 rmat;
+	mat3_t rmat;
 	float q0, q1, q2, q3;
 
-	vecNrm(axis, axis);
+	vec3_nrm(axis, axis);
 	q0 = cos(angle / 2);
 	q1 = sin(angle / 2) * axis[0];
 	q2 = sin(angle / 2) * axis[1];
@@ -160,102 +128,25 @@ void vecRotAxis(Vec3 v, float angle, Vec3 axis, Vec3 res)
 	rmat[0x7] = 2 * (q3 * q2 + q0 * q1);
 	rmat[0x8] = q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3;
 
-	vecTransf(v, rmat, res);
+	vec3_trans(v, rmat, res);
 }
 
-void vecTransf(Vec3 v, Mat3 mat, Vec3 res)
+void vec3_trans(vec3_t v, mat3_t mat, vec3_t res)
 {
-	Vec3 tmp;
-	vecCpy(tmp, v);
+	vec3_t tmp;
+	vec3_cpy(tmp, v);
 
 	res[0] = tmp[0] * mat[0x0] + tmp[1] * mat[0x1] + tmp[2] * mat[0x2];
 	res[1] = tmp[0] * mat[0x3] + tmp[1] * mat[0x4] + tmp[2] * mat[0x5];
 	res[2] = tmp[0] * mat[0x6] + tmp[1] * mat[0x7] + tmp[2] * mat[0x8];
 }
 
-/*
- * Divide the vector by the given
- * factor. This function is the
- * inverse to the scale-procedure.
- *
- * @v: The vector to scale
- * @f: The scaling factor
- * @res: The resulting vector to write to
- */
-void vecInvScl(Vec3 v, float f, Vec3 res)
-{
-	res[0] = v[0] / f;
-	res[1] = v[1] / f;
-	res[2] = v[2] / f;
-}
-
-
-/* 
- * Get the magnitude of a vector.
- *
- * @v: The vector to calculate the magnitude for
- *
- * Returns: The length of the vector
-*/
-float vecMag(Vec3 v)
-{
-	double len = (v[0] * v[0]) + (v[1] * v[1]) + (v[2] * v[2]);
-	return((float)sqrt(len));
-}
-
-/* 
- * Normalize a vector.
- *
- * @v: The vector to normalize
- * @res: The resulting vector to write to
-*/
-void vecNrm(Vec3 v, Vec3 res)
-{
-	float len = vecMag(v);
-	res[0] = v[0] / len;
-	res[1] = v[1] / len;
-	res[2] = v[2] / len;
-}
-
-/*
- * Calculate the dot-product of two vectors.
- *
- * @v1: The first vector
- * @v2: The second vector
- *
- * Returns: The resulting value
- */
-float vecDot(Vec3 v1, Vec3 v2)
-{
-	return(v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]);	
-}
-
-/*
- * Calculate the cross-product of 
- * two vectors.
- *
- * @v1: The first vector
- * @v2: The second vector
- * @res: The resulting vector to write to
- */
-void vecCross(Vec3 v1, Vec3 v2, Vec3 res)
-{
-	res[0] = (v1[1] * v2[2]) - (v1[2] * v2[1]);
-	res[1] = (v1[2] * v2[0]) - (v1[0] * v2[2]);
-	res[2] = (v1[0] * v2[1]) - (v1[1] * v2[0]);
-}
-
-/*
- * Print a vector in the terminal.
- *
- * @v: The vector to display
- */
-void vecPrint(Vec3 v)
+void vec3_dump(vec3_t v)
 {
 	printf("%.2f/%.2f/%.2f", v[0], v[1], v[2]);
 }
 
-float vecBarryCentric(Vec3 p1, Vec3 p2, Vec3 p3, Vec2 pos)
+float vec3_barry_centric(vec3_t p1, vec3_t p2, vec3_t p3, vec2_t pos)
 {
 	float det = (p2[2] - p3[2]) * (p1[0] - p3[0]) + (p3[0] - p2[0]) * (p1[2] - p3[2]);
 	float l1 = ((p2[2] - p3[2]) * (pos[0] - p3[0]) + (p3[0] - p2[0]) * (pos[1] - p3[2])) / det;

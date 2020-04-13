@@ -11,7 +11,7 @@ struct world {
 	 * The x-size and the z-size
 	 * of the world.
 	 */
-	Int2 size;
+	int2_t size;
 	int ptnum;
 
 
@@ -19,10 +19,10 @@ struct world {
 	 * The relative position of
 	 * the terrain.
 	 */
-	Vec3 pos;
+	vec3_t pos;
 
 	/*  Both the absolute min- and max-positions */
-	Vec2 min_pos, max_pos;
+	vec2_t min_pos, max_pos;
 
 	/*
 	 * The heightmap, containing
@@ -36,7 +36,7 @@ struct world {
 	 * the terrain, which will be
 	 * passed to the model.
 	 */
-	Vec3 rot;
+	vec3_t rot;
 
 	/*
 	 * The underlying model for

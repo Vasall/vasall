@@ -13,7 +13,7 @@ struct camera {
 	 * The current position of the
 	 * camera in the world.
 	*/
-	Vec3 pos;
+	vec3_t pos;
 
 	/*
 	 * The direction vectors for the camera,
@@ -21,8 +21,8 @@ struct camera {
 	 * the camera is looking at, while right is
 	 * left-vector to the forward-vector.
 	 */
-	Vec3 forward;
-	Vec3 right;
+	vec3_t forward;
+	vec3_t right;
 
 	/*
 	 * The distance between the target and
@@ -63,12 +63,12 @@ struct camera {
 	/*
 	 * The projection matrix.
 	 */
-	Mat4 proj;
+	mat4_t proj;
 
 	/*
 	 * The current viewmatrix.
 	 */
-	Mat4 view;
+	mat4_t view;
 
 	/*
 	 * The target entity. When this is not NULL, the camera will
@@ -89,22 +89,22 @@ int camCreate(float aov, float asp, float near, float far);
 void camDestroy(void);
 
 /* Get the projection matrix of the camera */
-void camGetProj(Mat4 mat);
+void camGetProj(mat4_t mat);
 
 /* Get the view matrix of the camera */
-void camGetView(Mat4 mat);
+void camGetView(mat4_t mat);
 
 /* Get the position of the camera */
-void camGetPos(Vec3 pos);
+void camGetPos(vec3_t pos);
 
 /* Set the position of the camera */
-void camSetPos(Vec3 pos);
+void camSetPos(vec3_t pos);
 
 /* Get the direction the camera is looking */
-void camGetDir(Vec3 dir);
+void camGetDir(vec3_t dir);
 
 /* Set the camera-direction */
-void camSetDir(Vec3 dir);
+void camSetDir(vec3_t dir);
 
 /* Change the rotation of the camera */
 void camMouseMoved(int delx, int dely);
@@ -119,7 +119,7 @@ void camRot(float d_yaw, float d_pitch);
 void camMovDir(Direction dir);
 
 /* Moves the camera freely, when no target entity is set */
-void camMov(Vec3 mov);
+void camMov(vec3_t mov);
 
 /* Create a new projection matrix */
 void camSetProjMat(float aov, float asp, float near, float far);
@@ -128,10 +128,10 @@ void camSetProjMat(float aov, float asp, float near, float far);
 void camUpdViewMat(void);
 
 /* Sets the cameras direction to look at a point */
-void camLookAt(Vec3 trg);
+void camLookAt(vec3_t trg);
 
 /* Set the camera */
-void camSet(Vec3 pos, Vec3 trg);
+void camSet(vec3_t pos, vec3_t trg);
 
 /* Set an object as the target-point */
 void camTargetObj(struct object *obj);

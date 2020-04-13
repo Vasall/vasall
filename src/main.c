@@ -19,10 +19,10 @@ void render(void);
 
 int main(int argc, char **argv)
 {
-	Vec3 pos = {125.0, 0.0, 125.0};
-	Vec3 dir = {1.0, 1.0, 1.0};
+	vec3_t pos = {125.0, 0.0, 125.0};
+	vec3_t dir = {1.0, 1.0, 1.0};
 
-	vecNrm(dir, dir);
+	vec3_nrm(dir, dir);
 
 	/* Update the rand-seed */
 	srand(time(0));

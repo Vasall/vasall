@@ -24,19 +24,19 @@ struct object {
 	 * The current position of the
 	 * object.
 	 */
-	Vec3 pos;
+	vec3_t pos;
 
 	/*
 	 * The current velocity of the
 	 * object.
 	 */
-	Vec3 vel;
+	vec3_t vel;
 
 	/*
 	 * The current facing-direction of
 	 * the object.
 	 */
-	Vec3 dir;
+	vec3_t dir;
 
 	/*
 	 * A pointer to the model attached
@@ -49,21 +49,21 @@ struct object {
 	 * the vertices from model space to 
 	 * world space.
 	 */
-	Mat4 matrix;
+	mat4_t matrix;
 
 	/*
 	 * The current rotation of the object. 
 	 * Used when calculating the model-matrix 
 	 * for this object.
 	 */
-	Vec3 rot;
+	vec3_t rot;
 
 	/*
 	 * The vector to scale the object
 	 * with. Used when calculating the
 	 * model-matrix for this object.
 	 */
-	Vec3 scl;
+	vec3_t scl;
 };
 
 
@@ -78,7 +78,7 @@ int objInit(void);
 void objClose(void);
 
 /* Create a new object and insert it into the object-list */
-int objSet(char *key, char* mdl, Vec3 pos);
+int objSet(char *key, char* mdl, vec3_t pos);
 
 /* Destory an existing object and remove it from the object-list */
 void objDel(char *key);
@@ -97,49 +97,49 @@ void objRender(struct object *obj);
 /* --------------------------------------- */
 
 /* Get the current position of the object */
-void objGetPos(struct object *obj, Vec3 pos);
+void objGetPos(struct object *obj, vec3_t pos);
 
 /* Set the new position of the object */
-void objSetPos(struct object *obj, Vec3 pos);
+void objSetPos(struct object *obj, vec3_t pos);
 
 /* Add a vector to the position */
-void objAddPos(struct object *obj, Vec3 del);
+void objAddPos(struct object *obj, vec3_t del);
 
 /* --------------------------------------- */
 /*                ROTATION                 */
 /* --------------------------------------- */
 
 /* Get the current rotation of the object */
-void objGetRot(struct object *obj, Vec3 rot);
+void objGetRot(struct object *obj, vec3_t rot);
 
 /* Set the new rotation of the object */
-void objSetRot(struct object *obj, Vec3 rot);
+void objSetRot(struct object *obj, vec3_t rot);
 
 /* Add a vector to the rotation */
-void objAddRot(struct object *obj, Vec3 del);
+void objAddRot(struct object *obj, vec3_t del);
 
 /* --------------------------------------- */
 /*                VELOCITY                 */
 /* --------------------------------------- */
 
 /* Get the current velocity of the object */
-void objGetVel(struct object *obj, Vec3 vel);
+void objGetVel(struct object *obj, vec3_t vel);
 
 /* Set the velocity of the object */
-void objSetVel(struct object *obj, Vec3 vel);
+void objSetVel(struct object *obj, vec3_t vel);
 
 /* Add a vector to the velocity */
-void objAddVel(struct object *obj, Vec3 del);
+void objAddVel(struct object *obj, vec3_t del);
 
 /* --------------------------------------- */
 /*                DIRECTION                */
 /* --------------------------------------- */
 
 /* Set the facing-direction of the object */
-void objSetDir(struct object *obj, Vec3 dir);
+void objSetDir(struct object *obj, vec3_t dir);
 
 /* Get the facing-direction of the object */
-void objGetDir(struct object *obj, Vec3 dir);
+void objGetDir(struct object *obj, vec3_t dir);
 
 /* --------------------------------------- */
 /*                  MODEL                  */
@@ -149,7 +149,7 @@ void objGetDir(struct object *obj, Vec3 dir);
 void objSetModel(struct object *obj, char *mdl);
 
 /* Get the model-matrix for rendering */
-void objGetMatrix(struct object *obj, Mat4 mat);
+void objGetMatrix(struct object *obj, mat4_t mat);
 
 /* Update model-matrix */
 void objUpdMatrix(struct object *obj);

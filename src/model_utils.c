@@ -15,7 +15,7 @@
  * Returns: 0 on success, -1 on any error
  */
 int mdlLoadObj(char *pth, int *idxnum, int **idx, int *vtxnum,
-		Vec3 **vtx, Vec3 **nrm, Vec2 **uv)
+		vec3_t **vtx, vec3_t **nrm, vec2_t **uv)
 {
 	int ret = 0, i, j, tmp;
 	FILE *fd;
@@ -47,7 +47,7 @@ int mdlLoadObj(char *pth, int *idxnum, int **idx, int *vtxnum,
 	/* Read the data from the obj-file */
 	while(fscanf(fd, "%s", char_buf) != EOF) {
 		if(strcmp(char_buf, "vt") == 0) {
-			Vec2 tex_tmp;
+			vec2_t tex_tmp;
 
 			/* Read texture-data */
 			fscanf(fd, "%f %f", 
@@ -60,7 +60,7 @@ int mdlLoadObj(char *pth, int *idxnum, int **idx, int *vtxnum,
 
 		}
 		else if(strcmp(char_buf, "vn") == 0) {
-			Vec3 nrm_tmp;
+			vec3_t nrm_tmp;
 
 			/* Read the normal-vector */
 			fscanf(fd, "%f %f %f", 
@@ -70,7 +70,7 @@ int mdlLoadObj(char *pth, int *idxnum, int **idx, int *vtxnum,
 			stcPush(nrm_in, &nrm_tmp);
 		}
 		else if(strcmp(char_buf, "v") == 0) {
-			Vec3 vtx_tmp;
+			vec3_t vtx_tmp;
 
 			/* Read the vector-position */
 			fscanf(fd, "%f %f %f", 
@@ -155,8 +155,8 @@ int mdlLoadObj(char *pth, int *idxnum, int **idx, int *vtxnum,
 	/* Push the data into the different arrays */
 	for(i = 0; i < idx_conv->num; i++) {
 		int cur[3];
-		Vec3 vtx_tmp, nrm_tmp;
-		Vec2 tex_tmp;
+		vec3_t vtx_tmp, nrm_tmp;
+		vec2_t tex_tmp;
 
 		memcpy(cur, stcGet(idx_conv, i), INT3);
 

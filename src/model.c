@@ -125,7 +125,7 @@ struct model *mdlCreate(char *key)
  * @col_flg: A flag indicating if the col-buf contains colors or uv-coords
  */
 void mdlSetMesh(struct model *mdl, int idxnum, int *idx, 
-		int vtxnum, Vec3 *vtx, Vec3 *nrm, void *col, 
+		int vtxnum, vec3_t *vtx, vec3_t *nrm, void *col, 
 		uint8_t col_flg)
 {
 	int i;
@@ -292,8 +292,8 @@ int mdlLoad(char *key, char *obj, char *tex, char *shd)
 {
 	struct model *mdl = NULL;
 	int r, *idx, idxnum, vtxnum;
-	Vec3 *vtx, *nrm;
-	Vec2 *uv;
+	vec3_t *vtx, *nrm;
+	vec2_t *uv;
 
 	/* Allocate memory for the model-struct */
 	mdl = mdlCreate(key);
@@ -397,14 +397,14 @@ void mdlRemv(char *key)
  * @mdl: Pointer to the model to render
  * @mat: The model-matrix to use
  */
-void mdlRender(struct model *mdl, Mat4 mat)
+void mdlRender(struct model *mdl, mat4_t mat)
 {
 	int model, view, proj;
-	Mat4 mod, vie, pro;
+	mat4_t mod, vie, pro;
 
 	if(mdl == NULL || mdl->status != MDL_OK) return;
 
-	mat4Cpy(mod, mat);
+	mat4_cpy(mod, mat);
 	camGetView(vie);
 	camGetProj(pro);
 

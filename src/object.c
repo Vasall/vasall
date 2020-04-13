@@ -31,7 +31,7 @@ void objClose(void)
 
 }
 
-int objSet(char *key, char* mdl, Vec3 pos)
+int objSet(char *key, char* mdl, vec3_t pos)
 {
 	int r;
 	struct object *obj = NULL;
@@ -45,19 +45,19 @@ int objSet(char *key, char* mdl, Vec3 pos)
 	strcpy(obj->key, key);
 
 	/* Set the position */
-	vecCpy(obj->pos, pos);
+	vec3_cpy(obj->pos, pos);
 
 	/* Set the velocity */
-	vecSet(obj->vel, 0.0, 0.0, 0.0);
+	vec3_set(obj->vel, 0.0, 0.0, 0.0);
 
 	/* Set the direction */
-	vecSet(obj->dir, 1.0, 1.0, 1.0);
+	vec3_set(obj->dir, 1.0, 1.0, 1.0);
 
 	/* Set the scaling-vector */
-	vecSet(obj->scl, 1.0, 1.0, 1.0);
+	vec3_set(obj->scl, 1.0, 1.0, 1.0);
 
 	/* Set the rotation-values */
-	vecSet(obj->rot, 0.0, 0.0, 0.0);
+	vec3_set(obj->rot, 0.0, 0.0, 0.0);
 
 	/* Set the model */
 	obj->model = mdlGet(mdl);
@@ -112,17 +112,17 @@ struct object *objGet(char *key)
  */
 void objUpdate(struct object *obj, float delt)
 {
-	Vec3 del;
+	vec3_t del;
 	
-	vecCpy(del, obj->vel);
-	vecScl(del, delt, del);
+	vec3_cpy(del, obj->vel);
+	vec3_scl(del, delt, del);
 
 	objAddPos(obj, del);
 
 	obj->pos[1] = wldGetHeight(obj->pos[0], obj->pos[2]) + 2.2;
 	
-	if(vecMag(del) > 0.0) {
-		vecNrm(del, obj->dir);
+	if(vec3_mag(del) > 0.0) {
+		vec3_nrm(del, obj->dir);
 		obj->rot[1] = atan2(-obj->dir[2], obj->dir[0]);
 	}
 
@@ -152,9 +152,9 @@ void objRender(struct object *obj)
  * @obj: Pointer to the object to get the position of
  * @pos: The vector to copy the values into
 */
-void objGetPos(struct object *obj, Vec3 pos)
+void objGetPos(struct object *obj, vec3_t pos)
 {
-	vecCpy(pos, obj->pos);
+	vec3_cpy(pos, obj->pos);
 	objUpdMatrix(obj);
 }
 
@@ -166,10 +166,10 @@ void objGetPos(struct object *obj, Vec3 pos)
  * @obj: Pointer to the object to set the position of
  * @pos: The new position of the object
  */
-void objSetPos(struct object *obj, Vec3 pos)
+void objSetPos(struct object *obj, vec3_t pos)
 {
 	objUpdMatrix(obj);
-	vecCpy(obj->pos, pos);
+	vec3_cpy(obj->pos, pos);
 }
 
 /* 
@@ -180,9 +180,9 @@ void objSetPos(struct object *obj, Vec3 pos)
  * @obj: Pointer to the object to change the position of
  * @vec: The vector to add to the position-vector
  */
-void objAddPos(struct object *obj, Vec3 del)
+void objAddPos(struct object *obj, vec3_t del)
 {
-	vecAdd(obj->pos, del, obj->pos);
+	vec3_add(obj->pos, del, obj->pos);
 	objUpdMatrix(obj);
 }
 
@@ -197,9 +197,9 @@ void objAddPos(struct object *obj, Vec3 del)
  * @obj: Pointer to the object to get the rotation of
  * @rot: The vector to write the rotation-values to
 */
-void objGetRot(struct object *obj, Vec3 rot)
+void objGetRot(struct object *obj, vec3_t rot)
 {
-	vecCpy(rot, obj->rot);
+	vec3_cpy(rot, obj->rot);
 	objUpdMatrix(obj);
 }
 
@@ -211,9 +211,9 @@ void objGetRot(struct object *obj, Vec3 rot)
  * @obj: Pointer to the object to set the rotation of
  * @rot: The new rotation of the object
  */
-void objSetRot(struct object *obj, Vec3 rot)
+void objSetRot(struct object *obj, vec3_t rot)
 {
-	vecCpy(obj->rot, rot);
+	vec3_cpy(obj->rot, rot);
 	objUpdMatrix(obj);
 }
 
@@ -225,9 +225,9 @@ void objSetRot(struct object *obj, Vec3 rot)
  * @obj: Pointer to the object to change the rotation of
  * @del: The vector to add to the rotation
 */
-void objAddRot(struct object *obj, Vec3 del)
+void objAddRot(struct object *obj, vec3_t del)
 {
-	vecAdd(obj->rot, del, obj->rot);
+	vec3_add(obj->rot, del, obj->rot);
 	objUpdMatrix(obj);
 }
 
@@ -242,9 +242,9 @@ void objAddRot(struct object *obj, Vec3 del)
  * @obj: Pointer to the object to get the velocity of
  * @vel: The vector to write the velocity-values to
 */
-void objGetVel(struct object *obj, Vec3 vel)
+void objGetVel(struct object *obj, vec3_t vel)
 {
-	vecCpy(vel, obj->vel);
+	vec3_cpy(vel, obj->vel);
 }
 
 /* 
@@ -255,9 +255,9 @@ void objGetVel(struct object *obj, Vec3 vel)
  * @obj: Pointer to the object to set the velocity of
  * @rot: The new velocity of the object
  */
-void objSetVel(struct object *obj, Vec3 vel)
+void objSetVel(struct object *obj, vec3_t vel)
 {
-	vecCpy(obj->vel, vel);
+	vec3_cpy(obj->vel, vel);
 }
 
 /*
@@ -268,9 +268,9 @@ void objSetVel(struct object *obj, Vec3 vel)
  * @obj: Pointer to the object to change the velocity of
  * @del: The vector to add to the velocity
 */
-void objAddVel(struct object *obj, Vec3 del)
+void objAddVel(struct object *obj, vec3_t del)
 {
-	vecAdd(obj->vel, del, obj->vel);
+	vec3_add(obj->vel, del, obj->vel);
 }
 
 /* =============================================== */
@@ -284,10 +284,10 @@ void objAddVel(struct object *obj, Vec3 del)
  * @obj: Pointer to the object
  * @dir: The new direction-vector
  */
-void objSetDir(struct object *obj, Vec3 dir)
+void objSetDir(struct object *obj, vec3_t dir)
 {
-	vecCpy(obj->dir, dir);
-	vecNrm(obj->dir, obj->dir);
+	vec3_cpy(obj->dir, dir);
+	vec3_nrm(obj->dir, obj->dir);
 }
 
 /* 
@@ -297,9 +297,9 @@ void objSetDir(struct object *obj, Vec3 dir)
  * @obj: Pointer to the object
  * @dir: A vector to copy the values into
  */
-void objGetDir(struct object *obj, Vec3 dir)
+void objGetDir(struct object *obj, vec3_t dir)
 {
-	vecCpy(dir, obj->dir);
+	vec3_cpy(dir, obj->dir);
 }
 
 /* =============================================== */
@@ -327,9 +327,9 @@ void objSetModel(struct object *obj, char *mdl)
  * @obj: Pointer to the model
  * @mat: The matrix to write the model-matrix to
  */
-void objGetMatrix(struct object *obj, Mat4 mat)
+void objGetMatrix(struct object *obj, mat4_t mat)
 {
-	mat4Cpy(mat, obj->matrix);
+	mat4_cpy(mat, obj->matrix);
 }
 
 /*
@@ -340,11 +340,11 @@ void objGetMatrix(struct object *obj, Mat4 mat)
  */
 void objUpdMatrix(struct object *obj)
 {
-	Vec3 rot;
+	vec3_t rot;
 
-	vecCpy(rot, obj->rot);
+	vec3_cpy(rot, obj->rot);
 
-	mat4Idt(obj->matrix);
+	mat4_idt(obj->matrix);
 
 	obj->matrix[0x0] =  cos(rot[1]);
 	obj->matrix[0x2] = -sin(rot[1]);
@@ -364,7 +364,7 @@ void objUpdMatrix(struct object *obj)
 void objPrint(struct object *obj)
 {
 	printf("Key: %s\n", obj->key);
-	printf("Pos: "); vecPrint(obj->pos); printf("\n");
-	printf("Rot: "); vecPrint(obj->rot); printf("\n");
-	printf("Vel: "); vecPrint(obj->vel); printf("\n");
+	printf("Pos: "); vec3_dump(obj->pos); printf("\n");
+	printf("Rot: "); vec3_dump(obj->rot); printf("\n");
+	printf("Vel: "); vec3_dump(obj->vel); printf("\n");
 }

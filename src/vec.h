@@ -1,71 +1,39 @@
-#ifndef VASALL_VEC_H
-#define VASALL_VEC_H
+#ifndef _VEC_H
+#define _VEC_H
 
 #include "mat.h"
 
 #define M_PI 3.141592654
 #define TO_RADS (3.14/180.0)
 
-#define VEC3_SIZE (sizeof(float)*3)
-typedef float Vec3[3];
-
 #define VEC2_SIZE (sizeof(float)*2)
-typedef float Vec2[2];
+typedef float vec2_t[2];
+
+#define VEC3_SIZE (sizeof(float)*3)
+typedef float vec3_t[3];
 
 #define INT2 (sizeof(int)*2)
-typedef int Int2[2];
+typedef int int2_t[2];
 
 #define INT3 (sizeof(int)*3)
-typedef int Int3[3];
+typedef int int3_t[3];
 
-/* Set the values of a 3d-vector */
-void vecSet(Vec3 v, float x, float y, float z);
-
-/* Copy the values from the second vector into the first */
-void vecCpy(Vec3 dst, Vec3 src);
-
-/* Add two vectors */
-void vecAdd(Vec3 v1, Vec3 v2, Vec3 res);
-
-/* Subtract one vector from another */
-void vecSub(Vec3 v1, Vec3 v2, Vec3 res);
-
-/* Scale a vector by a factor */
-void vecScl(Vec3 v, float f, Vec3 res);
-
-/* Rotate a vector around the x axis */
-void vecRotX(Vec3 v, float angle, Vec3 res);
-
-/* Rotate a vector around the y axis */
-void vecRotY(Vec3 v, float angle, Vec3 res);
-
-/* Rotate a vector around the z axis */
-void vecRotZ(Vec3 v, float angle, Vec3 res);
-
-/* Rotates a vector around a specified axis */
-void vecRotAxis(Vec3 v, float angle, Vec3 axis, Vec3 res);
-
-/* Transform a vector using a 3x3 transformation matrix */
-void vecTransf(Vec3 v, Mat3 mat, Vec3 res);
-
-/* Divide the vector by the factor */
-void vecInvScl(Vec3 v, float f, Vec3 res);
-
-/* Get the magnitude of a vector and return the result */
-float vecMag(Vec3 v);
-
-/* Normalize a vector */
-void vecNrm(Vec3 v, Vec3 res);
-
-/* Calculate the dot-product */
-float vecDot(Vec3 v1, Vec3 v2);
-
-/* Calculate the cross-product */
-void vecCross(Vec3 v1, Vec3 v2, Vec3 res);
-
-/* Output a vector in the terminal */
-void vecPrint(Vec3 v);
-
-float vecBarryCentric(Vec3 p1, Vec3 p2, Vec3 p3, Vec2 pos);
+void vec3_set(vec3_t v, float x, float y, float z);
+void vec3_cpy(vec3_t dst, vec3_t src);
+void vec3_add(vec3_t v1, vec3_t v2, vec3_t res);
+void vec3_sub(vec3_t v1, vec3_t v2, vec3_t res);
+void vec3_scl(vec3_t v, float f, vec3_t res);
+void vec3_inv_scl(vec3_t v, float f, vec3_t res);
+float vec3_mag(vec3_t v);
+void vec3_nrm(vec3_t v, vec3_t res);
+float vec3_dot(vec3_t v1, vec3_t v2);
+void vec3_cross(vec3_t v1, vec3_t v2, vec3_t res);
+void vec3_rot_x(vec3_t v, float angle, vec3_t res);
+void vec3_rot_y(vec3_t v, float angle, vec3_t res);
+void vec3_rot_z(vec3_t v, float angle, vec3_t res);
+void vec3_rot_axes(vec3_t v, float angle, vec3_t axis, vec3_t res);
+void vec3_trans(vec3_t v, mat3_t mat, vec3_t res);
+void vec3_dump(vec3_t v);
+float vec3_barry_centric(vec3_t p1, vec3_t p2, vec3_t p3, vec2_t pos);
 
 #endif

@@ -1,7 +1,7 @@
 #ifndef _CAMERA_H_
 #define _CAMERA_H_
 
-#include "global.h"
+#include "camera.h"
 #include "vec.h"
 #include "mat.h"
 #include "object.h"

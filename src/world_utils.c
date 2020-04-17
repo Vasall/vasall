@@ -4,59 +4,65 @@
 #include "utils.h"
 
 /*
- * This function is used to calculate
- * the number of vertices needed for a
+ * This function is used to calculate the number of vertices needed for a
  * terrain of the size vtxnum*vtxnum.
  *
  * @vtxnum: The side-length of the terrain-square
  *
  * Returns: The number of vertices
  */
-int calcVertexNum(int vtxnum) {
+int calcVertexNum(int vtxnum)
+{
 	int bottom2Rows = 2 * vtxnum;
 	int remainingRowCount = vtxnum - 2;
 	int topCount = remainingRowCount * (vtxnum - 1) * 2;
-	return(topCount + bottom2Rows);
+	return topCount + bottom2Rows;
 }
 
 /*
- * Generate a buffer containing the
- * ordered indices for a square terrain 
- * of the length vtxnum*vtxnum.
+ * Generate a buffer containing the ordered indices for a square terrain
+ * of the length vtxnum * vtxnum.
  *
  * @vtxnum: The side-length of the terrain-square
  * @idxlen: A pointer to write the number of indices to
  *
- * Returns: An array containing the ordered 
- * 	indices or NULL if an error occurred
+ * Returns: An array containing the ordered indices or NULL if an 
+ * 	error occurred
  */
-uint32_t *genIndexBuf(int vtxnum, int *idxlen) {
-	uint32_t size = ((vtxnum - 1) * (vtxnum - 1) * 6), *indices;
-	int ptr, rowlen = (vtxnum - 1) * 2;
+unsigned int *genIndexBuf(int vtxnum, int *idxlen)
+{
+	unsigned int size = ((vtxnum - 1) * (vtxnum - 1) * 6);
+	unsigned int *indices;
+	int ptr;
+	int rowlen = (vtxnum - 1) * 2;
 
 	*idxlen = size;
-	indices = malloc(size * sizeof(uint32_t));
-	if(indices == NULL) return(NULL);
+	if(!(indices = malloc(size * sizeof(uint32_t))))
+		return NULL;
+	
 	ptr = storeTopSection(indices, rowlen, vtxnum);
 	ptr = storeSecondLastLine(indices, ptr, rowlen, vtxnum);
 	ptr = storeLastLine(indices, ptr, rowlen, vtxnum);
-	return(indices);
+
+	return indices;
 }
 
 /*
- * Fill the vertices in the lines up
- * to the second-to-last. From there
- * special conditions apply.
+ * Fill the vertices in the lines up to the second-to-last. From there special
+ * conditions apply.
  *
  * @indices: The index-buffer
  * @rowlen: The length of a single row
  * @vtxnum: The side-length of the square-terrain
  *
- * Returns: The current position in 
- * 	the index-buffer
+ * Returns: The current position in the index-buffer
  */
-int storeTopSection(uint32_t *indices, int rowlen, int vtxnum) {
-	int ptr = 0, row, col;
+int storeTopSection(unsigned int *indices, int rowlen, int vtxnum)
+{
+	int ptr = 0;
+	int row;
+	int col;
+	
 	for (row = 0; row < vtxnum - 3; row++) {
 		for (col = 0; col < vtxnum - 1; col++) {
 			int topLeft = (row * rowlen) + (col * 2);
@@ -68,7 +74,8 @@ int storeTopSection(uint32_t *indices, int rowlen, int vtxnum) {
 					col % 2 != row % 2);
 		}
 	}
-	return(ptr);
+	
+	return ptr;
 }
 
 /*
@@ -79,11 +86,14 @@ int storeTopSection(uint32_t *indices, int rowlen, int vtxnum) {
  * @rowlen: The length of a single row
  * @vtxnum: The side-length of the square-terrain
  *
- * Returns: The updated position in the
- * 	index-array 
+ * Returns: The updated position in the index-array 
  */
-int storeSecondLastLine(uint32_t *indices, int ptr, int rowlen, int vtxnum) {
-	int col, row = vtxnum - 3;
+int storeSecondLastLine(unsigned int *indices, int ptr, int rowlen, 
+		int vtxnum)
+{
+	int col;
+	int row = vtxnum - 3;
+	
 	for (col = 0; col < vtxnum - 1; col++) {
 		int topLeft = (row * rowlen) + (col * 2);
 		int topRight = topLeft + 1;
@@ -93,6 +103,7 @@ int storeSecondLastLine(uint32_t *indices, int ptr, int rowlen, int vtxnum) {
 				bottomRight, indices, ptr, 
 				((col % 2) != (row % 2)));
 	}
+
 	return(ptr);
 }
 
@@ -104,8 +115,11 @@ int storeSecondLastLine(uint32_t *indices, int ptr, int rowlen, int vtxnum) {
  * @rowlen: The length of a single row
  * @vtxnum: The side-length of the square-terrain
  */
-int storeLastLine(uint32_t *indices, int ptr, int rowlen, int vtxnum) {
-	int col, row = vtxnum - 2;
+int storeLastLine(unsigned int *indices, int ptr, int rowlen, int vtxnum)
+{
+	int col;
+	int row = vtxnum - 2;
+	
 	for (col = 0; col < vtxnum - 1; col++) {
 		int topLeft = (row * rowlen) + col;
 		int topRight = topLeft + 1;
@@ -115,12 +129,12 @@ int storeLastLine(uint32_t *indices, int ptr, int rowlen, int vtxnum) {
 				bottomRight, indices, ptr, 
 				((col % 2) != (row % 2)));
 	}
-	return(ptr);
+
+	return ptr;
 }
 
 /*
- * Store the vertices for a single quad.
- * Note that this is a subfunction, that
+ * Store the vertices for a single quad. Note that this is a subfunction, that
  * will be called by the generation-function.
  *
  * @tl: The number of the top-left vertex
@@ -131,21 +145,21 @@ int storeLastLine(uint32_t *indices, int ptr, int rowlen, int vtxnum) {
  * @ptr: The current position in the index-buffer
  * @flg: Should the top- or bottom-left point be used
  *
- * Returns: The updated position in the
- * 	index-buffer
+ * Returns: The updated position in the index-buffer
  */
-int storeQuad(int tl, int tr, int bl, int br, uint32_t *indices, 
-		int ptr, int8_t flg) {
+int storeQuad(int tl, int tr, int bl, int br, unsigned int *indices,
+		int ptr, int8_t flg)
+{
 	ptr = storeLeftTriangle(tl, tr, bl, br, indices, ptr, flg);
 	indices[ptr++] = tr;
 	indices[ptr++] = flg ? tl : bl;
 	indices[ptr++] = br;
-	return(ptr);
+
+	return ptr;
 }
 
 /*
- * Store the vertices for all quads of the
- * last row.
+ * Store the vertices for all quads of the last row.
  * 
  * @tl: The number of the top-left vertex
  * @tr: The number of the top-right vertex
@@ -155,23 +169,21 @@ int storeQuad(int tl, int tr, int bl, int br, uint32_t *indices,
  * @ptr: The current position in the index-buffer
  * @flg: Should the top- or bottom-left point be used
  *
- * Returns: The updated position in the
- * 	index-buffer
+ * Returns: The updated position in the index-buffer
  */
-int storeLastRowQuad(int tl, int tr, int bl, int br, uint32_t *indices, 
-		int ptr, int8_t flg) {
+int storeLastRowQuad(int tl, int tr, int bl, int br, unsigned int *indices, 
+		int ptr, int8_t flg)
+{
 	ptr = storeLeftTriangle(tl, tr, bl, br, indices, ptr, flg);
 	indices[ptr++] = br;
 	indices[ptr++] = tr;
 	indices[ptr++] = flg ? tl : bl;
-	return(ptr);
+	return ptr;
 }
 
 /*
- * Store the vertices for the left triangle
- * of the quad. This can be abstracted as a
- * single function, as it is the same for all
- * quads.
+ * Store the vertices for the left triangle of the quad. This can be abstracted
+ * as a single function, as it is the same for all quads.
  *
  * @tl: The number of the top-left vertex
  * @tr: The number of the top-right vertex
@@ -181,13 +193,13 @@ int storeLastRowQuad(int tl, int tr, int bl, int br, uint32_t *indices,
  * @ptr: The current position in the index-buffer
  * @flg: Should the top- or bottom-right point be used
  *
- * Returns: The updated position in the
- * 	index-buffer
+ * Returns: The updated position in the index-buffer
  */
-int storeLeftTriangle(int tl, int tr, int bl, int br, uint32_t *indices, 
-		int ptr, int8_t flg) {
+int storeLeftTriangle(int tl, int tr, int bl, int br, unsigned int *indices, 
+		int ptr, int8_t flg)
+{
 	indices[ptr++] = tl;
 	indices[ptr++] = bl;
 	indices[ptr++] = flg ? br : tr;
-	return(ptr);
+	return ptr;
 }

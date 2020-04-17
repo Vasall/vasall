@@ -4,33 +4,28 @@
 #include <GL/gl.h>
 
 #include "world.h"
-#include <math.h>
-#include "global.h"
+#include "core.h"
 #include "vec.h"
 #include "utils.h"
 #include "shader.h"
 #include "loader.h"
 #include "world_utils.h"
 
+#include <math.h>
+
 /* Redefine external variables */
 struct world *world = NULL;
 
-static int twodim(int x, int y, int w) {return(y * w + x);}
+static int twodim(int x, int y, int w) {return y * w + x;}
 static float _abs(float val) {return(val < 0) ? (-val) : (val);}
 
-/*
- * Initialize the global world-struct
- *
- * Returns: Either 0 on success or -1
- * 	if an error occurred
- */
-int wldCreate(void)
+int wld_create(void)
 {
 	vec2_t del;
 
-	/* Allocate space for the world-struct */
-	world = (struct world *)malloc(sizeof(struct world));
-	if(world == NULL) return(-1);
+	world = malloc(sizeof(struct world));
+	if(world == NULL)
+		return -1;
 
 	/* Allocate space for the heightmap */
 	world->size[0] = WORLD_SIZE;
@@ -49,7 +44,8 @@ int wldCreate(void)
 	
 	world->ptnum = (WORLD_SIZE * WORLD_SIZE);
 	world->heights = malloc(sizeof(float) * (world->ptnum));
-	if(world->heights == NULL) return(-1);
+	if(world->heights == NULL)
+		goto err_free_world;
 
 	memset(world->heights, 0, world->ptnum);
 
@@ -59,51 +55,34 @@ int wldCreate(void)
 	world->terrain = NULL;
 
 	/* Generate the terrain */
-	wldGenTerrain();
+	wld_gen_terrain();
 
-	return(0);
+	return 0;
+
+err_free_world:
+	free(world);
+	return -1;
 }
 
-/*
- * Delete a world and free allocated memory.
- *
- * @world: Pointer to the world
- * 	to delete
- */
-void wldDestroy(void)
+void wld_destroy(void)
 {
-	/* Free the heightmap  */
-	free(world->heights);
+	if(!world || !world->heights)
+		return;
 
-	/* Free the struct itself */
+	free(world->heights);
 	free(world);
 }
 
-/*
- * Draw a world using OpenGL.
- *
- * @world: A pointer to the world to draw
- */
-void wldRender(void) 
+void wld_render(void) 
 {
 	mat4_t idt;
 	mat4_idt(idt);
-	mdlRender(world->terrain, idt);
+	mdl_render(world->terrain, idt);
 }
 
-/*
- * Get the height of the world at a
- * given position.
- *
- * @x: The x-position in the world
- * @z: The z-position in the world
- *
- * Returns: The height at the given position
- */
-float wldGetHeight(float x, float z)
+float wld_get_height(float x, float z)
 {
 	float ret = 0.0;
-
 	vec2_t rel_pos, coord;
 	int2_t map_idx;
 	float heights[4];
@@ -116,8 +95,9 @@ float wldGetHeight(float x, float z)
 
 	/* Check if the position is in range */
 	if(map_idx[0] < 0 || map_idx[0] >= world->size[0] ||
-				map_idx[1] < 0 || map_idx[1] >= world->size[1]) {
-		return(0);
+				map_idx[1] < 0 ||
+				map_idx[1] >= world->size[1]) {
+		return 0;
 	}
 
 	heights[0] = world->heights[twodim(map_idx[0], 
@@ -168,39 +148,31 @@ float wldGetHeight(float x, float z)
 
 	}
 
-
-	return(ret);
+	return ret;
 }
 
-/*
- * Generate a new terrain and write it
- * to the world-struct.
- *
- * Returns: Either 0 on success or -1
- * 	if an error occurred
- */
-int wldGenTerrain(void)
+int wld_gen_terrain(void)
 {
-	int vtxnum, x, z, w, count, i, j, idxnum, *idx = NULL;
+	int vtx_num, x, z, w, count, i, j, idx_num, *idx = NULL;
 	float **hImg = NULL, *heights = NULL, xpos, zpos;
-	vec3_t *vtx = NULL, *lastRow = NULL, *nrm = NULL, *col = NULL;
+	vec3_t *vtx = NULL, *last_row = NULL, *nrm = NULL, *col = NULL;
 	struct model *mdl;
 
 	w = (int)world->size[0];
 
 	/* Calculate the amount of vertices */
-	vtxnum = calcVertexNum(w);
+	vtx_num = calcVertexNum(w);
 
 	/* Initialize the vertex-array */
-	vtx = calloc(vtxnum, VEC3_SIZE);
-	if(vtx == NULL) return(-1);
+	if(!(vtx = calloc(vtx_num, VEC3_SIZE)))
+		return -1;
 
 	/* Create an array for all vertice-colors */
-	col = calloc(vtxnum, VEC3_SIZE);
-	if(col == NULL) return(-1);
+	if(!(col = calloc(vtx_num, VEC3_SIZE)))
+		goto err_free;
 
-	nrm = calloc(vtxnum, VEC3_SIZE);
-	if(nrm == NULL) return(-1);
+	if(!(nrm = calloc(vtx_num, VEC3_SIZE)))
+		goto err_free;
 
 	hImg = loadPPMHeightmap("../res/images/heightmap_256.ppm", 1, 256);
 	heights = world->heights;
@@ -210,8 +182,8 @@ int wldGenTerrain(void)
 			heights[i] = (40.0 * hImg[x][z] + 10.0) * 1.0;
 		}
 	}
-	lastRow = malloc(((int)world->size[0] - 1) * VEC3_SIZE * 2);
-	if(lastRow == NULL) return(-1);
+	if(!(last_row = malloc(((int)world->size[0] - 1) * VEC3_SIZE * 2)))
+		goto err_free;
 
 	/* Iterate over all points in the heightmap */
 	count = 0;
@@ -241,22 +213,23 @@ int wldGenTerrain(void)
 			vec3_cpy(vtx[count], ctl);
 			count++;
 
-			if(z != world->size[1] - 2 || x == world->size[0] - 2) {	
+			if(z != world->size[1] - 2 || 
+					x == world->size[0] - 2) {
 				vec3_cpy(vtx[count], ctr);
 				count++;
 			}
 
 			if(z == world->size[1] - 2) {
-				vec3_cpy(lastRow[x * 2], cbl);
-				vec3_cpy(lastRow[x * 2 + 1], cbr);
+				vec3_cpy(last_row[x * 2], cbl);
+				vec3_cpy(last_row[x * 2 + 1], cbr);
 			}
 		}
 	}
 
 	for(j = 0; j < world->size[0] - 1; j++) {
 		vec3_t left, right;
-		vec3_cpy(left, lastRow[j * 2]);
-		vec3_cpy(right, lastRow[j * 2 + 1]);
+		vec3_cpy(left, last_row[j * 2]);
+		vec3_cpy(right, last_row[j * 2 + 1]);
 
 		if(left[0] == 0 || right[0] == 1) {
 			vec3_cpy(vtx[count], left);
@@ -267,11 +240,11 @@ int wldGenTerrain(void)
 		count++;
 	}
 
-	idx = (int *)genIndexBuf(world->size[0], &idxnum);
-	if(idx == NULL) return(-1);
+	if(!(idx = (int *)genIndexBuf(world->size[0], &idx_num)))
+		goto err_free;
 
 	/* Calculate the colors for the vertices */
-	for(j = 0; j < idxnum - 2; j += 3) {
+	for(j = 0; j < idx_num - 2; j += 3) {
 		vec3_t col_tmp;
 		vec3_t v, mid;
 		vec3_set(mid, 0.0, 0.0, 0.0);
@@ -312,7 +285,7 @@ int wldGenTerrain(void)
 	}
 
 	/* Calculate the normal-vectors */
-	for(i = 0; i < idxnum - 2; i += 3) {
+	for(i = 0; i < idx_num - 2; i += 3) {
 		vec3_t v1, v2, v3, del1, del2, nrm_tmp;
 		
 		vec3_cpy(v1, vtx[idx[i]]);
@@ -330,17 +303,32 @@ int wldGenTerrain(void)
 	}
 
 	/* Allocate memory for the model-struct */
-	if((mdl = mdlCreate("wld_")) == NULL) goto failed;
-	mdlSetShader(mdl, "wld_");
-	mdlSetMesh(mdl, idxnum, (int32_t *)idx, vtxnum, vtx, nrm, col, 0);
-	if(mdlFinish(mdl) < 0) goto failed;
+	if(!(mdl = mdl_begin("wld_")))
+		goto err_free;
+	
+	mdl_set_shader(mdl, "wld_");
+	mdl_set_mesh(mdl, idx_num, (int32_t *)idx, vtx_num, vtx, nrm, col, 0);
+	if(mdl_end(mdl) < 0)
+		goto err_free;
 
-	world->terrain = mdlGet("wld_");
-	if(world->terrain == NULL) goto failed;
+	if(!(world->terrain = mdl_get("wld_")))
+		goto err_free;
 
-	return(0);
+	if(vtx) free(vtx);
+	if(col) free(col);
+	if(nrm) free(nrm);
+	if(last_row) free(last_row);
+	if(idx) free(idx);
 
-failed:
-	return(-1);
+	return 0;
+
+err_free:
+	if(vtx) free(vtx);
+	if(col) free(col);
+	if(nrm) free(nrm);
+	if(last_row) free(last_row);
+	if(idx) free(idx);
+
+	return -1;
 }
 

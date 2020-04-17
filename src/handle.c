@@ -140,10 +140,10 @@ void game_update(void)
 
 	vec3_add(forw, right, vel);
 
-	objSetVel(core->obj, vel);
+	obj_set_vel(core->obj, vel);
 
 	/* Update the object */
-	objUpdate(core->obj, 1.0);
+	obj_update(core->obj, 1.0);
 
 	/* Update the camera-position */
 	camUpdate();
@@ -153,7 +153,7 @@ void game_render(void)
 {
 	/* Render the world */
 	camUpdViewMat();
-	wldRender();
+	wld_render();
 
-	objRender(core->obj);
+	obj_render(core->obj);
 }

@@ -1,92 +1,70 @@
+#include "model.h"
+#include "core.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "model.h"
-#include "global.h"
 
 /* Redefine external variables */
-struct ht_t *model_table = NULL;
+struct ht_t *models = NULL;
 
-/*
- * Initialize the model-cache.
- *
- * Returns: Either 0 on success or -1
- * 	if an error occurred
- */
-int mdlInit(void)
+int mdl_init(void)
 {
-	model_table = htCreate(MDL_SLOTS);
-	if(model_table == NULL) return(-1);
+	if(!(models = ht_init(MDL_SLOTS)))
+		return -1;
 
-	return(0);
+	return 0;
 }
 
-/*
- * Close the model-cache and free the
- * allocated memory. Also detach everything
- * from OpenGL, which has been used by the
- * models.
- */
-void mdlClose(void)
+void mdl_close(void)
 {
 	int i;
 	struct ht_entry *ptr;
 	struct model *mdl;
 
-	for(i = 0; i < model_table->size; i++) {
-		ptr = model_table->entries[i];
+	for(i = 0; i < models->size; i++) {
+		ptr = models->entries[i];
 
 		while(ptr != NULL) {
 			mdl = (struct model *)ptr->buf;	
 
 			/* Destroy buffer-array-objects */
-			if(mdl->vtx_bao != 0) {
+			if(mdl->vtx_bao)
 				glDeleteBuffers(1, &mdl->vtx_bao);
-			}
 
-			if(mdl->idx_bao != 0) {
-				glDeleteBuffers(1, &mdl->idx_bao);	
-			}
+			if(mdl->idx_bao)
+				glDeleteBuffers(1, &mdl->idx_bao);
 
 			/* Destroy vertex-array-object */
-			if(mdl->vao != 0) {
+			if(mdl->vao)
 				glDeleteVertexArrays(1, &mdl->vao);
-			}
 
 			/* Free buffers */
-			if(mdl->idx_buf != NULL) free(mdl->idx_buf);
-			if(mdl->vtx_buf != NULL) free(mdl->vtx_buf);
+			if(mdl->idx_buf)
+				free(mdl->idx_buf);
+
+			if(mdl->vtx_buf)
+				free(mdl->vtx_buf);
 
 			ptr = ptr->next;
 		}	
 	}
 
 	/* Destroy the model-table */
-	htDestroy(model_table);
+	ht_close(models);
 }
 
-/* 
- * Create a new model by allocating the
- * necessary memory. Note that this function
- * doesn't yet push the model into the
- * model-table, as this will be done when
- * finishing the model.
- *
- * @key: The key to bind the model to
- *
- * Returns: Either a pointer to the model
- * 	or NULL if an error occurred
- */
-struct model *mdlCreate(char *key)
+struct model *mdl_begin(char *key)
 {
 	struct model *mdl;
 
 	/* Check if the given key is valid */
-	if(key == NULL || strlen(key) >= MDL_KEY_LEN) return(NULL);
+	if(key == NULL || strlen(key) >= MDL_KEY_LEN)
+		return NULL;
 
-	mdl = malloc(sizeof(struct model));
-	if(mdl == NULL) return(NULL);
+	if(!(mdl = malloc(sizeof(struct model))))
+		return NULL;
 
 	/* Copy the key for this model */
 	strcpy(mdl->key, key);
@@ -107,24 +85,10 @@ struct model *mdlCreate(char *key)
 	/* Generate a new vao */
 	glGenVertexArrays(1, &mdl->vao);
 
-	return(mdl);
+	return mdl;
 }
 
-/* 
- * Attach a mesh to the model by copying the
- * necessary data into the different buffers
- * and adding them in OpenGL to the model.
- *
- * @mdl: Pointer to the model
- * @idxnum: The length of the index-buffer
- * @idx: A buffer containing the indices
- * @vtxnum: The number of vertices
- * @vtx: The vertex-positions
- * @nrm: The normal-vectors
- * @col: A buffer containing either uv-coordinates or color-values
- * @col_flg: A flag indicating if the col-buf contains colors or uv-coords
- */
-void mdlSetMesh(struct model *mdl, int idxnum, int *idx, 
+void mdl_set_mesh(struct model *mdl, int idxnum, int *idx, 
 		int vtxnum, vec3_t *vtx, vec3_t *nrm, void *col, 
 		uint8_t col_flg)
 {
@@ -135,17 +99,18 @@ void mdlSetMesh(struct model *mdl, int idxnum, int *idx,
 	int vtx_sizeb = ((3 * 2) + col_sizeb);
 	int vtx_size = vtx_sizeb * sizeof(float);
 
-	if(mdl == NULL || mdl->status != MDL_OK) return;
+	if(mdl == NULL || mdl->status != MDL_OK)
+		return;
 
 	/* Allocate memory for the indices */
 	mdl->idx_num = idxnum;
-	mdl->idx_buf = malloc(idxnum * sizeof(int));
-	if(mdl->idx_buf == NULL) goto failed;
+	if(!(mdl->idx_buf = malloc(idxnum * sizeof(int))))
+		goto err_set_status;
 
 	/* Allocate memory for the vertex-data */
 	mdl->vtx_num = vtxnum;
-	mdl->vtx_buf = malloc(vtxnum * vtx_size);
-	if(mdl->vtx_buf == NULL) goto failed;
+	if(!(mdl->vtx_buf = malloc(vtxnum * vtx_size)))
+		goto err_set_status;
 
 	/* Copy the indices into the allocated index-buffer */
 	memcpy(mdl->idx_buf, idx, idxnum * sizeof(int));
@@ -181,228 +146,174 @@ void mdlSetMesh(struct model *mdl, int idxnum, int *idx,
 	/* Register the indices */
 	glGenBuffers(1, &mdl->idx_bao);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mdl->idx_bao);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, idxnum * sizeof(int), mdl->idx_buf, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, idxnum * sizeof(int), 
+			mdl->idx_buf, GL_STATIC_DRAW);
 
 	/* Unbind the vertex-array-object */
 	glBindVertexArray(0);
 
 	return;
 
-failed:
+err_set_status:
 	mdl->status = MDL_ERR_MESH;
 }
 
-/* 
- * Attach a texture to the model, by first
- * copying the pixel-data into a different
- * buffer and then binding it using OpenGL.
- *
- * @mdl: Pointer to the model
- * @tex: The key of the texture to use
- */
-void mdlSetTex(struct model *mdl, char *tex)
+void mdl_set_texture(struct model *mdl, char *tex)
 {
-	struct texture *texture;
+	struct texture *tex_ptr = NULL;
 
-	if(mdl == NULL || mdl->status != MDL_OK) return;
+	if(mdl == NULL || mdl->status != MDL_OK)
+		return;
 
-	texture = texGet(tex);
-	if(texture == NULL) goto failed;
+	if(!(tex_ptr = tex_get(tex)))
+		goto err_set_status;
 
-	mdl->tex = texture;
+	mdl->tex = tex_ptr;
 	return;
 
-failed:
+err_set_status:
 	mdl->status = MDL_ERR_TEXTURE;
 }
 
-/* 
- * Attach a shader from the shader-table 
- * to the model. This function will use
- * the given shader-key to get the shader
- * from the shader-table and then add a
- * pointer to the struct to the model.
- * If no shader with that key is in the
- * shader-table, the shader won't be set
- * and the status of the model will be
- * updated.
- *
- * @mdl: Pointer to the model
- * @shd: The key for the shader in the shader-table
- */
-void mdlSetShader(struct model *mdl, char *shd)
+void mdl_set_shader(struct model *mdl, char *shd)
 {
 	struct shader *shd_ptr;
 	
-	if(mdl == NULL || mdl->status != MDL_OK) return;
+	if(mdl == NULL || mdl->status != MDL_OK)
+		return;
 
-	shd_ptr = shdGet(shd);
-	if(shd_ptr == NULL) goto failed;
+	if(!(shd_ptr = shd_get(shd)))
+		goto err_set_status;
 
 	mdl->shader = shd_ptr;
 	return;
 
-failed:
+err_set_status:
 	mdl->status = MDL_ERR_SHADER;	
 }
 
-/* 
- * Finish the model and push it into the model-table.
- * Note that this function will only put the model
- * into the table, if the status is MDL_OK, which
- * means that the model has been created successfully.
- * To get the actual status of the model, just check
- * the status-attribute.
- *
- * @mdl: Pointer to the model to finish
- *
- * Returns: Either 0 on success or -1
- * 	if an error occurred
- */
-int mdlFinish(struct model *mdl)
+int mdl_end(struct model *mdl)
 {
-	if(mdl == NULL || mdl->status != MDL_OK) return(-1);
+	int sz = sizeof(struct model);
 
-	if(htSet(model_table, mdl->key, (const uint8_t *)mdl, 
-			sizeof(struct model)) < 0) {
-		goto failed;
-	}
+	if(mdl == NULL || mdl->status != MDL_OK)
+		return -1;
 
-	/* Everything should have been copied into the table,
-	 * so we should be able to free this struct. */
+	if(ht_set(models, mdl->key, (const uint8_t *)mdl, sz) < 0)
+		goto err_set_status;
+
+	/* 
+	 * Everything should have been copied into the table,
+	 * so we should be able to free this struct.
+	 */
 	free(mdl);
+	return 0;
 
-	return(0);
-
-failed:
+err_set_status:
 	mdl->status = MDL_ERR_FINISHING;
-      	return(-1);
+      	return -1;
 }
 
-/* 
- * Start the creation of a new model. 
- * First push a new model struct into 
- * the model-cache and mark the new 
- * struct as the currently active one.
- *
- * Returns: Either a pointer to the new
- * 	model of NULL
- */
-int mdlLoad(char *key, char *obj, char *tex, char *shd)
+int mdl_load(char *key, char *obj, char *tex, char *shd)
 {
 	struct model *mdl = NULL;
-	int r, *idx, idxnum, vtxnum;
+	int *idx, idxnum, vtxnum;
 	vec3_t *vtx, *nrm;
 	vec2_t *uv;
 
 	/* Allocate memory for the model-struct */
-	mdl = mdlCreate(key);
-	if(mdl == NULL) goto failed;
+	if(!(mdl = mdl_begin(key)))
+		goto err_del_mdl;
 
-	r = mdlLoadObj(obj, &idxnum, &idx, &vtxnum, &vtx, &nrm, &uv);
-	if(r < 0) goto failed;
+	if(mdl_load_obj(obj, &idxnum, &idx, &vtxnum, &vtx, &nrm, &uv) < 0)
+		goto err_del_mdl;
 
-	mdlSetTex(mdl, tex);
-	mdlSetShader(mdl, shd);
+	mdl_set_texture(mdl, tex);
+	mdl_set_shader(mdl, shd);
 
-	mdlSetMesh(mdl, idxnum, idx, vtxnum, vtx, nrm, uv, 1);
+	mdl_set_mesh(mdl, idxnum, idx, vtxnum, vtx, nrm, uv, 1);
 
-	if(mdlFinish(mdl) < 0) goto failed;
+	if(mdl_end(mdl) < 0)
+		goto err_del_mdl;
 
 	mdl->status = MDL_OK;
+	return 0;
 
-	return(0);
-
-failed:
-	/* Delete the local model-struct */
-	mdlDel(mdl);
-
-	return(-1);
+err_del_mdl:
+	mdl_del(mdl);
+	return -1;
 }
 
-/*
- * Get a model from the model-table an return the pointer.
- *
- * @key: The key of the model
- *
- * Returns: Either the pointer to the model or NULL
- * 	if an error occurred
- */
-struct model *mdlGet(char *key)
+struct model *mdl_get(char *key)
 {
-	int r;
 	struct model *mdl;
 
-	r = htGet(model_table, key, (uint8_t **)&mdl, NULL);
-	if(r < 0) return(NULL);
+	if(ht_get(models, key, (uint8_t **)&mdl, NULL) < 0)
+		return NULL;
 
-	return(mdl);
+	return mdl;
 }
 
-/*
- * This function is going to be used, to
- * delete a standalone model, which hasn't
- * been added to the model-table yet.
- *
- * @mdl: The pointer to the model
- */
-void mdlDel(struct model *mdl)
+void mdl_del(struct model *mdl)
 {
 	/* Destroy the buffer-array-objects */
-	if(mdl->idx_bao != 0) glDeleteBuffers(1, &mdl->idx_bao);
-	if(mdl->vtx_bao != 0) glDeleteBuffers(1, &mdl->vtx_bao);
+	if(mdl->idx_bao)
+		glDeleteBuffers(1, &mdl->idx_bao);
+	
+	if(mdl->vtx_bao)
+		glDeleteBuffers(1, &mdl->vtx_bao);
 
 	/* Destroy the vertex-array-object */
-	if(mdl->vao != 0) glDeleteVertexArrays(1, &mdl->vao);
+	if(mdl->vao)
+		glDeleteVertexArrays(1, &mdl->vao);
 
 	/* Free the buffers */
-	if(mdl->idx_buf != NULL) free(mdl->idx_buf);
-	if(mdl->vtx_buf != NULL) free(mdl->vtx_buf);
+	if(mdl->idx_buf)
+		free(mdl->idx_buf);
+	
+	if(mdl->vtx_buf)
+		free(mdl->vtx_buf);
 
 	/* Free the struct itself */
 	free(mdl);
 }
 
-/* 
- * Unbind everything from OpenGL, delete a model and 
- * remove it from the model-table.
- *
- * @key: The key of the model
- */
-void mdlRemv(char *key)
+void mdl_remv(char *key)
 {
 	struct model *mdl;
 
-	mdl = mdlGet(key);
-	if(mdl == NULL) return;
+	if(!(mdl = mdl_get(key)))
+		return;
 
 	/* Destroy the buffer-array-objects */
-	if(mdl->idx_bao != 0) glDeleteBuffers(1, &mdl->idx_bao);
-	if(mdl->vtx_bao != 0) glDeleteBuffers(1, &mdl->vtx_bao);
+	if(mdl->idx_bao)
+		glDeleteBuffers(1, &mdl->idx_bao);
+	
+	if(mdl->vtx_bao)
+		glDeleteBuffers(1, &mdl->vtx_bao);
 
 	/* Destroy the vertex-array-object */
-	if(mdl->vao != 0) glDeleteVertexArrays(1, &mdl->vao);
+	if(mdl->vao)
+		glDeleteVertexArrays(1, &mdl->vao);
 
 	/* Free the buffers */
-	if(mdl->idx_buf != NULL) free(mdl->idx_buf);
-	if(mdl->vtx_buf != NULL) free(mdl->vtx_buf);
+	if(mdl->idx_buf)
+		free(mdl->idx_buf);
+	
+	if(mdl->vtx_buf)
+		free(mdl->vtx_buf);
 
 	/* Remove the model from the model-table */
-	htDel(model_table, mdl->key);
+	ht_del(models, mdl->key);
 }
 
-/*
- * Render a model with the given model-matrix.
- *
- * @mdl: Pointer to the model to render
- * @mat: The model-matrix to use
- */
-void mdlRender(struct model *mdl, mat4_t mat)
+void mdl_render(struct model *mdl, mat4_t mat)
 {
 	int model, view, proj;
 	mat4_t mod, vie, pro;
 
-	if(mdl == NULL || mdl->status != MDL_OK) return;
+	if(mdl == NULL || mdl->status != MDL_OK)
+		return;
 
 	mat4_cpy(mod, mat);
 	camGetView(vie);
@@ -411,9 +322,8 @@ void mdlRender(struct model *mdl, mat4_t mat)
 	glBindVertexArray(mdl->vao);
 	glUseProgram(mdl->shader->prog);
 
-	if(mdl->tex != NULL) {
+	if(mdl->tex)
 		glBindTexture(GL_TEXTURE_2D, mdl->tex->id);
-	}
 
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);

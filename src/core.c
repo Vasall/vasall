@@ -1,49 +1,28 @@
-#include "global.h"
+#include "core.h"
 
 /* Redefine external variables */
 uint8_t zero = 0;
 uint8_t one = 1;
-gloWrapper *core = NULL;
-char gloErrBuf[256];
+struct core_wrapper *core = NULL;
+char glo_err_buf[256];
 
-/* 
- * Set a new error-message.
- *
- * @err: The string to set as the new
- * 	error message
-*/
-void gloSetError(char *err)
+void glo_set_err(char *err)
 {	
-	strcpy(gloErrBuf, err);
+	strcpy(glo_err_buf, err);
 }
 
-/* 
- * Get the most recent error-message.
- *
- * Returns: The most recent error-message
-*/
-char *gloGetError(void)
+char *glo_get_err(void)
 {
-	return(gloErrBuf);
+	return glo_err_buf;
 }
 
 
-/*
- * Initialize the global-wrapper and setup the
- * core instances and prepare the attributes.
- *
- * @argc: The number of arguments passed to main
- * @argv: The argument-buffer passed to main
- *
- * Returns: Either 0 on success or -1
- * 	if an error occurred
-*/
-int gloInit(int argc, char **argv)
+int core_init(int argc, char **argv)
 {
 	if(argc) {/* Prevent warning for not using argc */}
 
-	core = calloc(1, sizeof(gloWrapper));
-	if(core == NULL) return(-1);
+	if(!(core = calloc(1, sizeof(struct core_wrapper))))
+		return -1;
 
 	/* Just to be save */
 	core->procevt = NULL;
@@ -51,49 +30,40 @@ int gloInit(int argc, char **argv)
 	core->render = NULL;
 
 	/* Initialize the caches */
-	if(texInit() < 0) return(-1);
-	if(shdInit() < 0) return(-1);
-	if(mdlInit() < 0) return(-1);
+	if(tex_init() < 0) 
+		return -1;
+
+	if(shd_init() < 0)
+		return -1;
+
+	if(mdl_init() < 0)
+		return -1;
 
 	/* Initialize the object-array */
-	if(objInit() < 0) return(-1);
+	if(obj_init() < 0)
+		return -1;
 
 	/* Get the absolute path to the binary-directory */	
 	core->bindir = XSDL_GetBinDir(argv[0]);
 
-	return(0);
+	return 0;
 }
 
-/*
- * Destroy a global-wrapper and free the
- * allocated space.
-*/
-void gloClose(void)
+void core_close(void)
 {
-	if(core == NULL) return;
+	if(core)
+		return;
 
-	/* Close the different tables */
-	mdlClose();
-	shdClose();
-	texClose();
+	mdl_close();
+	shd_close();
+	tex_close();
 
-	/* Clear the object-array */
-	objClose();
+	obj_close();
 
-	/* Free the core-struct */
 	free(core);
 }
 
-/* 
- * Read the include-register and import all necessary
- * resources, which should be defined in the file.
- *
- * @pth: The path to the include-register
- *
- * Returns: Either 0 on success or -1
- * 	if an error occurred
- */
-int gloLoad(char *pth)
+int core_load(char *pth)
 {
 	FILE *fd;
 	char dir[128], rel[256], opt[4];
@@ -104,7 +74,8 @@ int gloLoad(char *pth)
 	printf("Load register: %s\n", rel);
 
 	fd = fopen(rel, "r+");
-	if(fd == NULL) return(-1);
+	if(fd == NULL)
+		return -1;
 
 	while(fscanf(fd, "%s", opt) != EOF) {
 		printf("%s > ", opt);
@@ -123,9 +94,8 @@ int gloLoad(char *pth)
 			XSDL_CombinePath(pth, dir, pth);
 
 			/* Load the pixel-data */
-			if(texLoad(key, pth) < 0) {
+			if(tex_load(key, pth) < 0)
 				goto failed;
-			}
 		}
 
 		/* Load a shader and push it into the shader-table */
@@ -147,9 +117,8 @@ int gloLoad(char *pth)
 			XSDL_CombinePath(frag_pth, dir, frag_pth);
 
 			/* Load the shader from the files */
-			if(shdSet(key, vert_pth, frag_pth) < 0) {
+			if(shd_set(key, vert_pth, frag_pth) < 0)
 				goto failed;
-			}
 		}
 
 		/* Load a model and push it into model-table */
@@ -173,20 +142,17 @@ int gloLoad(char *pth)
 			fscanf(fd, "%s", shd);
 			printf("%s", shd);
 
-			if(mdlLoad(key, obj_pth, tex, shd) < 0) {
+			if(mdl_load(key, obj_pth, tex, shd) < 0)
 				goto failed;
-			}
 		}
 
 		printf("\n");
 	}
 				
 	fclose(fd);
-
-	return(0);
+	return 0;
 
 failed:
 	fclose(fd);
-
-	return(-1);
+	return -1;
 }

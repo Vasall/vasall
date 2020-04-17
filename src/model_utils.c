@@ -1,20 +1,11 @@
 #include "model_utils.h"
+#include "list.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "list.h"
 
-/*
- * Loads a model from a wavefront .obj file.
- * The model gets added to the model cache and
- * the index is returned.
- *
- * @mdl: The model struct to set the mash of
- * @pth: The absolute path to the obj-file
- *
- * Returns: 0 on success, -1 on any error
- */
-int mdlLoadObj(char *pth, int *idxnum, int **idx, int *vtxnum,
+int mdl_load_obj(char *pth, int *idxnum, int **idx, int *vtxnum,
 		vec3_t **vtx, vec3_t **nrm, vec2_t **uv)
 {
 	int ret = 0, i, j, tmp;
@@ -25,24 +16,23 @@ int mdlLoadObj(char *pth, int *idxnum, int **idx, int *vtxnum,
 	struct dyn_stack *idx_in = NULL, *idx_conv = NULL, *idx_out = NULL;
 
 	/* Open the file in read-mode */
-	if((fd = fopen(pth, "r")) == NULL) { 
-		ret = -1; goto close; 
-	}
+	if((fd = fopen(pth, "r")) == NULL)
+		return -1;
 
 	/* Create buffers to read input data into */
-	if((vtx_in = stcCreate(VEC3_SIZE)) == NULL) goto failed;
-	if((nrm_in = stcCreate(VEC3_SIZE)) == NULL) goto failed;
-	if((tex_in = stcCreate(VEC2_SIZE)) == NULL) goto failed;
+	if(!(vtx_in = stcCreate(VEC3_SIZE))) goto err_set_ret;
+	if(!(nrm_in = stcCreate(VEC3_SIZE))) goto err_set_ret;
+	if(!(tex_in = stcCreate(VEC2_SIZE))) goto err_set_ret;
 
 	/* Create buffers to write output data to */
-	if((vtx_out = stcCreate(VEC3_SIZE)) == NULL) goto failed;
-	if((nrm_out = stcCreate(VEC3_SIZE)) == NULL) goto failed;
-	if((tex_out = stcCreate(VEC2_SIZE)) == NULL) goto failed;
+	if(!(vtx_out = stcCreate(VEC3_SIZE))) goto err_set_ret;
+	if(!(nrm_out = stcCreate(VEC3_SIZE))) goto err_set_ret;
+	if(!(tex_out = stcCreate(VEC2_SIZE))) goto err_set_ret;
 
 	/* Create buffers to store the indices */
-	if((idx_in = stcCreate(INT3)) == NULL) goto failed;
-	if((idx_conv = stcCreate(INT3)) == NULL) goto failed;
-	if((idx_out = stcCreate(sizeof(int))) == NULL) goto failed;
+	if(!(idx_in = stcCreate(INT3))) goto err_set_ret;
+	if(!(idx_conv = stcCreate(INT3))) goto err_set_ret;
+	if(!(idx_out = stcCreate(sizeof(int)))) goto err_set_ret;
 
 	/* Read the data from the obj-file */
 	while(fscanf(fd, "%s", char_buf) != EOF) {
@@ -50,8 +40,7 @@ int mdlLoadObj(char *pth, int *idxnum, int **idx, int *vtxnum,
 			vec2_t tex_tmp;
 
 			/* Read texture-data */
-			fscanf(fd, "%f %f", 
-					&tex_tmp[0], &tex_tmp[1]);
+			fscanf(fd, "%f %f", &tex_tmp[0], &tex_tmp[1]);
 
 			/* Flip vertical-position */
 			tex_tmp[1] = 1.0 - tex_tmp[1];
@@ -63,8 +52,8 @@ int mdlLoadObj(char *pth, int *idxnum, int **idx, int *vtxnum,
 			vec3_t nrm_tmp;
 
 			/* Read the normal-vector */
-			fscanf(fd, "%f %f %f", 
-					&nrm_tmp[0], &nrm_tmp[1], &nrm_tmp[2]);
+			fscanf(fd, "%f %f %f", &nrm_tmp[0], &nrm_tmp[1],
+					&nrm_tmp[2]);
 
 			/* Push the normal into the normal-stack */	
 			stcPush(nrm_in, &nrm_tmp);
@@ -73,8 +62,8 @@ int mdlLoadObj(char *pth, int *idxnum, int **idx, int *vtxnum,
 			vec3_t vtx_tmp;
 
 			/* Read the vector-position */
-			fscanf(fd, "%f %f %f", 
-					&vtx_tmp[0], &vtx_tmp[1], &vtx_tmp[2]);
+			fscanf(fd, "%f %f %f", &vtx_tmp[0], &vtx_tmp[1],
+					&vtx_tmp[2]);
 
 			/* Push the vertex into the vertex-array */
 			stcPush(vtx_in, &vtx_tmp);
@@ -84,8 +73,8 @@ int mdlLoadObj(char *pth, int *idxnum, int **idx, int *vtxnum,
 
 			/* Read the different indices */
 			for(i = 0; i < 3; i++) {
-				fscanf(fd, "%d/%d/%d", 
-						&idx_tmp[0], &idx_tmp[1], &idx_tmp[2]);
+				fscanf(fd, "%d/%d/%d", &idx_tmp[0], 
+						&idx_tmp[1], &idx_tmp[2]);
 
 				idx_tmp[0] -= 1;
 				idx_tmp[1] -= 1;
@@ -187,7 +176,7 @@ int mdlLoadObj(char *pth, int *idxnum, int **idx, int *vtxnum,
 
 	goto cleanup;
 
-failed:
+err_set_ret:
 	ret = -1;
 
 cleanup:
@@ -204,8 +193,6 @@ cleanup:
 	stcDestroy(idx_out);
 
 	fclose(fd);
-
-close:
 	return (ret);
 }
 

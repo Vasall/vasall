@@ -49,7 +49,7 @@ void vec3_inv_scl(vec3_t v, float f, vec3_t res)
 float vec3_mag(vec3_t v)
 {
 	double len = (v[0] * v[0]) + (v[1] * v[1]) + (v[2] * v[2]);
-	return((float)sqrt(len));
+	return (float)sqrt(len);
 }
 
 void vec3_nrm(vec3_t v, vec3_t res)
@@ -62,7 +62,7 @@ void vec3_nrm(vec3_t v, vec3_t res)
 
 float vec3_dot(vec3_t v1, vec3_t v2)
 {
-	return(v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]);	
+	return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
 }
 
 void vec3_cross(vec3_t v1, vec3_t v2, vec3_t res)
@@ -141,7 +141,7 @@ void vec3_trans(vec3_t v, mat3_t mat, vec3_t res)
 	res[2] = tmp[0] * mat[0x6] + tmp[1] * mat[0x7] + tmp[2] * mat[0x8];
 }
 
-void vec3_dump(vec3_t v)
+void vec3_print(vec3_t v)
 {
 	printf("%.2f/%.2f/%.2f", v[0], v[1], v[2]);
 }
@@ -152,5 +152,5 @@ float vec3_barry_centric(vec3_t p1, vec3_t p2, vec3_t p3, vec2_t pos)
 	float l1 = ((p2[2] - p3[2]) * (pos[0] - p3[0]) + (p3[0] - p2[0]) * (pos[1] - p3[2])) / det;
 	float l2 = ((p3[2] - p1[2]) * (pos[0] - p3[0]) + (p1[0] - p3[0]) * (pos[1] - p3[2])) / det;
 	float l3 = 1.0 - l1 - l2;
-	return((l1 * p1[1]) + (l2 * p2[1]) + (l3 * p3[1]));
+	return (l1 * p1[1]) + (l2 * p2[1]) + (l3 * p3[1]);
 }

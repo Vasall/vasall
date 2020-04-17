@@ -1,5 +1,5 @@
-#ifndef _GLOBAL_H_
-#define _GLOBAL_H_
+#ifndef _CORE_H
+#define _CORE_H
 
 #define GL_GLEXT_PROTOTYPES
 #include <GL/glut.h>
@@ -20,6 +20,7 @@
 #include "XSDL/XSDL_text.h"
 #include "XSDL/XSDL_utf8.h"
 #include "XSDL/XSDL_utils.h"
+
 #include "vec.h"
 #include "mat.h"
 #include "list.h"
@@ -38,7 +39,7 @@
  * throughout the whole project. The main
  * wrapper should be called core.
  */
-typedef struct gloWrapper {
+struct core_wrapper {
 	/*
 	 * Pointer to the window-struct,
 	 * which represents the created
@@ -116,60 +117,59 @@ typedef struct gloWrapper {
 	*/
 	void (*render)(void);
 
-	struct object *obj;
-} gloWrapper;
+	struct chunk_manager *chunks;
 
-/*
- * These two variables are just defined, as
- * for many things, pointers to a variable
- * containing either one or zero are required.
- * So instead of having to define 1-0-variables
- * again and again, these act as shortcuts.
- */
+	struct object *obj;
+};
+
 extern uint8_t one;
 extern uint8_t zero;
-
-/*
- * The flags for the window. Note that
- * this variable can be changed any time,
- * to enable things like fullscreen.
- */
 extern int g_win_flgs;
+extern struct core_wrapper *core;
+extern char glo_err_buf[256];
+
+/* 
+ * Set a new error-message.
+ *
+ * @err: The string to set as the new
+ * 	error message
+*/
+void glo_set_err(char *err);
+
+/* 
+ * Get the most recent error-message.
+ *
+ * Returns: The most recent error-message
+*/
+char *glo_get_err(void);
 
 /*
- * The one global-wrapper used to
- * contain all important things in
- * one single instance, to make it
- * easier to use throughout the
- * project.
- */
-extern gloWrapper *core;
+ * Initialize the core-wrapper and setup the
+ * module instances and prepare the attributes.
+ *
+ * @argc: The number of arguments passed to main
+ * @argv: The argument-buffer passed to main
+ *
+ * Returns: Either 0 on success or -1
+ * 	if an error occurred
+*/
+int core_init(int argc, char **argv);
 
 /*
- * This is the error-buffer for the
- * project which contains the most
- * recent error-message. This buffer
- * should never be set or read manually,
- * but rather through the use of the
- * glSetError() and glGetError()
- * functions as doing otherwise can lead
- * to undefind behavior.
+ * Destroy a global-wrapper and free the
+ * allocated space.
+*/
+void core_close(void);
+
+/* 
+ * Read the include-register and import all necessary
+ * resources, which should be defined in the file.
+ *
+ * @pth: The path to the include-register
+ *
+ * Returns: Either 0 on success or -1
+ * 	if an error occurred
  */
-extern char gloErrBuf[256];
-
-/* Set a new error-message */
-void gloSetError(char *err);
-
-/* Get the most recent error-message */
-char *gloGetError(void);
-
-/* Initialize the global-wrapper */
-int gloInit(int argc, char **argv);
-
-/* Destroy the global-wrapper */
-void gloClose(void);
-
-/* Read the include-register and import all resources */
-int gloLoad(char *pth);
+int core_load(char *pth);
 
 #endif

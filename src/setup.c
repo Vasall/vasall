@@ -3,13 +3,13 @@
 #include <GL/glext.h>
 #include <GL/gl.h>
 
+#include "setup.h"
+#include "core.h"
+#include "handle.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#include "setup.h"
-#include "global.h"
-#include "handle.h"
 
 /* Redefine external variables */
 int g_win_flgs = XSDL_WINDOW_RESIZABLE | XSDL_WINDOW_OPENGL;

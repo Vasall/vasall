@@ -1,7 +1,7 @@
 #ifndef _HANDLE_H_
 #define _HANDLE_H_
 
-#include "global.h"
+#include "core.h"
 
 /* Handle the resize-event */
 void handle_resize(XSDL_Event *evt);

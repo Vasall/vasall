@@ -1,46 +1,43 @@
-#ifndef _WORLD_H_
-#define _WORLD_H_
+#ifndef _WORLD_H
+#define _WORLD_H
 
-#include "global.h"
+#include "core.h"
 #include "model.h"
 
 #define WORLD_SIZE 256
 
 struct world {
 	/*
-	 * The x-size and the z-size
-	 * of the world.
+	 * The x-size and the z-size of the world.
 	 */
 	int2_t size;
 	int ptnum;
 
 
 	/*
-	 * The relative position of
-	 * the terrain.
+	 * The relative position of the terrain.
 	 */
 	vec3_t pos;
 
-	/*  Both the absolute min- and max-positions */
+	/*  
+	 * Both the absolute min- and max-positions.
+	 */
 	vec2_t min_pos, max_pos;
 
 	/*
-	 * The heightmap, containing
-	 * the heights of each vertex
-	 * of the terrain.
+	 * The heightmap, containing the heights of each vertex of
+	 * the terrain.
 	 */
 	float *heights;
 
 	/*
-	 * The relative rotation of
-	 * the terrain, which will be
-	 * passed to the model.
+	 * The relative rotation of the terrain, which will be passed to
+	 * the model.
 	 */
 	vec3_t rot;
 
 	/*
-	 * The underlying model for
-	 * the terrain.
+	 * The underlying model for the terrain.
 	 */
 	struct model *terrain;
 };
@@ -49,20 +46,41 @@ struct world {
 /* The global world-struct */
 extern struct world *world;
 
+/*
+ * Initialize the global world-struct
+ *
+ * Returns: Either 0 on success or -1 if an error occurred
+ */
+int wld_create(void);
 
-/* Create and initialize a new world */
-int wldCreate(void);
+/*
+ * Delete a world and free allocated memory.
+ *
+ * @world: Pointer to the world
+ * 	to delete
+ */
+void wld_destroy(void);
 
-/* Destroy a world */
-void wldDestroy(void);
+/*
+ * Render the world using OpenGL.
+ */
+void wld_render(void);
 
-/* Render the world */
-void wldRender(void);
+/*
+ * Get the height of the world at a given position.
+ *
+ * @x: The x-position in the world
+ * @z: The z-position in the world
+ *
+ * Returns: The height at the given position
+ */
+float wld_get_height(float x, float z);
 
-/* Get the height of the terrain at the given position */
-float wldGetHeight(float x, float z);
-
-/* Generate the terrain of the world */
-int wldGenTerrain(void);
+/*
+ * Generate a new terrain and write it to the world-struct.
+ *
+ * Returns: Either 0 on success or -1 if an error occurred
+ */
+int wld_gen_terrain(void);
 
 #endif

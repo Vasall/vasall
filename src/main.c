@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <limits.h>
 
-#include "global.h"
+#include "core.h"
 #include "setup.h"
 #include "handle.h"
 #include "input.h"
@@ -21,10 +21,8 @@ int main(int argc, char **argv)
 {
 	vec3_t pos = {125.0, 0.0, 125.0};
 	vec3_t dir = {1.0, 1.0, 1.0};
-
 	vec3_nrm(dir, dir);
 
-	/* Update the rand-seed */
 	srand(time(0));
 
 	pad_printf("Initialize XSDL-subsystem");
@@ -36,9 +34,9 @@ int main(int argc, char **argv)
 	printf("done\n");
 
 	pad_printf("Initialize core-wrapper");
-	if(gloInit(argc, argv) < 0) {
+	if(core_init(argc, argv) < 0) {
 		printf("failed!\n");
-		printf("%s\n", gloGetError());
+		printf("%s\n", glo_get_err());
 		goto cleanup_enud;
 	}
 	printf("done\n");
@@ -78,7 +76,7 @@ int main(int argc, char **argv)
 	printf("done\n");
 
 	printf("Import models, textures and shaders:\n");
-	if(gloLoad("../res") < 0) {
+	if(core_load("../res") < 0) {
 		goto cleanup_ui;
 	}
 
@@ -103,7 +101,7 @@ int main(int argc, char **argv)
 	printf("done\n");
 
 	pad_printf("Initialize world");
-	if(wldCreate() < 0) {
+	if(wld_create() < 0) {
 		printf("failed!\n");
 		goto cleanup_camera;
 	}
@@ -114,9 +112,10 @@ int main(int argc, char **argv)
 	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
 
 	/* Add a demo-dummy */
-	objSet("demo", "cube", pos);
-	core->obj = objGet("demo");
-	if(core->obj == NULL) goto cleanup_world;
+	obj_set("demo", "cube", pos);
+	core->obj = obj_get("demo");
+	if(core->obj == NULL)
+		goto cleanup_world;
 
 	camTargetObj(core->obj);
 
@@ -141,7 +140,7 @@ int main(int argc, char **argv)
 
 cleanup_world:
 	pad_printf("Destroy world");
-	wldDestroy();
+	wld_destroy();
 	printf("done\n");
 
 	pad_printf("Clear caches");
@@ -170,7 +169,7 @@ cleanup_window:
 
 cleanup_core:
 	pad_printf("Destroy the core-struct");
-	gloClose();
+	core_close();
 	printf("done\n");
 
 cleanup_enud:
@@ -179,7 +178,7 @@ cleanup_enud:
 	printf("done\n");
 
 exit:
-	return(0);
+	return 0;
 }
 
 /*

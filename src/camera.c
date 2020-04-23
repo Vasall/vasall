@@ -4,25 +4,13 @@
 #include <math.h>
 
 /* Redefine external variable */
-struct camera *camera;
+struct camera *camera = NULL;
 
-/*
- * Initialize the global camera-instance.
- *
- * @aov: The angle of view
- * @asp: The current aspect ratio
- * @near: The near-limit
- * @far: The far-limit
- *
- * Returns: Either 0 on success or -1
- * 	if an error occurred
- */
-int camCreate(float aov, float asp, float near, float far)
+V_API int cam_init(float aov, float asp, float near, float far)
 {
-
 	/* Initialize the camera-struct */
-	camera = calloc(1, sizeof(struct camera));
-	if(camera == NULL) return(-1);
+	if(!(camera = calloc(1, sizeof(struct camera))))
+		return -1;
 
 	/* Set the default position of the camera */
 	vec3_set(camera->pos, 0.0, 0.0, 0.0);
@@ -39,84 +27,44 @@ int camCreate(float aov, float asp, float near, float far)
 
 	/* Create the projection matrix */
 	mat4_idt(camera->proj);
-	camSetProjMat(aov, asp, near, far);
+	cam_proj_mat(aov, asp, near, far);
 
 	/* Create the view-matrix */
-mat4_idt(camera->view);
-	camUpdViewMat();
+	mat4_idt(camera->view);
+	cam_update_view();
 
-	camera->trg_obj = NULL;
+	camera->trg_obj = -1;
 
-	return(0);
+	return 0;
 }
 
-/*
- * Destroy the global camera-instance
- * and free the allocated memory.
- */
-void camDestroy(void)
+V_API void cam_close(void)
 {
-	free(camera);
+	if(camera)
+		free(camera);
 }
 
-/*
- * Get the projection matrix of the camera
- * and write it to the specified matrix.
- *
- * @mat: The matrix to write the result to
- */
-void camGetProj(mat4_t mat)
+V_API void cam_get_proj(mat4_t mat)
 {
 	mat4_cpy(mat, camera->proj);
 }
 
-/*
- * Get the view matrix of the camera and
- * write it to the specified matrix.
- *
- * @mat: The matrix to write to
- */
-void camGetView(mat4_t mat)
+V_API void cam_get_view(mat4_t mat)
 {
 	mat4_cpy(mat, camera->view);
 }
 
-/* 
- * Get the position of the camera.
- *
- * @pos: The vector to write the position to
- */
-void camGetPos(vec3_t pos)
-{
-	vec3_cpy(pos, camera->pos);
-}
-
-/*
- * Set the position of the camera.
- *
- * @pos: The vector containing the new position
- */
-void camSetPos(vec3_t pos)
+V_API void cam_set_pos(vec3_t pos)
 {
 	vec3_cpy(camera->pos, pos);
 }
 
-/* 
- * Get the normalized direction the camera is looking.
- *
- * @dir: The vector to write the direction
- */
-void camGetDir(vec3_t dir)
+V_API void cam_get_pos(vec3_t pos)
 {
-	vec3_cpy(dir, camera->forward);
+	vec3_cpy(pos, camera->pos);
 }
 
-/* 
- * Set the direction the camera is looking.
- *
- * @dir: The vector to read the direction from
- */
-void camSetDir(vec3_t dir)
+V_API void cam_set_dir(vec3_t dir)
 {
 	vec3_t up = {0.0, 1.0, 0.0};
 
@@ -125,33 +73,25 @@ void camSetDir(vec3_t dir)
 	
 	vec3_cross(up, camera->forward, camera->right);
 
-	camUpdViewMat();
+	cam_update_view();
 }
 
-/*
- * Zoom the camera in or out and update the view matrix. 
- * This may change the camera's position
- *
- * @val: The zoom-value
- */
-void camZoom(int val)
+V_API void cam_get_dir(vec3_t dir)
+{
+	vec3_cpy(dir, camera->forward);
+}
+
+V_API void cam_zoom(int val)
 {
 	camera->dist += val;
 	if(camera->dist < 0.5) {
 		camera->dist = 0.5;
 	}
 
-	camUpdate();
+	cam_update();
 }
 
-/*
- * Rotate the camera according to a yaw and pitch delta
- * and update the view matrix
- *
- * @d_yaw: the yaw delta in radians
- * @d_pitch: the pitch delta in radians
- */
-void camRot(float d_yaw, float d_pitch)
+V_API void cam_rot(float d_yaw, float d_pitch)
 {
 	vec3_t stdup = {0.0, 1.0, 0.0};
 	
@@ -172,17 +112,10 @@ void camRot(float d_yaw, float d_pitch)
 	vec3_cross(stdup, camera->forward, camera->right);
 	vec3_nrm(camera->right, camera->right);
 
-	camUpdate();
+	cam_update();
 }
 
-/*
- * Move the camera in a certain direction
- * and update the view matrix
- *
- * @dir: The direction to move the camera in.
- * 	(FORWARD, BACK, LEFT, RIGHT)
- */
-void camMovDir(Direction dir)
+V_API void cam_mov_dir(Direction dir)
 {
 	vec3_t movVec, up, forw, right;
 
@@ -214,33 +147,19 @@ void camMovDir(Direction dir)
 			break;
 	}
 
-	camMov(movVec);
+	cam_mov(movVec);
 }
 
-/*
- * Moves the camera according to vector
- *
- * @mov: The movement vector
- */
-void camMov(vec3_t mov)
+V_API void cam_mov(vec3_t mov)
 {
-	if(camera->trg_obj != NULL) {
-		printf("Trying to move camera freely with target entity set.\n");
+	if(camera->trg_obj >= 0)
 		return;
-	}
 
 	vec3_add(camera->pos, mov, camera->pos);
-
-	camUpdViewMat();
+	cam_update_view();
 }
 
-/*
- * Adjusts the camera's direction, so it looks
- * at the target point
- *
- * @trg: The target position to look at
- */
-void camLookAt(vec3_t trg)
+V_API void cam_look_at(vec3_t trg)
 {
 	vec3_t up = {0.0, 1.0, 0.0};
 
@@ -251,7 +170,6 @@ void camLookAt(vec3_t trg)
 
 		vec3_cross(up, camera->forward, camera->right);
 		vec3_nrm(camera->right, camera->right);
-
 		return;
 	}
 
@@ -262,19 +180,13 @@ void camLookAt(vec3_t trg)
 	vec3_nrm(camera->right, camera->right);
 }
 
-/*
- * Create a new projection-matrix and
- * write the result into the given
- * matrix.
- *
- * @aov: Angle of view in degree
- * @asp: The aspect ratio of the window
- * @near: The near-limit
- * @far: The far-limit
- */
-void camSetProjMat(float aov, float asp, float near, float far)
+V_API void cam_proj_mat(float aov, float asp, float near, float far)
 {
-	float bottom, top, left, right, tangent;
+	float bottom;
+	float top;
+	float left;
+	float right;
+	float tangent;
 
 	camera->aov = aov;
 	camera->asp = asp;
@@ -298,15 +210,13 @@ void camSetProjMat(float aov, float asp, float near, float far)
 	camera->proj[0xf] = 0;
 }
 
-/*
- * Calculate a view-matrix and write the
- * result into the specified camera
- */
-void camUpdViewMat(void)
+V_API void cam_update_view(void)
 {
-	vec3_t forw, right, up, stdup;
+	vec3_t forw;
+	vec3_t right;
+	vec3_t up;
+	vec3_t stdup;
 
-	/* The default up-vector */
 	vec3_set(stdup, 0.0, 1.0, 0.0);
 
 	vec3_cpy(forw, camera->forward);
@@ -331,14 +241,7 @@ void camUpdViewMat(void)
 	camera->view[0xe] = (-forw[0] * camera->pos[0]) - (forw[1] * camera->pos[1]) - (forw[2] * camera->pos[2]);
 }
 
-/* 
- * Set the camera's position and it's direction, so
- * it looks at the specified target
- *
- * @pos: The new position of the camera
- * @trg: The new target to focus on
-*/
-void camSet(vec3_t pos, vec3_t trg)
+V_API void cam_set(vec3_t pos, vec3_t trg)
 {	
 	vec3_t up = {0.0, 1.0, 0.0};
 
@@ -350,35 +253,24 @@ void camSet(vec3_t pos, vec3_t trg)
 	vec3_cross(up, camera->forward, camera->right);
 	vec3_nrm(camera->right, camera->right);
 
-	camUpdViewMat();
+	cam_update_view();
 }
 
-/*
- * Set an object as the target-point.
- *
- * @obj: Pointer to the object, to focus on
- */
-void camTargetObj(struct object *obj)
+V_API void cam_trg_obj(short obj)
 {	
 	camera->trg_obj = obj;
 }
 
-/*
- * Updates the camera according to it's set attributes.
- * This function may change the camera's position when a
- * target entity is set.
- */
-void camUpdate(void)
+V_API void cam_update(void)
 {
-	vec3_t tmp;
-
-	if(camera->trg_obj != NULL) {
-		vec3_scl(camera->forward, camera->dist, tmp);
-		vec3_add(camera->trg_obj->pos, tmp, camera->pos);
-		/* TODO do not target postion of object, but
-		 * specific target point relative to it */
-	} else {
+	if(camera->trg_obj >= 0) {
+		vec3_t pos;
+		vec3_t tmp;
 		
+		vec3_cpy(pos, world->objects->pos[camera->trg_obj]);
+		vec3_scl(camera->forward, camera->dist, tmp);
+		vec3_add(pos, tmp, camera->pos);
 	}
-	camUpdViewMat();
+
+	cam_update_view();
 }

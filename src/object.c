@@ -26,15 +26,8 @@ struct object_table *obj_init(void)
 
 void obj_close(struct object_table *tbl)
 {
-	int i;
-
 	if(!tbl)
 		return;
-	
-	for(i = 0; i < OBJ_SLOTS; i++) {
-		if((tbl->mask[i] & OBJ_M_DATA) == OBJ_M_DATA)
-			free(tbl->data[i]);
-	}
 
 	free(tbl);
 }
@@ -67,206 +60,134 @@ short obj_set(struct object_table *tbl, uint32_t mask, vec3_t pos, short model,
 	vec3_set(tbl->vel[slot], 0, 0, 0);
 	vec3_set(tbl->dir[slot], 1, 0, 1);
 	tbl->model[slot] = model;
-	
+	tbl->anim[slot] = 0;
+	tbl->prog[slot] = 0.0;
+	mat4_idt(tbl->mat[slot]);
+
 	tbl->len[slot] = 0;
-	tbl->data[slot] = NULL;
 
 	if(data && len) {
 		len = (len > OBJ_DATA_MAX) ? (OBJ_DATA_MAX) : (len);
 		tbl->len[slot] = len;
-		memcpy(tbl->[slot], data, len);
+		memcpy(tbl->buf[slot], data, len);
 	}
 
 	return slot;
-
-err_clear_slot:
-	tbl->mask[slot] = OBJ_M_NONE;
-	return -1;
 }
 
-int obj_set(char *key, char* mdl, vec3_t pos)
+void obj_del(struct object_table *tbl, short slot)
 {
-	struct object *obj = NULL;
+	if(!tbl)
+		return;
 
-	obj = malloc(sizeof(struct object));
-	if(obj == NULL)
+	tbl->mask[slot] = OBJ_M_NONE;
+}
+
+/* TODO: Limit Mask so it can't be set to 0 or negative values */
+int obj_mod(struct object_table *tbl, short slot, short attr, 
+		void *data, int len)
+{
+	if(!tbl)
 		return -1;
 
-	memset(obj, 0, sizeof(struct object));
+	if(!tbl->mask[slot])
+		return -1;
 
-	strcpy(obj->key, key);
+	switch(attr) {
+		case(OBJ_ATTR_MASK):
+			tbl->mask[slot] = *(uint32_t *)data;
+			break;
 
-	vec3_cpy(obj->pos, pos);
-	vec3_set(obj->vel, 0.0, 0.0, 0.0);
-	vec3_set(obj->dir, 1.0, 1.0, 1.0);
-	vec3_set(obj->scl, 1.0, 1.0, 1.0);
-	vec3_set(obj->rot, 0.0, 0.0, 0.0);
+		case(OBJ_ATTR_POS):
+			vec3_cpy(tbl->pos[slot], data);
+			break;
+		
+		case(OBJ_ATTR_VEL):
+			vec3_cpy(tbl->vel[slot], data);
+			break;
+		
+		case(OBJ_ATTR_DIR):
+			vec3_cpy(tbl->dir[slot], data);
+			break;
+		
+		case(OBJ_ATTR_BUF):
+			tbl->len[slot] = len;
+			memcpy(tbl->buf[slot], data, len);
+			break;
 
-	if((obj->model = mdl_get(mdl)) == NULL)
-		goto err_free_obj;
-
-	obj_update_mat(obj);
-
-	if(ht_set(objects, key, (uint8_t *)obj, sizeof(struct object)) < 0)
-		goto err_free_obj;
-
-	return 0;	
-
-err_free_obj:
-	free(obj);
-	return -1;
-}
-
-void obj_del(char *key)
-{
-	if(key) {}
-}
-
-struct object *obj_get(char *key)
-{
-	struct object *obj;
-
-	if(ht_get(objects, key, (uint8_t **)&obj, NULL) < 0)
-		return NULL;
-
-	return obj;
-}
-
-void obj_update(struct object *obj, float delt)
-{
-	vec3_t del;
-	
-	vec3_cpy(del, obj->vel);
-	vec3_scl(del, delt, del);
-
-	obj_add_pos(obj, del);
-
-	obj->pos[1] = wld_get_height(obj->pos[0], obj->pos[2]) + 2.2;
-	
-	if(vec3_mag(del) > 0.0) {
-		vec3_nrm(del, obj->dir);
-		obj->rot[1] = atan2(-obj->dir[2], obj->dir[0]);
+		default:
+			return -1;
 	}
 
-	obj_update_mat(obj);
+	return 0;
 }
 
-void obj_render(struct object *obj)
+void obj_update_matrix(struct object_table *tbl, short slot)
 {
-	mdl_render(obj->model, obj->matrix);
+	float rot;
+
+	mat4_idt(tbl->mat[slot]);
+
+	rot = atan2(-tbl->dir[slot][2], tbl->dir[slot][0]);
+	tbl->mat[slot][0x0] =  cos(rot);
+	tbl->mat[slot][0x2] = -sin(rot);
+	tbl->mat[slot][0x8] =  sin(rot);
+	tbl->mat[slot][0xa] =  cos(rot);
+
+	tbl->mat[slot][0xc] = tbl->pos[slot][0];
+	tbl->mat[slot][0xd] = tbl->pos[slot][1];
+	tbl->mat[slot][0xe] = tbl->pos[slot][2];
 }
 
-/* =============================================== */
-/*                     POSITION                    */
-/* =============================================== */
-
-void obj_set_pos(struct object *obj, vec3_t pos)
+void obj_print(struct object_table *tbl, short slot)
 {
-	vec3_cpy(obj->pos, pos);
-	obj_update_mat(obj);
+	printf("Display object %d:\n", slot);
+	printf("Pos: "); vec3_print(tbl->pos[slot]); printf("\n");
+	printf("Vel: "); vec3_print(tbl->vel[slot]); printf("\n");
+	printf("Dir: "); vec3_print(tbl->dir[slot]); printf("\n");
 }
 
-void obj_get_pos(struct object *obj, vec3_t pos)
+
+void obj_sys_update(struct object_table *tbl, float delt)
 {
-	vec3_cpy(pos, obj->pos);
+	vec3_t pos;
+	vec3_t del;
+	int i;
+
+	if(!tbl)
+		return;
+		
+	for(i = 0; i < OBJ_SLOTS; i++) {
+		if((tbl->mask[i] & OBJ_M_MOVE) == OBJ_M_MOVE) {
+			float x, z;
+
+			vec3_cpy(pos, tbl->pos[i]);
+			vec3_scl(tbl->vel[i], delt, del);
+			vec3_add(pos, del, tbl->pos[i]);
+
+			x = tbl->pos[i][0];
+			z = tbl->pos[i][2];
+			tbl->pos[i][1] = wld_get_height(x, z) + 2.2;
+			
+			if(vec3_mag(del) > 0.0) {
+				vec3_nrm(del, tbl->dir[i]);
+				obj_update_matrix(tbl, i);
+			}
+
+		}
+	}
 }
 
-void obj_add_pos(struct object *obj, vec3_t del)
+void obj_sys_render(struct object_table *tbl)
 {
-	vec3_add(obj->pos, del, obj->pos);
-	obj_update_mat(obj);
-}
+	int i;
 
-/* =============================================== */
-/*                     ROTATION                    */
-/* =============================================== */
+	if(!tbl)
+		return;
 
-void obj_set_rot(struct object *obj, vec3_t rot)
-{
-	vec3_cpy(obj->rot, rot);
-	obj_update_mat(obj);
-}
-
-void obj_get_rot(struct object *obj, vec3_t rot)
-{
-	vec3_cpy(rot, obj->rot);
-}
-
-void obj_add_rot(struct object *obj, vec3_t del)
-{
-	vec3_add(obj->rot, del, obj->rot);
-	obj_update_mat(obj);
-}
-
-/* =============================================== */
-/*                     VELOCITY                    */
-/* =============================================== */
-
-void obj_set_vel(struct object *obj, vec3_t vel)
-{
-	vec3_cpy(obj->vel, vel);
-}
-
-void obj_get_vel(struct object *obj, vec3_t vel)
-{
-	vec3_cpy(vel, obj->vel);
-}
-
-void obj_add_vel(struct object *obj, vec3_t del)
-{
-	vec3_add(obj->vel, del, obj->vel);
-}
-
-/* =============================================== */
-/*                     DIRECTION                   */
-/* =============================================== */
-
-void obj_set_dir(struct object *obj, vec3_t dir)
-{
-	vec3_cpy(obj->dir, dir);
-	vec3_nrm(obj->dir, obj->dir);
-}
-
-void obj_get_dir(struct object *obj, vec3_t dir)
-{
-	vec3_cpy(dir, obj->dir);
-}
-
-/* =============================================== */
-/*                       MODEL                     */
-/* =============================================== */
-
-void obj_set_model(struct object *obj, char *mdl)
-{
-	obj->model = mdl_get(mdl);
-}
-
-void obj_get_mat(struct object *obj, mat4_t mat)
-{
-	mat4_cpy(mat, obj->matrix);
-}
-
-void obj_update_mat(struct object *obj)
-{
-	vec3_t rot;
-
-	vec3_cpy(rot, obj->rot);
-	mat4_idt(obj->matrix);
-
-	obj->matrix[0x0] =  cos(rot[1]);
-	obj->matrix[0x2] = -sin(rot[1]);
-	obj->matrix[0x8] =  sin(rot[1]);
-	obj->matrix[0xa] =  cos(rot[1]);
-
-	obj->matrix[0xc] = obj->pos[0];
-	obj->matrix[0xd] = obj->pos[1];
-	obj->matrix[0xe] = obj->pos[2];
-}
-
-void obj_print(struct object *obj)
-{
-	printf("Key: %s\n", obj->key);
-	printf("Pos: "); vec3_print(obj->pos); printf("\n");
-	printf("Rot: "); vec3_print(obj->rot); printf("\n");
-	printf("Vel: "); vec3_print(obj->vel); printf("\n");
+	for(i = 0; i < OBJ_SLOTS; i++) {
+		if((tbl->mask[i] & OBJ_M_MODEL) == OBJ_M_MODEL) {
+			mdl_render(tbl->model[i], tbl->mat[i]);
+		}
+	}
 }

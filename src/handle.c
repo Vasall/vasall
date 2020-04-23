@@ -23,7 +23,7 @@ void handle_resize(XSDL_Event *evt)
 
 	/* Update projection matrix */
 	ratio = (double)ctx->win_w / (double)ctx->win_h;
-	camSetProjMat(45.0, ratio, 0.1, 1000.0);
+	cam_proj_mat(45.0, ratio, 0.1, 1000.0);
 }
 
 
@@ -38,7 +38,8 @@ void menu_update(void)
 
 void game_procevt(XSDL_Event *evt)
 {
-	int mod, mod_ctrl;
+	int mod;
+	int mod_ctrl;
 	uint8_t axis;
 	float val;
 
@@ -66,17 +67,17 @@ void game_procevt(XSDL_Event *evt)
 			break;
 
 		case(XSDL_MOUSEWHEEL):
-			camZoom(evt->wheel.y);
+			cam_zoom(evt->wheel.y);
 			break;
 
 		case(XSDL_MOUSEMOTION):
 			if(evt->motion.state == SDL_BUTTON_LMASK) {
 				/* If left mouse button pressed */
-				camRot(-evt->motion.xrel / 50.0,
+				cam_rot(-evt->motion.xrel / 50.0,
 						-evt->motion.yrel / 50.0);
 			}
 			break;
-
+		/* 
 		case(XSDL_KEYDOWN):
 			mod = evt->key.keysym.mod;
 
@@ -114,6 +115,7 @@ void game_procevt(XSDL_Event *evt)
 					break;
 			}
 			break;
+		*/
 	}
 }
 
@@ -122,9 +124,7 @@ void game_update(void)
 	vec3_t vel, forw, right;
 
 	/* Rotate the camera */	
-	camRot(inp_map->camera[0], inp_map->camera[1]);
-
-	/*printf("%f - %f\n", inp_map->movement[0], inp_map->movement[1]);*/
+	cam_rot(inp_map->camera[0], inp_map->camera[1]);
 
 	/* Set player-velocity */
 	vec3_cpy(forw, camera->forward);
@@ -140,20 +140,15 @@ void game_update(void)
 
 	vec3_add(forw, right, vel);
 
-	obj_set_vel(core->obj, vel);
+	vec3_cpy(world->objects->vel[core->obj], vel);
 
-	/* Update the object */
-	obj_update(core->obj, 1.0);
+	wld_update();
 
 	/* Update the camera-position */
-	camUpdate();
+	cam_update();
 }
 
 void game_render(void)
 {
-	/* Render the world */
-	camUpdViewMat();
 	wld_render();
-
-	obj_render(core->obj);
 }

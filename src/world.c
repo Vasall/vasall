@@ -74,11 +74,18 @@ void wld_destroy(void)
 	free(world);
 }
 
+void wld_update(void)
+{
+	obj_sys_update(world->objects, 1.0);
+}
+
 void wld_render(void) 
 {
 	mat4_t idt;
 	mat4_idt(idt);
 	mdl_render(world->terrain, idt);
+
+	obj_sys_render(world->objects);
 }
 
 float wld_get_height(float x, float z)

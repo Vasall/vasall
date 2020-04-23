@@ -21,6 +21,7 @@
 #include "XSDL/XSDL_utf8.h"
 #include "XSDL/XSDL_utils.h"
 
+#include "defines.h"
 #include "vec.h"
 #include "mat.h"
 #include "list.h"
@@ -117,9 +118,7 @@ struct core_wrapper {
 	*/
 	void (*render)(void);
 
-	struct chunk_manager *chunks;
-
-	struct object *obj;
+	short obj;
 };
 
 extern uint8_t one;
@@ -134,14 +133,14 @@ extern char glo_err_buf[256];
  * @err: The string to set as the new
  * 	error message
 */
-void glo_set_err(char *err);
+V_API void glo_set_err(char *err);
 
 /* 
  * Get the most recent error-message.
  *
  * Returns: The most recent error-message
 */
-char *glo_get_err(void);
+V_API char *glo_get_err(void);
 
 /*
  * Initialize the core-wrapper and setup the
@@ -153,13 +152,13 @@ char *glo_get_err(void);
  * Returns: Either 0 on success or -1
  * 	if an error occurred
 */
-int core_init(int argc, char **argv);
+V_API int core_init(int argc, char **argv);
 
 /*
  * Destroy a global-wrapper and free the
  * allocated space.
 */
-void core_close(void);
+V_API void core_close(void);
 
 /* 
  * Read the include-register and import all necessary
@@ -170,10 +169,16 @@ void core_close(void);
  * Returns: Either 0 on success or -1
  * 	if an error occurred
  */
-int core_load(char *pth);
+V_API int core_load(char *pth);
 
-void core_update(void);
+/*
+ * Update the core-instance.
+ */
+V_API void core_update(void);
 
-void core_render(void);
+/*
+ * Render the instances in the core-instance.
+ */
+V_API void core_render(void);
 
 #endif

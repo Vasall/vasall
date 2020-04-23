@@ -117,6 +117,20 @@ void try_login(XSDL_Node *n, XSDL_Event *e)
 
 	if(n||e){/* Prevent warning for not using paameters */}	
 
+	if(1) {
+		struct XSDL_Node *node;
+	
+		/* Update core functions */
+		core->procevt = &game_procevt;
+		core->update = &game_update;
+		core->render = &game_render;
+
+		/* Switch from menuscreen to gamescreen */
+		node = XSDL_Get(core->uiroot, "mns");
+		XSDL_ModFlag(node, XSDL_FLG_ACT, &zero);
+		return;
+	}
+
 	uname_node = XSDL_Get(core->uiroot, "mns_user")->element;
 	pswd_node = XSDL_Get(core->uiroot, "mns_pswd")->element; 
 

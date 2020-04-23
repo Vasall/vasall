@@ -57,13 +57,13 @@ struct model {
 	 * The texture attached to this
 	 * model.
 	 */
-	unsigned short tex;
+	short tex;
 
 	/*
 	 * The shader attached to this
 	 * model.
 	 */
-	unsigned short shd;
+	short shd;
 
 	/*
 	 * The current status of the model.

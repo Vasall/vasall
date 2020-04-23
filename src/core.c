@@ -7,17 +7,17 @@ uint8_t one = 1;
 struct core_wrapper *core = NULL;
 char glo_err_buf[256];
 
-void glo_set_err(char *err)
+V_API void glo_set_err(char *err)
 {	
 	strcpy(glo_err_buf, err);
 }
 
-char *glo_get_err(void)
+V_API char *glo_get_err(void)
 {
 	return glo_err_buf;
 }
 
-int core_init(int argc, char **argv)
+V_API int core_init(int argc, char **argv)
 {
 	if(argc) {/* Prevent warning for not using argc */}
 
@@ -39,10 +39,6 @@ int core_init(int argc, char **argv)
 	if(mdl_init() < 0)
 		return -1;
 
-	/* Initialize the object-array */
-	if(obj_init() < 0)
-		return -1;
-
 	/* Initialize the client */
 	if(cli_init(argv[1], atoi(argv[2]), atoi(argv[3])) < 0)
 		return -1;
@@ -53,14 +49,12 @@ int core_init(int argc, char **argv)
 	return 0;
 }
 
-void core_close(void)
+V_API void core_close(void)
 {
 	if(core)
 		return;
 
 	cli_close();
-
-	obj_close();
 	
 	shd_close();
 	mdl_close();
@@ -69,7 +63,7 @@ void core_close(void)
 	free(core);
 }
 
-int core_load(char *pth)
+V_API int core_load(char *pth)
 {
 	FILE *fd;
 	char dir[128], rel[256], opt[4];
@@ -130,6 +124,8 @@ int core_load(char *pth)
 		/* Load a model and push it into model-table */
 		else if(strcmp(opt, "mdl") == 0) {
 			char tmp[64], key[5], obj_pth[256], tex[5], shd[5];
+			short tex_slot;
+			short shd_slot;
 
 			/* Read the name of the model */
 			fscanf(fd, "%s", key);
@@ -144,11 +140,15 @@ int core_load(char *pth)
 			fscanf(fd, "%s", tex);
 			printf("%s - ", tex);
 
+			tex_slot = tex_get(tex);
+				
 			/* Read the path to the shader-file */
 			fscanf(fd, "%s", shd);
 			printf("%s", shd);
 
-			if(mdl_load(key, obj_pth, tex, shd) < 0)
+			shd_slot = shd_get(shd);
+
+			if(mdl_load(key, obj_pth, tex_slot, shd_slot) < 0)
 				goto failed;
 		}
 
@@ -163,7 +163,7 @@ failed:
 	return -1;
 }
 
-void core_update(void)
+V_API void core_update(void)
 {
 	/* Update the client */
 	cli_update();
@@ -175,7 +175,7 @@ void core_update(void)
 	if(core->update != NULL) core->update();
 }
 
-void core_render(void)
+V_API void core_render(void)
 {
 	/* Clear the screen */
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

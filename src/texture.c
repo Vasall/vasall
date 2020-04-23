@@ -28,10 +28,6 @@ int tex_init(void)
 	int i;
 	short slot;
 
-	if((slot = tex_get_slot()) < 0)
-		return -1;
-	
-
 	if(!(textures = malloc(sizeof(struct texture *) * TEX_SLOTS)))
 		return -1;
 
@@ -71,6 +67,7 @@ short tex_set(char *name, uint8_t *buf, int w, int h)
 	if(!(tex = malloc(tex_sz)))
 		return -1;
 
+	strcpy(tex->name, name);
 	tex->width = w;
 	tex->height = h;
 	tex->size = w * h;
@@ -118,7 +115,6 @@ short tex_load(char *name, char *pth)
 short tex_get(char *name)
 {
 	int i;
-	struct texture *tex;
 
 	for(i = 0; i < TEX_SLOTS; i++) {
 		if(!textures[i])

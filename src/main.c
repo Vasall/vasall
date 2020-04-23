@@ -27,14 +27,14 @@ int main(int argc, char **argv)
 
 	if(argc < 4) {
 		printf("usage: %s <ipv6-addr> <port> <self>\n", argv[0]);
-		return -1;
+		return 0;
 	}
 
 	pad_printf("Initialize XSDL-subsystem");
 	if(XSDL_Init(XSDL_INIT_EVERYTHING) < 0) {
 		printf("failed!\n");
 		printf("%s\n", SDL_GetError());
-		goto exit;
+		return 0;
 	}
 	printf("done\n");
 
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 	if(core_init(argc, argv) < 0) {
 		printf("failed!\n");
 		printf("%s\n", glo_get_err());
-		goto cleanup_enud;
+		goto err_cleanup_xsdl;
 	}
 	printf("done\n");
 
@@ -55,60 +55,59 @@ int main(int argc, char **argv)
 	if((core->window = initWindow()) == NULL) {
 		printf("failed!\n");
 		printf("%s\n", XSDL_GetError());
-		goto cleanup_core;
+		goto err_cleanup_core;
 	}
 	printf("done\n");
 
 	pad_printf("Initialize OpenGL");
 	if(initGL() < 0) {
 		printf("failed!\n");
-		goto cleanup_window;
+		goto err_cleanup_window;
 	}
 	printf("done\n");
 
 	pad_printf("Initialize UI-context");
 	if((core->uicontext = XSDL_CreateUIContext(core->window)) == NULL) {
 		printf("failed!\n");
-		goto cleanup_gl;
+		goto err_cleanup_gl;
 	}
 	core->uiroot = core->uicontext->root;
 	printf("done\n");
 
 	pad_printf("Init inputs");
 	if(inpInit() < 0) {
-		goto cleanup_ui;
+		goto err_cleanup_ui;
 	}
 	printf("done\n");
 
 	printf("Import models, textures and shaders:\n");
 	if(core_load("../res") < 0) {
-		goto cleanup_ui;
+		goto err_cleanup_ui;
 	}
 
 	printf("Import fonts:\n");
 	if(loadResources() < 0) {
-		goto cleanup_ui;
+		goto err_cleanup_ui;
 	}
 
 	pad_printf("Initialize UI");
 	if(initUI() < 0) {
 		printf("failed!\n");
-		goto cleanup_ui;
+		goto err_cleanup_ui;
 	}
 	printf("done\n");
 
 	pad_printf("Initialize camera");
-	if(camCreate(45.0, 800.0 / 600.0, 0.1, 1000.0) < 0) {
+	if(cam_init(45.0, 800.0 / 600.0, 0.1, 1000.0) < 0) {
 		printf("failed!\n");
-		goto cleanup_ui;
+		goto err_cleanup_ui;
 	}
-	camUpdViewMat();
 	printf("done\n");
 
 	pad_printf("Initialize world");
 	if(wld_create() < 0) {
 		printf("failed!\n");
-		goto cleanup_camera;
+		goto err_cleanup_camera;
 	}
 	printf("done\n");
 
@@ -117,17 +116,14 @@ int main(int argc, char **argv)
 	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
 
 	/* Add a demo-dummy */
-	obj_set("demo", "cube", pos);
-	core->obj = obj_get("demo");
-	if(core->obj == NULL)
-		goto cleanup_world;
+	
+	if((core->obj = obj_set(world->objects, OBJ_M_ENTITY, pos, 
+			mdl_get("cube"), NULL, 0)) < 0)
+		goto err_cleanup_world;
 
-	camTargetObj(core->obj);
-
+	cam_trg_obj(core->obj);
 	camera->dist = 10.0;
-	camSetDir(dir);
-
-	XSDL_ShowNodes(core->uicontext->root);
+	cam_set_dir(dir);
 
 	/*
 	 * Mark the game as running and
@@ -143,7 +139,7 @@ int main(int argc, char **argv)
 
 	printf("\n");
 
-cleanup_world:
+err_cleanup_world:
 	pad_printf("Destroy world");
 	wld_destroy();
 	printf("done\n");
@@ -152,37 +148,35 @@ cleanup_world:
 	XSDL_ClearFontCache();
 	printf("done\n");
 
-cleanup_camera:
+err_cleanup_camera:
 	pad_printf("Destroy camera");
-	camDestroy();
+	cam_close();
 	printf("done\n");
 
-cleanup_ui:
+err_cleanup_ui:
 	pad_printf("Destroy UI-context");
 	XSDL_DeleteUIContext(core->uicontext);
 	printf("done\n");
 
-cleanup_gl:
+err_cleanup_gl:
 	pad_printf("Cleanup OpenGL");
 	XSDL_GL_DeleteContext(core->glcontext);
 	printf("done\n");
 
-cleanup_window:
+err_cleanup_window:
 	pad_printf("Destroy window");
 	XSDL_DestroyWindow(core->window);
 	printf("done\n");
 
-cleanup_core:
+err_cleanup_core:
 	pad_printf("Destroy the core-struct");
 	core_close();
 	printf("done\n");
 
-cleanup_enud:
+err_cleanup_xsdl:
 	pad_printf("Shutdown XSDL-subsystem");
 	XSDL_Quit();
 	printf("done\n");
-
-exit:
 	return 0;
 }
 
@@ -238,8 +232,7 @@ void handle_events(void)
 		}
 
 		/* Run specified event-handler */
-		if(core->procevt != NULL) {
+		if(core->procevt)
 			core->procevt(&event);
-		}
 	}
 }

@@ -12,19 +12,32 @@
 #define OBJ_DATA_MAX 128
 
 #define OBJ_M_NONE 0x00
-#define OBJ_M_DATA 0x01
+#define OBJ_M_MOVE 0x01
+#define OBJ_M_MODEL 0x02
+#define OBJ_M_DATA 0x03
+
+#define OBJ_M_ENTITY (OBJ_M_MOVE|OBJ_M_MODEL)
+
+enum object_attr {
+	OBJ_ATTR_MASK =   0x01,
+	OBJ_ATTR_POS =    0x02,
+	OBJ_ATTR_VEL =    0x03,
+	OBJ_ATTR_DIR =    0x04,
+	OBJ_ATTR_BUF =    0x05
+
+};
 
 struct object_table {
-	uint32_t mask[OBJ_SLOTS];
-	vec3_t pos[OBJ_SLOTS];
-	vec3_t vel[OBJ_SLOTS];
-	vec3_t dir[OBJ_SLOTS];
-	mat4_t mat[OBJ_SLOTS];
-	short model[OBJ_SLOTS];
-	short anim[OBJ_SLOTS];
-	short prog[OBJECTS_SLOTS];
-	int len[OBJ_SLOTS];
-	char data[OBJ_SLOTS][OBJ_DATA_MAX];
+	uint32_t  mask[OBJ_SLOTS];
+	vec3_t    pos[OBJ_SLOTS];
+	vec3_t    vel[OBJ_SLOTS];
+	vec3_t    dir[OBJ_SLOTS];
+	short     model[OBJ_SLOTS];
+	short     anim[OBJ_SLOTS];
+	float     prog[OBJ_SLOTS];
+	mat4_t    mat[OBJ_SLOTS];
+	int       len[OBJ_SLOTS];
+	char      buf[OBJ_SLOTS][OBJ_DATA_MAX];
 };
 
 /*
@@ -81,33 +94,34 @@ int obj_mod(struct object_table *tbl, short slot, short attr,
 		void *data, int len);
 
 /*
- * Update an object and use pyhsical calculations to adjust the attributes of 
- * the object.
- *
- * @obj: Pointer to the object to update
- * @delt: The time since the last frame
- */
-void obj_sys_update(struct object *obj, float delt);
-
-/* 
- * Render the model of an object on the screen.
- *
- * obj: Pointer to the object to render
-*/
-void obj_sys_render(struct object *obj);
-
-/*
  * Update the model-matrix of a given model.
  *
- * @obj: The model to update the mode-matrix for
+ * @tbl: Pointer to the object-table
+ * @slot: The slot in the object-table
  */
-void obj_update_mat(struct object *obj);
+void obj_update_matrix(struct object_table *tbl, short slot);
 
 /* 
- * Output info about the object in the terminal
+ * Output info about the object in the terminal.
  *
- * @obj: Pointer to the object to display data about
-*/
-void obj_print(struct object *obj);
+ * @tbl: Pointer to the object-table
+ * @slot: The slot of the object in the object-table
+ */
+void obj_print(struct object_table *tbl, short slot);
+
+/*
+ * Update all objects in an object-table according to their mask.
+ *
+ * @tbl: Pointer to the object-table
+ * @delt: The time since the last frame
+ */
+void obj_sys_update(struct object_table *tbl, float delt);
+
+/* 
+ * Render all renderable objects in an object-table.
+ *
+ * @tbl: Pointer to the object table
+ */
+void obj_sys_render(struct object_table *tbl);
 
 #endif

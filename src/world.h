@@ -67,6 +67,11 @@ int wld_create(void);
 void wld_destroy(void);
 
 /*
+ * Render the objects and objects in it.
+ */
+void wld_update(void);
+
+/*
  * Render the world using OpenGL.
  */
 void wld_render(void);

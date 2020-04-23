@@ -225,8 +225,11 @@ void mdl_set_shader(short slot, short shd)
 short mdl_load(char *name, char *amo, short tex, short shd)
 {
 	int slot;
-	int *idx, idxnum, vtxnum;
-	vec3_t *vtx, *nrm;
+	int *idx;
+	int idxnum;
+	int vtxnum;
+	vec3_t *vtx;
+	vec3_t *nrm;
 	vec2_t *uv;
 
 	/* Allocate memory for the model-struct */
@@ -315,15 +318,15 @@ void mdl_render(short slot, mat4_t mat)
 
 	if(!(tex = textures[mdl->tex]))
 		return;
-
+	
 	mat4_cpy(mod, mat);
-	camGetView(vie);
-	camGetProj(pro);
+	cam_get_view(vie);
+	cam_get_proj(pro);
 
 	glBindVertexArray(mdl->vao);
 	glUseProgram(shd->prog);
 
-	if(mdl->tex)
+	if(mdl->tex >= 0)
 		glBindTexture(GL_TEXTURE_2D, tex->id);
 
 	glEnableVertexAttribArray(0);

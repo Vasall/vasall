@@ -25,6 +25,11 @@ int main(int argc, char **argv)
 
 	srand(time(0));
 
+	if(argc < 4) {
+		printf("usage: %s <ipv6-addr> <port> <self>\n", argv[0]);
+		return -1;
+	}
+
 	pad_printf("Initialize XSDL-subsystem");
 	if(XSDL_Init(XSDL_INIT_EVERYTHING) < 0) {
 		printf("failed!\n");
@@ -132,8 +137,8 @@ int main(int argc, char **argv)
 	core->running = 1;
 	while(core->running) {
 		handle_events();
-		update();
-		render();
+		core_update();
+		core_render();
 	}
 
 	printf("\n");
@@ -237,36 +242,4 @@ void handle_events(void)
 			core->procevt(&event);
 		}
 	}
-}
-
-/*
- * Update the current game and execute
- * the update-callback-function.
- */
-void update(void)
-{
-	XSDL_UpdateUIContext(core->uicontext);
-
-	/* Run specified update-function */
-	if(core->update != NULL) core->update();
-}
-
-/*
- * Render the game-scene and the
- * user-interface and then execute the
- * render-callback-function.
- */
-void render(void)
-{
-	/* Clear the screen */
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	/* Run current render-function */
-	if(core->render != NULL) core->render();
-
-	/* Render the current userinterface */
-	XSDL_Render(core->uicontext);
-
-	/* Render the buffer on the screen */
-	XSDL_GL_SwapWindow(core->window);
 }

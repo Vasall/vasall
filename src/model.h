@@ -8,8 +8,8 @@
 #include "shader.h"
 #include "utils.h"
 
-#define MDL_KEY_LEN             5
-#define MDL_SLOTS               8
+#define MDL_KEY_LEN             8
+#define MDL_SLOTS             256
 
 #define MDL_OK                  0
 #define MDL_ERR_CREATING        1
@@ -27,10 +27,10 @@
  */
 struct model {
 	/*
-	 * The key of this model.
+	 * The name of the model.
 	 */
-	char key[8];
-	
+	char name[9];
+
 	/*
 	 * The vertex-array-object
 	 * attached to the model.
@@ -57,13 +57,13 @@ struct model {
 	 * The texture attached to this
 	 * model.
 	 */
-	struct texture *tex;
+	unsigned short tex;
 
 	/*
 	 * The shader attached to this
 	 * model.
 	 */
-	struct shader *shader;
+	unsigned short shd;
 
 	/*
 	 * The current status of the model.
@@ -73,44 +73,36 @@ struct model {
 
 
 /* The global model-table used to store all models */
-extern struct ht_t *models;
+extern struct model **models;
 
 /*
- * Initialize the model-cache.
+ * Initialize the model-table.
  *
- * Returns: Either 0 on success or -1
- * 	if an error occurred
+ * Returns: Either 0 on success or -1 if an error occurred
  */
 int mdl_init(void);
 
 /*
- * Close the model-cache and free the
- * allocated memory. Also detach everything
- * from OpenGL, which has been used by the
- * models.
+ * Close the model-table and free the allocated memory. Also detach everything
+ * from OpenGL, which has been used by the models.
  */
 void mdl_close(void);
 
 /* 
- * Create a new model by allocating the
- * necessary memory. Note that this function
- * doesn't yet push the model into the
- * model-table, as this will be done when
- * finishing the model.
+ * Create a new model and allocate the necessary memory.
  *
- * @key: The key to bind the model to
+ * @name: A null-terminated buffer with the max length of 8 letters containing
+ * 	the name of the model
  *
- * Returns: Either a pointer to the model
- * 	or NULL if an error occurred
+ * Returns: Either the slot in the model-table or -1 if an error occurred
  */
-struct model *mdl_begin(char *key);
+short mdl_set(char *name);
 
 /* 
- * Attach a mesh to the model by copying the
- * necessary data into the different buffers
- * and adding them in OpenGL to the model.
+ * Attach a mesh to the model by copying the necessary data into the different 
+ * buffers and adding them in OpenGL to the model.
  *
- * @mdl: Pointer to the model
+ * @slot: The slot in the model-table
  * @idxnum: The length of the index-buffer
  * @idx: A buffer containing the indices
  * @vtxnum: The number of vertices
@@ -119,95 +111,65 @@ struct model *mdl_begin(char *key);
  * @col: A buffer containing either uv-coordinates or color-values
  * @col_flg: A flag indicating if the col-buf contains colors or uv-coords
  */
-void mdl_set_mesh(struct model *mdl, int idxnum, int *idx, 
-		int vtxnum, vec3_t *vtx, vec3_t *nrm, void *col,
-		uint8_t col_flg);
+void mdl_set_mesh(short slot, int idxnum, int *idx, int vtxnum, vec3_t *vtx, 
+		vec3_t *nrm, void *col, uint8_t col_flg);
 
 /* 
- * Attach a texture to the model, by first
- * copying the pixel-data into a different
- * buffer and then binding it using OpenGL.
+ * Attach a texture to the model, by first copying the pixel-data into a
+ * different buffer and then binding it using OpenGL.
  *
- * @mdl: Pointer to the model
- * @tex: The key of the texture to use
+ * @slot: The slot in the model-table
+ * @tex: The index of the texture in the texture-table
  */
-void mdl_set_texture(struct model *mdl, char *tex);
+void mdl_set_texture(short slot, short tex);
 
 /* 
- * Attach a shader from the shader-table 
- * to the model. This function will use
- * the given shader-key to get the shader
- * from the shader-table and then add a
- * pointer to the struct to the model.
- * If no shader with that key is in the
- * shader-table, the shader won't be set
- * and the status of the model will be
+ * Attach a shader from the shader-table to the model. This function will use
+ * the given shader-key to get the shader from the shader-table and then add a
+ * pointer to the struct to the model. If no shader with that key is in the
+ * shader-table, the shader won't be set and the status of the model will be
  * updated.
  *
- * @mdl: Pointer to the model
- * @shd: The key for the shader in the shader-table
+ * @slot: The slot in the model-table
+ * @shd: The slot in the shader-table
  */
-void mdl_set_shader(struct model *mdl, char *shd);
+void mdl_set_shader(short slot, short shd);
 
 /* 
- * Finish the model and push it into the model-table.
- * Note that this function will only put the model
- * into the table, if the status is MDL_OK, which
- * means that the model has been created successfully.
- * To get the actual status of the model, just check
- * the status-attribute.
+ * Load a new model from an dot-amo-file and attach both the texture and shader
+ * to the model.
  *
- * @mdl: Pointer to the model to finish
+ * @name: The name of the model
+ * @amo: The absolute path the dot-amo-file containing the mesh
+ * @tex: The index of the texture in the texture-table
+ * @shd: The index of the shader in the shader-table
  *
- * Returns: Either 0 on success or -1
- * 	if an error occurred
+ * Returns: Either 0 on success or -1 if an error occurred
  */
-int mdl_end(struct model *mdl);
-
-/* 
- * Start the creation of a new model. 
- * First push a new model struct into 
- * the model-cache and mark the new 
- * struct as the currently active one.
- *
- * Returns: Either a pointer to the new
- * 	model of NULL
- */
-int mdl_load(char *key, char *obj, char *tex, char *shd);
+short mdl_load(char *name, char *amo, short tex, short shd);
 
 /*
  * Get a model from the model-table an return the pointer.
  *
- * @key: The key of the model
+ * @key: The name of the model to search for
  *
- * Returns: Either the pointer to the model or NULL
- * 	if an error occurred
+ * Returns: Either the slot in the model-table or -1 if an error occurred
  */
-struct model *mdl_get(char *key);
+short mdl_get(char *name);
 
 /*
- * This function is going to be used, to
- * delete a standalone model, which hasn't
- * been added to the model-table yet.
+ * Remove a model from the model-table and free the allocated memory.
  *
- * @mdl: The pointer to the model
+ * @slot: The slot in the model-table
  */
-void mdl_del(struct model *mdl);
-
-/* 
- * Unbind everything from OpenGL, delete a model and 
- * remove it from the model-table.
- *
- * @key: The key of the model
- */
-void mdl_remv(char *key);
+void mdl_del(short slot);
 
 /*
  * Render a model with the given model-matrix.
  *
- * @mdl: Pointer to the model to render
+ * @slot: The slot in the model-table
  * @mat: The model-matrix to use
  */
-void mdl_render(struct model *mdl, mat4_t mat);
+void mdl_render(short slot, mat4_t mat);
 
 #endif

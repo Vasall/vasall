@@ -21,7 +21,8 @@ LIB_PTH    := lib
 LIB_DIRS   := $(sort $(dir $(wildcard $(MKFILE_DIR)$(LIB_PTH)/*/)))
 
 # Set static libararies
-LIBS       := ./$(LIB_PTH)/XSDL/lib/xsdl.a ./$(LIB_PTH)/clusterd-client/libcd.a
+LIBS       := ./$(LIB_PTH)/XSDL/lib/xsdl.a ./$(LIB_PTH)/clusterd-client/libcd.a \
+	./$(LIB_PTH)/clusterd-client/lib/lcp/lcp.a -lgmp -lm -lcrypto
 
 # The compiler to use
 CC         := gcc
@@ -51,7 +52,7 @@ OBJECTS    := $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
 rm         := rm -f
 
-$(BINDIR)/$(TARGET): $(OBJECTS)
+$(BINDIR)/$(TARGET): $(OBJECTS) libs
 	@$(LINKER) $(OBJECTS) $(LFLAGS) -o $@
 	@echo "Linking complete!"
 
@@ -59,7 +60,7 @@ $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
 	@$(CC) $(CFLAGS) $(ERRFLAGS) -c $< -o $@
 	@echo "Compiled "$<" successfully!"
 
-# Build all modules in the lib-folder
+# Build all submodules in the lib-folder
 .PHONY: libs
 libs: ${LIB_DIRS}
-	@$(MAKE) -C $<
+	$(foreach dir,$(LIB_DIRS),make -C $(dir);)

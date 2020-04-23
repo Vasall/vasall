@@ -7,12 +7,17 @@
 
 
 /* Redefine external variables */
-struct ht_t *models = NULL;
+struct model **models = NULL;
 
 int mdl_init(void)
 {
-	if(!(models = ht_init(MDL_SLOTS)))
+	int i;
+
+	if(!(models = malloc(sizeof(struct model *) * MDL_SLOTS)))
 		return -1;
+
+	for(i = 0; i < MDL_SLOTS; i++)
+		models[i] = NULL;
 
 	return 0;
 }
@@ -20,54 +25,81 @@ int mdl_init(void)
 void mdl_close(void)
 {
 	int i;
-	struct ht_entry *ptr;
 	struct model *mdl;
 
-	for(i = 0; i < models->size; i++) {
-		ptr = models->entries[i];
+	for(i = 0; i < MDL_SLOTS; i++) {
+		if(!(mdl = models[i]))
+			continue;
 
-		while(ptr != NULL) {
-			mdl = (struct model *)ptr->buf;	
+		/* Destroy buffer-array-objects */
+		if(mdl->vtx_bao)
+			glDeleteBuffers(1, &mdl->vtx_bao);
 
-			/* Destroy buffer-array-objects */
-			if(mdl->vtx_bao)
-				glDeleteBuffers(1, &mdl->vtx_bao);
+		if(mdl->idx_bao)
+			glDeleteBuffers(1, &mdl->idx_bao);
 
-			if(mdl->idx_bao)
-				glDeleteBuffers(1, &mdl->idx_bao);
+		/* Destroy vertex-array-object */
+		if(mdl->vao)
+			glDeleteVertexArrays(1, &mdl->vao);
 
-			/* Destroy vertex-array-object */
-			if(mdl->vao)
-				glDeleteVertexArrays(1, &mdl->vao);
+		/* Free buffers */
+		if(mdl->idx_buf)
+			free(mdl->idx_buf);
 
-			/* Free buffers */
-			if(mdl->idx_buf)
-				free(mdl->idx_buf);
+		if(mdl->vtx_buf)
+			free(mdl->vtx_buf);
 
-			if(mdl->vtx_buf)
-				free(mdl->vtx_buf);
-
-			ptr = ptr->next;
-		}	
+		free(mdl);
 	}
 
-	/* Destroy the model-table */
-	ht_close(models);
+	free(models);
 }
 
-struct model *mdl_begin(char *key)
+static short mdl_get_slot(void)
+{
+	short i;
+
+	if(!models)
+		return -1;
+
+	for(i = 0; i < MDL_SLOTS; i++) {
+		if(!models[i])
+			return i;
+	}
+
+	return -1;
+}
+
+static void mdl_set_status(short slot, uint8_t status)
 {
 	struct model *mdl;
 
+	if(slot < 0 || slot >= MDL_SLOTS)
+		return;
+
+	if(!(mdl = models[slot]))
+		return;
+
+	mdl->status = status;
+}
+
+short mdl_set(char *name)
+{
+	short slot;
+	struct model *mdl;
+
 	/* Check if the given key is valid */
-	if(key == NULL || strlen(key) >= MDL_KEY_LEN)
-		return NULL;
+	if(!name || strlen(name) >= MDL_KEY_LEN)
+		return -1;
+
+	if((slot = mdl_get_slot()) < 0)
+		return -1;
 
 	if(!(mdl = malloc(sizeof(struct model))))
-		return NULL;
+		return -1;
 
 	/* Copy the key for this model */
-	strcpy(mdl->key, key);
+	strcpy(mdl->name, name);
 
 	/* Initialize model-attributes */
 	mdl->vao = 0;
@@ -77,20 +109,20 @@ struct model *mdl_begin(char *key)
 	mdl->vtx_bao = 0;
 	mdl->vtx_buf = NULL;
 	mdl->vtx_num = 0;
-	mdl->tex = NULL;
-	mdl->shader = NULL;
+	mdl->tex = -1;
+	mdl->shd = -1;
 		
 	mdl->status = MDL_OK;
 
 	/* Generate a new vao */
 	glGenVertexArrays(1, &mdl->vao);
 
-	return mdl;
+	models[slot] = mdl;
+	return slot;
 }
 
-void mdl_set_mesh(struct model *mdl, int idxnum, int *idx, 
-		int vtxnum, vec3_t *vtx, vec3_t *nrm, void *col, 
-		uint8_t col_flg)
+void mdl_set_mesh(short slot, int idxnum, int *idx, int vtxnum, vec3_t *vtx, 
+		vec3_t *nrm, void *col, uint8_t col_flg)
 {
 	int i;
 	float *ptr;
@@ -98,8 +130,13 @@ void mdl_set_mesh(struct model *mdl, int idxnum, int *idx,
 	int col_size = col_sizeb * sizeof(float);
 	int vtx_sizeb = ((3 * 2) + col_sizeb);
 	int vtx_size = vtx_sizeb * sizeof(float);
+	struct model *mdl;
 
-	if(mdl == NULL || mdl->status != MDL_OK)
+	if(slot < 0 || slot >= MDL_SLOTS)
+		return;
+
+	mdl = models[slot];
+	if(!mdl || mdl->status != MDL_OK)
 		return;
 
 	/* Allocate memory for the indices */
@@ -129,19 +166,18 @@ void mdl_set_mesh(struct model *mdl, int idxnum, int *idx,
 	/* Register the vertex-positions */
 	glGenBuffers(1, &mdl->vtx_bao);
 	glBindBuffer(GL_ARRAY_BUFFER, mdl->vtx_bao);
-	glBufferData(GL_ARRAY_BUFFER, vtxnum * vtx_size, 
-			mdl->vtx_buf, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vtxnum * vtx_size, mdl->vtx_buf, 
+			GL_STATIC_DRAW);
 
 	/* Bind the data to the indices */
 	/* Vertex-Position */
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 
-			vtx_size, NULL);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, vtx_size, NULL);
 	/* Normal-Vector */
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 
-			vtx_size, (void *)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, vtx_size, 
+			(void *)(3 * sizeof(float)));
 	/* UV-Coordinate */
-	glVertexAttribPointer(2, col_sizeb, GL_FLOAT, GL_FALSE, 
-			vtx_size, (void *)(6 * sizeof(float)));
+	glVertexAttribPointer(2, col_sizeb, GL_FLOAT, GL_FALSE, vtx_size, 
+			(void *)(6 * sizeof(float)));
 	
 	/* Register the indices */
 	glGenBuffers(1, &mdl->idx_bao);
@@ -158,161 +194,126 @@ err_set_status:
 	mdl->status = MDL_ERR_MESH;
 }
 
-void mdl_set_texture(struct model *mdl, char *tex)
+void mdl_set_texture(short slot, short tex)
 {
-	struct texture *tex_ptr = NULL;
+	struct model *mdl;
 
-	if(mdl == NULL || mdl->status != MDL_OK)
+	if(slot < 0 || slot >= MDL_SLOTS)
 		return;
 
-	if(!(tex_ptr = tex_get(tex)))
-		goto err_set_status;
+	mdl = models[slot];
+	if(!mdl || mdl->status != MDL_OK)
+		return;
 
-	mdl->tex = tex_ptr;
-	return;
-
-err_set_status:
-	mdl->status = MDL_ERR_TEXTURE;
+	mdl->tex = tex;
 }
 
-void mdl_set_shader(struct model *mdl, char *shd)
+void mdl_set_shader(short slot, short shd)
 {
-	struct shader *shd_ptr;
+	struct model *mdl;
 	
-	if(mdl == NULL || mdl->status != MDL_OK)
+	if(slot < 0 || slot >= MDL_SLOTS)
 		return;
 
-	if(!(shd_ptr = shd_get(shd)))
-		goto err_set_status;
+	mdl = models[slot];
+	if(!mdl || mdl->status != MDL_OK)
+		return;
 
-	mdl->shader = shd_ptr;
-	return;
-
-err_set_status:
-	mdl->status = MDL_ERR_SHADER;	
+	mdl->shd = shd;
 }
 
-int mdl_end(struct model *mdl)
+short mdl_load(char *name, char *amo, short tex, short shd)
 {
-	int sz = sizeof(struct model);
-
-	if(mdl == NULL || mdl->status != MDL_OK)
-		return -1;
-
-	if(ht_set(models, mdl->key, (const uint8_t *)mdl, sz) < 0)
-		goto err_set_status;
-
-	/* 
-	 * Everything should have been copied into the table,
-	 * so we should be able to free this struct.
-	 */
-	free(mdl);
-	return 0;
-
-err_set_status:
-	mdl->status = MDL_ERR_FINISHING;
-      	return -1;
-}
-
-int mdl_load(char *key, char *obj, char *tex, char *shd)
-{
-	struct model *mdl = NULL;
+	int slot;
 	int *idx, idxnum, vtxnum;
 	vec3_t *vtx, *nrm;
 	vec2_t *uv;
 
 	/* Allocate memory for the model-struct */
-	if(!(mdl = mdl_begin(key)))
+	if((slot = mdl_set(name)) < 0)
+		return -1;
+
+	if(mdl_load_obj(amo, &idxnum, &idx, &vtxnum, &vtx, &nrm, &uv) < 0)
 		goto err_del_mdl;
 
-	if(mdl_load_obj(obj, &idxnum, &idx, &vtxnum, &vtx, &nrm, &uv) < 0)
-		goto err_del_mdl;
+	mdl_set_texture(slot, tex);
+	mdl_set_shader(slot, shd);
 
-	mdl_set_texture(mdl, tex);
-	mdl_set_shader(mdl, shd);
+	mdl_set_mesh(slot, idxnum, idx, vtxnum, vtx, nrm, uv, 1);
 
-	mdl_set_mesh(mdl, idxnum, idx, vtxnum, vtx, nrm, uv, 1);
-
-	if(mdl_end(mdl) < 0)
-		goto err_del_mdl;
-
-	mdl->status = MDL_OK;
-	return 0;
+	mdl_set_status(slot, MDL_OK);
+	return slot;
 
 err_del_mdl:
-	mdl_del(mdl);
+	mdl_del(slot);
 	return -1;
 }
 
-struct model *mdl_get(char *key)
+short mdl_get(char *name)
+{
+	int i;
+
+	for(i = 0; i < MDL_SLOTS; i++) {
+		if(!models[i])
+			continue;
+
+		if(!strcmp(models[i]->name, name)) {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+void mdl_del(short slot)
 {
 	struct model *mdl;
 
-	if(ht_get(models, key, (uint8_t **)&mdl, NULL) < 0)
-		return NULL;
-
-	return mdl;
-}
-
-void mdl_del(struct model *mdl)
-{
-	/* Destroy the buffer-array-objects */
-	if(mdl->idx_bao)
-		glDeleteBuffers(1, &mdl->idx_bao);
-	
-	if(mdl->vtx_bao)
-		glDeleteBuffers(1, &mdl->vtx_bao);
-
-	/* Destroy the vertex-array-object */
-	if(mdl->vao)
-		glDeleteVertexArrays(1, &mdl->vao);
-
-	/* Free the buffers */
-	if(mdl->idx_buf)
-		free(mdl->idx_buf);
-	
-	if(mdl->vtx_buf)
-		free(mdl->vtx_buf);
-
-	/* Free the struct itself */
-	free(mdl);
-}
-
-void mdl_remv(char *key)
-{
-	struct model *mdl;
-
-	if(!(mdl = mdl_get(key)))
+	if(slot < 0 || slot >= MDL_SLOTS)
 		return;
 
-	/* Destroy the buffer-array-objects */
+	mdl = models[slot];
+	if(!mdl)
+		return;
+
 	if(mdl->idx_bao)
 		glDeleteBuffers(1, &mdl->idx_bao);
 	
 	if(mdl->vtx_bao)
 		glDeleteBuffers(1, &mdl->vtx_bao);
 
-	/* Destroy the vertex-array-object */
 	if(mdl->vao)
 		glDeleteVertexArrays(1, &mdl->vao);
 
-	/* Free the buffers */
 	if(mdl->idx_buf)
 		free(mdl->idx_buf);
 	
 	if(mdl->vtx_buf)
 		free(mdl->vtx_buf);
 
-	/* Remove the model from the model-table */
-	ht_del(models, mdl->key);
+	free(mdl);
+	models[slot] = NULL;
 }
 
-void mdl_render(struct model *mdl, mat4_t mat)
+void mdl_render(short slot, mat4_t mat)
 {
 	int model, view, proj;
 	mat4_t mod, vie, pro;
+	struct model *mdl;
+	struct shader *shd;
+	struct texture *tex;
 
-	if(mdl == NULL || mdl->status != MDL_OK)
+	if(slot < 0 || slot >= MDL_SLOTS)
+		return;
+
+	mdl = models[slot];
+	if(!mdl || mdl->status != MDL_OK)
+		return;
+
+	if(!(shd = shaders[mdl->shd]))
+		return;
+
+	if(!(tex = textures[mdl->tex]))
 		return;
 
 	mat4_cpy(mod, mat);
@@ -320,18 +321,18 @@ void mdl_render(struct model *mdl, mat4_t mat)
 	camGetProj(pro);
 
 	glBindVertexArray(mdl->vao);
-	glUseProgram(mdl->shader->prog);
+	glUseProgram(shd->prog);
 
 	if(mdl->tex)
-		glBindTexture(GL_TEXTURE_2D, mdl->tex->id);
+		glBindTexture(GL_TEXTURE_2D, tex->id);
 
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
 
-	model = glGetUniformLocation(mdl->shader->prog, "model");
-	view = glGetUniformLocation(mdl->shader->prog, "view");
-	proj = glGetUniformLocation(mdl->shader->prog, "proj");
+	model = glGetUniformLocation(shd->prog, "model");
+	view = glGetUniformLocation(shd->prog, "view");
+	proj = glGetUniformLocation(shd->prog, "proj");
 
 	glUniformMatrix4fv(model, 1, GL_FALSE, mod);
 	glUniformMatrix4fv(view, 1, GL_FALSE, vie);

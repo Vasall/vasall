@@ -1,4 +1,5 @@
 #include "core.h"
+#include "client.h"
 
 /* Redefine external variables */
 uint8_t zero = 0;
@@ -15,7 +16,6 @@ char *glo_get_err(void)
 {
 	return glo_err_buf;
 }
-
 
 int core_init(int argc, char **argv)
 {
@@ -43,6 +43,10 @@ int core_init(int argc, char **argv)
 	if(obj_init() < 0)
 		return -1;
 
+	/* Initialize the client */
+	if(cli_init(argv[1], atoi(argv[2]), atoi(argv[3])) < 0)
+		return -1;
+
 	/* Get the absolute path to the binary-directory */	
 	core->bindir = XSDL_GetBinDir(argv[0]);
 
@@ -54,11 +58,13 @@ void core_close(void)
 	if(core)
 		return;
 
-	mdl_close();
-	shd_close();
-	tex_close();
+	cli_close();
 
 	obj_close();
+	
+	shd_close();
+	mdl_close();
+	tex_close();
 
 	free(core);
 }
@@ -155,4 +161,31 @@ int core_load(char *pth)
 failed:
 	fclose(fd);
 	return -1;
+}
+
+void core_update(void)
+{
+	/* Update the client */
+	cli_update();
+
+	/* Update the userinterface */
+	XSDL_UpdateUIContext(core->uicontext);
+
+	/* Run specified update-function */
+	if(core->update != NULL) core->update();
+}
+
+void core_render(void)
+{
+	/* Clear the screen */
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	/* Run current render-function */
+	if(core->render != NULL) core->render();
+
+	/* Render the current userinterface */
+	XSDL_Render(core->uicontext);
+
+	/* Render the buffer on the screen */
+	XSDL_GL_SwapWindow(core->window);
 }

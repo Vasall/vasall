@@ -11,7 +11,7 @@
 
 
 /* A list containing all active shaders */
-struct ht_t *shaders = NULL;
+struct shader **shaders = NULL;
 
 
 /* A simple function that will read a file into an allocated char pointer buffer */
@@ -35,10 +35,27 @@ static char *filetobuf(char *file)
 	return buf;
 }
 
+static short shd_get_slot(void)
+{
+	short i;
+
+	for(i = 0; i < SHD_SLOTS; i++) {
+		if(!shaders[i])
+			return i;
+	}
+
+	return -1;
+}
+
 int shd_init(void)
 {
-	if(!(shaders = ht_init(SHD_SLOTS)))
+	int i;
+
+	if(!(shaders = malloc(sizeof(struct shader *) * SHD_SLOTS)))
 		return -1;
+
+	for(i = 0; i < SHD_SLOTS; i++)
+		shaders[i] = NULL;
 
 	return 0;
 }
@@ -46,34 +63,32 @@ int shd_init(void)
 void shd_close(void)
 {
 	int i;
-	struct ht_entry *ptr;
 	struct shader *shd;
 
-	for(i = 0; i < textures->size; i++) {
-		ptr = shaders->entries[i];
-
-		while(ptr != NULL) {
-			shd = (struct shader *)ptr->buf;
-
-			/* Destroy the shader-program */
-			glDeleteProgram(shd->prog);
-
-			ptr = ptr->next;
-		}
+	for(i = 0; i < SHD_SLOTS; i++) {
+		if(!(shd = shaders[i]))
+			continue;
+	
+		/* Destroy the shader-program */
+		glDeleteProgram(shd->prog);	
 	}
 
-	ht_close(shaders);
+	free(shaders);
 }
 
-int shd_set(char *key, char *vtx_shd, char *frg_shd)
+short shd_set(char *name, char *vtx_shd, char *frg_shd)
 {
+	short slot;
 	int success;
 	int shd_sz = sizeof(struct shader);
 	struct shader *shd = NULL;
 	uint32_t fshd = 0, vshd = 0;
 	char *vtxsrc = NULL, *frgsrc = NULL, infoLog[512];
 
-	if(vtx_shd == NULL || frg_shd == NULL)
+	if((slot = shd_get_slot()) < 0)
+		return -1;
+
+	if(!vtx_shd || !frg_shd)
 		return -1;
 
 	/* Allocate the necessary memory for the struct */
@@ -81,6 +96,7 @@ int shd_set(char *key, char *vtx_shd, char *frg_shd)
 		return -1;
 
 	/* Initialize the shader-values */
+	strcpy(shd->name, name);
 	shd->prog = 0;
 	shd->status = 0;
 
@@ -141,15 +157,10 @@ int shd_set(char *key, char *vtx_shd, char *frg_shd)
 	glDeleteShader(fshd);
 	fshd = 0;
 
-	/* Insert the shader into the tabel */
-	if(ht_set(shaders, key, (const uint8_t *)shd, shd_sz) < 0)
-		goto err_cleanup;
-
-	/* Free the code-buffers */
+	shaders[slot] = shd;
 	free(vtxsrc);
 	free(frgsrc);
-
-	return 0;
+	return slot;
 
 err_cleanup:
 	/* Detach and destroy the shaders */
@@ -175,26 +186,35 @@ err_cleanup:
 	return -1;
 }
 
-struct shader *shd_get(char *key)
+short shd_get(char *name)
 {
-	struct shader *ptr;
+	int i;
 
-	if(ht_get(shaders, key, (uint8_t **)&ptr, NULL) < 0)
-		return NULL;
+	for(i = 0; i < SHD_SLOTS; i++) {
+		if(!shaders[i])
+			continue;
 
-	return ptr;
+		if(!strcmp(shaders[i]->name, name))
+			return i;
+	}
+
+	return -1;
 }
 
-void shd_remv(char *key)
+void shd_del(short slot)
 {
 	struct shader *shd;
 
-	if(!(shd = shd_get(key)))
+	if(slot < 0 || slot >= SHD_SLOTS)
+		return;
+
+	if(!(shd = shaders[slot]))
 		return;
 
 	/* Destroy the shader-program */
 	if(shd->prog)
 		glDeleteProgram(shd->prog);
 
-	ht_del(shaders, key);
+	free(shd);
+	shaders[slot] = NULL;
 }

@@ -23,11 +23,9 @@ int wld_create(void)
 {
 	vec2_t del;
 
-	world = malloc(sizeof(struct world));
-	if(world == NULL)
+	if(!(world = malloc(sizeof(struct world))))
 		return -1;
 
-	/* Allocate space for the heightmap */
 	world->size[0] = WORLD_SIZE;
 	world->size[1] = WORLD_SIZE;
 
@@ -51,13 +49,15 @@ int wld_create(void)
 
 	memset(&world->rot, 0, sizeof(vec3_t));
 
-	/* Set the terrain-model-pointer to NULL */
-	world->terrain = NULL;
+	if(!(world->objects = obj_init()))
+		goto err_free_heights;
 
-	/* Generate the terrain */
 	wld_gen_terrain();
 
 	return 0;
+
+err_free_heights:
+	free(world->heights);
 
 err_free_world:
 	free(world);
@@ -69,6 +69,7 @@ void wld_destroy(void)
 	if(!world || !world->heights)
 		return;
 
+	obj_close(world->objects);	
 	free(world->heights);
 	free(world);
 }
@@ -156,7 +157,6 @@ int wld_gen_terrain(void)
 	int vtx_num, x, z, w, count, i, j, idx_num, *idx = NULL;
 	float **hImg = NULL, *heights = NULL, xpos, zpos;
 	vec3_t *vtx = NULL, *last_row = NULL, *nrm = NULL, *col = NULL;
-	struct model *mdl;
 
 	w = (int)world->size[0];
 
@@ -303,23 +303,18 @@ int wld_gen_terrain(void)
 	}
 
 	/* Allocate memory for the model-struct */
-	if(!(mdl = mdl_begin("wld_")))
+	if((world->terrain = mdl_set("wld_")) < 0)
 		goto err_free;
 	
-	mdl_set_shader(mdl, "wld_");
-	mdl_set_mesh(mdl, idx_num, (int32_t *)idx, vtx_num, vtx, nrm, col, 0);
-	if(mdl_end(mdl) < 0)
-		goto err_free;
-
-	if(!(world->terrain = mdl_get("wld_")))
-		goto err_free;
+	mdl_set_shader(world->terrain, shd_get("wld_"));
+	mdl_set_mesh(world->terrain, idx_num, (int32_t *)idx, vtx_num, vtx, 
+			nrm, col, 0);
 
 	if(vtx) free(vtx);
 	if(col) free(col);
 	if(nrm) free(nrm);
 	if(last_row) free(last_row);
 	if(idx) free(idx);
-
 	return 0;
 
 err_free:

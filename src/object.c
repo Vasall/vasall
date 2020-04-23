@@ -10,17 +10,78 @@
 struct ht_t *objects = NULL;
 
 
-int obj_init(void)
+struct object_table *obj_init(void)
 {
-	if(!(objects = ht_init(OBJ_SLOTS)))
-		return -1;
+	struct object_table *tbl;
+	int i;
 
-	return 0;
+	if(!(tbl = malloc(sizeof(struct object_table))))
+		return NULL;
+
+	for(i = 0; i < OBJ_SLOTS; i++)
+		tbl->mask[i] = OBJ_M_NONE;
+
+	return tbl;
 }
 
-void obj_close(void)
+void obj_close(struct object_table *tbl)
 {
+	int i;
 
+	if(!tbl)
+		return;
+	
+	for(i = 0; i < OBJ_SLOTS; i++) {
+		if((tbl->mask[i] & OBJ_M_DATA) == OBJ_M_DATA)
+			free(tbl->data[i]);
+	}
+
+	free(tbl);
+}
+
+static short obj_get_slot(struct object_table *tbl)
+{
+	short i;
+
+	for(i = 0; i < OBJ_SLOTS; i++) {
+		if(tbl->mask[i] == OBJ_M_NONE)
+			return i;
+	}
+
+	return -1;
+}
+
+short obj_set(struct object_table *tbl, uint32_t mask, vec3_t pos, short model,
+		char *data, int len)
+{
+	short slot;
+
+	if(!tbl)
+		return -1;
+
+	if((slot = obj_get_slot(tbl)) < 0)
+		return -1;
+
+	tbl->mask[slot] = mask;
+	vec3_cpy(tbl->pos[slot], pos);
+	vec3_set(tbl->vel[slot], 0, 0, 0);
+	vec3_set(tbl->dir[slot], 1, 0, 1);
+	tbl->model[slot] = model;
+	
+	tbl->len[slot] = 0;
+	tbl->data[slot] = NULL;
+
+	if(data && len) {
+		len = (len > OBJ_DATA_MAX) ? (OBJ_DATA_MAX) : (len);
+		tbl->len[slot] = len;
+		memcpy(tbl->[slot], data, len);
+	}
+
+	return slot;
+
+err_clear_slot:
+	tbl->mask[slot] = OBJ_M_NONE;
+	return -1;
 }
 
 int obj_set(char *key, char* mdl, vec3_t pos)

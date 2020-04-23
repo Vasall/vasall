@@ -172,4 +172,8 @@ void core_close(void);
  */
 int core_load(char *pth);
 
+void core_update(void);
+
+void core_render(void);
+
 #endif

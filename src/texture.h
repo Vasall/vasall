@@ -10,7 +10,11 @@
 #define TEX_SLOTS 8
 
 struct texture {
-	/* The id of this texture in OpenGL */
+	/*
+	 * The name of the texture.
+	 */
+	char name[9];
+
 	uint32_t id;
 
 	/* The buffer containing the texture */
@@ -23,7 +27,7 @@ struct texture {
 };
 
 /* The global texture-table */
-extern struct ht_t *textures;
+extern struct texture **textures;
 
 /*
  * Initialize the texture-table and allocate the necessary memory.
@@ -39,42 +43,42 @@ void tex_close(void);
 
 /*
  * Create a new texture and push it into the texture-table, with the 
- * given key.
+ * given name.
  *
- * @key: The key of the texture
+ * @name: The name of the texture
  * @buf: A buffer containing the pixel-data
  * @w: The width of the texture
  * @h: The height of the texture
  *
  * Returns: Either 0 on success or -1 if an error occurred
  */
-int tex_set(char *key, uint8_t *buf, int w, int h);
+short tex_set(char *name, uint8_t *buf, int w, int h);
 
 /*
  * Load a texture from a file and push the created structure into the 
  * texture-table, with the given key.
  *
- * @key: The key of the texture
+ * @name: The name of the texture
  * @pth: The absolute path to the texture
  *
- * Returns: Either 0 on success or -1 if an error occurred
+ * Returns: Either the slot in the texture-table or -1 if an error occurred
  */
-int tex_load(char *key, char *pth);
+short tex_load(char *name, char *pth);
 
 /*
- * Get a texture from the table and return a pointer to the struct.
+ * Get a texture from the texture-table.
  *
- * @key: The key of the texture
+ * @name: The name of the texture
  *
- * Returns: Either a pointer to the texture or NULL if an error occurred
+ * Returns: Either the slot in the texture-table or -1 if an error occurred
  */
-struct texture *tex_get(char *key);
+short tex_get(char *name);
 
 /*
  * Delete a texture, remove it from the table and free the allocated memory.
  *
- * @key: The key of the texture
+ * @slot: The slot in the texture-table
  */
-void tex_del(char *key);
+void tex_del(short slot);
 
 #endif

@@ -3,6 +3,7 @@
 
 #include "core.h"
 #include "model.h"
+#include "object.h"
 
 #define WORLD_SIZE 256
 
@@ -12,7 +13,6 @@ struct world {
 	 */
 	int2_t size;
 	int ptnum;
-
 
 	/*
 	 * The relative position of the terrain.
@@ -39,7 +39,12 @@ struct world {
 	/*
 	 * The underlying model for the terrain.
 	 */
-	struct model *terrain;
+	short terrain;
+
+	/*
+	 * The object table for the world.
+	 */
+	struct object_table *objects;
 };
 
 

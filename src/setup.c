@@ -6,6 +6,7 @@
 #include "setup.h"
 #include "core.h"
 #include "handle.h"
+#include "client.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -110,17 +111,35 @@ loadfailed:
  */
 void try_login(XSDL_Node *n, XSDL_Event *e)
 {
-	if(n||e){/* Prevent warning for not using paameters */}
+	struct XSDL_Input *uname_node, *pswd_node;
+	char uname[17];
+	char pswd[32];
 
-	/* Update core functions */
-	core->procevt = &game_procevt;
-	core->update = &game_update;
-	core->render = &game_render;
+	if(n||e){/* Prevent warning for not using paameters */}	
 
-	/* Switch from menuscreen to gamescreen */
-	XSDL_ModFlag(XSDL_Get(core->uiroot, "mns"), XSDL_FLG_ACT, &zero);
+	uname_node = XSDL_Get(core->uiroot, "mns_user")->element;
+	pswd_node = XSDL_Get(core->uiroot, "mns_pswd")->element; 
 
-	return;
+	strcpy(uname, uname_node->buffer);
+	strcpy(pswd, pswd_node->buffer);
+
+	if(cd_sto(client->core, 0, uname, pswd) == 1) {
+		struct XSDL_Node *node;
+
+		printf("Successfully logged into the system!\n");
+
+		/* Update core functions */
+		core->procevt = &game_procevt;
+		core->update = &game_update;
+		core->render = &game_render;
+
+		/* Switch from menuscreen to gamescreen */
+		node = XSDL_Get(core->uiroot, "mns");
+		XSDL_ModFlag(node, XSDL_FLG_ACT, &zero);
+		return;
+	}
+
+	printf("Failed to log into the system!\n");
 }
 
 /*

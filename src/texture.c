@@ -6,13 +6,37 @@
 #include <string.h>
 
 /* Redefine external variables */
-struct ht_t *textures = NULL;
+struct texture **textures = NULL;
 
+static short tex_get_slot(void)
+{
+	short i;
+
+	if(!textures)
+		return -1;
+
+	for(i = 0; i < TEX_SLOTS; i++) {
+		if(!textures[i])
+			return i;
+	}
+
+	return -1;
+}
 
 int tex_init(void)
 {
-	if(!(textures = ht_init(TEX_SLOTS)))
+	int i;
+	short slot;
+
+	if((slot = tex_get_slot()) < 0)
 		return -1;
+	
+
+	if(!(textures = malloc(sizeof(struct texture *) * TEX_SLOTS)))
+		return -1;
+
+	for(i = 0; i < TEX_SLOTS; i++)
+		textures[i] = NULL;
 
 	return 0;
 }
@@ -20,31 +44,30 @@ int tex_init(void)
 void tex_close(void)
 {
 	int i;
-	struct ht_entry *ptr;
 	struct texture *tex;
 
-	for(i = 0; i < textures->size; i++) {
-		ptr = textures->entries[i];
-
-		while(ptr != NULL) {
-			tex = (struct texture *)ptr->buf;
-
-			glDeleteTextures(1, &tex->id);
-			free(tex->buf);
-
-			ptr = ptr->next;
-		}
+	for(i = 0; i < TEX_SLOTS; i++) {
+		if(!(tex = textures[i]))
+			continue;
+		
+		glDeleteTextures(1, &tex->id);
+		free(tex->buf);
+		free(tex);
 	}
 
-	ht_close(textures);
+	free(textures);
 }
 
-int tex_set(char *key, uint8_t *buf, int w, int h)
+short tex_set(char *name, uint8_t *buf, int w, int h)
 {
 	struct texture *tex;
 	int tex_sz = sizeof(struct texture);
 	int size = (w * h) * sizeof(uint8_t) * 4;
-		
+	short slot;
+
+	if((slot = tex_get_slot()) < 0)
+		return -1;
+
 	if(!(tex = malloc(tex_sz)))
 		return -1;
 
@@ -73,41 +96,53 @@ int tex_set(char *key, uint8_t *buf, int w, int h)
 	/* Unbind current texture */
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	/* Add the texture to the table */
-	if(ht_set(textures, key, (const uint8_t *)tex, tex_sz) < 0)
-		goto err_free_tex;
-
-	/* Delete this instance, as it has been copied into the table */
-	free(tex);
-	return 0;
+	textures[slot] = tex;
+	return slot;
 
 err_free_tex:
 	free(tex);
 	return -1;
 }
 
-int tex_load(char *key, char *pth)
+short tex_load(char *name, char *pth)
 {
 	int w, h;
 	uint8_t *buf;
-
+	
 	/* Load the PNG-file */
 	texLoadPNG(pth, &buf, &w, &h);
 
-	return tex_set(key, buf, w, h);
+	return tex_set(name, buf, w, h);
 }
 
-struct texture *tex_get(char *key)
+short tex_get(char *name)
+{
+	int i;
+	struct texture *tex;
+
+	for(i = 0; i < TEX_SLOTS; i++) {
+		if(!textures[i])
+			continue;
+
+		if(!strcmp(textures[i]->name, name))
+			return i;
+	}
+
+	return -1;
+}
+
+void tex_del(short slot)
 {
 	struct texture *tex;
 
-	if(ht_get(textures, key, (uint8_t **)&tex, NULL) < 0)
-		return NULL;
+	if(slot < 0 || slot >= TEX_SLOTS)
+		return;
 
-	return tex;
-}
+	if(!(tex = textures[slot]))
+		return;
 
-void tex_del(char *key)
-{
-	if(key) {}
+	glDeleteTextures(1, &tex->id);
+	free(tex->buf);
+	free(tex);
+	textures[slot] = NULL;
 }

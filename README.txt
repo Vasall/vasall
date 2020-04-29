@@ -1,13 +1,10 @@
-vasall-client
+ _ _   _   __   _   _    _   
+| | | / \ / _| / \ | |  | |  
+| V || o |\_ \| o || |_ | |_ 
+ \_/ |_n_||__/|_n_||___||___|
 
-A coop-hunting-game similar to Monster Hunter. Still in developement.
-How to build the game yourself:
-Debian and Ubuntu
+ABSTRACT
+    Vasall is a peer-to-peer MMO-RPG which focuses mainly on combat and exploration.
 
-Install the necessary dependencies: sudo apt install git make libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev freeglut3-dev
-Clone the repository: git clone https://github.com/Vasall/vasall-client
-Change into the folder: cd vasall-client
-Create the necessary folders: mkdir lib
-Clone the XSDL-repository into the lib-folder: cd lib && git clone https://github.com/enudstudios/XSDL.git && cd ..
-Then start building: make libs && bash build.sh && make -B
-Now you can run the code: ./bin/vasall-client
+TECHNICAL DESCRIPTION
+    The whole game is written in C89 and only relies on the SDL-framework and OpenGL.

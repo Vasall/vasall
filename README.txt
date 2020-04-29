@@ -20,7 +20,7 @@ TECHNICAL DESCRIPTION
 INSTALLATION
 
   Installing can be done using the terminal. Note that some of the following
-  commands need to be called as root.
+  commands need to be executed as root.
   
   First of all you have to get the basic tools to download and build the game:
     $ apt install git make bash

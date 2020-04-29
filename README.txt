@@ -5,10 +5,12 @@
                         \_/ |_n_||__/|_n_||___||___|
  
 ABSTRACT
+
   Vasall is a peer-to-peer MMO-RPG which focuses mainly on combat and 
   exploration.
 
 TECHNICAL DESCRIPTION
+
   The whole game is written in C89 and only relies on the SDL-framework for
   creating the window and handeling IO. Additionally OpenGL is used for 
   rendering. Currently the game will most likely only run on Linux as the
@@ -16,6 +18,7 @@ TECHNICAL DESCRIPTION
   the near future.
 
 INSTALLATION
+
   Installing can be done using the terminal. Note that some of the following
   commands need to be called as root.
   

@@ -1,14 +1,16 @@
-#ifndef _MODEL_H
-#define _MODEL_H
+#ifndef _V_MODEL_H
+#define _V_MODEL_H
 
-#include <stdint.h>
+#include "defines.h"
 #include "vec.h"
 #include "mat.h"
 #include "texture.h"
 #include "shader.h"
 #include "utils.h"
 
-#define MDL_KEY_LEN             8
+#include <stdint.h>
+
+#define MDL_NAME_MAX            8
 #define MDL_SLOTS             256
 
 #define MDL_OK                  0
@@ -73,20 +75,20 @@ struct model {
 
 
 /* The global model-table used to store all models */
-extern struct model **models;
+V_GLOBAL struct model **models;
 
 /*
  * Initialize the model-table.
  *
  * Returns: Either 0 on success or -1 if an error occurred
  */
-int mdl_init(void);
+V_API int mdl_init(void);
 
 /*
  * Close the model-table and free the allocated memory. Also detach everything
  * from OpenGL, which has been used by the models.
  */
-void mdl_close(void);
+V_API void mdl_close(void);
 
 /* 
  * Create a new model and allocate the necessary memory.
@@ -96,7 +98,7 @@ void mdl_close(void);
  *
  * Returns: Either the slot in the model-table or -1 if an error occurred
  */
-short mdl_set(char *name);
+V_API short mdl_set(char *name);
 
 /* 
  * Attach a mesh to the model by copying the necessary data into the different 
@@ -111,8 +113,8 @@ short mdl_set(char *name);
  * @col: A buffer containing either uv-coordinates or color-values
  * @col_flg: A flag indicating if the col-buf contains colors or uv-coords
  */
-void mdl_set_mesh(short slot, int idxnum, int *idx, int vtxnum, vec3_t *vtx, 
-		vec3_t *nrm, void *col, uint8_t col_flg);
+V_API void mdl_set_mesh(short slot, int idxnum, int *idx, int vtxnum, 
+		vec3_t *vtx, vec3_t *nrm, void *col, uint8_t col_flg);
 
 /* 
  * Attach a texture to the model, by first copying the pixel-data into a
@@ -121,7 +123,7 @@ void mdl_set_mesh(short slot, int idxnum, int *idx, int vtxnum, vec3_t *vtx,
  * @slot: The slot in the model-table
  * @tex: The index of the texture in the texture-table
  */
-void mdl_set_texture(short slot, short tex);
+V_API void mdl_set_texture(short slot, short tex);
 
 /* 
  * Attach a shader from the shader-table to the model. This function will use
@@ -133,7 +135,7 @@ void mdl_set_texture(short slot, short tex);
  * @slot: The slot in the model-table
  * @shd: The slot in the shader-table
  */
-void mdl_set_shader(short slot, short shd);
+V_API void mdl_set_shader(short slot, short shd);
 
 /* 
  * Load a new model from an dot-amo-file and attach both the texture and shader
@@ -146,7 +148,7 @@ void mdl_set_shader(short slot, short shd);
  *
  * Returns: Either 0 on success or -1 if an error occurred
  */
-short mdl_load(char *name, char *amo, short tex, short shd);
+V_API short mdl_load(char *name, char *amo, short tex, short shd);
 
 /*
  * Get a model from the model-table an return the pointer.
@@ -155,14 +157,14 @@ short mdl_load(char *name, char *amo, short tex, short shd);
  *
  * Returns: Either the slot in the model-table or -1 if an error occurred
  */
-short mdl_get(char *name);
+V_API short mdl_get(char *name);
 
 /*
  * Remove a model from the model-table and free the allocated memory.
  *
  * @slot: The slot in the model-table
  */
-void mdl_del(short slot);
+V_API void mdl_del(short slot);
 
 /*
  * Render a model with the given model-matrix.
@@ -170,6 +172,6 @@ void mdl_del(short slot);
  * @slot: The slot in the model-table
  * @mat: The model-matrix to use
  */
-void mdl_render(short slot, mat4_t mat);
+V_API void mdl_render(short slot, mat4_t mat);
 
 #endif

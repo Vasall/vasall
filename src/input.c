@@ -8,16 +8,18 @@
 /* Redefine external-variables */
 struct input_map *inp_map = NULL;
 
-/* 
- * Initialize the input-map.
- *
- * Returns: Either 0 on succes or -1
- * 	if an error occurred
- */
-int inpInit(void)
+int inp_init(void)
 {
-	inp_map = calloc(1, sizeof(struct input_map));
-	if(inp_map == NULL) return(-1);
+	if(!(inp_map = calloc(1, sizeof(struct input_map))))
+		return -1;
 
-	return(0);
+	return 0;
+}
+
+void inp_close(void)
+{
+	if(!inp_map)
+		return;
+
+	free(inp_map);
 }

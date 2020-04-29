@@ -13,29 +13,47 @@
 /* A list containing all active shaders */
 struct shader **shaders = NULL;
 
-
-/* A simple function that will read a file into an allocated char pointer buffer */
-static char *filetobuf(char *file)
+/*
+ * Read an file into a newly allocated buffer. Please always free the returned
+ * buffer after using it to prevent memory-leaks.
+ *
+ * @pth: The absolte path to the file to read
+ *
+ * Returns: Either a buffer containing the content of the file or NULL if an
+ * 	error occurred
+ */
+V_INTERN char *filetobuf(char *pth)
 {
 	FILE *fptr;
 	long length;
 	char *buf;
 
-	if(!(fptr = fopen(file, "rb")))
+	if(!(fptr = fopen(pth, "rb")))
 		return NULL;
 	
 	fseek(fptr, 0, SEEK_END);
 	length = ftell(fptr);
-	buf = malloc(length + 1);
+
+	if(!(buf = malloc(length + 1)))
+		goto err_close_file;
+
 	fseek(fptr, 0, SEEK_SET);
 	fread(buf, length, 1, fptr);
 	fclose(fptr);
 	buf[length] = 0;
-
 	return buf;
+
+err_close_file:
+	fclose(fptr);
+	return NULL;
 }
 
-static short shd_get_slot(void)
+/*
+ * Get an empty slot in the shader-table.
+ *
+ * Returns: Either a empty slot in the shader-table or -1 if an error occurred
+ */
+V_INTERN short shd_get_slot(void)
 {
 	short i;
 
@@ -47,7 +65,22 @@ static short shd_get_slot(void)
 	return -1;
 }
 
-int shd_init(void)
+/*
+ * Check if a slot-number is in range.
+ *
+ * @slot: The slot-number to check
+ *
+ * Returns: Either 0 if the slot-number is ok, or 1 if not
+ */
+V_INTERN int shd_check_slot(short slot)
+{
+	if(slot < 0 || slot >= SHD_SLOTS)
+		return 1;
+
+	return 0;
+}
+
+V_API int shd_init(void)
 {
 	int i;
 
@@ -60,7 +93,7 @@ int shd_init(void)
 	return 0;
 }
 
-void shd_close(void)
+V_API void shd_close(void)
 {
 	int i;
 	struct shader *shd;
@@ -76,7 +109,7 @@ void shd_close(void)
 	free(shaders);
 }
 
-short shd_set(char *name, char *vtx_shd, char *frg_shd)
+V_API short shd_set(char *name, char *vtx_shd, char *frg_shd)
 {
 	short slot;
 	int success;
@@ -186,7 +219,7 @@ err_cleanup:
 	return -1;
 }
 
-short shd_get(char *name)
+V_API short shd_get(char *name)
 {
 	int i;
 
@@ -201,11 +234,11 @@ short shd_get(char *name)
 	return -1;
 }
 
-void shd_del(short slot)
+V_API void shd_del(short slot)
 {
 	struct shader *shd;
 
-	if(slot < 0 || slot >= SHD_SLOTS)
+	if(shd_check_slot(slot))
 		return;
 
 	if(!(shd = shaders[slot]))

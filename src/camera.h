@@ -1,5 +1,5 @@
-#ifndef _CAMERA_H_
-#define _CAMERA_H_
+#ifndef _V_CAMERA_H_
+#define _V_CAMERA_H_
 
 #include "defines.h"
 #include "camera.h"
@@ -80,7 +80,7 @@ struct camera {
 
 
 /* The global camera-struct */
-extern struct camera *camera;
+V_GLOBAL struct camera *camera;
 
 /*
  * Initialize the global camera-instance.

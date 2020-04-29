@@ -22,7 +22,7 @@ int g_win_flgs = XSDL_WINDOW_RESIZABLE | XSDL_WINDOW_OPENGL;
  * Returns: Either a pointer to the new window
  * 	of NULL if an error occurred
  */
-XSDL_Window *initWindow(void)
+V_API XSDL_Window *initWindow(void)
 {
 	XSDL_Window *win;
 
@@ -46,7 +46,7 @@ XSDL_Window *initWindow(void)
  * Returns: 0 on success and -1 
  * 	if an error occurred
  */
-int initGL(void)
+V_API int initGL(void)
 {
 	/* Create the XSDL-OpenGL-context */
 	if((core->glcontext = XSDL_GL_CreateContext(core->window)) == NULL) {
@@ -77,7 +77,7 @@ int initGL(void)
  * Returns: 0 on success and -1 
  * 	if an error occurred
  */
-int loadResources(void)
+V_API int loadResources(void)
 {
 	char path[512];
 	/* printf("Directory: %s\n", core->bindir);*/
@@ -109,7 +109,7 @@ loadfailed:
  * 	attached to
  * @e: Pointer to the event
  */
-void try_login(XSDL_Node *n, XSDL_Event *e)
+V_INTERN void try_login(XSDL_Node *n, XSDL_Event *e)
 {
 	struct XSDL_Input *uname_node, *pswd_node;
 	char uname[17];
@@ -162,7 +162,7 @@ void try_login(XSDL_Node *n, XSDL_Event *e)
  * Returns: 0 on success and -1
  * 	if an error occurred
  */
-int initUI(void)
+V_API int initUI(void)
 {
 	XSDL_Rect body0 = {50, 14, 300, 52};
 	XSDL_Rect body1 = {40, 96, 320, 24};

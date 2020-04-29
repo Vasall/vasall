@@ -16,10 +16,10 @@
 /* Redefine external variables */
 struct world *world = NULL;
 
-static int twodim(int x, int y, int w) {return y * w + x;}
-static float _abs(float val) {return(val < 0) ? (-val) : (val);}
+V_INTERN int twodim(int x, int y, int w) {return y * w + x;}
+V_INTERN float _abs(float val) {return(val < 0) ? (-val) : (val);}
 
-int wld_create(void)
+V_API int wld_create(void)
 {
 	vec2_t del;
 
@@ -49,46 +49,32 @@ int wld_create(void)
 
 	memset(&world->rot, 0, sizeof(vec3_t));
 
-	if(!(world->objects = obj_init()))
-		goto err_free_heights;
-
 	wld_gen_terrain();
 
 	return 0;
-
-err_free_heights:
-	free(world->heights);
 
 err_free_world:
 	free(world);
 	return -1;
 }
 
-void wld_destroy(void)
+V_API void wld_destroy(void)
 {
 	if(!world || !world->heights)
 		return;
 
-	obj_close(world->objects);	
 	free(world->heights);
 	free(world);
 }
 
-void wld_update(void)
-{
-	obj_sys_update(world->objects, 1.0);
-}
-
-void wld_render(void) 
+V_API void wld_render(void) 
 {
 	mat4_t idt;
 	mat4_idt(idt);
 	mdl_render(world->terrain, idt);
-
-	obj_sys_render(world->objects);
 }
 
-float wld_get_height(float x, float z)
+V_API float wld_get_height(float x, float z)
 {
 	float ret = 0.0;
 	vec2_t rel_pos, coord;
@@ -159,7 +145,7 @@ float wld_get_height(float x, float z)
 	return ret;
 }
 
-int wld_gen_terrain(void)
+V_API int wld_gen_terrain(void)
 {
 	int vtx_num, x, z, w, count, i, j, idx_num, *idx = NULL;
 	float **hImg = NULL, *heights = NULL, xpos, zpos;

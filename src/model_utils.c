@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-int mdl_load_obj(char *pth, int *idxnum, int **idx, int *vtxnum,
+V_API int mdl_load_obj(char *pth, int *idxnum, int **idx, int *vtxnum,
 		vec3_t **vtx, vec3_t **nrm, vec2_t **uv)
 {
 	int ret = 0, i, j, tmp;

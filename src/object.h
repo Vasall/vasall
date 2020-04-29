@@ -1,6 +1,7 @@
-#ifndef _OBJECT_H
-#define _OBJECT_H
+#ifndef _V_OBJECT_H
+#define _V_OBJECT_H
 
+#include "defines.h"
 #include "vec.h"
 #include "mat.h"
 #include "list.h"
@@ -40,49 +41,46 @@ struct object_table {
 	char      buf[OBJ_SLOTS][OBJ_DATA_MAX];
 };
 
-/*
- * Initialize a new object-table and reset all entries.
- *
- * Returns: Either a pointer to the created object-table or NULL if an error
- * 	occurred
- */
-struct object_table *obj_init(void);
+V_GLOBAL struct object_table *objects;
 
 /*
- * Close an old object-table and free the allocated memory.
+ * Initialize the object-table.
  *
- * @tbl: Pointer to the object-table
+ * Returns: Either 0 on success or -1 if an error occurred
  */
-void obj_close(struct object_table *tbl);
+V_API int obj_init(void);
+
+/*
+ * CLose the object-table and free the allocated memory.
+ */
+V_API void obj_close(void);
 
 /*
  * Create and initialize a new object and then insert it into the object-table
  *
- * @tbl: Pointer to the object-table
+ * @id: The id of the object in the cluster
  * @mask: The mask to use for the object
  * @pos: The initial position of the object
  * @model: A slot in the model-table 
  * @data: Additional data for the object
  * @len: The length of the data-buffer in bytes
  *
- * Returns: Either the slot of the object in the object-table or -1 if an error
- * 	occurred
+ * Returns: Either the slot of the object in the object-table or -1 if an
+ * 	error occurred
  */
-short obj_set(struct object_table *tbl, uint32_t mask, vec3_t pos, short model,
+V_API short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 		char *data, int len);
 
 /*
  * Delete an object and remove it from the object-table.
  *
- * @tbl: Pointer to the object-table
  * @slot: The slot of the object to delete
  */
-void obj_del(struct object_table *tbl, short slot);
+V_API void obj_del(short slot);
 
 /*
- * Modify an attribute of an object.
+ * Modify an attribute of an object in the object-table.
  *
- * @tbl: Pointer to the object-table
  * @slot: The slot of the object in the object-table
  * @attr: THE attribute to modify
  * @data: Pointer to the data
@@ -90,38 +88,41 @@ void obj_del(struct object_table *tbl, short slot);
  *
  * Returns: Either 0 on success or -1 if an error occurred
  */
-int obj_mod(struct object_table *tbl, short slot, short attr, 
-		void *data, int len);
+V_API int obj_mod(short slot, short attr, void *data, int len);
 
 /*
- * Update the model-matrix of a given model.
+ * Get the slot of an object with the given id in the object-table.
  *
- * @tbl: Pointer to the object-table
+ * @id: The id of the object to search for
+ *
+ * Returns: Either the slot in the object table or -1 if an error occurred
+ */
+V_API short obj_sel_id(uint32_t id);
+
+/*
+ * Update the model-matrix of a given model in the object-table.
+ *
  * @slot: The slot in the object-table
  */
-void obj_update_matrix(struct object_table *tbl, short slot);
+V_API void obj_update_matrix(short slot);
 
 /* 
  * Output info about the object in the terminal.
  *
- * @tbl: Pointer to the object-table
  * @slot: The slot of the object in the object-table
  */
-void obj_print(struct object_table *tbl, short slot);
+V_API void obj_print(short slot);
 
 /*
  * Update all objects in an object-table according to their mask.
  *
- * @tbl: Pointer to the object-table
  * @delt: The time since the last frame
  */
-void obj_sys_update(struct object_table *tbl, float delt);
+V_API void obj_sys_update(float delt);
 
 /* 
  * Render all renderable objects in an object-table.
- *
- * @tbl: Pointer to the object table
  */
-void obj_sys_render(struct object_table *tbl);
+V_API void obj_sys_render(void);
 
 #endif

@@ -6,113 +6,141 @@
 #include <string.h>
 #include <math.h>
 
-/* Redefine global variables */
-struct ht_t *objects = NULL;
+/* Redefine external variable */
+struct object_table *objects = NULL;
 
-
-struct object_table *obj_init(void)
+V_API int obj_init(void)
 {
-	struct object_table *tbl;
 	int i;
 
-	if(!(tbl = malloc(sizeof(struct object_table))))
-		return NULL;
+	if(!(objects = malloc(sizeof(struct object_table))))
+		return -1;
 
 	for(i = 0; i < OBJ_SLOTS; i++)
-		tbl->mask[i] = OBJ_M_NONE;
+		objects->mask[i] = OBJ_M_NONE;
 
-	return tbl;
+	return 0;
 }
 
-void obj_close(struct object_table *tbl)
+V_API void obj_close(void)
 {
-	if(!tbl)
+	if(!objects)
 		return;
 
-	free(tbl);
+	free(objects);
 }
 
-static short obj_get_slot(struct object_table *tbl)
+/*
+ * Get an empty slot in the object-table.
+ *
+ * Returns: Either an empty slot in the table or -1 if an error occurred
+ */
+V_INTERN short obj_get_slot(void)
 {
 	short i;
 
 	for(i = 0; i < OBJ_SLOTS; i++) {
-		if(tbl->mask[i] == OBJ_M_NONE)
+		if(objects->mask[i] == OBJ_M_NONE)
 			return i;
 	}
 
 	return -1;
 }
 
-short obj_set(struct object_table *tbl, uint32_t mask, vec3_t pos, short model,
+/*
+ * Check if a slot is in range.
+ *
+ * @slot: The slot-number to check
+ *
+ * Returns: Either 0 if the slot-number is ok, or 1 if not
+ */
+V_INTERN int obj_check_slot(short slot)
+{
+	if(slot < 0 || slot > OBJ_SLOTS)
+		return 1;
+
+	return 0;
+}
+
+V_API short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 		char *data, int len)
 {
 	short slot;
+	float x;
+	float z;
 
-	if(!tbl)
+	if(!objects)
 		return -1;
 
-	if((slot = obj_get_slot(tbl)) < 0)
+	if((slot = obj_get_slot()) < 0)
 		return -1;
 
-	tbl->mask[slot] = mask;
-	vec3_cpy(tbl->pos[slot], pos);
-	vec3_set(tbl->vel[slot], 0, 0, 0);
-	vec3_set(tbl->dir[slot], 1, 0, 1);
-	tbl->model[slot] = model;
-	tbl->anim[slot] = 0;
-	tbl->prog[slot] = 0.0;
-	mat4_idt(tbl->mat[slot]);
+	objects->mask[slot] = mask;
+	vec3_cpy(objects->pos[slot], pos);
+	vec3_set(objects->vel[slot], 0, 0, 0);
+	vec3_set(objects->dir[slot], 1, 0, 1);
+	objects->model[slot] = model;
+	objects->anim[slot] = 0;
+	objects->prog[slot] = 0.0;
+	mat4_idt(objects->mat[slot]);
 
-	tbl->len[slot] = 0;
+	objects->len[slot] = 0;
 
 	if(data && len) {
 		len = (len > OBJ_DATA_MAX) ? (OBJ_DATA_MAX) : (len);
-		tbl->len[slot] = len;
-		memcpy(tbl->buf[slot], data, len);
+		objects->len[slot] = len;
+		memcpy(objects->buf[slot], data, len);
 	}
 
+	x = objects->pos[slot][0];
+	z = objects->pos[slot][2];
+	objects->pos[slot][1] = wld_get_height(x, z) + 2.2;
+	obj_update_matrix(slot);
 	return slot;
 }
 
-void obj_del(struct object_table *tbl, short slot)
+V_API void obj_del(short slot)
 {
-	if(!tbl)
+	if(!objects)
 		return;
 
-	tbl->mask[slot] = OBJ_M_NONE;
+	if(obj_check_slot(slot))
+		return;
+
+	objects->mask[slot] = OBJ_M_NONE;
 }
 
-/* TODO: Limit Mask so it can't be set to 0 or negative values */
-int obj_mod(struct object_table *tbl, short slot, short attr, 
-		void *data, int len)
+V_API int obj_mod(short slot, short attr, void *data, int len)
 {
-	if(!tbl)
+	if(!objects)
 		return -1;
 
-	if(!tbl->mask[slot])
+	if(obj_check_slot(slot))
+		return -1;
+
+	if(!objects->mask[slot])
 		return -1;
 
 	switch(attr) {
 		case(OBJ_ATTR_MASK):
-			tbl->mask[slot] = *(uint32_t *)data;
+			objects->mask[slot] = *(uint32_t *)data;
 			break;
 
 		case(OBJ_ATTR_POS):
-			vec3_cpy(tbl->pos[slot], data);
+			vec3_cpy(objects->pos[slot], data);
 			break;
 		
 		case(OBJ_ATTR_VEL):
-			vec3_cpy(tbl->vel[slot], data);
+			vec3_cpy(objects->vel[slot], data);
 			break;
 		
 		case(OBJ_ATTR_DIR):
-			vec3_cpy(tbl->dir[slot], data);
+			vec3_cpy(objects->dir[slot], data);
 			break;
 		
 		case(OBJ_ATTR_BUF):
-			tbl->len[slot] = len;
-			memcpy(tbl->buf[slot], data, len);
+			objects->len[slot] = len;
+			memcpy(objects->buf[slot], data, len);
 			break;
 
 		default:
@@ -122,72 +150,84 @@ int obj_mod(struct object_table *tbl, short slot, short attr,
 	return 0;
 }
 
-void obj_update_matrix(struct object_table *tbl, short slot)
+V_API void obj_update_matrix(short slot)
 {
 	float rot;
 
-	mat4_idt(tbl->mat[slot]);
+	if(!objects)
+		return;
 
-	rot = atan2(-tbl->dir[slot][2], tbl->dir[slot][0]);
-	tbl->mat[slot][0x0] =  cos(rot);
-	tbl->mat[slot][0x2] = -sin(rot);
-	tbl->mat[slot][0x8] =  sin(rot);
-	tbl->mat[slot][0xa] =  cos(rot);
+	if(obj_check_slot(slot))
+		return;
 
-	tbl->mat[slot][0xc] = tbl->pos[slot][0];
-	tbl->mat[slot][0xd] = tbl->pos[slot][1];
-	tbl->mat[slot][0xe] = tbl->pos[slot][2];
+	mat4_idt(objects->mat[slot]);
+
+	rot = atan2(-objects->dir[slot][2], objects->dir[slot][0]);
+	objects->mat[slot][0x0] =  cos(rot);
+	objects->mat[slot][0x2] = -sin(rot);
+	objects->mat[slot][0x8] =  sin(rot);
+	objects->mat[slot][0xa] =  cos(rot);
+
+	objects->mat[slot][0xc] = objects->pos[slot][0];
+	objects->mat[slot][0xd] = objects->pos[slot][1];
+	objects->mat[slot][0xe] = objects->pos[slot][2];
 }
 
-void obj_print(struct object_table *tbl, short slot)
+V_API void obj_print(short slot)
 {
+	if(!objects)
+		return;
+
+	if(obj_check_slot(slot))
+		return;
+
 	printf("Display object %d:\n", slot);
-	printf("Pos: "); vec3_print(tbl->pos[slot]); printf("\n");
-	printf("Vel: "); vec3_print(tbl->vel[slot]); printf("\n");
-	printf("Dir: "); vec3_print(tbl->dir[slot]); printf("\n");
+	printf("Pos: "); vec3_print(objects->pos[slot]); printf("\n");
+	printf("Vel: "); vec3_print(objects->vel[slot]); printf("\n");
+	printf("Dir: "); vec3_print(objects->dir[slot]); printf("\n");
 }
 
 
-void obj_sys_update(struct object_table *tbl, float delt)
+V_API void obj_sys_update(float delt)
 {
 	vec3_t pos;
 	vec3_t del;
 	int i;
 
-	if(!tbl)
+	if(!objects)
 		return;
 		
 	for(i = 0; i < OBJ_SLOTS; i++) {
-		if((tbl->mask[i] & OBJ_M_MOVE) == OBJ_M_MOVE) {
+		if((objects->mask[i] & OBJ_M_MOVE) == OBJ_M_MOVE) {
 			float x, z;
 
-			vec3_cpy(pos, tbl->pos[i]);
-			vec3_scl(tbl->vel[i], delt, del);
-			vec3_add(pos, del, tbl->pos[i]);
+			vec3_cpy(pos, objects->pos[i]);
+			vec3_scl(objects->vel[i], delt, del);
+			vec3_add(pos, del, objects->pos[i]);
 
-			x = tbl->pos[i][0];
-			z = tbl->pos[i][2];
-			tbl->pos[i][1] = wld_get_height(x, z) + 2.2;
+			x = objects->pos[i][0];
+			z = objects->pos[i][2];
+			objects->pos[i][1] = wld_get_height(x, z) + 2.2;
 			
 			if(vec3_mag(del) > 0.0) {
-				vec3_nrm(del, tbl->dir[i]);
-				obj_update_matrix(tbl, i);
+				vec3_nrm(del, objects->dir[i]);
+				obj_update_matrix(i);
 			}
 
 		}
 	}
 }
 
-void obj_sys_render(struct object_table *tbl)
+V_API void obj_sys_render(void)
 {
 	int i;
 
-	if(!tbl)
+	if(!objects)
 		return;
 
 	for(i = 0; i < OBJ_SLOTS; i++) {
-		if((tbl->mask[i] & OBJ_M_MODEL) == OBJ_M_MODEL) {
-			mdl_render(tbl->model[i], tbl->mat[i]);
+		if((objects->mask[i] & OBJ_M_MODEL) == OBJ_M_MODEL) {
+			mdl_render(objects->model[i], objects->mat[i]);
 		}
 	}
 }

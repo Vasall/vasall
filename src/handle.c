@@ -9,7 +9,7 @@
  *
  * @evt: A pointer to the event
  */
-void handle_resize(XSDL_Event *evt)
+V_API void handle_resize(XSDL_Event *evt)
 {
 	double ratio;
 	XSDL_UIContext *ctx = core->uicontext;
@@ -27,18 +27,17 @@ void handle_resize(XSDL_Event *evt)
 }
 
 
-void menu_procevt(XSDL_Event *evt)
+V_API void menu_procevt(XSDL_Event *evt)
 {
 	if(evt) {/* Prevent warning for not using evt */}
 }
 
-void menu_update(void)
+V_API void menu_update(void)
 {
 }
 
-void game_procevt(XSDL_Event *evt)
+V_API void game_procevt(XSDL_Event *evt)
 {
-	int mod;
 	int mod_ctrl;
 	uint8_t axis;
 	float val;
@@ -119,7 +118,7 @@ void game_procevt(XSDL_Event *evt)
 	}
 }
 
-void game_update(void)
+V_API void game_update(void)
 {
 	vec3_t vel, forw, right;
 
@@ -140,15 +139,16 @@ void game_update(void)
 
 	vec3_add(forw, right, vel);
 
-	vec3_cpy(world->objects->vel[core->obj], vel);
+	vec3_cpy(objects->vel[core->obj], vel);
 
-	wld_update();
+	obj_sys_update(1.0);
 
 	/* Update the camera-position */
 	cam_update();
 }
 
-void game_render(void)
+V_API void game_render(void)
 {
 	wld_render();
+	obj_sys_render();
 }

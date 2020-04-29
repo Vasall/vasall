@@ -9,7 +9,61 @@
 /* Redefine external variables */
 struct model **models = NULL;
 
-int mdl_init(void)
+/*
+ * Get an empty slot in the model-table.
+ *
+ * Returns: Either an empty slot or -1 if an error occurred
+ */
+V_INTERN short mdl_get_slot(void)
+{
+	short i;
+
+	if(!models)
+		return -1;
+
+	for(i = 0; i < MDL_SLOTS; i++) {
+		if(!models[i])
+			return i;
+	}
+
+	return -1;
+}
+
+/*
+ * Check if the slot-number is still in range.
+ *
+ * @slot: The slot-number to check
+ *
+ * Returns: Either 0 if the slot-number is ok, or -1 if not
+ */
+V_INTERN int mdl_check_slot(short slot)
+{
+	if(slot < 0 || slot >= MDL_SLOTS)
+		return 1;
+
+	return 0;
+}
+
+/*
+ * Set the status of a model.
+ *
+ * @slot: The slot of the model in the model-table
+ * @status: The new status of the model
+ */
+V_INTERN void mdl_set_status(short slot, uint8_t status)
+{
+	struct model *mdl;
+
+	if(mdl_check_slot(slot))
+		return;
+
+	if(!(mdl = models[slot]))
+		return;
+
+	mdl->status = status;
+}
+
+V_API int mdl_init(void)
 {
 	int i;
 
@@ -22,7 +76,7 @@ int mdl_init(void)
 	return 0;
 }
 
-void mdl_close(void)
+V_API void mdl_close(void)
 {
 	int i;
 	struct model *mdl;
@@ -55,41 +109,13 @@ void mdl_close(void)
 	free(models);
 }
 
-static short mdl_get_slot(void)
-{
-	short i;
-
-	if(!models)
-		return -1;
-
-	for(i = 0; i < MDL_SLOTS; i++) {
-		if(!models[i])
-			return i;
-	}
-
-	return -1;
-}
-
-static void mdl_set_status(short slot, uint8_t status)
-{
-	struct model *mdl;
-
-	if(slot < 0 || slot >= MDL_SLOTS)
-		return;
-
-	if(!(mdl = models[slot]))
-		return;
-
-	mdl->status = status;
-}
-
-short mdl_set(char *name)
+V_API short mdl_set(char *name)
 {
 	short slot;
 	struct model *mdl;
 
 	/* Check if the given key is valid */
-	if(!name || strlen(name) >= MDL_KEY_LEN)
+	if(!name || strlen(name) >= MDL_NAME_MAX)
 		return -1;
 
 	if((slot = mdl_get_slot()) < 0)
@@ -121,8 +147,8 @@ short mdl_set(char *name)
 	return slot;
 }
 
-void mdl_set_mesh(short slot, int idxnum, int *idx, int vtxnum, vec3_t *vtx, 
-		vec3_t *nrm, void *col, uint8_t col_flg)
+V_API void mdl_set_mesh(short slot, int idxnum, int *idx, int vtxnum,
+		vec3_t *vtx, vec3_t *nrm, void *col, uint8_t col_flg)
 {
 	int i;
 	float *ptr;
@@ -132,22 +158,22 @@ void mdl_set_mesh(short slot, int idxnum, int *idx, int vtxnum, vec3_t *vtx,
 	int vtx_size = vtx_sizeb * sizeof(float);
 	struct model *mdl;
 
-	if(slot < 0 || slot >= MDL_SLOTS)
+	if(mdl_check_slot(slot))
 		return;
 
 	mdl = models[slot];
 	if(!mdl || mdl->status != MDL_OK)
-		return;
+		goto err_set_failed;
 
 	/* Allocate memory for the indices */
 	mdl->idx_num = idxnum;
 	if(!(mdl->idx_buf = malloc(idxnum * sizeof(int))))
-		goto err_set_status;
+		goto err_set_failed;
 
 	/* Allocate memory for the vertex-data */
 	mdl->vtx_num = vtxnum;
 	if(!(mdl->vtx_buf = malloc(vtxnum * vtx_size)))
-		goto err_set_status;
+		goto err_set_failed;
 
 	/* Copy the indices into the allocated index-buffer */
 	memcpy(mdl->idx_buf, idx, idxnum * sizeof(int));
@@ -187,42 +213,49 @@ void mdl_set_mesh(short slot, int idxnum, int *idx, int vtxnum, vec3_t *vtx,
 
 	/* Unbind the vertex-array-object */
 	glBindVertexArray(0);
-
 	return;
 
-err_set_status:
-	mdl->status = MDL_ERR_MESH;
+err_set_failed:
+	mdl_set_status(slot, MDL_ERR_MESH);
 }
 
-void mdl_set_texture(short slot, short tex)
+V_API void mdl_set_texture(short slot, short tex)
 {
 	struct model *mdl;
 
-	if(slot < 0 || slot >= MDL_SLOTS)
+	if(mdl_check_slot(slot))
 		return;
 
 	mdl = models[slot];
 	if(!mdl || mdl->status != MDL_OK)
-		return;
+		goto err_set_failed;
 
 	mdl->tex = tex;
+	return;
+
+err_set_failed:
+	mdl_set_status(slot, MDL_ERR_TEXTURE);
 }
 
-void mdl_set_shader(short slot, short shd)
+V_API void mdl_set_shader(short slot, short shd)
 {
 	struct model *mdl;
 	
-	if(slot < 0 || slot >= MDL_SLOTS)
+	if(mdl_check_slot(slot))
 		return;
 
 	mdl = models[slot];
 	if(!mdl || mdl->status != MDL_OK)
-		return;
+		goto err_set_failed;
 
 	mdl->shd = shd;
+	return;
+
+err_set_failed:
+	mdl_set_status(slot, MDL_ERR_SHADER);
 }
 
-short mdl_load(char *name, char *amo, short tex, short shd)
+V_API short mdl_load(char *name, char *amo, short tex, short shd)
 {
 	int slot;
 	int *idx;
@@ -252,7 +285,7 @@ err_del_mdl:
 	return -1;
 }
 
-short mdl_get(char *name)
+V_API short mdl_get(char *name)
 {
 	int i;
 
@@ -268,15 +301,14 @@ short mdl_get(char *name)
 	return -1;
 }
 
-void mdl_del(short slot)
+V_API void mdl_del(short slot)
 {
 	struct model *mdl;
 
-	if(slot < 0 || slot >= MDL_SLOTS)
+	if(mdl_check_slot(slot))
 		return;
 
-	mdl = models[slot];
-	if(!mdl)
+	if(!(mdl = models[slot]))
 		return;
 
 	if(mdl->idx_bao)
@@ -298,7 +330,7 @@ void mdl_del(short slot)
 	models[slot] = NULL;
 }
 
-void mdl_render(short slot, mat4_t mat)
+V_API void mdl_render(short slot, mat4_t mat)
 {
 	int model, view, proj;
 	mat4_t mod, vie, pro;
@@ -306,7 +338,7 @@ void mdl_render(short slot, mat4_t mat)
 	struct shader *shd;
 	struct texture *tex;
 
-	if(slot < 0 || slot >= MDL_SLOTS)
+	if(mdl_check_slot(slot))
 		return;
 
 	mdl = models[slot];

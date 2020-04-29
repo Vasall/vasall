@@ -75,33 +75,34 @@ int main(int argc, char **argv)
 	printf("done\n");
 
 	pad_printf("Init inputs");
-	if(inpInit() < 0) {
+	if(inp_init() < 0) {
 		goto err_cleanup_ui;
 	}
 	printf("done\n");
 
 	printf("Import models, textures and shaders:\n");
 	if(core_load("../res") < 0) {
-		goto err_cleanup_ui;
+		goto err_cleanup_input;
 	}
 
 	printf("Import fonts:\n");
 	if(loadResources() < 0) {
-		goto err_cleanup_ui;
+		goto err_cleanup_input;
 	}
 
 	pad_printf("Initialize UI");
 	if(initUI() < 0) {
 		printf("failed!\n");
-		goto err_cleanup_ui;
+		goto err_cleanup_input;
 	}
 	printf("done\n");
 
 	pad_printf("Initialize camera");
 	if(cam_init(45.0, 800.0 / 600.0, 0.1, 1000.0) < 0) {
 		printf("failed!\n");
-		goto err_cleanup_ui;
+		goto err_cleanup_input;
 	}
+	cam_update();
 	printf("done\n");
 
 	pad_printf("Initialize world");
@@ -117,8 +118,8 @@ int main(int argc, char **argv)
 
 	/* Add a demo-dummy */
 	
-	if((core->obj = obj_set(world->objects, OBJ_M_ENTITY, pos, 
-			mdl_get("cube"), NULL, 0)) < 0)
+	if((core->obj = obj_set(0, OBJ_M_ENTITY, pos, mdl_get("cube"), 
+					NULL, 0)) < 0)
 		goto err_cleanup_world;
 
 	cam_trg_obj(core->obj);
@@ -151,6 +152,11 @@ err_cleanup_world:
 err_cleanup_camera:
 	pad_printf("Destroy camera");
 	cam_close();
+	printf("done\n");
+
+err_cleanup_input:
+	pad_printf("Cleanup input");
+	inp_close();
 	printf("done\n");
 
 err_cleanup_ui:

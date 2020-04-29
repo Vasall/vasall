@@ -1,5 +1,5 @@
-#ifndef _LIST_H_
-#define _LIST_H_
+#ifndef _V_LIST_H_
+#define _V_LIST_H_
 
 struct ptr_list {
 	/* The number of pointers in the array */

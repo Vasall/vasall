@@ -1,5 +1,5 @@
-#ifndef VASALL_LOADER_H
-#define VASALL_LOADER_H
+#ifndef _V_LOADER_H
+#define _V_LOADER_H
 
 #ifdef __APPLE__
 #include <OpenGL/gl.h>

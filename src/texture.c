@@ -8,7 +8,12 @@
 /* Redefine external variables */
 struct texture **textures = NULL;
 
-static short tex_get_slot(void)
+/*
+ * Get an empty slot in the texture-table.
+ *
+ * Returns: Either an empty slot or -1 if an error occurred
+ */
+V_INTERN short tex_get_slot(void)
 {
 	short i;
 
@@ -23,10 +28,24 @@ static short tex_get_slot(void)
 	return -1;
 }
 
-int tex_init(void)
+/*
+ * Check if a slot-number is in range.
+ *
+ * @slot: The slot-number to check
+ *
+ * Returns: Either 0 if the slot-number is ok, or 1 if not 
+ */
+V_INTERN int tex_check_slot(short slot)
+{
+	if(slot < 0 || slot >= TEX_SLOTS)
+		return 1;
+
+	return 0;
+}
+
+V_API int tex_init(void)
 {
 	int i;
-	short slot;
 
 	if(!(textures = malloc(sizeof(struct texture *) * TEX_SLOTS)))
 		return -1;
@@ -37,7 +56,7 @@ int tex_init(void)
 	return 0;
 }
 
-void tex_close(void)
+V_API void tex_close(void)
 {
 	int i;
 	struct texture *tex;
@@ -54,7 +73,7 @@ void tex_close(void)
 	free(textures);
 }
 
-short tex_set(char *name, uint8_t *buf, int w, int h)
+V_API short tex_set(char *name, uint8_t *buf, int w, int h)
 {
 	struct texture *tex;
 	int tex_sz = sizeof(struct texture);
@@ -101,18 +120,18 @@ err_free_tex:
 	return -1;
 }
 
-short tex_load(char *name, char *pth)
+V_API short tex_load(char *name, char *pth)
 {
 	int w, h;
 	uint8_t *buf;
 	
-	/* Load the PNG-file */
-	texLoadPNG(pth, &buf, &w, &h);
+	if(tex_load_png(pth, &buf, &w, &h) < 0)
+		return -1;
 
 	return tex_set(name, buf, w, h);
 }
 
-short tex_get(char *name)
+V_API short tex_get(char *name)
 {
 	int i;
 
@@ -127,11 +146,11 @@ short tex_get(char *name)
 	return -1;
 }
 
-void tex_del(short slot)
+V_API void tex_del(short slot)
 {
 	struct texture *tex;
 
-	if(slot < 0 || slot >= TEX_SLOTS)
+	if(tex_check_slot(slot))
 		return;
 
 	if(!(tex = textures[slot]))

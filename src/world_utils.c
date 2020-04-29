@@ -3,49 +3,17 @@
 #include <stdlib.h>
 #include "utils.h"
 
-/*
- * This function is used to calculate the number of vertices needed for a
- * terrain of the size vtxnum*vtxnum.
- *
- * @vtxnum: The side-length of the terrain-square
- *
- * Returns: The number of vertices
- */
-int calcVertexNum(int vtxnum)
-{
-	int bottom2Rows = 2 * vtxnum;
-	int remainingRowCount = vtxnum - 2;
-	int topCount = remainingRowCount * (vtxnum - 1) * 2;
-	return topCount + bottom2Rows;
-}
-
-/*
- * Generate a buffer containing the ordered indices for a square terrain
- * of the length vtxnum * vtxnum.
- *
- * @vtxnum: The side-length of the terrain-square
- * @idxlen: A pointer to write the number of indices to
- *
- * Returns: An array containing the ordered indices or NULL if an 
- * 	error occurred
- */
-unsigned int *genIndexBuf(int vtxnum, int *idxlen)
-{
-	unsigned int size = ((vtxnum - 1) * (vtxnum - 1) * 6);
-	unsigned int *indices;
-	int ptr;
-	int rowlen = (vtxnum - 1) * 2;
-
-	*idxlen = size;
-	if(!(indices = malloc(size * sizeof(uint32_t))))
-		return NULL;
-	
-	ptr = storeTopSection(indices, rowlen, vtxnum);
-	ptr = storeSecondLastLine(indices, ptr, rowlen, vtxnum);
-	ptr = storeLastLine(indices, ptr, rowlen, vtxnum);
-
-	return indices;
-}
+V_INTERN int storeTopSection(unsigned int *indices, int rowlen, int vtxnum);
+V_INTERN int storeSecondLastLine(unsigned int *indices, int ptr, int rowlen, 
+		int vtxnum);
+V_INTERN int storeLastLine(unsigned int *indices, int ptr, int rowlen, 
+		int vtxnum);
+V_INTERN int storeQuad(int tl, int tr, int bl, int br, unsigned int *indices,
+		int ptr, int8_t flg);
+V_INTERN int storeLastRowQuad(int tl, int tr, int bl, int br,
+		unsigned int *indices, int ptr, int8_t flg);
+V_INTERN int storeLeftTriangle(int tl, int tr, int bl, int br, 
+		unsigned int *indices, int ptr, int8_t flg);
 
 /*
  * Fill the vertices in the lines up to the second-to-last. From there special
@@ -57,7 +25,7 @@ unsigned int *genIndexBuf(int vtxnum, int *idxlen)
  *
  * Returns: The current position in the index-buffer
  */
-int storeTopSection(unsigned int *indices, int rowlen, int vtxnum)
+V_INTERN int storeTopSection(unsigned int *indices, int rowlen, int vtxnum)
 {
 	int ptr = 0;
 	int row;
@@ -88,7 +56,7 @@ int storeTopSection(unsigned int *indices, int rowlen, int vtxnum)
  *
  * Returns: The updated position in the index-array 
  */
-int storeSecondLastLine(unsigned int *indices, int ptr, int rowlen, 
+V_INTERN int storeSecondLastLine(unsigned int *indices, int ptr, int rowlen, 
 		int vtxnum)
 {
 	int col;
@@ -104,7 +72,7 @@ int storeSecondLastLine(unsigned int *indices, int ptr, int rowlen,
 				((col % 2) != (row % 2)));
 	}
 
-	return(ptr);
+	return ptr;
 }
 
 /*
@@ -115,7 +83,8 @@ int storeSecondLastLine(unsigned int *indices, int ptr, int rowlen,
  * @rowlen: The length of a single row
  * @vtxnum: The side-length of the square-terrain
  */
-int storeLastLine(unsigned int *indices, int ptr, int rowlen, int vtxnum)
+V_INTERN int storeLastLine(unsigned int *indices, int ptr, int rowlen, 
+		int vtxnum)
 {
 	int col;
 	int row = vtxnum - 2;
@@ -147,7 +116,7 @@ int storeLastLine(unsigned int *indices, int ptr, int rowlen, int vtxnum)
  *
  * Returns: The updated position in the index-buffer
  */
-int storeQuad(int tl, int tr, int bl, int br, unsigned int *indices,
+V_INTERN int storeQuad(int tl, int tr, int bl, int br, unsigned int *indices,
 		int ptr, int8_t flg)
 {
 	ptr = storeLeftTriangle(tl, tr, bl, br, indices, ptr, flg);
@@ -171,8 +140,8 @@ int storeQuad(int tl, int tr, int bl, int br, unsigned int *indices,
  *
  * Returns: The updated position in the index-buffer
  */
-int storeLastRowQuad(int tl, int tr, int bl, int br, unsigned int *indices, 
-		int ptr, int8_t flg)
+V_INTERN int storeLastRowQuad(int tl, int tr, int bl, int br,
+		unsigned int *indices, int ptr, int8_t flg)
 {
 	ptr = storeLeftTriangle(tl, tr, bl, br, indices, ptr, flg);
 	indices[ptr++] = br;
@@ -195,11 +164,37 @@ int storeLastRowQuad(int tl, int tr, int bl, int br, unsigned int *indices,
  *
  * Returns: The updated position in the index-buffer
  */
-int storeLeftTriangle(int tl, int tr, int bl, int br, unsigned int *indices, 
-		int ptr, int8_t flg)
+V_INTERN int storeLeftTriangle(int tl, int tr, int bl, int br, 
+		unsigned int *indices, int ptr, int8_t flg)
 {
 	indices[ptr++] = tl;
 	indices[ptr++] = bl;
 	indices[ptr++] = flg ? br : tr;
 	return ptr;
+}
+
+V_API int calcVertexNum(int vtxnum)
+{
+	int bottom2Rows = 2 * vtxnum;
+	int remainingRowCount = vtxnum - 2;
+	int topCount = remainingRowCount * (vtxnum - 1) * 2;
+	return topCount + bottom2Rows;
+}
+
+V_API unsigned int *genIndexBuf(int vtxnum, int *idxlen)
+{
+	unsigned int size = ((vtxnum - 1) * (vtxnum - 1) * 6);
+	unsigned int *indices;
+	int ptr;
+	int rowlen = (vtxnum - 1) * 2;
+
+	*idxlen = size;
+	if(!(indices = malloc(size * sizeof(uint32_t))))
+		return NULL;
+	
+	ptr = storeTopSection(indices, rowlen, vtxnum);
+	ptr = storeSecondLastLine(indices, ptr, rowlen, vtxnum);
+	ptr = storeLastLine(indices, ptr, rowlen, vtxnum);
+
+	return indices;
 }

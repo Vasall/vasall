@@ -8,7 +8,7 @@
 struct client_handler *client = NULL;
 
 
-int cli_init(char *addr, short port, short self)
+V_API int cli_init(char *addr, short port, short self)
 {
 	if(client)
 		return -1;
@@ -27,7 +27,7 @@ err_free_client:
 	return -1;
 }
 
-void cli_close(void)
+V_API void cli_close(void)
 {
 	if(!client)
 		return;
@@ -37,7 +37,7 @@ void cli_close(void)
 	client = NULL;
 }
 
-void cli_update(void)
+V_API void cli_update(void)
 {
 	struct cd_evt evt;
 	int i;

@@ -39,6 +39,9 @@ V_API int core_init(int argc, char **argv)
 	if(mdl_init() < 0)
 		return -1;
 
+	if(obj_init() < 0)
+		return -1;
+
 	/* Initialize the client */
 	if(cli_init(argv[1], atoi(argv[2]), atoi(argv[3])) < 0)
 		return -1;
@@ -56,6 +59,7 @@ V_API void core_close(void)
 
 	cli_close();
 	
+	obj_close();
 	shd_close();
 	mdl_close();
 	tex_close();
@@ -172,7 +176,8 @@ V_API void core_update(void)
 	XSDL_UpdateUIContext(core->uicontext);
 
 	/* Run specified update-function */
-	if(core->update != NULL) core->update();
+	if(core->update)
+		core->update();
 }
 
 V_API void core_render(void)
@@ -181,7 +186,8 @@ V_API void core_render(void)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	/* Run current render-function */
-	if(core->render != NULL) core->render();
+	if(core->render)
+		core->render();
 
 	/* Render the current userinterface */
 	XSDL_Render(core->uicontext);

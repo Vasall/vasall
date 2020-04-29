@@ -1,5 +1,5 @@
-#ifndef _CORE_H
-#define _CORE_H
+#ifndef _V_CORE_H
+#define _V_CORE_H
 
 #define GL_GLEXT_PROTOTYPES
 #include <GL/glut.h>
@@ -121,11 +121,11 @@ struct core_wrapper {
 	short obj;
 };
 
-extern uint8_t one;
-extern uint8_t zero;
-extern int g_win_flgs;
-extern struct core_wrapper *core;
-extern char glo_err_buf[256];
+V_GLOBAL uint8_t one;
+V_GLOBAL uint8_t zero;
+V_GLOBAL int g_win_flgs;
+V_GLOBAL struct core_wrapper *core;
+V_GLOBAL char glo_err_buf[256];
 
 /* 
  * Set a new error-message.

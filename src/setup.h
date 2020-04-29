@@ -1,20 +1,19 @@
-#ifndef VASALL_SETUP_H
-#define VASALL_SETUP_H
+#ifndef _V_SETUP_H
+#define _V_SETUP_H
 
+#include "defines.h"
 #include "core.h"
 
-void try_login(XSDL_Node *n, XSDL_Event *e);
-
 /* Create and configure the window */
-XSDL_Window *initWindow(void);
+V_API XSDL_Window *initWindow(void);
 
 /* Initialize OpenGL */
-int initGL(void);
+V_API int initGL(void);
 
 /* Load all resources into the differente caches */
-int loadResources(void);
+V_API int loadResources(void);
 
 /* Initialize UI-elements */
-int initUI(void);
+V_API int initUI(void);
 
 #endif

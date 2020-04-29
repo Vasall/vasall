@@ -1,6 +1,7 @@
-#ifndef _MODEL_UTILS_H
-#define _MODEL_UTILS_H
+#ifndef _V_MODEL_UTILS_H
+#define _V_MODEL_UTILS_H
 
+#include "defines.h"
 #include "model.h"
 
 /*
@@ -12,7 +13,7 @@
  *
  * Returns: Either 0 on success or -1 if an error occurred
  */
-int mdl_load_obj(char *pth, int *idxnum, int **idx, int *vtxnum,
+V_API int mdl_load_obj(char *pth, int *idxnum, int **idx, int *vtxnum,
 		vec3_t **vtx, vec3_t **nrm, vec2_t **uv);
 
 #endif

@@ -5,7 +5,7 @@
 #include <string.h>
 
 
-unsigned int hash(const char *key, int size)
+V_API unsigned int hash(const char *key, int size)
 {
 	unsigned long int val = 0;
 	unsigned int i = 0;
@@ -17,7 +17,7 @@ unsigned int hash(const char *key, int size)
 	return val % size;
 }
 
-struct ht_entry *ht_pair(const char *key, const uint8_t *buf, int size)
+V_API struct ht_entry *ht_pair(const char *key, const uint8_t *buf, int size)
 {
 	struct ht_entry *entry;
 
@@ -47,7 +47,7 @@ err_free_entry:
 	return NULL;
 }
 
-struct ht_t *ht_init(int size)
+V_API struct ht_t *ht_init(int size)
 {
 	struct ht_t *tbl;
 	int i = 0;
@@ -72,7 +72,7 @@ err_free_tbl:
 	return NULL;
 }
 
-void ht_close(struct ht_t *tbl)
+V_API void ht_close(struct ht_t *tbl)
 {
 	int i;
 	struct ht_entry *ptr, *next;
@@ -95,7 +95,8 @@ void ht_close(struct ht_t *tbl)
 	free(tbl);
 }
 
-int ht_set(struct ht_t *tbl, const char *key, const uint8_t *buf, int size)
+V_API int ht_set(struct ht_t *tbl, const char *key, const uint8_t *buf, 
+		int size)
 {
 	struct ht_entry *ptr, *prev;
 	unsigned int slot = hash(key, tbl->size);
@@ -133,7 +134,7 @@ int ht_set(struct ht_t *tbl, const char *key, const uint8_t *buf, int size)
 	return 0;
 }
 
-int ht_get(struct ht_t *tbl, const char *key, uint8_t **ptr, int *size)
+V_API int ht_get(struct ht_t *tbl, const char *key, uint8_t **ptr, int *size)
 {
 	struct ht_entry *entry;
 	unsigned int slot = hash(key, tbl->size);
@@ -158,9 +159,10 @@ int ht_get(struct ht_t *tbl, const char *key, uint8_t **ptr, int *size)
 	return -1;
 }
 
-void ht_del(struct ht_t *tbl, const char *key)
+V_API void ht_del(struct ht_t *tbl, const char *key)
 {
-	struct ht_entry *ptr, *prev;
+	struct ht_entry *ptr;
+	struct ht_entry *prev;
 	int idx = 0;
 	unsigned int bucket = hash(key, tbl->size);
 
@@ -193,7 +195,7 @@ void ht_del(struct ht_t *tbl, const char *key)
 	}
 }
 
-void ht_print(struct ht_t *tbl)
+V_API void ht_print(struct ht_t *tbl)
 {
 	int i = 0;
 	struct ht_entry *ptr = NULL;

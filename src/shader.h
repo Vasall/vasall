@@ -1,7 +1,9 @@
-#ifndef _SHADER_H
-#define _SHADER_H
+#ifndef _V_SHADER_H
+#define _V_SHADER_H
 
+#include "defines.h"
 #include "core.h"
+
 #include <stdint.h>
 
 #define SHD_SLOTS               8
@@ -18,19 +20,19 @@ struct shader {
 
 
 /* A list containing all active shaders */
-extern struct shader **shaders;
+V_GLOBAL struct shader **shaders;
 
 /*
  * Create and initialize the shader-list.
  *
  * Returns: Either 0 on success or -1 if an error occurred
  */
-int shd_init(void);
+V_API int shd_init(void);
 
 /*
  * Close the shader-list and free the allocated memory.
  */
-void shd_close(void);
+V_API void shd_close(void);
 
 /*
  * Create a new shader and attach it to the shader-table.
@@ -41,7 +43,7 @@ void shd_close(void);
  *
  * Returns: Either a slot in the shader-table or -1 if an error occurred
  */
-short shd_set(char *name, char *vtx_shd, char *frg_shd);
+V_API short shd_set(char *name, char *vtx_shd, char *frg_shd);
 
 /*
  * Get a shader from the shader-list by searching for a name.
@@ -50,7 +52,7 @@ short shd_set(char *name, char *vtx_shd, char *frg_shd);
  *
  * Returns: Either a slot in the shader-table or -1 if an error occurred
  */
-short shd_get(char *name);
+V_API short shd_get(char *name);
 
 /*
  * Unbind everything from OpenGL, destroy the shader
@@ -58,6 +60,6 @@ short shd_get(char *name);
  *
  * slot: The slot in the shader-table
  */
-void shd_del(short slot);
+V_API void shd_del(short slot);
 
 #endif

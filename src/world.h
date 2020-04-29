@@ -1,6 +1,7 @@
-#ifndef _WORLD_H
-#define _WORLD_H
+#ifndef _V_WORLD_H
+#define _V_WORLD_H
 
+#include "defines.h"
 #include "core.h"
 #include "model.h"
 #include "object.h"
@@ -40,23 +41,18 @@ struct world {
 	 * The underlying model for the terrain.
 	 */
 	short terrain;
-
-	/*
-	 * The object table for the world.
-	 */
-	struct object_table *objects;
 };
 
 
 /* The global world-struct */
-extern struct world *world;
+V_GLOBAL struct world *world;
 
 /*
  * Initialize the global world-struct
  *
  * Returns: Either 0 on success or -1 if an error occurred
  */
-int wld_create(void);
+V_API int wld_create(void);
 
 /*
  * Delete a world and free allocated memory.
@@ -64,17 +60,12 @@ int wld_create(void);
  * @world: Pointer to the world
  * 	to delete
  */
-void wld_destroy(void);
-
-/*
- * Render the objects and objects in it.
- */
-void wld_update(void);
+V_API void wld_destroy(void);
 
 /*
  * Render the world using OpenGL.
  */
-void wld_render(void);
+V_API void wld_render(void);
 
 /*
  * Get the height of the world at a given position.
@@ -84,13 +75,13 @@ void wld_render(void);
  *
  * Returns: The height at the given position
  */
-float wld_get_height(float x, float z);
+V_API float wld_get_height(float x, float z);
 
 /*
  * Generate a new terrain and write it to the world-struct.
  *
  * Returns: Either 0 on success or -1 if an error occurred
  */
-int wld_gen_terrain(void);
+V_API int wld_gen_terrain(void);
 
 #endif

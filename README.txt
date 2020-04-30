@@ -6,7 +6,7 @@
  
 ABSTRACT
 
-  Vasall is a peer-to-peer MMO-RPG which focuses mainly on combat and 
+  Vasall is a free-to-play MMO-RPG which focuses mainly on combat and 
   exploration. Note that this project is still in the early stages of
   developement.
 

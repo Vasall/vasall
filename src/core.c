@@ -43,7 +43,7 @@ V_API int core_init(int argc, char **argv)
 		return -1;
 
 	/* Initialize the client */
-	if(cli_init(argv[1], atoi(argv[2]), atoi(argv[3])) < 0)
+	if(cli_init(argv[1], atoi(argv[2])) < 0)
 		return -1;
 
 	/* Get the absolute path to the binary-directory */	

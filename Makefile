@@ -21,8 +21,8 @@ LIB_PTH    := lib
 LIB_DIRS   := $(sort $(dir $(wildcard $(MKFILE_DIR)$(LIB_PTH)/*/)))
 
 # Set static libararies
-LIBS       := ./$(LIB_PTH)/XSDL/lib/xsdl.a ./$(LIB_PTH)/clusterd-client/libcd.a \
-	./$(LIB_PTH)/clusterd-client/lib/lcp/lcp.a -lgmp -lm -lcrypto
+LIBS       := ./$(LIB_PTH)/XSDL/lib/xsdl.a ./$(LIB_PTH)/lcp/liblcp.a \
+		-lgmp -lm -lcrypto
 
 # The compiler to use
 CC         := gcc

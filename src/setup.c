@@ -117,7 +117,7 @@ V_INTERN void try_login(XSDL_Node *n, XSDL_Event *e)
 
 	if(n||e){/* Prevent warning for not using paameters */}	
 
-	if(1) {
+	if(0) {
 		struct XSDL_Node *node;
 	
 		/* Update core functions */
@@ -137,7 +137,7 @@ V_INTERN void try_login(XSDL_Node *n, XSDL_Event *e)
 	strcpy(uname, uname_node->buffer);
 	strcpy(pswd, pswd_node->buffer);
 
-	if(cd_sto(client->core, 0, uname, pswd) == 1) {
+	if(cli_sto(uname, pswd) == 1) {
 		struct XSDL_Node *node;
 
 		printf("Successfully logged into the system!\n");

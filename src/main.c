@@ -25,8 +25,8 @@ int main(int argc, char **argv)
 
 	srand(time(0));
 
-	if(argc < 4) {
-		printf("usage: %s <ipv6-addr> <port> <self>\n", argv[0]);
+	if(argc < 3) {
+		printf("usage: %s <ipv6-addr> <port>\n", argv[0]);
 		return 0;
 	}
 

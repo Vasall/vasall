@@ -73,15 +73,7 @@ V_API int core_load(char *pth)
 	if(!(fd = fopen(rel, "r")))
 		return -1;
 	
-	while(1) {
-		printf("%p\n", fd);
-		printf("before\n");
-		if(fscanf(fd, "%99s", opt) == EOF) {
-			printf("break\n");
-			break;
-		}
-		printf("after\n");
-
+	while(fscanf(fd, "%4s", opt) != EOF) {
 		printf("%s > ", opt);
 
 		/* Load a texture and push it into the texture-table */

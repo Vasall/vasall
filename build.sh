@@ -27,7 +27,13 @@ fi
 # Check if the XSDL-library has already been cloned
 if [ ! -d "${LIB_DIR}/XSDL" ]; then
 	echo "XSDL-lib missing."	
-	git clone https://github.com/enudstudios/XSDL.git ./lib/XSDL
+	git clone https://github.com/Vasall/XSDL.git ./lib/XSDL
+fi
+
+# Check if the XSDL-library has already been cloned
+if [ ! -d "${LIB_DIR}/lcp" ]; then
+	echo "XSDL-lib missing."	
+	git clone https://github.com/Vasall/lcp.git ./lib/lcp
 fi
 
 echo "Compile files."

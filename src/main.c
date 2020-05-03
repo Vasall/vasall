@@ -13,7 +13,7 @@
 #define PAD_LEN 30
 
 void pad_printf(char *str);
-void handle_events(void);
+void handle_evts(void);
 void update(void);
 void render(void);
 
@@ -30,11 +30,17 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	pad_printf("Initialize XSDL-subsystem");
-	if(XSDL_Init(XSDL_INIT_EVERYTHING) < 0) {
+	pad_printf("Initialize window");
+	if(win_init() < 0) {
 		printf("failed!\n");
-		printf("%s\n", SDL_GetError());
 		return 0;
+	}
+	printf("done\n");
+
+	pad_printf("Initialize render-assets");
+	if(rat_init() < 0) {
+		printf("failed!\n");
+		goto err_close_window;
 	}
 	printf("done\n");
 
@@ -42,41 +48,13 @@ int main(int argc, char **argv)
 	if(core_init(argc, argv) < 0) {
 		printf("failed!\n");
 		printf("%s\n", glo_get_err());
-		goto err_cleanup_xsdl;
+		goto err_cleanup_rat;
 	}
-	printf("done\n");
-
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
-			SDL_GL_CONTEXT_PROFILE_CORE);
-
-	pad_printf("Initialize window");
-	if((core->window = initWindow()) == NULL) {
-		printf("failed!\n");
-		printf("%s\n", XSDL_GetError());
-		goto err_cleanup_core;
-	}
-	printf("done\n");
-
-	pad_printf("Initialize OpenGL");
-	if(initGL() < 0) {
-		printf("failed!\n");
-		goto err_cleanup_window;
-	}
-	printf("done\n");
-
-	pad_printf("Initialize UI-context");
-	if((core->uicontext = XSDL_CreateUIContext(core->window)) == NULL) {
-		printf("failed!\n");
-		goto err_cleanup_gl;
-	}
-	core->uiroot = core->uicontext->root;
 	printf("done\n");
 
 	pad_printf("Init inputs");
 	if(inp_init() < 0) {
-		goto err_cleanup_ui;
+		goto err_cleanup_core;
 	}
 	printf("done\n");
 
@@ -86,12 +64,12 @@ int main(int argc, char **argv)
 	}
 
 	printf("Import fonts:\n");
-	if(loadResources() < 0) {
+	if(load_res() < 0) {
 		goto err_cleanup_input;
 	}
 
 	pad_printf("Initialize UI");
-	if(initUI() < 0) {
+	if(init_ui() < 0) {
 		printf("failed!\n");
 		goto err_cleanup_input;
 	}
@@ -112,10 +90,6 @@ int main(int argc, char **argv)
 	}
 	printf("done\n");
 
-	printf("\n");
-	XSDL_ShowVersions();
-	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
-
 	/* Add a demo-dummy */
 	
 	if((core->obj = obj_set(0, OBJ_M_ENTITY, pos, mdl_get("cube"), 
@@ -133,7 +107,7 @@ int main(int argc, char **argv)
 	 */
 	core->running = 1;
 	while(core->running) {
-		handle_events();
+		handle_evts();
 		core_update();
 		core_render();
 	}
@@ -146,7 +120,6 @@ err_cleanup_world:
 	printf("done\n");
 
 	pad_printf("Clear caches");
-	XSDL_ClearFontCache();
 	printf("done\n");
 
 err_cleanup_camera:
@@ -159,29 +132,19 @@ err_cleanup_input:
 	inp_close();
 	printf("done\n");
 
-err_cleanup_ui:
-	pad_printf("Destroy UI-context");
-	XSDL_DeleteUIContext(core->uicontext);
-	printf("done\n");
-
-err_cleanup_gl:
-	pad_printf("Cleanup OpenGL");
-	XSDL_GL_DeleteContext(core->glcontext);
-	printf("done\n");
-
-err_cleanup_window:
-	pad_printf("Destroy window");
-	XSDL_DestroyWindow(core->window);
-	printf("done\n");
-
 err_cleanup_core:
 	pad_printf("Destroy the core-struct");
 	core_close();
 	printf("done\n");
 
-err_cleanup_xsdl:
-	pad_printf("Shutdown XSDL-subsystem");
-	XSDL_Quit();
+err_cleanup_rat:
+	pad_printf("Cleanup render-assets");
+	rat_close();
+	printf("done\n");
+
+err_close_window:
+	pad_printf("Close window");
+	win_close();
 	printf("done\n");
 	return 0;
 }
@@ -200,45 +163,45 @@ void pad_printf(char *str)
 
 /*
  * Process and handle the current
- * events. Note that the custom
- * event-callback-function will be
+ * evts. Note that the custom
+ * evt-callback-function will be
  * skipped if the user interacts with
  * the userinterface.
  */
-void handle_events(void)
+void handle_evts(void)
 {
-	XSDL_Event event;
+	XSDL_Event evt;
 
-	while(XSDL_PollEvent(&event)) {
-		if(event.type == XSDL_QUIT) {
+	while(XSDL_PollEvent(&evt)) {
+		if(evt.type == XSDL_QUIT) {
 			core->running = 0;
 			return;
 		}
 
-		if(event.type == XSDL_KEYDOWN && 
-				event.key.keysym.scancode == 20 &&
-				event.key.keysym.mod & KMOD_CTRL) {
+		if(evt.type == XSDL_KEYDOWN && 
+				evt.key.keysym.scancode == 20 &&
+				evt.key.keysym.mod & KMOD_CTRL) {
 			core->running = 0;
 			return;
 		}
 
 
 		/* Process interactions with the UI */
-		if(XSDL_ProcEvent(core->uicontext, &event) > -1) {
+		if(XSDL_ProcEvent(window->ui_ctx, &evt) > -1) {
 			/* Skip, as the user interacted with the UI */
 			continue;
 		}
 
-		if(event.type == XSDL_WINDOWEVENT) {
-			switch(event.window.event) {
+		if(evt.type == XSDL_WINDOWEVENT) {
+			switch(evt.window.event) {
 				case(XSDL_WINDOWEVENT_RESIZED):
-					handle_resize(&event);
+					handle_resize(&evt);
 					break;
 			}
 		}
 
-		/* Run specified event-handler */
+		/* Run specified evt-handler */
 		if(core->procevt)
-			core->procevt(&event);
+			core->procevt(&evt);
 	}
 }

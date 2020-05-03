@@ -29,7 +29,7 @@ CC         := gcc
 # Error flags for compiling
 ERRFLAGS   := -Wall -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wold-style-definition
 # Compiling flags here
-CFLAGS     := -g -O0 -ansi -std=c89 -pedantic -I. -I./$(LIB_PTH)/
+CFLAGS     := -g -O0 -ansi -std=c89 -pedantic -I. -I./include/ -I./$(LIB_PTH)/
 SDL_CFLAGS := $(shell pkg-config --cflags sdl2 SDL2_ttf SDL2_image)
 override CFLAGS += $(SDL_CFLAGS)
 
@@ -52,7 +52,7 @@ OBJECTS    := $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
 rm         := rm -f
 
-$(BINDIR)/$(TARGET): $(OBJECTS) libs
+$(BINDIR)/$(TARGET): $(OBJECTS)
 	@$(LINKER) $(OBJECTS) $(LFLAGS) -o $@
 	@echo "Linking complete!"
 

@@ -1,8 +1,3 @@
-#define GL_GLEXT_PROTOTYPES
-#include <GL/glut.h>
-#include <GL/glext.h>
-#include <GL/gl.h>
-
 #include "setup.h"
 #include "core.h"
 #include "handle.h"
@@ -12,64 +7,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-/* Redefine external variables */
-int g_win_flgs = XSDL_WINDOW_RESIZABLE | XSDL_WINDOW_OPENGL;
-
-/*
- * Create and configure the basic settings of
- * the main window.
- *
- * Returns: Either a pointer to the new window
- * 	of NULL if an error occurred
- */
-V_API XSDL_Window *initWindow(void)
-{
-	XSDL_Window *win;
-
-	win = XSDL_CreateWindow("Vasall",
-			XSDL_WINDOWPOS_UNDEFINED,
-			XSDL_WINDOWPOS_UNDEFINED,
-			800, 600,
-			g_win_flgs);
-
-	if(win == NULL) {
-		return(NULL);
-	}
-
-	return(win);
-}
-
-/*
- * This function is going to setup
- * OpenGL with the default settings.
- *
- * Returns: 0 on success and -1 
- * 	if an error occurred
- */
-V_API int initGL(void)
-{
-	/* Create the XSDL-OpenGL-context */
-	if((core->glcontext = XSDL_GL_CreateContext(core->window)) == NULL) {
-		printf("Failed to create context.\n");
-		return(-1);
-	}
-
-	/* Set clear-color */
-	glClearColor(0.06, 0.06, 0.06, 1.0);
-
-	/* Change provoking-vertex to first */
-	glProvokingVertex(GL_FIRST_VERTEX_CONVENTION);
-
-	/* Enable transparency */
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	/* Enable depth-test */
-	glEnable(GL_DEPTH_TEST);
-
-	return(0);
-}
-
 /*
  * Load all necessary resources, 
  * like fonts, sprites and more.
@@ -77,7 +14,7 @@ V_API int initGL(void)
  * Returns: 0 on success and -1 
  * 	if an error occurred
  */
-V_API int loadResources(void)
+V_API int load_res(void)
 {
 	char path[512];
 	/* printf("Directory: %s\n", core->bindir);*/
@@ -117,22 +54,22 @@ V_INTERN void try_login(XSDL_Node *n, XSDL_Event *e)
 
 	if(n||e){/* Prevent warning for not using paameters */}	
 
-	if(0) {
+	if(1) {
 		struct XSDL_Node *node;
-	
+
 		/* Update core functions */
 		core->procevt = &game_procevt;
 		core->update = &game_update;
 		core->render = &game_render;
 
 		/* Switch from menuscreen to gamescreen */
-		node = XSDL_Get(core->uiroot, "mns");
+		node = XSDL_Get(window->ui_root, "mns");
 		XSDL_ModFlag(node, XSDL_FLG_ACT, &zero);
 		return;
 	}
 
-	uname_node = XSDL_Get(core->uiroot, "mns_user")->element;
-	pswd_node = XSDL_Get(core->uiroot, "mns_pswd")->element; 
+	uname_node = XSDL_Get(window->ui_root, "mns_user")->element;
+	pswd_node = XSDL_Get(window->ui_root, "mns_pswd")->element; 
 
 	strcpy(uname, uname_node->buffer);
 	strcpy(pswd, pswd_node->buffer);
@@ -148,7 +85,7 @@ V_INTERN void try_login(XSDL_Node *n, XSDL_Event *e)
 		core->render = &game_render;
 
 		/* Switch from menuscreen to gamescreen */
-		node = XSDL_Get(core->uiroot, "mns");
+		node = XSDL_Get(window->ui_root, "mns");
 		XSDL_ModFlag(node, XSDL_FLG_ACT, &zero);
 		return;
 	}
@@ -162,7 +99,7 @@ V_INTERN void try_login(XSDL_Node *n, XSDL_Event *e)
  * Returns: 0 on success and -1
  * 	if an error occurred
  */
-V_API int initUI(void)
+V_API int init_ui(void)
 {
 	XSDL_Rect body0 = {50, 14, 300, 52};
 	XSDL_Rect body1 = {40, 96, 320, 24};
@@ -179,55 +116,55 @@ V_API int initUI(void)
 	XSDL_Input *pswd_input;
 
 	/* Create the menu-sceen */
-	XSDL_CreateWrapper(core->uiroot, "mns", 0, 0, 800, 600);
-	XSDL_EnableNodeTex(XSDL_Get(core->uiroot, "mns"));
-	XSDL_CreateWrapper(XSDL_Get(core->uiroot, "mns"), "mns_form", 200, 80, 400, 380);
+	XSDL_CreateWrapper(window->ui_root, "mns", 0, 0, 800, 600);
+	XSDL_EnableNodeTex(XSDL_Get(window->ui_root, "mns"));
+	XSDL_CreateWrapper(XSDL_Get(window->ui_root, "mns"), "mns_form", 200, 80, 400, 380);
 
-	XSDL_CreateWrapper(XSDL_Get(core->uiroot, "mns_form"), "mns_title", 0, 0, 400, 80);
-	XSDL_CreateText(XSDL_Get(core->uiroot, "mns_title"), "label0", &body0, "VASALL", 
+	XSDL_CreateWrapper(XSDL_Get(window->ui_root, "mns_form"), "mns_title", 0, 0, 400, 80);
+	XSDL_CreateText(XSDL_Get(window->ui_root, "mns_title"), "label0", &body0, "VASALL", 
 			&XSDL_WHITE, 3, 0);
 
-	XSDL_CreateText(XSDL_Get(core->uiroot, "mns_form"), "label1", &body1,"Email:", 
+	XSDL_CreateText(XSDL_Get(window->ui_root, "mns_form"), "label1", &body1,"Email:", 
 			&XSDL_WHITE, 2, XSDL_TEXT_LEFT);
-	XSDL_CreateInput(XSDL_Get(core->uiroot, "mns_form"), "mns_user", 40, 120, 320, 40, "");
+	XSDL_CreateInput(XSDL_Get(window->ui_root, "mns_form"), "mns_user", 40, 120, 320, 40, "");
 
-	XSDL_CreateText(XSDL_Get(core->uiroot, "mns_form"), "label2", &body2, "Password:", 
+	XSDL_CreateText(XSDL_Get(window->ui_root, "mns_form"), "label2", &body2, "Password:", 
 			&XSDL_WHITE, 2, XSDL_TEXT_LEFT);
-	XSDL_CreateInput(XSDL_Get(core->uiroot, "mns_form"), "mns_pswd", 40, 200, 320, 40, "");
+	XSDL_CreateInput(XSDL_Get(window->ui_root, "mns_form"), "mns_pswd", 40, 200, 320, 40, "");
 
-	XSDL_CreateButton(XSDL_Get(core->uiroot, "mns_form"), "mns_login", 40, 270, 320, 40, 
+	XSDL_CreateButton(XSDL_Get(window->ui_root, "mns_form"), "mns_login", 40, 270, 320, 40, 
 			"Login");
 
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_user"), XSDL_STY_VIS, &one);
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_user"), XSDL_STY_BCK, &one);
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_user"), XSDL_STY_BCK_COL, &mns_input_bck_col);
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_user"), XSDL_STY_BOR, &one);
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_user"), XSDL_STY_BOR_COL, &mns_input_bor_col);
-	user_input = XSDL_Get(core->uiroot, "mns_user")->element;
+	XSDL_ModStyle(XSDL_Get(window->ui_root, "mns_user"), XSDL_STY_VIS, &one);
+	XSDL_ModStyle(XSDL_Get(window->ui_root, "mns_user"), XSDL_STY_BCK, &one);
+	XSDL_ModStyle(XSDL_Get(window->ui_root, "mns_user"), XSDL_STY_BCK_COL, &mns_input_bck_col);
+	XSDL_ModStyle(XSDL_Get(window->ui_root, "mns_user"), XSDL_STY_BOR, &one);
+	XSDL_ModStyle(XSDL_Get(window->ui_root, "mns_user"), XSDL_STY_BOR_COL, &mns_input_bor_col);
+	user_input = XSDL_Get(window->ui_root, "mns_user")->element;
 	memcpy(&user_input->col, &mns_text_col, sizeof(XSDL_Color));
 
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_pswd"), XSDL_STY_VIS, &one);
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_pswd"), XSDL_STY_BCK, &one);
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_pswd"), XSDL_STY_BCK_COL, &mns_input_bck_col);
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_pswd"), XSDL_STY_BOR, &one);
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_pswd"), XSDL_STY_BOR_COL, &mns_input_bor_col);
-	pswd_input = XSDL_Get(core->uiroot, "mns_pswd")->element;
+	XSDL_ModStyle(XSDL_Get(window->ui_root, "mns_pswd"), XSDL_STY_VIS, &one);
+	XSDL_ModStyle(XSDL_Get(window->ui_root, "mns_pswd"), XSDL_STY_BCK, &one);
+	XSDL_ModStyle(XSDL_Get(window->ui_root, "mns_pswd"), XSDL_STY_BCK_COL, &mns_input_bck_col);
+	XSDL_ModStyle(XSDL_Get(window->ui_root, "mns_pswd"), XSDL_STY_BOR, &one);
+	XSDL_ModStyle(XSDL_Get(window->ui_root, "mns_pswd"), XSDL_STY_BOR_COL, &mns_input_bor_col);
+	pswd_input = XSDL_Get(window->ui_root, "mns_pswd")->element;
 	memcpy(&pswd_input->col, &mns_text_col, sizeof(XSDL_Color));
 
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_form"), XSDL_STY_VIS, &one);
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_form"), XSDL_STY_BCK, &one);
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_form"), XSDL_STY_BCK_COL, &mns_form_bck_col);
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_form"), XSDL_STY_COR_RAD, &mns_form_corners);
+	XSDL_ModStyle(XSDL_Get(window->ui_root, "mns_form"), XSDL_STY_VIS, &one);
+	XSDL_ModStyle(XSDL_Get(window->ui_root, "mns_form"), XSDL_STY_BCK, &one);
+	XSDL_ModStyle(XSDL_Get(window->ui_root, "mns_form"), XSDL_STY_BCK_COL, &mns_form_bck_col);
+	XSDL_ModStyle(XSDL_Get(window->ui_root, "mns_form"), XSDL_STY_COR_RAD, &mns_form_corners);
 
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_title"), XSDL_STY_VIS, &one);
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_title"), XSDL_STY_BCK_COL, &mns_title_bck_col);
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_title"), XSDL_STY_COR_RAD, &mns_title_cor);
+	XSDL_ModStyle(XSDL_Get(window->ui_root, "mns_title"), XSDL_STY_VIS, &one);
+	XSDL_ModStyle(XSDL_Get(window->ui_root, "mns_title"), XSDL_STY_BCK_COL, &mns_title_bck_col);
+	XSDL_ModStyle(XSDL_Get(window->ui_root, "mns_title"), XSDL_STY_COR_RAD, &mns_title_cor);
 
-	XSDL_BindEvent(XSDL_Get(core->uiroot, "mns_login"), XSDL_EVT_MOUSEDOWN, &try_login);
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_login"), XSDL_STY_BCK, &one);
-	XSDL_ModStyle(XSDL_Get(core->uiroot, "mns_login"), XSDL_STY_BCK_COL, &mns_login_bck_col);
+	XSDL_BindEvent(XSDL_Get(window->ui_root, "mns_login"), XSDL_EVT_MOUSEDOWN, &try_login);
+	XSDL_ModStyle(XSDL_Get(window->ui_root, "mns_login"), XSDL_STY_BCK, &one);
+	XSDL_ModStyle(XSDL_Get(window->ui_root, "mns_login"), XSDL_STY_BCK_COL, &mns_login_bck_col);
 
-	XSDL_BuildPipe(core->uicontext->pipe, core->uiroot);
+	XSDL_BuildPipe(window->ui_ctx->pipe, window->ui_root);
 
 	return(0);
 }

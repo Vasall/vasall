@@ -4,16 +4,7 @@
 #include <string.h>
 #include <stdint.h>
 
-/* 
- * Create a new pointer-list and set
- * each element to NULL.
- *
- * @limit: The pointer-limit for this list
- *
- * Returns: Either a pointer to the created
- * 	list or NULL if an error occurred
- */
-struct ptr_list *lstCreate(int limit)
+extern struct ptr_list *lstCreate(int limit)
 {
 	int i;
 	struct ptr_list *lst;
@@ -39,13 +30,7 @@ struct ptr_list *lstCreate(int limit)
 	return(lst);
 }
 
-/* 
- * Destory a pointer-list, free all pointers
- * and then free the whole struct-pointer.
- *
- * @lst: Pointer to the list-struct
- */
-void lstDestroy(struct ptr_list *lst)
+extern void lstDestroy(struct ptr_list *lst)
 {
 	int i;
 
@@ -60,13 +45,7 @@ void lstDestroy(struct ptr_list *lst)
 	free(lst);
 }
 
-/* 
- * Clear a pointer-list and free all allocated
- * pointers.
- *
- * @lst: Pointer to the list-struct
- */
-void lstClear(struct ptr_list *lst)
+extern void lstClear(struct ptr_list *lst)
 {
 	int i;
 
@@ -80,18 +59,7 @@ void lstClear(struct ptr_list *lst)
 	}
 }
 
-/* 
- * Allocated the given amount of bytes and add the
- * pointer to the list.
- *
- * @lst: Pointer to the list to insert pointer into
- * @ptr: The pointer to add to the list
- * @size: The amount of bytes to allocate
- *
- * Returns: Either 0 on success or -1
- * 	if an error occurred
- */
-int lstAdd(struct ptr_list *lst, void **ptr, int size)
+extern int lstAdd(struct ptr_list *lst, void **ptr, int size)
 {
 	if(lst == NULL) return(-1);
 
@@ -106,15 +74,7 @@ int lstAdd(struct ptr_list *lst, void **ptr, int size)
 	return(0);
 }
 
-/* 
- * Remove a pointer from the list, free the allocated 
- * memory and set the slot to NULL. Then reorder the 
- * left elements, to fill in empty holes in the list. 
- *
- * @lst: Pointer to remove the pointer from
- * @ptr: The pointer to remove
- */
-void lstRemv(struct ptr_list *lst, void *ptr)
+extern void lstRemv(struct ptr_list *lst, void *ptr)
 {
 	int i;
 
@@ -131,12 +91,7 @@ void lstRemv(struct ptr_list *lst, void *ptr)
 	}
 }
 
-/* 
- * Reorder the pointers in the list.
- *
- * @lst: Pointer to the list to reorder 
- */
-void lstOrder(struct ptr_list *lst)
+extern void lstOrder(struct ptr_list *lst)
 {
 	int i;
 	
@@ -150,12 +105,7 @@ void lstOrder(struct ptr_list *lst)
 	}	
 }
 
-/* 
- * Display the list in the console.
- *
- * @lst: Pointer to the list
- */
-void lstPrint(struct ptr_list *lst)
+extern void lstPrint(struct ptr_list *lst)
 {
 	int i;
 
@@ -163,16 +113,7 @@ void lstPrint(struct ptr_list *lst)
 	for(i = 0; i < lst->limit; i++) printf("%d: %p\n", i, lst->arr[i]);
 }
 
-/* 
- * Create a new dynamic stack and allocate
- * memory for the struct.
- *
- * elesz: The size of a single element in the stack
- *
- * Returns: Either a pointer to the created stack
- * 	or NULL if an error occurred
- */
-struct dyn_stack *stcCreate(int elesz)
+extern struct dyn_stack *stcCreate(int elesz)
 {
 	struct dyn_stack *stc = NULL;
 
@@ -192,16 +133,7 @@ struct dyn_stack *stcCreate(int elesz)
 	return(stc);
 }
 
-/* 
- * Destroy a dynamic stack and free the
- * allocated memory. Note that the elements
- * contain allocated memory themself have 
- * to be freed manually before calling
- * this function.
- *
- * @stc: Pointer to the stack to destroy
- */
-void stcDestroy(struct dyn_stack *stc)
+extern void stcDestroy(struct dyn_stack *stc)
 {
 	if(stc == NULL) return;
 
@@ -212,16 +144,7 @@ void stcDestroy(struct dyn_stack *stc)
 	free(stc);
 }
 
-/* 
- * Push a new element to the end of a stack.
- *
- * @stc: Pointer to the stack
- * @in: Pointer to the element to push into the stack
- *
- * Returns: Either the index of the new element
- * 	on success or -1 if an error occurred
- */
-int stcPush(struct dyn_stack *stc, void *in)
+extern int stcPush(struct dyn_stack *stc, void *in)
 {
 	void *ptr = NULL;
 
@@ -239,18 +162,7 @@ int stcPush(struct dyn_stack *stc, void *in)
 	return(stc->num - 1);
 }
 
-/* 
- * Pull the last element of a stack and write it
- * to the given buffer.
- *
- * @stc: Pointer to the stack
- * @out: Pointer to the memory to write the element to
- *
- * Returns: Either the new number of elements 
- * 	in  the stack on success or -1 if an 
- * 	error occurred
- */
-int stcPull(struct dyn_stack *stc, void *out)
+extern int stcPull(struct dyn_stack *stc, void *out)
 {
 	void *ptr = NULL;
 
@@ -272,17 +184,7 @@ int stcPull(struct dyn_stack *stc, void *out)
 	return(stc->num);
 }
 
-/* 
- * Clone an element and push it to the end
- * of the stack. 
- *
- * @stc: Pointer to the stack
- * @idx: The index of the element in the buffer
- *
- * Returns: The index of the cloned element in the stack
- * 	or -1 if an error occurred
- */
-int stcCopy(struct dyn_stack *stc, int idx)
+extern int stcCopy(struct dyn_stack *stc, int idx)
 {
 	uint8_t *ptr;
 	int ret = -1;
@@ -293,17 +195,7 @@ int stcCopy(struct dyn_stack *stc, int idx)
 	return(ret);
 }
 
-/* 
- * Get the content at a specific index and 
- * return a pointer to the buffer-position.
- *
- * @stc: Pointer to the stack
- * @idx: The index of the element to get
- *
- * Return: Either a pointer to the element or
- * 	NULL if an error occurred
- */
-void *stcGet(struct dyn_stack *stc, int idx)
+extern void *stcGet(struct dyn_stack *stc, int idx)
 {
 	uint8_t *ptr = NULL;
 
@@ -314,13 +206,7 @@ void *stcGet(struct dyn_stack *stc, int idx)
 	return(ptr);
 }
 
-/*
- * Print both the size of the stack and
- * output all element in the array.
- *
- * @stc: Pointer to the stack to display
- */
-void stcPrint(struct dyn_stack *stc)
+extern void stcPrint(struct dyn_stack *stc)
 {
 	int i;
 	uint8_t val;

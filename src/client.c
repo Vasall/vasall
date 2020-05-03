@@ -19,7 +19,6 @@ V_INTERN int cli_serv_hdr(char *buf, uint8_t t, uint8_t kt, uint32_t id,
 
 V_API int cli_init(char *addr, short port)
 {
-	printf("Allocate core\n");
 	if(!(client = malloc(sizeof(struct cli_hdl))))
 		return -1;
 
@@ -327,7 +326,7 @@ V_INTERN int cli_serv_hdr(char *buf, uint8_t t, uint8_t kt, uint32_t id,
 
 	memcpy(key_buf, &key, 4);
 	memcpy(key_buf + 4, &ti_mod, 2);
-	key_hash = hash((char *)key_buf, 6);
+	key_hash = hash((char *)key_buf, 6, 0xffffffff);
 	memcpy(buf + 8, &key_hash, 4);
 
 	memcpy(buf + 12, &len, 2);

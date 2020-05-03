@@ -1,49 +1,69 @@
 #include "utils.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 
-/*
- * This function will open a file and then
- * read it's content into an allocated buffer.
- *
- * @pth: The absolute path to the file
- * @buf: An unallocated ptr
- * @len: A pointer to write the length of the buffer to
- *
- * Returns: Either 0 on success or -1
- * 	if an error occurred
- */
-int readFile(char *pth, uint8_t **buf, long *len)
+extern unsigned long hash(char *key, int len, long lim)
+{
+	unsigned long int val = 0;
+	int i = 0;
+
+	for(; i < len; i++)
+		val = val * 37 + key[i];
+
+	return val % lim;
+}
+
+extern int fs_load_png(char *pth, uint8_t **buf, int *w, int *h)
+{
+	int width;
+	int height;
+	int size;
+	SDL_Surface *surf;
+	uint8_t *buffer;
+
+	if(!(surf = IMG_Load(pth)))
+		return -1;
+
+	width = surf->w;
+	height = surf->h;
+	size = surf->pitch * surf->h;
+
+	if(!(buffer = malloc(size)))
+		return -1;
+
+	memcpy(buffer, surf->pixels, size);
+
+	*buf = buffer;
+	*w = width;
+	*h = height;
+	return 0;
+}
+
+extern int fs_load_file(char *pth, uint8_t **buf, long *len)
 {
 	FILE *fd;
 	long length;
 	uint8_t *data;
 
-	/* Open the file */
-	fd = fopen(pth, "rb");
-	if(fd == NULL) return(-1);
+	if(!(fd = fopen(pth, "rb")))
+		return -1;
 
-	/* Get the length of the file */
 	fseek(fd, 0, SEEK_END);
 	length = ftell(fd);
 	
-	/* Allocate a buffer */
-	data = malloc(length);
-	if(data == NULL) {
-		fclose(fd);
-		return(0);
-	}
+	if(!(data = malloc(length)))
+		goto err_close_fd;
 
-	/* Read the content into the buffer */
 	fseek(fd, 0, SEEK_SET);
 	fread(data, length, 1, fd);
 
-	/* Close the file */
 	fclose(fd);
-
-	/* Set the output-variables */
 	*buf = data;
-	*len = length;
+	if(len) *len = length;
+	return 0;
 
-	return(0);
+err_close_fd:
+	fclose(fd);
+	return -1;
 }

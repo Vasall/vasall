@@ -4,74 +4,29 @@
 #include <GL/gl.h>
 
 #include "shader.h"
+#include "utils.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
 
 
-/* A list containing all active shaders */
-struct shader **shaders = NULL;
+struct shader_wrapper *shaders = NULL;
 
-/*
- * Read an file into a newly allocated buffer. Please always free the returned
- * buffer after using it to prevent memory-leaks.
- *
- * @pth: The absolte path to the file to read
- *
- * Returns: Either a buffer containing the content of the file or NULL if an
- * 	error occurred
- */
-V_INTERN char *filetobuf(char *pth)
-{
-	FILE *fptr;
-	long length;
-	char *buf;
 
-	if(!(fptr = fopen(pth, "rb")))
-		return NULL;
-	
-	fseek(fptr, 0, SEEK_END);
-	length = ftell(fptr);
-
-	if(!(buf = malloc(length + 1)))
-		goto err_close_file;
-
-	fseek(fptr, 0, SEEK_SET);
-	fread(buf, length, 1, fptr);
-	fclose(fptr);
-	buf[length] = 0;
-	return buf;
-
-err_close_file:
-	fclose(fptr);
-	return NULL;
-}
-
-/*
- * Get an empty slot in the shader-table.
- *
- * Returns: Either a empty slot in the shader-table or -1 if an error occurred
- */
 V_INTERN short shd_get_slot(void)
 {
 	short i;
 
 	for(i = 0; i < SHD_SLOTS; i++) {
-		if(!shaders[i])
+		if(shaders->mask[i] == 0)
 			return i;
 	}
 
 	return -1;
 }
 
-/*
- * Check if a slot-number is in range.
- *
- * @slot: The slot-number to check
- *
- * Returns: Either 0 if the slot-number is ok, or 1 if not
- */
 V_INTERN int shd_check_slot(short slot)
 {
 	if(slot < 0 || slot >= SHD_SLOTS)
@@ -84,11 +39,11 @@ V_API int shd_init(void)
 {
 	int i;
 
-	if(!(shaders = malloc(sizeof(struct shader *) * SHD_SLOTS)))
+	if(!(shaders = malloc(sizeof(struct shader_wrapper))))
 		return -1;
 
 	for(i = 0; i < SHD_SLOTS; i++)
-		shaders[i] = NULL;
+		shaders->mask[i] = 0;
 
 	return 0;
 }
@@ -96,127 +51,118 @@ V_API int shd_init(void)
 V_API void shd_close(void)
 {
 	int i;
-	struct shader *shd;
 
 	for(i = 0; i < SHD_SLOTS; i++) {
-		if(!(shd = shaders[i]))
+		if(shaders->mask[i] == 0)
 			continue;
 	
-		/* Destroy the shader-program */
-		glDeleteProgram(shd->prog);	
+		glDeleteProgram(shaders->prog[i]);	
 	}
 
 	free(shaders);
+	shaders = NULL;
 }
 
-V_API short shd_set(char *name, char *vtx_shd, char *frg_shd)
+V_API short shd_set(char *name, char *vs, char *fs)
 {
 	short slot;
 	int success;
-	int shd_sz = sizeof(struct shader);
-	struct shader *shd = NULL;
-	uint32_t fshd = 0, vshd = 0;
-	char *vtxsrc = NULL, *frgsrc = NULL, infoLog[512];
+	uint32_t fshd = 0;
+	uint32_t vshd = 0;
+	char *vtx_src = NULL;
+	char *frg_src = NULL;
+	char infoLog[512];
 
 	if((slot = shd_get_slot()) < 0)
 		return -1;
 
-	if(!vtx_shd || !frg_shd)
+	if(!vs || !fs)
 		return -1;
 
-	/* Allocate the necessary memory for the struct */
-	if(!(shd = malloc(shd_sz)))
-		return -1;
-
-	/* Initialize the shader-values */
-	strcpy(shd->name, name);
-	shd->prog = 0;
-	shd->status = 0;
-
-	/* Create a new shader-program */
-	if(!(shd->prog = glCreateProgram()))
+	if((shaders->prog[slot] = glCreateProgram()) == 0)
 		goto err_cleanup;
 
 	/* Load vertex-shader and attach the vertex-shader */
-	if(!(vtxsrc = filetobuf(vtx_shd)))
+	if(fs_load_file(vs, (uint8_t **)&vtx_src, NULL) < 0)
 		goto err_cleanup;
 
 	/* Create and initialize the vertex-shader */
 	vshd = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vshd, 1, (const GLchar **)&vtxsrc, NULL);
+	glShaderSource(vshd, 1, (const GLchar **)&vtx_src, NULL);
 	glCompileShader(vshd);
 
 	glGetShaderiv(vshd, GL_COMPILE_STATUS, &success);
-	if(!success) {
-		glGetShaderInfoLog(vshd, 512, NULL, infoLog);
-		printf("\nFailed to compile shader %s: %s\n", vtx_shd, infoLog);
+	if(!success)
 		goto err_cleanup;
-	}
 
-	glAttachShader(shd->prog, vshd);
+	glAttachShader(shaders->prog[slot], vshd);
 
 	/* Load and attach the fragment-shader */
-	if(!(frgsrc = filetobuf(frg_shd)))
+	if(fs_load_file(fs, (uint8_t **)&frg_src, NULL) < 0)
 		goto err_cleanup;
 
 	/* Create and initialize the fragment-shader */
 	fshd = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fshd, 1, (const GLchar **)&frgsrc, NULL);
+	glShaderSource(fshd, 1, (const GLchar **)&frg_src, NULL);
 	glCompileShader(fshd);
 
 	glGetShaderiv(fshd, GL_COMPILE_STATUS, &success);
-	if(!success) {
-		glGetShaderInfoLog(fshd, 512, NULL, infoLog);
-		printf("\nFailed to compile shader %s: %s\n", frg_shd, infoLog);
+	if(!success)
 		goto err_cleanup;
-	}
 
-	glAttachShader(shd->prog, fshd);
+	glAttachShader(shaders->prog[slot], fshd);
 
 	/* Bind the vertex-attributes */
-	glBindAttribLocation(shd->prog, 0, "vtxPos");
-	glBindAttribLocation(shd->prog, 1, "vtxNrm");
-	glBindAttribLocation(shd->prog, 2, "vtxCol");
+	glBindAttribLocation(shaders->prog[slot], 0, "vtxPos");
+	glBindAttribLocation(shaders->prog[slot], 1, "vtxNrm");
+	glBindAttribLocation(shaders->prog[slot], 2, "vtxCol");
 
 	/* Link the shader-program */
-	glLinkProgram(shd->prog);
+	glLinkProgram(shaders->prog[slot]);
 
 	/* Detach and destroy shaders */
-	glDetachShader(shd->prog, vshd);
+	glDetachShader(shaders->prog[slot], vshd);
 	glDeleteShader(vshd);
 	vshd = 0;
 
-	glDetachShader(shd->prog, fshd);
+	glDetachShader(shaders->prog[slot], fshd);
 	glDeleteShader(fshd);
 	fshd = 0;
 
-	shaders[slot] = shd;
-	free(vtxsrc);
-	free(frgsrc);
+	shaders->mask[slot] = 1;
+	strcpy(shaders->name[slot], name);
+	free(vtx_src);
+	free(frg_src);
 	return slot;
 
 err_cleanup:
-	/* Detach and destroy the shaders */
 	if(vshd) {
-		glDetachShader(shd->prog, vshd);
+		glDetachShader(shaders->prog[slot], vshd);
 		glDeleteShader(vshd);
 	}
 	if(fshd) {
-		glDetachShader(shd->prog, fshd);
+		glDetachShader(shaders->prog[slot], fshd);
 		glDeleteShader(fshd);
 	}
 
-	/* Destroy the shader-program */
-	if(shd->prog)
-		glDeleteProgram(shd->prog);
+	if(shaders->prog[slot])
+		glDeleteProgram(shaders->prog[slot]);
 
-	/* Free the code-buffers */
-	free(vtxsrc);
-	free(frgsrc);
-
-	/* Destroy the shader-struct */
-	free(shd);
+	free(vtx_src);
+	free(frg_src);
 	return -1;
+}
+
+V_API void shd_del(short slot)
+{
+	if(shd_check_slot(slot))
+		return;
+
+	if(shaders->mask[slot] == 0)
+		return;
+	
+	glDeleteProgram(shaders->prog[slot]);
+	shaders->mask[slot] = 0;
 }
 
 V_API short shd_get(char *name)
@@ -224,30 +170,30 @@ V_API short shd_get(char *name)
 	int i;
 
 	for(i = 0; i < SHD_SLOTS; i++) {
-		if(!shaders[i])
+		if(shaders->mask[i] == 0)
 			continue;
 
-		if(!strcmp(shaders[i]->name, name))
+		if(!strcmp(shaders->name[i], name))
 			return i;
 	}
 
 	return -1;
 }
 
-V_API void shd_del(short slot)
+extern void shd_use(short slot, int *loc)
 {
-	struct shader *shd;
+	glUseProgram(shaders->prog[slot]);
 
-	if(shd_check_slot(slot))
-		return;
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
 
-	if(!(shd = shaders[slot]))
-		return;
+	loc[0] = glGetUniformLocation(shaders->prog[slot], "model");
+	loc[1] = glGetUniformLocation(shaders->prog[slot], "view");
+	loc[2] = glGetUniformLocation(shaders->prog[slot], "proj");
+}
 
-	/* Destroy the shader-program */
-	if(shd->prog)
-		glDeleteProgram(shd->prog);
-
-	free(shd);
-	shaders[slot] = NULL;
+extern void shd_unuse(void)
+{
+	glUseProgram(0);
 }

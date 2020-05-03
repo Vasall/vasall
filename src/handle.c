@@ -12,7 +12,7 @@
 V_API void handle_resize(XSDL_Event *evt)
 {
 	double ratio;
-	XSDL_UIContext *ctx = core->uicontext;
+	XSDL_UIContext *ctx = window->ui_ctx;
 
 	if(evt){/* Prevent warning for not using evt */}
 

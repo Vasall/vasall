@@ -1,4 +1,5 @@
 #include "core.h"
+#include "render.h"
 #include "client.h"
 
 /* Redefine external variables */
@@ -21,29 +22,23 @@ V_API int core_init(int argc, char **argv)
 {
 	if(argc) {/* Prevent warning for not using argc */}
 
-	if(!(core = calloc(1, sizeof(struct core_wrapper))))
+	if(!(core = malloc(sizeof(struct core_wrapper))))
 		return -1;
+
+	memset(core, 0, sizeof(struct core_wrapper));
 
 	/* Just to be save */
 	core->procevt = NULL;
 	core->update = NULL;
 	core->render = NULL;
 
-	/* Initialize the caches */
-	if(tex_init() < 0) 
-		return -1;
-
-	if(shd_init() < 0)
+	if(cli_init("::1", 4242) < 0)
 		return -1;
 
 	if(mdl_init() < 0)
 		return -1;
 
 	if(obj_init() < 0)
-		return -1;
-
-	/* Initialize the client */
-	if(cli_init(argv[1], atoi(argv[2])) < 0)
 		return -1;
 
 	/* Get the absolute path to the binary-directory */	
@@ -54,34 +49,39 @@ V_API int core_init(int argc, char **argv)
 
 V_API void core_close(void)
 {
-	if(core)
+	if(!core)
 		return;
 
 	cli_close();
 	
 	obj_close();
-	shd_close();
 	mdl_close();
-	tex_close();
 
 	free(core);
 }
 
 V_API int core_load(char *pth)
 {
-	FILE *fd;
-	char dir[128], rel[256], opt[4];
+	FILE *fd = NULL;
+	char dir[256], rel[512], opt[512];
 
 	XSDL_CombinePath(dir, core->bindir, pth);
 	XSDL_CombinePath(rel, dir, "include.reg");
 
 	printf("Load register: %s\n", rel);
 
-	fd = fopen(rel, "r+");
-	if(fd == NULL)
+	if(!(fd = fopen(rel, "r")))
 		return -1;
+	
+	while(1) {
+		printf("%p\n", fd);
+		printf("before\n");
+		if(fscanf(fd, "%99s", opt) == EOF) {
+			printf("break\n");
+			break;
+		}
+		printf("after\n");
 
-	while(fscanf(fd, "%s", opt) != EOF) {
 		printf("%s > ", opt);
 
 		/* Load a texture and push it into the texture-table */
@@ -98,7 +98,8 @@ V_API int core_load(char *pth)
 			XSDL_CombinePath(pth, dir, pth);
 
 			/* Load the pixel-data */
-			if(tex_load(key, pth) < 0)
+			printf("Load texture\n");
+			if(tex_load_png(key, pth) < 0)
 				goto failed;
 		}
 
@@ -121,6 +122,7 @@ V_API int core_load(char *pth)
 			XSDL_CombinePath(frag_pth, dir, frag_pth);
 
 			/* Load the shader from the files */
+			printf("Set shader\n");
 			if(shd_set(key, vert_pth, frag_pth) < 0)
 				goto failed;
 		}
@@ -152,13 +154,15 @@ V_API int core_load(char *pth)
 
 			shd_slot = shd_get(shd);
 
+			printf("Model\n");
 			if(mdl_load(key, obj_pth, tex_slot, shd_slot) < 0)
 				goto failed;
 		}
 
 		printf("\n");
 	}
-				
+	
+	printf("adda\n");
 	fclose(fd);
 	return 0;
 
@@ -173,7 +177,7 @@ V_API void core_update(void)
 	cli_update();
 
 	/* Update the userinterface */
-	XSDL_UpdateUIContext(core->uicontext);
+	XSDL_UpdateUIContext(window->ui_ctx);
 
 	/* Run specified update-function */
 	if(core->update)
@@ -190,8 +194,8 @@ V_API void core_render(void)
 		core->render();
 
 	/* Render the current userinterface */
-	XSDL_Render(core->uicontext);
+	XSDL_Render(window->ui_ctx);
 
 	/* Render the buffer on the screen */
-	XSDL_GL_SwapWindow(core->window);
+	XSDL_GL_SwapWindow(window->win);
 }

@@ -332,11 +332,9 @@ V_API void mdl_del(short slot)
 
 V_API void mdl_render(short slot, mat4_t mat)
 {
-	int model, view, proj;
+	int loc[3];
 	mat4_t mod, vie, pro;
 	struct model *mdl;
-	struct shader *shd;
-	struct texture *tex;
 
 	if(mdl_check_slot(slot))
 		return;
@@ -344,37 +342,22 @@ V_API void mdl_render(short slot, mat4_t mat)
 	mdl = models[slot];
 	if(!mdl || mdl->status != MDL_OK)
 		return;
-
-	if(!(shd = shaders[mdl->shd]))
-		return;
-
-	if(!(tex = textures[mdl->tex]))
-		return;
 	
 	mat4_cpy(mod, mat);
 	cam_get_view(vie);
 	cam_get_proj(pro);
 
 	glBindVertexArray(mdl->vao);
-	glUseProgram(shd->prog);
+	shd_use(mdl->shd, loc);
+	tex_use(mdl->tex);
 
-	if(mdl->tex >= 0)
-		glBindTexture(GL_TEXTURE_2D, tex->id);
-
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glEnableVertexAttribArray(2);
-
-	model = glGetUniformLocation(shd->prog, "model");
-	view = glGetUniformLocation(shd->prog, "view");
-	proj = glGetUniformLocation(shd->prog, "proj");
-
-	glUniformMatrix4fv(model, 1, GL_FALSE, mod);
-	glUniformMatrix4fv(view, 1, GL_FALSE, vie);
-	glUniformMatrix4fv(proj, 1, GL_FALSE, pro);
+	glUniformMatrix4fv(loc[0], 1, GL_FALSE, mod);
+	glUniformMatrix4fv(loc[1], 1, GL_FALSE, vie);
+	glUniformMatrix4fv(loc[2], 1, GL_FALSE, pro);
 
 	glDrawElements(GL_TRIANGLES, mdl->idx_num, GL_UNSIGNED_INT, 0);
 
-	glUseProgram(0);
+	tex_unuse();
+	shd_unuse();
 	glBindVertexArray(0);
 }

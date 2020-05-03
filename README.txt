@@ -28,7 +28,7 @@ INSTALLATION
 
   Now that the necessary tools have been installed, we now have to get the
   external libraries:
-    $ apt install libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev freeglut3-dev
+    $ apt install libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev freeglut3-dev libgmp-dev libssl-dev
 
   After installing the external libraries, we can now clone the reposity:
     $ git clone https://github.com/Vasall/vasall-client.git

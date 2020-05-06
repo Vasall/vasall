@@ -1,13 +1,12 @@
-#ifndef _V_OBJECT_H
-#define _V_OBJECT_H
+#ifndef _OBJECT_H
+#define _OBJECT_H
 
-#include "defines.h"
 #include "vec.h"
 #include "mat.h"
-#include "list.h"
+#include "mbasic.h"
+#include "sdl.h"
+#include "asset.h"
 #include "model.h"
-
-#include <stdint.h>
 
 #define OBJ_SLOTS 128
 #define OBJ_DATA_MAX 128
@@ -41,88 +40,26 @@ struct object_table {
 	char      buf[OBJ_SLOTS][OBJ_DATA_MAX];
 };
 
-V_GLOBAL struct object_table *objects;
 
-/*
- * Initialize the object-table.
- *
- * Returns: Either 0 on success or -1 if an error occurred
- */
-V_API int obj_init(void);
+extern struct object_table objects;
 
-/*
- * CLose the object-table and free the allocated memory.
- */
-V_API void obj_close(void);
 
-/*
- * Create and initialize a new object and then insert it into the object-table
- *
- * @id: The id of the object in the cluster
- * @mask: The mask to use for the object
- * @pos: The initial position of the object
- * @model: A slot in the model-table 
- * @data: Additional data for the object
- * @len: The length of the data-buffer in bytes
- *
- * Returns: Either the slot of the object in the object-table or -1 if an
- * 	error occurred
- */
-V_API short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
+extern int obj_init(void);
+extern void obj_close(void);
+
+extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 		char *data, int len);
+extern void obj_del(short slot);
 
-/*
- * Delete an object and remove it from the object-table.
- *
- * @slot: The slot of the object to delete
- */
-V_API void obj_del(short slot);
+extern int obj_mod(short slot, short attr, void *data, int len);
 
-/*
- * Modify an attribute of an object in the object-table.
- *
- * @slot: The slot of the object in the object-table
- * @attr: THE attribute to modify
- * @data: Pointer to the data
- * @len: The length of the data-buffer in bytes
- *
- * Returns: Either 0 on success or -1 if an error occurred
- */
-V_API int obj_mod(short slot, short attr, void *data, int len);
+extern short obj_sel_id(uint32_t id);
 
-/*
- * Get the slot of an object with the given id in the object-table.
- *
- * @id: The id of the object to search for
- *
- * Returns: Either the slot in the object table or -1 if an error occurred
- */
-V_API short obj_sel_id(uint32_t id);
+extern void obj_update_matrix(short slot);
 
-/*
- * Update the model-matrix of a given model in the object-table.
- *
- * @slot: The slot in the object-table
- */
-V_API void obj_update_matrix(short slot);
+extern void obj_print(short slot);
 
-/* 
- * Output info about the object in the terminal.
- *
- * @slot: The slot of the object in the object-table
- */
-V_API void obj_print(short slot);
-
-/*
- * Update all objects in an object-table according to their mask.
- *
- * @delt: The time since the last frame
- */
-V_API void obj_sys_update(float delt);
-
-/* 
- * Render all renderable objects in an object-table.
- */
-V_API void obj_sys_render(void);
+extern void obj_sys_update(float delt);
+extern void obj_sys_render(void);
 
 #endif

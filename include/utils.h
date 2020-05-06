@@ -1,14 +1,11 @@
 #ifndef _UTILS_H
 #define _UTILS_H
 
-#include "core.h"
+#include "sdl.h"
 
-#include <stdint.h>
-
-extern unsigned long hash(char *key, int len, long lim);
-
-extern int fs_load_png(char *pth, uint8_t **buf, int *w, int *h);
-
-extern int fs_load_file(char *pth, uint8_t **buf, long *len);
-
+extern int strins(char *buf, char *ins, int pos);
+extern char *get_bin_dir(char *pth);
+void join_paths(char *dst, char *pth1, char *pth2);
+extern SDL_Surface *crop_surf(SDL_Surface* in, SDL_Rect *in_rect, 
+		SDL_Rect *out_rect);
 #endif

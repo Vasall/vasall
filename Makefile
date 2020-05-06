@@ -21,8 +21,7 @@ LIB_PTH    := lib
 LIB_DIRS   := $(sort $(dir $(wildcard $(MKFILE_DIR)$(LIB_PTH)/*/)))
 
 # Set static libararies
-LIBS       := ./$(LIB_PTH)/XSDL/lib/xsdl.a ./$(LIB_PTH)/lcp/liblcp.a \
-		-lgmp -lm -lcrypto
+LIBS       := 
 
 # The compiler to use
 CC         := gcc
@@ -64,3 +63,4 @@ $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
 .PHONY: libs
 libs: ${LIB_DIRS}
 	$(foreach dir,$(LIB_DIRS),make -C $(dir);)
+

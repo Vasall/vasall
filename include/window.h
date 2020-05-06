@@ -1,39 +1,57 @@
 #ifndef _WINDOW_H
 #define _WINDOW_H
 
-#define GL_GLEXT_PROTOTYPES
-#include <GL/glut.h>
-#include <GL/glext.h>
-#include <GL/gl.h>
+#include "sdl.h"
+#include "node.h"
+#include "vec.h"
+#include "input.h"
 
-#include "XSDL/XSDL.h"
-#include "XSDL/XSDL_cache.h"
-#include "XSDL/XSDL_context.h"
-#include "XSDL/XSDL_img.h"
-#include "XSDL/XSDL_init.h"
-#include "XSDL/XSDL_input.h"
-#include "XSDL/XSDL_list.h"
-#include "XSDL/XSDL_node.h"
-#include "XSDL/XSDL_render.h"
-#include "XSDL/XSDL_stdnodes.h"
-#include "XSDL/XSDL_struct.h"
-#include "XSDL/XSDL_text.h"
-#include "XSDL/XSDL_utf8.h"
-#include "XSDL/XSDL_utils.h"
+#define PIPE_LEN 32
+
+enum cursors {
+	CURSOR_ARROW = 0,
+	CURSOR_IBEAM = 1,
+	CURSOR_HAND = 2
+};
 
 struct window_wrapper {
-	XSDL_Window *win;
-	XSDL_GLContext gl_ctx;
-	XSDL_UIContext *ui_ctx;
-	XSDL_Node *ui_root;
-	int8_t fullscr;
+	SDL_Window *win;
+	SDL_GLContext gl_ctx;
+
+	struct ui_node *root;
+	
+	short pipe_num;
+	struct ui_node *pipe[PIPE_LEN];	
+
+	struct ui_node *hover;
+	struct ui_node *active;
+
+	int win_w;
+	int win_h;
+
+	uint32_t shader;
+
+	SDL_Cursor *cursors[8];
 };
 
 
-extern struct window_wrapper *window;
+extern struct window_wrapper window;
 
 
 extern int win_init(void);
 extern void win_close(void);
+
+extern void win_update(void);
+extern void win_render(void);
+
+extern int win_proc_evt(SDL_Event *evt); 
+
+extern void win_build_pipe(void);
+extern void win_dump_pipe(void);
+
+extern void win_focus_node(struct ui_node *n);
+extern void win_unfocus_node(void);
+
+extern struct ui_node *win_check_hover(struct ui_node *n, int2_t pos);
 
 #endif

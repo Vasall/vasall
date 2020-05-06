@@ -1,27 +1,30 @@
-#ifndef _V_INPUT_H
-#define _V_INPUT_H
+#ifndef _INPUT_H
+#define _INPUT_H
 
-#include "defines.h"
+#include "sdl.h"
+#include "vec.h"
 
-struct input_map {
-	float camera[2];
+#define DEVICE_NUM 4
 
-	float movement[2];
+struct input_wrapper {
+	char mask[DEVICE_NUM];
+	int id[DEVICE_NUM];
+	uint8_t type[DEVICE_NUM];
+	char name[DEVICE_NUM][24];
+	void *ptr[DEVICE_NUM];
+
+	vec2_t movement;
+	vec2_t camera;
 };
 
-V_GLOBAL struct input_map *inp_map;
 
-/* 
- * Initialize the input-map.
- *
- * Returns: Either 0 on succes or -1
- * 	if an error occurred
- */
-V_API int inp_init(void);
+extern struct input_wrapper input;
 
-/*
- * Close the input-handler and free the allocated memory.
- */
-V_API void inp_close(void);
+
+extern int inp_init(void);
+extern void inp_close(void);
+
+extern int inp_add_device(int idx);
+extern void inp_remv_device(int id);
 
 #endif

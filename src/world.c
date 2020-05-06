@@ -1,107 +1,89 @@
-#define GL_GLEXT_PROTOTYPES
-#include <GL/glut.h>
-#include <GL/glext.h>
-#include <GL/gl.h>
-
 #include "world.h"
-#include "core.h"
-#include "vec.h"
-#include "utils.h"
-#include "shader.h"
-#include "loader.h"
+#include "mbasic.h"
 #include "world_utils.h"
 
-#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-/* Redefine external variables */
-struct world *world = NULL;
 
-V_INTERN int twodim(int x, int y, int w) {return y * w + x;}
-V_INTERN float _abs(float val) {return(val < 0) ? (-val) : (val);}
+struct world world;
 
-V_API int wld_create(void)
+
+static int twodim(int x, int y, int w) {return y * w + x;}
+
+extern int wld_init(void)
 {
 	vec2_t del;
 
-	if(!(world = malloc(sizeof(struct world))))
+	world.size[0] = WORLD_SIZE;
+	world.size[1] = WORLD_SIZE;
+
+	del[0] = world.size[0] / 2.0;
+	del[1] = world.size[1] / 2.0;	
+
+	memset(world.pos, 0, VEC3_SIZE);
+
+	world.min_pos[0] = world.pos[0] - del[0];
+	world.min_pos[1] = world.pos[2] - del[1];
+	
+	world.max_pos[0] = world.pos[0] + del[0];
+	world.max_pos[1] = world.pos[2] + del[1];
+	
+	world.ptnum = (WORLD_SIZE * WORLD_SIZE);
+	if(!(world.heights = malloc(sizeof(float) * (world.ptnum))))
 		return -1;
 
-	world->size[0] = WORLD_SIZE;
-	world->size[1] = WORLD_SIZE;
-
-	del[0] = world->size[0] / 2.0;
-	del[1] = world->size[1] / 2.0;	
-
-	memset(world->pos, 0, VEC3_SIZE);
-
-	world->min_pos[0] = world->pos[0] - del[0];
-	world->min_pos[1] = world->pos[2] - del[1];
-	
-	world->max_pos[0] = world->pos[0] + del[0];
-	world->max_pos[1] = world->pos[2] + del[1];
-	
-	world->ptnum = (WORLD_SIZE * WORLD_SIZE);
-	world->heights = malloc(sizeof(float) * (world->ptnum));
-	if(world->heights == NULL)
-		goto err_free_world;
-
-	memset(world->heights, 0, world->ptnum);
-
-	memset(&world->rot, 0, sizeof(vec3_t));
+	memset(world.heights, 0, world.ptnum);
+	memset(&world.rot, 0, sizeof(vec3_t));
 
 	wld_gen_terrain();
-
 	return 0;
-
-err_free_world:
-	free(world);
-	return -1;
 }
 
-V_API void wld_destroy(void)
+extern void wld_close(void)
 {
-	if(!world || !world->heights)
+	if(!world.heights)
 		return;
 
-	free(world->heights);
-	free(world);
+	free(world.heights);
 }
 
-V_API void wld_render(void) 
+extern void wld_render(void) 
 {
 	mat4_t idt;
 	mat4_idt(idt);
-	mdl_render(world->terrain, idt);
+	mdl_render(world.terrain, idt);
 }
 
-V_API float wld_get_height(float x, float z)
+extern float wld_get_height(float x, float z)
 {
 	float ret = 0.0;
 	vec2_t rel_pos, coord;
 	int2_t map_idx;
 	float heights[4];
 
-	rel_pos[0] = _abs(world->min_pos[0] - x);
-	rel_pos[1] = _abs(world->min_pos[1] - z);
+	rel_pos[0] = _abs(world.min_pos[0] - x);
+	rel_pos[1] = _abs(world.min_pos[1] - z);
 
 	map_idx[0] = floor(rel_pos[0]);
 	map_idx[1] = floor(rel_pos[1]);
 
 	/* Check if the position is in range */
-	if(map_idx[0] < 0 || map_idx[0] >= world->size[0] ||
+	if(map_idx[0] < 0 || map_idx[0] >= world.size[0] ||
 				map_idx[1] < 0 ||
-				map_idx[1] >= world->size[1]) {
+				map_idx[1] >= world.size[1]) {
 		return 0;
 	}
 
-	heights[0] = world->heights[twodim(map_idx[0], 
-			map_idx[1], world->size[0])];
-	heights[1] = world->heights[twodim(map_idx[0] + 1, 
-			map_idx[1], world->size[0])];
-	heights[2] = world->heights[twodim(map_idx[0], 
-			map_idx[1] + 1, world->size[0])];
-	heights[3] = world->heights[twodim(map_idx[0] + 1, 
-			map_idx[1] + 1, world->size[0])];
+	heights[0] = world.heights[twodim(map_idx[0], 
+			map_idx[1], world.size[0])];
+	heights[1] = world.heights[twodim(map_idx[0] + 1, 
+			map_idx[1], world.size[0])];
+	heights[2] = world.heights[twodim(map_idx[0], 
+			map_idx[1] + 1, world.size[0])];
+	heights[3] = world.heights[twodim(map_idx[0] + 1, 
+			map_idx[1] + 1, world.size[0])];
 
 	coord[0] = rel_pos[0] - floor(rel_pos[0]);
 	coord[1] = rel_pos[1] - floor(rel_pos[1]);
@@ -145,13 +127,13 @@ V_API float wld_get_height(float x, float z)
 	return ret;
 }
 
-V_API int wld_gen_terrain(void)
+extern int wld_gen_terrain(void)
 {
 	int vtx_num, x, z, w, count, i, j, idx_num, *idx = NULL;
 	float **hImg = NULL, *heights = NULL, xpos, zpos;
 	vec3_t *vtx = NULL, *last_row = NULL, *nrm = NULL, *col = NULL;
 
-	w = (int)world->size[0];
+	w = (int)world.size[0];
 
 	/* Calculate the amount of vertices */
 	vtx_num = calcVertexNum(w);
@@ -167,59 +149,62 @@ V_API int wld_gen_terrain(void)
 	if(!(nrm = calloc(vtx_num, VEC3_SIZE)))
 		goto err_free;
 
-	hImg = loadPPMHeightmap("../res/images/heightmap_256.ppm", 1, 256);
-	heights = world->heights;
-	for(x = 0; x < world->size[0]; x++) {
-		for(z = 0; z < world->size[1]; z++) {
-			i = twodim(z, x, world->size[1]);
+	if(!(hImg = loadPPMHeightmap("res/images/heightmap_256.ppm", 1, 256)))
+		goto err_free;
+
+	heights = world.heights;
+	for(x = 0; x < world.size[0]; x++) {
+		for(z = 0; z < world.size[1]; z++) {
+			i = twodim(z, x, world.size[1]);
 			heights[i] = (40.0 * hImg[x][z] + 10.0) * 1.0;
 		}
 	}
-	if(!(last_row = malloc(((int)world->size[0] - 1) * VEC3_SIZE * 2)))
+
+	if(!(last_row = malloc(((int)world.size[0] - 1) * VEC3_SIZE * 2)))
 		goto err_free;
 
 	/* Iterate over all points in the heightmap */
 	count = 0;
-	for(z = 0; z < world->size[1] - 1; z++) {
-		for(x = 0; x < world->size[0] - 1; x++) {
+	for(z = 0; z < world.size[1] - 1; z++) {
+		for(x = 0; x < world.size[0] - 1; x++) {
 			vec3_t ctl, ctr, cbl, cbr;
 			
 			xpos = x - 128.0;
 			zpos = z - 128.0;
 
 			ctl[0] = xpos;
-			ctl[1] = heights[twodim(x, z, world->size[0])];
+			ctl[1] = heights[twodim(x, z, world.size[0])];
 		       	ctl[2] = zpos;
 
 			ctr[0] = xpos + 1.0;
-			ctr[1] = heights[twodim(x + 1, z, world->size[0])];
+			ctr[1] = heights[twodim(x + 1, z, world.size[0])];
 			ctr[2] = zpos;
 
 			cbl[0] = xpos;
-			cbl[1] = heights[twodim(x, z + 1, world->size[0])];
+			cbl[1] = heights[twodim(x, z + 1, world.size[0])];
 			cbl[2] = zpos + 1.0;
 
 			cbr[0] = xpos + 1.0;
-			cbr[1] = heights[twodim(x + 1, z + 1, world->size[0])];
+			cbr[1] = heights[twodim(x + 1, z + 1, world.size[0])];
 			cbr[2] = zpos + 1.0;
 
 			vec3_cpy(vtx[count], ctl);
 			count++;
 
-			if(z != world->size[1] - 2 || 
-					x == world->size[0] - 2) {
+			if(z != world.size[1] - 2 || 
+					x == world.size[0] - 2) {
 				vec3_cpy(vtx[count], ctr);
 				count++;
 			}
 
-			if(z == world->size[1] - 2) {
+			if(z == world.size[1] - 2) {
 				vec3_cpy(last_row[x * 2], cbl);
 				vec3_cpy(last_row[x * 2 + 1], cbr);
 			}
 		}
 	}
 
-	for(j = 0; j < world->size[0] - 1; j++) {
+	for(j = 0; j < world.size[0] - 1; j++) {
 		vec3_t left, right;
 		vec3_cpy(left, last_row[j * 2]);
 		vec3_cpy(right, last_row[j * 2 + 1]);
@@ -233,7 +218,7 @@ V_API int wld_gen_terrain(void)
 		count++;
 	}
 
-	if(!(idx = (int *)genIndexBuf(world->size[0], &idx_num)))
+	if(!(idx = (int *)genIndexBuf(world.size[0], &idx_num)))
 		goto err_free;
 
 	/* Calculate the colors for the vertices */
@@ -296,11 +281,11 @@ V_API int wld_gen_terrain(void)
 	}
 
 	/* Allocate memory for the model-struct */
-	if((world->terrain = mdl_set("wld_")) < 0)
+	if((world.terrain = mdl_set("wld_")) < 0)
 		goto err_free;
 	
-	mdl_set_shader(world->terrain, shd_get("wld_"));
-	mdl_set_mesh(world->terrain, idx_num, (int32_t *)idx, vtx_num, vtx, 
+	mdl_set_shader(world.terrain, shd_get("col"));
+	mdl_set_mesh(world.terrain, idx_num, (int32_t *)idx, vtx_num, vtx, 
 			nrm, col, 0);
 
 	if(vtx) free(vtx);
@@ -316,7 +301,5 @@ err_free:
 	if(nrm) free(nrm);
 	if(last_row) free(last_row);
 	if(idx) free(idx);
-
 	return -1;
 }
-

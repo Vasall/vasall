@@ -1,7 +1,0 @@
-tex colr texture/finn2.png
-
-shd flat shader/flat.vert shader/flat.frag
-shd wld_ shader/terrain.vert shader/terrain.frag
-
-mdl tree model/tanne.obj colr flat
-mdl cube model/finn.obj colr flat

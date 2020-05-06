@@ -6,53 +6,53 @@
 #include <math.h>
 #include <string.h>
 
-V_API void vec3_set(vec3_t v, float x, float y, float z)
+extern void vec3_set(vec3_t v, float x, float y, float z)
 {
 	v[0] = x;
 	v[1] = y;
 	v[2] = z;
 }
 
-V_API void vec3_cpy(vec3_t dst, vec3_t src)
+extern void vec3_cpy(vec3_t dst, vec3_t src)
 {
 	memcpy(dst, src, VEC3_SIZE);
 }
 
-V_API void vec3_add(vec3_t v1, vec3_t v2, vec3_t res)
+extern void vec3_add(vec3_t v1, vec3_t v2, vec3_t res)
 {
 	res[0] = v1[0] + v2[0];
 	res[1] = v1[1] + v2[1];
 	res[2] = v1[2] + v2[2];
 }
 
-V_API void vec3_sub(vec3_t v1, vec3_t v2, vec3_t res)
+extern void vec3_sub(vec3_t v1, vec3_t v2, vec3_t res)
 {
 	res[0] = v1[0] - v2[0];
 	res[1] = v1[1] - v2[1];
 	res[2] = v1[2] - v2[2];
 }
 
-V_API void vec3_scl(vec3_t v, float f, vec3_t res)
+extern void vec3_scl(vec3_t v, float f, vec3_t res)
 {
 	res[0] = v[0] * f;
 	res[1] = v[1] * f;
 	res[2] = v[2] * f;
 }
 
-V_API void vec3_inv_scl(vec3_t v, float f, vec3_t res)
+extern void vec3_inv_scl(vec3_t v, float f, vec3_t res)
 {
 	res[0] = v[0] / f;
 	res[1] = v[1] / f;
 	res[2] = v[2] / f;
 }
 
-V_API float vec3_mag(vec3_t v)
+extern float vec3_mag(vec3_t v)
 {
 	double len = (v[0] * v[0]) + (v[1] * v[1]) + (v[2] * v[2]);
 	return (float)sqrt(len);
 }
 
-V_API void vec3_nrm(vec3_t v, vec3_t res)
+extern void vec3_nrm(vec3_t v, vec3_t res)
 {
 	float len = vec3_mag(v);
 	res[0] = v[0] / len;
@@ -60,19 +60,19 @@ V_API void vec3_nrm(vec3_t v, vec3_t res)
 	res[2] = v[2] / len;
 }
 
-V_API float vec3_dot(vec3_t v1, vec3_t v2)
+extern float vec3_dot(vec3_t v1, vec3_t v2)
 {
 	return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
 }
 
-V_API void vec3_cross(vec3_t v1, vec3_t v2, vec3_t res)
+extern void vec3_cross(vec3_t v1, vec3_t v2, vec3_t res)
 {
 	res[0] = (v1[1] * v2[2]) - (v1[2] * v2[1]);
 	res[1] = (v1[2] * v2[0]) - (v1[0] * v2[2]);
 	res[2] = (v1[0] * v2[1]) - (v1[1] * v2[0]);
 }
 
-V_API void vec3_rot_x(vec3_t v, float angle, vec3_t res)
+extern void vec3_rot_x(vec3_t v, float angle, vec3_t res)
 {
 	mat3_t rmat;
 	mat3_idt(rmat);
@@ -84,7 +84,7 @@ V_API void vec3_rot_x(vec3_t v, float angle, vec3_t res)
 	vec3_trans(v, rmat, res);
 }
 
-V_API void vec3_rot_y(vec3_t v, float angle, vec3_t res)
+extern void vec3_rot_y(vec3_t v, float angle, vec3_t res)
 {
 	mat3_t rmat;
 	mat3_idt(rmat);
@@ -96,7 +96,7 @@ V_API void vec3_rot_y(vec3_t v, float angle, vec3_t res)
 	vec3_trans(v, rmat, res);
 }
 
-V_API void vec3_rot_z(vec3_t v, float angle, vec3_t res)
+extern void vec3_rot_z(vec3_t v, float angle, vec3_t res)
 {
 	mat3_t rmat;
 	mat3_idt(rmat);
@@ -107,7 +107,7 @@ V_API void vec3_rot_z(vec3_t v, float angle, vec3_t res)
 	vec3_trans(v, rmat, res);
 }
 
-V_API void vec3_rot_axes(vec3_t v, float angle, vec3_t axis, vec3_t res)
+extern void vec3_rot_axes(vec3_t v, float angle, vec3_t axis, vec3_t res)
 {
 	mat3_t rmat;
 	float q0, q1, q2, q3;
@@ -131,7 +131,7 @@ V_API void vec3_rot_axes(vec3_t v, float angle, vec3_t axis, vec3_t res)
 	vec3_trans(v, rmat, res);
 }
 
-V_API void vec3_trans(vec3_t v, mat3_t mat, vec3_t res)
+extern void vec3_trans(vec3_t v, mat3_t mat, vec3_t res)
 {
 	vec3_t tmp;
 	vec3_cpy(tmp, v);
@@ -141,12 +141,12 @@ V_API void vec3_trans(vec3_t v, mat3_t mat, vec3_t res)
 	res[2] = tmp[0] * mat[0x6] + tmp[1] * mat[0x7] + tmp[2] * mat[0x8];
 }
 
-V_API void vec3_print(vec3_t v)
+extern void vec3_print(vec3_t v)
 {
 	printf("%.2f/%.2f/%.2f", v[0], v[1], v[2]);
 }
 
-V_API float vec3_barry_centric(vec3_t p1, vec3_t p2, vec3_t p3, vec2_t pos)
+extern float vec3_barry_centric(vec3_t p1, vec3_t p2, vec3_t p3, vec2_t pos)
 {
 	float det = (p2[2] - p3[2]) * (p1[0] - p3[0]) + (p3[0] - p2[0]) * (p1[2] - p3[2]);
 	float l1 = ((p2[2] - p3[2]) * (pos[0] - p3[0]) + (p3[0] - p2[0]) * (pos[1] - p3[2])) / det;

@@ -4,12 +4,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-V_API void mat3_zero(mat3_t mat) 
+extern void mat3_zero(mat3_t mat) 
 {
 	memset(mat, 0, MAT3_SIZE);
 }
 
-V_API void mat3_idt(mat3_t mat) 
+extern void mat3_idt(mat3_t mat) 
 {
 	mat3_zero(mat);
 	mat[0x0] = 1.0;
@@ -17,12 +17,12 @@ V_API void mat3_idt(mat3_t mat)
 	mat[0x8] = 1.0;
 }
 
-V_API void mat3_cpy(mat3_t dst, mat3_t src) 
+extern void mat3_cpy(mat3_t dst, mat3_t src) 
 {
 	memcpy(dst, src, MAT3_SIZE);
 }
 
-V_API void mat3_mult(mat3_t m1, mat3_t m2, mat3_t res)
+extern void mat3_mult(mat3_t m1, mat3_t m2, mat3_t res)
 {
 	int i, j, k;
 	mat4_t ret;
@@ -42,7 +42,7 @@ V_API void mat3_mult(mat3_t m1, mat3_t m2, mat3_t res)
 	mat4_cpy(res, ret);
 }
 
-V_API void mat3_print(mat3_t mat)
+extern void mat3_print(mat3_t mat)
 {
 	int r, c;
 
@@ -54,13 +54,13 @@ V_API void mat3_print(mat3_t mat)
 	}
 }
 
-V_API void mat4_zero(mat4_t mat)
+extern void mat4_zero(mat4_t mat)
 {
 	memset(mat, 0, MAT4_SIZE);
 	mat[0xf] = 1.0;
 }
 
-V_API void mat4_idt(mat4_t mat)
+extern void mat4_idt(mat4_t mat)
 {
 	mat4_zero(mat);
 	mat[0x00] = 1.0;
@@ -69,12 +69,12 @@ V_API void mat4_idt(mat4_t mat)
 	mat[0x0f] = 1.0;
 }
 
-V_API void mat4_cpy(mat4_t dst, mat4_t src)
+extern void mat4_cpy(mat4_t dst, mat4_t src)
 {
 	memcpy(dst, src, MAT4_SIZE);
 }
 
-V_API void mat4_mult(mat4_t m1, mat4_t m2, mat4_t res)
+extern void mat4_mult(mat4_t m1, mat4_t m2, mat4_t res)
 {
 	int i, j, k;
 	mat4_zero(res);
@@ -91,7 +91,7 @@ V_API void mat4_mult(mat4_t m1, mat4_t m2, mat4_t res)
 	}
 }
 
-V_API void mat4_print(mat4_t mat)
+extern void mat4_print(mat4_t mat)
 {
 	int r, c;
 	for(r = 0; r < 4; r++) {

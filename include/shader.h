@@ -1,8 +1,7 @@
 #ifndef _SHADER_H
 #define _SHADER_H
 
-#include "defines.h"
-#include "core.h"
+#include "sdl.h"
 
 #include <stdint.h>
 
@@ -16,7 +15,7 @@ struct shader_wrapper {
 };
 
 
-extern struct shader_wrapper *shaders;
+extern struct shader_wrapper shaders;
 
 
 extern int shd_init(void);
@@ -29,5 +28,7 @@ extern short shd_get(char *name);
 
 extern void shd_use(short slot, int *loc);
 extern void shd_unuse(void);
+
+
 
 #endif

@@ -1,7 +1,6 @@
 #ifndef _CAMERA_H
 #define _CAMERA_H
 
-#include "defines.h"
 #include "camera.h"
 #include "vec.h"
 #include "mat.h"
@@ -30,7 +29,7 @@ struct camera_wrapper {
 };
 
 
-extern struct camera_wrapper *camera;
+extern struct camera_wrapper camera;
 
 
 extern int cam_init(float aov, float asp, float near, float far);

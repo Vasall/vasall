@@ -33,9 +33,8 @@ INSTALLATION
   After installing the external libraries, we can now clone the reposity:
     $ git clone https://github.com/Vasall/vasall-client.git
 
-  Finally we can build the client by calling build.sh. The script will download
-  all necessary modules and then starts compiling the project:
-    $ bash build.sh
+  Create the necessary folders for the object-files and the final binary:
+    $ mkdir bin obj
 
   Now that everything is done, we can finally start the client and start
   playing the game using this command:

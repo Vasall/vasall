@@ -35,6 +35,9 @@ INSTALLATION
 
   Create the necessary folders for the object-files and the final binary:
     $ mkdir bin obj
+    
+  Compile the sourcecode:
+    $ make
 
   Now that everything is done, we can finally start the client and start
   playing the game using this command:

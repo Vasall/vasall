@@ -15,8 +15,8 @@ TECHNICAL DESCRIPTION
   The whole game is written in C89 and only relies on the SDL-frameworks for
   creating the window and handeling IO. Additionally OpenGL is used for 
   rendering. Currently the game will most likely only run on Linux as the
-  core system hasn't been ported to Windows and macOS yet, but will come in
-  the near future.
+  core system hasn't been ported to Windows and macOS yet. A port will come
+  in the near future.
 
 INSTALLATION
 
@@ -30,8 +30,8 @@ INSTALLATION
 
   Now that the necessary tools have been installed, we now have to get the
   external libraries:
-    $ apt install libgmp-dev libssl-dev
     $ apt install libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev freeglut3-dev
+    $ apt install libgmp-dev libssl-dev
 
   After installing the external libraries, we can now clone the reposity:
     $ git clone https://github.com/Vasall/vasall-client.git

@@ -15,8 +15,8 @@ TECHNICAL DESCRIPTION
   The whole game is written in C89 and only relies on the SDL-frameworks for
   creating the window and handeling IO. Additionally OpenGL is used for 
   rendering. Currently the game will most likely only run on Linux as the
-  core system hasn't been ported to Windows and macOS yet, but will come in
-  the near future.
+  core system hasn't been ported to Windows and macOS yet. A port will come
+  in the near future.
 
 INSTALLATION
 

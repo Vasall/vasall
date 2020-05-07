@@ -199,8 +199,7 @@ extern unsigned int *genIndexBuf(int vtxnum, int *idxlen)
 	return indices;
 }
 
-extern GLubyte *loadPPM(char* fileName, int8_t pathRelative,
-	int* width, int* height)
+extern GLubyte *loadPPM(char *fileName, int *width, int *height)
 {
 	FILE *file;
 	char path[512], b[100], c;
@@ -257,17 +256,15 @@ extern GLubyte *loadPPM(char* fileName, int8_t pathRelative,
 	return image;
 }
 
-extern float **loadPPMHeightmap(char* fileName, int8_t pathRelative, int terrainSize)
+extern float **loadPPMHeightmap(char* fileName, int terrainSize)
 {
 	/* Load the image */
 	int width, height, i, j;
 	GLubyte* img;
 	float **heightmapImage;
 
-	img = loadPPM(fileName, pathRelative, &width, &height);
-	if(img == NULL) {
-		return(NULL);
-	}
+	if(!(img = loadPPM(fileName, &width, &height)))
+		return NULL;
 
 	/* Check that image is same size as terrain */
 	if (width < terrainSize || height < terrainSize) {
@@ -303,16 +300,16 @@ extern float **loadPPMHeightmap(char* fileName, int8_t pathRelative, int terrain
 		}
 	}
 
-	return (heightmapImage);
+	return heightmapImage;
 }
 
-extern void loadPPMTexture(char* fileName, int8_t pathRelative, GLuint* textures)
+extern void loadPPMTexture(char* fileName, GLuint* textures)
 {
 	/* Load the image from the file */
 	int width, height;
 	GLubyte* img;
 
-	img = loadPPM(fileName, pathRelative, &width, &height);
+	img = loadPPM(fileName, &width, &height);
 
 	/* Set texture properties */
 	glBindTexture(GL_TEXTURE_2D, textures[0]);

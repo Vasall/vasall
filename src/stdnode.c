@@ -368,14 +368,12 @@ ui_node *ui_add_text(ui_node *par, char* id, SDL_Rect *body,
 		char *text, SDL_Color *col, uint8_t font, uint8_t opt)
 {
 	ui_text *ele = NULL;
-	SDL_Rect txt_body;
 	ui_node *node;
-	char *buf = NULL;
 
 	if(!(ele = malloc(sizeof(ui_text))))
 		return NULL;
 
-	if(!(ele->text = malloc(strlen(text) * sizeof(char))))
+	if(!(ele->text = malloc((strlen(text) + 1)* sizeof(char))))
 		goto err_free_ele;
 
 	strcpy(ele->text, text);

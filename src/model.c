@@ -13,9 +13,6 @@ static short mdl_get_slot(void)
 {
 	short i;
 
-	if(!models)
-		return -1;
-
 	for(i = 0; i < MDL_SLOTS; i++) {
 		if(!models[i])
 			return i;
@@ -32,7 +29,7 @@ static int mdl_check_slot(short slot)
 	return 0;
 }
 
-extern void mdl_set_status(short slot, uint8_t status)
+static void mdl_set_status(short slot, uint8_t status)
 {
 	struct model *mdl;
 
@@ -277,7 +274,7 @@ err_set_failed:
 	mdl_set_status(slot, MDL_ERR_SHADER);
 }
 
-extern int mdl_load_obj(char *pth, int *idxnum, int **idx, int *vtxnum,
+static int mdl_load_obj(char *pth, int *idxnum, int **idx, int *vtxnum,
 		vec3_t **vtx, vec3_t **nrm, vec2_t **uv)
 {
 	int ret = 0, i, j, tmp;

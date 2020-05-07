@@ -128,10 +128,12 @@ static void ui_delete_node(ui_node *n, void *data)
 	if(n->del != NULL)
 		n->del(n, NULL);
 
-	SDL_FreeSurface(n->surf);		
-	glDeleteTextures(1, &n->tex);
-	glDeleteBuffers(2, n->bao);
-	glDeleteVertexArrays(1, &n->vao);
+	if(n->surf != NULL) {
+		SDL_FreeSurface(n->surf);		
+		glDeleteTextures(1, &n->tex);
+		glDeleteBuffers(2, n->bao);
+		glDeleteVertexArrays(1, &n->vao);
+	}
 
 	for(i = 0; i < 6; i++) {
 		free(n->pos_constr[i]);
@@ -662,7 +664,6 @@ static int ui_init_tex(ui_node *n)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, 
 			GL_UNSIGNED_BYTE, n->surf->pixels);
 	glGenerateMipmap(GL_TEXTURE_2D);
@@ -738,6 +739,7 @@ extern void ui_mod_flag(ui_node *n, short flg, void *val)
 
 			flags->active = *((uint8_t *)val);
 
+			ui_prerender(n);
 			win_build_pipe();
 			break;
 
@@ -788,7 +790,7 @@ void ui_mod_style(ui_node *n, short opt, void *val)
 	ui_prerender(n);
 }
 
-void ui_bind_evt(ui_node *n, short evt, ui_node_callback ptr)
+void ui_bind_event(ui_node *n, short evt, ui_node_callback ptr)
 {
 	ui_node_events *events = &n->events;
 

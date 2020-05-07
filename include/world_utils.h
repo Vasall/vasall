@@ -9,9 +9,9 @@
 extern int calcVertexNum(int vtxnum);
 extern unsigned int *genIndexBuf(int vtxnum, int *idxlen);
 
-extern GLubyte *loadPPM(char* fileName, int8_t pathRelative, int* width, int* height);
-extern void loadPPMTexture(char* fileName, int8_t pathRelative, GLuint* textures);
-extern float **loadPPMHeightmap(char* fileName, int8_t pathRelative, int terrainSize);
+extern GLubyte *loadPPM(char* fileName, int* width, int* height);
+extern void loadPPMTexture(char* fileName, GLuint* textures);
+extern float **loadPPMHeightmap(char* fileName, int terrainSize);
 extern float** convertImageToHeightmap(GLubyte* image, int heightmapRadius);
 
 #endif

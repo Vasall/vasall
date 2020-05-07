@@ -1,14 +1,8 @@
-#include "game.h"
-#include "object.h"
-#include "camera.h"
-#include "input.h"
+#include "update.h"
 
 #include <stdlib.h>
 
-short obj = -1;
-int running = 1;
-
-extern void game_proc_evt(SDL_Event *evt)
+void game_proc_evt(SDL_Event *evt)
 {
 	int mod_ctrl;
 	uint8_t axis;
@@ -89,8 +83,7 @@ extern void game_proc_evt(SDL_Event *evt)
 	}
 }
 
-
-extern void game_update(void)
+void game_update(void)
 {
 	vec3_t vel, forw, right;
 
@@ -111,7 +104,7 @@ extern void game_update(void)
 
 	vec3_add(forw, right, vel);
 
-	vec3_cpy(objects.vel[obj], vel);
+	vec3_cpy(objects.vel[core.obj], vel);
 
 	obj_sys_update(1.0);
 
@@ -119,8 +112,11 @@ extern void game_update(void)
 	cam_update();
 }
 
-extern void game_render(void)
+void game_render(void)
 {
+	/* Render the world */
 	wld_render();
+
+	/* Render the objects */
 	obj_sys_render();
 }

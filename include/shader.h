@@ -29,6 +29,4 @@ extern short shd_get(char *name);
 extern void shd_use(short slot, int *loc);
 extern void shd_unuse(void);
 
-
-
 #endif

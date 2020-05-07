@@ -203,6 +203,6 @@ extern void ui_mod_flag(struct ui_node *n, short flag, void *val);
 
 extern void ui_mod_style(ui_node *node, short opt, void *val);
 
-extern void ui_bind_evt(struct ui_node *n, short evt, ui_node_callback ptr);
+extern void ui_bind_event(struct ui_node *n, short evt, ui_node_callback ptr);
 
 #endif

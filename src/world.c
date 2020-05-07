@@ -137,6 +137,7 @@ extern int wld_gen_terrain(void)
 
 	/* Calculate the amount of vertices */
 	vtx_num = calcVertexNum(w);
+	printf("%d\n", vtx_num);
 
 	/* Initialize the vertex-array */
 	if(!(vtx = calloc(vtx_num, VEC3_SIZE)))
@@ -149,7 +150,7 @@ extern int wld_gen_terrain(void)
 	if(!(nrm = calloc(vtx_num, VEC3_SIZE)))
 		goto err_free;
 
-	if(!(hImg = loadPPMHeightmap("res/images/heightmap_256.ppm", 1, 256)))
+	if(!(hImg = loadPPMHeightmap("res/images/heightmap_256.ppm", 256)))
 		goto err_free;
 
 	heights = world.heights;

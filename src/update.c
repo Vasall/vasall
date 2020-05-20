@@ -106,7 +106,7 @@ void game_update(void)
 
 	vec3_cpy(objects.vel[core.obj], vel);
 
-	obj_sys_update(1.0);
+	obj_sys_update(5.0);
 
 	/* Update the camera-position */
 	cam_update();

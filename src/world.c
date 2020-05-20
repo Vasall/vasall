@@ -133,11 +133,10 @@ extern int wld_gen_terrain(void)
 	float **hImg = NULL, *heights = NULL, xpos, zpos;
 	vec3_t *vtx = NULL, *last_row = NULL, *nrm = NULL, *col = NULL;
 
-	w = (int)world.size[0];
+	w = world.size[0];
 
 	/* Calculate the amount of vertices */
-	vtx_num = calcVertexNum(w);
-	printf("%d\n", vtx_num);
+	vtx_num = calcVertexNum(w) + 1;
 
 	/* Initialize the vertex-array */
 	if(!(vtx = calloc(vtx_num, VEC3_SIZE)))
@@ -192,8 +191,7 @@ extern int wld_gen_terrain(void)
 			vec3_cpy(vtx[count], ctl);
 			count++;
 
-			if(z != world.size[1] - 2 || 
-					x == world.size[0] - 2) {
+			if(z != world.size[1] - 2 || x == world.size[0] - 2) {
 				vec3_cpy(vtx[count], ctr);
 				count++;
 			}

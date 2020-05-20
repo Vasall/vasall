@@ -105,7 +105,6 @@ int load_ui(void)
 	ui_mod_style(ui_get("mns_login"), STY_BCK_COL, &mns_login_bck_col);
 
 	win_build_pipe();
-	win_dump_pipe();
 	return 0;
 }
 

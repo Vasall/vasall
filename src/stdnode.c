@@ -304,6 +304,7 @@ void INPUT_RENDER(ui_node *n, ui_node *rel)
 	else if(ele->algn == 1) curw = ((rect.x + rect.w) - relw) + curw;
 
 	if(strlen(ele->buffer) > 0) {
+		/* TODO: Fix hiding the password */
 		if(ele->hide == 1) {
 			int i, len, byte_len;
 			char bullet_array[385];

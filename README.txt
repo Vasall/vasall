@@ -36,14 +36,17 @@ INSTALLATION
   After installing the external libraries, we can now clone the reposity:
     $ git clone https://github.com/Vasall/vasall-client.git
 
+  Change into the created folder:
+    $ cd vasall-client
+
   Create the necessary folders for the object-files and the final binary:
     $ mkdir bin obj lib
    
   Additionally we have to get a module:
-    $ svn https://github.com/miniupnp/miniupnp/trunk/miniupnpc
+    $ cd lib && svn https://github.com/miniupnp/miniupnp/trunk/miniupnpc
 
   Build the module using the following command:
-    $ cd lib/miniupnpc && make && cd ../../
+    $ cd miniupnpc && make && cd ../../
 
   Compile the sourcecode:
     $ make

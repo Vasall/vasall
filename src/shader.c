@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 
+/* Redefine the global shader-wrapper */
 struct shader_wrapper shaders;
 
 
@@ -19,6 +20,7 @@ static short shd_get_slot(void)
 	return -1;
 }
 
+
 static int shd_check_slot(short slot)
 {
 	if(slot < 0 || slot >= SHD_SLOTS)
@@ -26,6 +28,7 @@ static int shd_check_slot(short slot)
 
 	return 0;
 }
+
 
 extern int shd_init(void)
 {
@@ -36,6 +39,7 @@ extern int shd_init(void)
 
 	return 0;
 }
+
 
 extern void shd_close(void)
 {
@@ -48,6 +52,7 @@ extern void shd_close(void)
 		glDeleteProgram(shaders.prog[i]);	
 	}
 }
+
 
 extern short shd_set(char *name, char *vs, char *fs)
 {
@@ -138,6 +143,7 @@ err_cleanup:
 	return -1;
 }
 
+
 extern void shd_del(short slot)
 {
 	if(shd_check_slot(slot))
@@ -149,6 +155,7 @@ extern void shd_del(short slot)
 	glDeleteProgram(shaders.prog[slot]);
 	shaders.mask[slot] = 0;
 }
+
 
 extern short shd_get(char *name)
 {
@@ -165,6 +172,7 @@ extern short shd_get(char *name)
 	return -1;
 }
 
+
 extern void shd_use(short slot, int *loc)
 {
 	glUseProgram(shaders.prog[slot]);
@@ -177,6 +185,7 @@ extern void shd_use(short slot, int *loc)
 	loc[1] = glGetUniformLocation(shaders.prog[slot], "view");
 	loc[2] = glGetUniformLocation(shaders.prog[slot], "proj");
 }
+
 
 extern void shd_unuse(void)
 {

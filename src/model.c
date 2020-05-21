@@ -21,6 +21,7 @@ static short mdl_get_slot(void)
 	return -1;
 }
 
+
 static int mdl_check_slot(short slot)
 {
 	if(slot < 0 || slot >= MDL_SLOTS)
@@ -28,6 +29,7 @@ static int mdl_check_slot(short slot)
 
 	return 0;
 }
+
 
 static void mdl_set_status(short slot, uint8_t status)
 {
@@ -42,6 +44,7 @@ static void mdl_set_status(short slot, uint8_t status)
 	mdl->status = status;
 }
 
+
 extern int mdl_init(void)
 {
 	int i;
@@ -51,6 +54,7 @@ extern int mdl_init(void)
 
 	return 0;
 }
+
 
 extern void mdl_close(void)
 {
@@ -82,6 +86,7 @@ extern void mdl_close(void)
 		free(mdl);
 	}
 }
+
 
 extern short mdl_set(char *name)
 {
@@ -121,6 +126,7 @@ extern short mdl_set(char *name)
 	return slot;
 }
 
+
 extern short mdl_get(char *name)
 {
 	int i;
@@ -136,6 +142,7 @@ extern short mdl_get(char *name)
 
 	return -1;
 }
+
 
 extern void mdl_del(short slot)
 {
@@ -165,6 +172,7 @@ extern void mdl_del(short slot)
 	free(mdl);
 	models[slot] = NULL;
 }
+
 
 extern void mdl_set_mesh(short slot, int idxnum, int *idx, int vtxnum,
 		vec3_t *vtx, vec3_t *nrm, void *col, uint8_t col_flg)
@@ -238,6 +246,7 @@ err_set_failed:
 	mdl_set_status(slot, MDL_ERR_MESH);
 }
 
+
 extern void mdl_set_texture(short slot, short tex)
 {
 	struct model *mdl;
@@ -256,6 +265,7 @@ err_set_failed:
 	mdl_set_status(slot, MDL_ERR_TEXTURE);
 }
 
+
 extern void mdl_set_shader(short slot, short shd)
 {
 	struct model *mdl;
@@ -273,6 +283,7 @@ extern void mdl_set_shader(short slot, short shd)
 err_set_failed:
 	mdl_set_status(slot, MDL_ERR_SHADER);
 }
+
 
 static int mdl_load_obj(char *pth, int *idxnum, int **idx, int *vtxnum,
 		vec3_t **vtx, vec3_t **nrm, vec2_t **uv)
@@ -495,6 +506,7 @@ err_del_mdl:
 	mdl_del(slot);
 	return -1;
 }
+
 
 extern void mdl_render(short slot, mat4_t mat)
 {

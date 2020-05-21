@@ -5,6 +5,7 @@
 #include <string.h>
 
 
+/* Redefine the global texture-wrapper */
 struct texture_wrapper textures;
 
 
@@ -20,6 +21,7 @@ static short tex_get_slot(void)
 	return -1;
 }
 
+
 static int tex_check_slot(short slot)
 {
 	if(slot < 0 || slot >= TEX_SLOTS)
@@ -27,6 +29,7 @@ static int tex_check_slot(short slot)
 
 	return 0;
 }
+
 
 extern int tex_init(void)
 {
@@ -37,6 +40,7 @@ extern int tex_init(void)
 
 	return 0;
 }
+
 
 extern void tex_close(void)
 {
@@ -49,6 +53,7 @@ extern void tex_close(void)
 		glDeleteTextures(1, &textures.handle[i]);
 	}
 }
+
 
 extern short tex_set(char *name, uint8_t *px, int w, int h)
 {
@@ -75,6 +80,7 @@ extern short tex_set(char *name, uint8_t *px, int w, int h)
 	return slot;
 }
 
+
 extern void tex_del(short slot)
 {
 	if(tex_check_slot(slot))
@@ -86,6 +92,7 @@ extern void tex_del(short slot)
 	glDeleteTextures(1, &textures.handle[slot]);
 	textures.mask[slot] = 0;
 }
+
 
 extern short tex_get(char *name)
 {
@@ -102,6 +109,7 @@ extern short tex_get(char *name)
 	return -1;
 }
 
+
 extern void tex_use(short slot)
 {
 	if(slot < 0)
@@ -110,10 +118,12 @@ extern void tex_use(short slot)
 	glBindTexture(GL_TEXTURE_2D, textures.handle[slot]);
 }
 
+
 extern void tex_unuse(void)
 {
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
+
 
 extern short tex_load_png(char *name, char *pth)
 {

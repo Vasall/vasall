@@ -6,6 +6,7 @@
 #include <stdlib.h>
 
 
+/* Redefine the global core-wrapper */
 struct core_wrapper core; 
 
 
@@ -20,6 +21,7 @@ extern int core_init(void)
 	core.obj = -1;
 	return 0;
 }
+
 
 extern void core_proc_evt(void)
 {
@@ -64,6 +66,7 @@ extern void core_update(void)
 	if(core.update)
 		core.update();
 }
+
 
 extern void core_render(void)
 {

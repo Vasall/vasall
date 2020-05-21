@@ -15,11 +15,15 @@ int main(int argc, char **argv)
 
 	if(argc || argv) {/* Prevent warnings for not using parameters */}
 
-	/* Initialize the sdl-subsystem */
-	if(sdl_init() < 0)
+	/* Initialize the network-system */
+	if(net_init() < 0)
 		return 0;
 
-	/* Initialiize asset-table(shaders, textures, fonts) */
+	/* Initialize the sdl-subsystem */
+	if(sdl_init() < 0)
+		goto err_close_net;
+
+	/* Initialize asset-table(shaders, textures, fonts) */
 	if(ast_init() < 0)
 		goto err_close_sdl;
 
@@ -97,5 +101,8 @@ err_free_ast:
 
 err_close_sdl:
 	sdl_close();
+
+err_close_net:
+	net_close();
 	return -1;
 }

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
 extern int sdl_init(void)
 {
 	if(SDL_Init(SDL_INIT_EVERYTHING) < 0)
@@ -24,6 +25,7 @@ err_quit_sdl:
 	return -1;
 }
 
+
 extern void sdl_close(void)
 {
 	if(TTF_WasInit()) {
@@ -32,6 +34,7 @@ extern void sdl_close(void)
 
 	SDL_Quit();
 }
+
 
 extern int sdl_fill_rounded(SDL_Surface *surf, int xo, int yo, int w, int h, 
 		SDL_Color col, short *cor)

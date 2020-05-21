@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 extern int fs_load_file(char *pth, uint8_t **buf, long *len)
 {
 	FILE *fd;
@@ -34,6 +35,7 @@ err_close_fd:
 	return -1;
 }
 
+
 extern int fs_load_png(char *pth, uint8_t **buf, int *w, int *h)
 {
 	int width;
@@ -60,5 +62,3 @@ extern int fs_load_png(char *pth, uint8_t **buf, int *w, int *h)
 	*h = height;
 	return 0;
 }
-
-

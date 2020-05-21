@@ -24,6 +24,7 @@ err_close_shd:
 	return -1;
 }
 
+
 extern void ast_close(void)
 {
 	txt_close();

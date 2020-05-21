@@ -19,10 +19,12 @@ extern int obj_init(void)
 	return 0;
 }
 
+
 extern void obj_close(void)
 {
 	return;
 }
+
 
 static short obj_get_slot(void)
 {
@@ -36,6 +38,7 @@ static short obj_get_slot(void)
 	return -1;
 }
 
+
 static int obj_check_slot(short slot)
 {
 	if(slot < 0 || slot > OBJ_SLOTS)
@@ -43,6 +46,7 @@ static int obj_check_slot(short slot)
 
 	return 0;
 }
+
 
 extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 		char *data, int len)
@@ -78,6 +82,7 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 	return slot;
 }
 
+
 extern void obj_del(short slot)
 {
 	if(obj_check_slot(slot))
@@ -85,6 +90,7 @@ extern void obj_del(short slot)
 
 	objects.mask[slot] = OBJ_M_NONE;
 }
+
 
 extern int obj_mod(short slot, short attr, void *data, int len)
 {
@@ -123,6 +129,7 @@ extern int obj_mod(short slot, short attr, void *data, int len)
 	return 0;
 }
 
+
 extern void obj_update_matrix(short slot)
 {
 	float rot;
@@ -143,6 +150,7 @@ extern void obj_update_matrix(short slot)
 	objects.mat[slot][0xe] = objects.pos[slot][2];
 }
 
+
 extern void obj_print(short slot)
 {
 	if(obj_check_slot(slot))
@@ -153,6 +161,7 @@ extern void obj_print(short slot)
 	printf("Vel: "); vec3_print(objects.vel[slot]); printf("\n");
 	printf("Dir: "); vec3_print(objects.dir[slot]); printf("\n");
 }
+
 
 extern void obj_sys_update(float delt)
 {
@@ -179,6 +188,7 @@ extern void obj_sys_update(float delt)
 		}
 	}
 }
+
 
 extern void obj_sys_render(void)
 {

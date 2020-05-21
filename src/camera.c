@@ -5,6 +5,7 @@
 #include <math.h>
 
 
+/* Redefine the global camera-wrapper */
 struct camera_wrapper camera;
 
 
@@ -35,30 +36,36 @@ extern int cam_init(float aov, float asp, float near, float far)
 	return 0;
 }
 
+
 extern void cam_close(void)
 {
 	return;
 }
+
 
 extern void cam_get_proj(mat4_t mat)
 {
 	mat4_cpy(mat, camera.proj);
 }
 
+
 extern void cam_get_view(mat4_t mat)
 {
 	mat4_cpy(mat, camera.view);
 }
+
 
 extern void cam_set_pos(vec3_t pos)
 {
 	vec3_cpy(camera.pos, pos);
 }
 
+
 extern void cam_get_pos(vec3_t pos)
 {
 	vec3_cpy(pos, camera.pos);
 }
+
 
 extern void cam_set_dir(vec3_t dir)
 {
@@ -72,10 +79,12 @@ extern void cam_set_dir(vec3_t dir)
 	cam_update_view();
 }
 
+
 extern void cam_get_dir(vec3_t dir)
 {
 	vec3_cpy(dir, camera.forward);
 }
+
 
 extern void cam_zoom(int val)
 {
@@ -85,6 +94,7 @@ extern void cam_zoom(int val)
 
 	cam_update();
 }
+
 
 extern void cam_rot(float d_yaw, float d_pitch)
 {
@@ -110,40 +120,6 @@ extern void cam_rot(float d_yaw, float d_pitch)
 	cam_update();
 }
 
-extern void cam_mov_dir(Direction dir)
-{
-	vec3_t movVec, up, forw, right;
-
-	/* Vector to add to our position */
-	vec3_set(movVec, 0.0, 0.0, 0.0);
-
-	vec3_set(up, 0.0, 1.0, 0.0);
-	vec3_set(forw, camera.forward[0], 0.0, camera.forward[2]);
-	vec3_nrm(forw, forw);
-
-	vec3_cross(up, forw, right);
-
-	/* UP and DOWN not yet implemented */
-
-	switch(dir) {
-		case FORWARD:
-			vec3_scl(forw, -1.0, movVec);
-			break;
-		case BACK:
-			vec3_cpy(movVec, forw);
-			break;
-		case RIGHT:
-			vec3_cpy(movVec, right);
-			break;
-		case LEFT:
-			vec3_scl(right, -1.0, movVec);
-			break;
-		default:
-			break;
-	}
-
-	cam_mov(movVec);
-}
 
 extern void cam_mov(vec3_t mov)
 {
@@ -153,6 +129,7 @@ extern void cam_mov(vec3_t mov)
 	vec3_add(camera.pos, mov, camera.pos);
 	cam_update_view();
 }
+
 
 extern void cam_look_at(vec3_t trg)
 {
@@ -174,6 +151,7 @@ extern void cam_look_at(vec3_t trg)
 	vec3_cross(up, camera.forward, camera.right);
 	vec3_nrm(camera.right, camera.right);
 }
+
 
 extern void cam_proj_mat(float aov, float asp, float near, float far)
 {
@@ -204,6 +182,7 @@ extern void cam_proj_mat(float aov, float asp, float near, float far)
 	camera.proj[0xe] = (-2 * far * near) / (far - near); 
 	camera.proj[0xf] = 0;
 }
+
 
 extern void cam_update_view(void)
 {
@@ -239,6 +218,7 @@ extern void cam_update_view(void)
 		(forw[1] * camera.pos[1]) - (forw[2] * camera.pos[2]);
 }
 
+
 extern void cam_set(vec3_t pos, vec3_t trg)
 {	
 	vec3_t up = {0.0, 1.0, 0.0};
@@ -254,10 +234,12 @@ extern void cam_set(vec3_t pos, vec3_t trg)
 	cam_update_view();
 }
 
+
 extern void cam_trg_obj(short obj)
 {	
 	camera.trg_obj = obj;
 }
+
 
 extern void cam_update(void)
 {

@@ -5,7 +5,9 @@
 #include <stdlib.h>
 
 
+/* Redefine the global text-wrapper */
 struct text_wrapper texts;
+
 
 extern int txt_init(void)
 {
@@ -18,6 +20,7 @@ extern int txt_init(void)
 	return 0;
 }
 
+
 extern void txt_close(void)
 {
 	int i;
@@ -27,6 +30,7 @@ extern void txt_close(void)
 			TTF_CloseFont(texts.fonts[i]);
 	}
 }
+
 
 extern short txt_font_ttf(char *pth, int size)
 {
@@ -102,6 +106,7 @@ extern void txt_render_rel(SDL_Surface *surf, SDL_Rect *rect, SDL_Color *col,
 	SDL_FreeSurface(clipped);
 	SDL_FreeSurface(rend);
 }
+
 
 extern void txt_render(SDL_Surface *surf, SDL_Rect *rect, SDL_Color *col,
 		short font, char *text, uint8_t opt)

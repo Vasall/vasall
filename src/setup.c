@@ -31,6 +31,7 @@ int load_resources(void)
 	return 0;
 }
 
+
 static void try_login(ui_node *n, SDL_Event *e)
 {
 	ui_node *node;
@@ -47,6 +48,7 @@ static void try_login(ui_node *n, SDL_Event *e)
 	node = ui_get("mns");
 	ui_mod_flag(node, FLG_ACT, &zero);
 }
+
 
 int load_ui(void)
 {

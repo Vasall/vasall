@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 
+/* Redefine the external input-wrapper */
 struct input_wrapper input;
 
 
@@ -25,6 +26,7 @@ err_close_input:
 	return -1;
 }
 
+
 extern void inp_close(void)
 {
 	int i;
@@ -39,6 +41,7 @@ extern void inp_close(void)
 	}
 }
 
+
 static short inp_get_slot(void)
 {
 	short i;
@@ -50,6 +53,7 @@ static short inp_get_slot(void)
 
 	return -1;
 }
+
 
 extern int inp_add_device(int idx)
 {
@@ -80,6 +84,7 @@ extern int inp_add_device(int idx)
 	return -1;
 }
 
+
 static short inp_get_id(int id)
 {
 	short i;
@@ -94,6 +99,7 @@ static short inp_get_id(int id)
 
 	return -1;
 }
+
 
 extern void inp_remv_device(int id)
 {

@@ -36,7 +36,7 @@ override CFLAGS += $(SDL_CFLAGS)
 # The linker to use
 LINKER     := gcc
 # Linking flags here
-LFLAGS     := -Wall -I. $(LIBS) -lm -lGL -lGLU -lglut
+LFLAGS     := -Wall -I. $(LIBS) -lm -lgmp -lGL -lGLU -lglut ./lib/miniupnpc/libminiupnpc.a
 SDL_LFLAGS  := $(shell pkg-config --libs sdl2 SDL2_ttf SDL2_image)
 override LFLAGS += $(SDL_LFLAGS)
 

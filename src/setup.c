@@ -16,16 +16,16 @@ int load_resources(void)
 	if(txt_font_ttf("res/fonts/editundo.ttf", 48) < 0)
 		return -1;
 
-	if(shd_set("col", "res/shader/color.vert", "res/shader/color.frag") < 0)
+	if(shd_set("col", "res/shaders/color.vert", "res/shaders/color.frag") < 0)
 		return -1;
 
-	if(shd_set("uv", "res/shader/uv.vert", "res/shader/uv.frag") < 0)
+	if(shd_set("uv", "res/shaders/uv.vert", "res/shaders/uv.frag") < 0)
 		return -1;
 
-	if(tex_load_png("plr", "res/texture/finn2.png") < 0)
+	if(tex_load_png("plr", "res/textures/finn2.png") < 0)
 		return -1;
 
-	if(mdl_load("plr", "res/model/finn.obj", tex_get("plr"), shd_get("uv")) < 0)
+	if(mdl_load("plr", "res/models/finn.obj", tex_get("plr"), shd_get("uv")) < 0)
 		return -1;
 
 	return 0;

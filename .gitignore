@@ -6,9 +6,9 @@
 # Ignore the follwing directories
 /bin
 /obj
-/lib
 /tools
 /dev
+/lib
 
 # for ctags vim
 /tags

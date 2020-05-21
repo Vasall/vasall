@@ -26,7 +26,7 @@ INSTALLATION
   commands need to be executed as root.
   
   First of all you have to get the basic tools to download and build the game:
-    $ apt install git make bash
+    $ apt install git make bash subversion
 
   Now that the necessary tools have been installed, we now have to get the
   external libraries:
@@ -37,8 +37,14 @@ INSTALLATION
     $ git clone https://github.com/Vasall/vasall-client.git
 
   Create the necessary folders for the object-files and the final binary:
-    $ mkdir bin obj
-    
+    $ mkdir bin obj lib
+   
+  Additionally we have to get a module:
+    $ svn https://github.com/miniupnp/miniupnp/trunk/miniupnpc
+
+  Build the module using the following command:
+    $ cd lib/miniupnpc && make && cd ../../
+
   Compile the sourcecode:
     $ make
 

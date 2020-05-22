@@ -28,20 +28,31 @@ struct sock_pck_que {
 #define SOCK_M_UPNP    0x08
 
 struct socket_table {	
-	uint8_t mask[SOCK_NUM];
-	int fd[SOCK_NUM];
+	unsigned short     mask[SOCK_NUM];
+	int                fd[SOCK_NUM];
 
-	unsigned short int_port[SOCK_NUM];
-	unsigned short ext_port[SOCK_NUM];
+	unsigned short     int_port[SOCK_NUM];
+	unsigned short     ext_port[SOCK_NUM];
 
-	struct sockaddr_in6 dst[SOCK_NUM];
+	struct             sockaddr_in6 dst[SOCK_NUM];
+	uint32_t           id[SOCK_NUM];
 
-	time_t tout[SOCK_NUM];
+	time_t             tout[SOCK_NUM];
 
-	uint8_t status[SOCK_NUM];
-	struct sock_pck_que *que[SOCK_NUM];
+	uint8_t            status[SOCK_NUM];
+	struct             sock_pck_que *que[SOCK_NUM];
 };
 
+
+#define PEER_NUM       32
+
+struct peer_table {
+	unsigned short     mask[PEER_NUM];
+	unsigned short     socket[PEER_NUM];
+
+	uint32_t           id[SOCK_NUM];
+
+};
 
 #define NET_F_PPR      0x01
 #define NET_F_UPNP     0x02
@@ -51,10 +62,10 @@ struct socket_table {
 /*
  * Define the IPv6-addresses and ports of the default servers.
  */
-#define MAIN_IP        "0:0:0:0:0:ffff:4e2e:bbb1\0"
+#define MAIN_IP        "0:0:0:0:0:ffff:4e2e:bbb1"
 #define MAIN_PORT      4242
 
-#define DISCO_IP       "0:0:0:0:0:ffff:4e2f:27b2\0"
+#define DISCO_IP       "0:0:0:0:0:ffff:4e2f:27b2"
 #define DISCO_PORT     4243
 
 #define PROXY_IP       "0:0:0:0:0:ffff:4e2f:27b2"
@@ -152,13 +163,14 @@ extern void net_disconnect(short slot);
 
 
 /*
- *  
+ * Update all sockets in the socket-table and send keep-alive messages if
+ * necessary. Also process incomming packages.
  */
-extern void net_process(void);
+extern void net_update(void);
 
 
 /*
- * 
+ * Show the socket-table in the console. 
  */
 extern void net_print_sock(void);
 
@@ -183,7 +195,5 @@ extern int net_btob_4to6(struct in_addr *src, struct in6_addr *dst);
  * Returns: A string containing the address in text form
  */
 extern char *net_str_addr6(struct in6_addr *addr);
-
-
 
 #endif

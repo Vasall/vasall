@@ -15,9 +15,14 @@ int main(int argc, char **argv)
 
 	if(argc || argv) {/* Prevent warnings for not using parameters */}
 
+	srand(time(0)); 
+
 	/* Initialize the network-system */
 	if(net_init() < 0)
 		return 0;
+
+	printf("Internal: %s\n", net_str_addr6(&network.int_addr));
+	printf("External: %s\n", net_str_addr6(&network.ext_addr));
 
 	/* Initialize the sdl-subsystem */
 	if(sdl_init() < 0)
@@ -63,7 +68,7 @@ int main(int argc, char **argv)
 	if(core_init() < 0)
 		goto err_close_obj;
 
-	/* Add a demo player-object */
+	/* Add player-object */
 	tmp = mdl_get("plr");
 	if((core.obj = obj_set(0, OBJ_M_ENTITY, pos, tmp, NULL, 0)) < 0)
 		goto err_close_obj;

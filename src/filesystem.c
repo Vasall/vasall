@@ -1,4 +1,5 @@
 #include "filesystem.h"
+#include "error.h"
 #include "sdl.h"
 
 #include <stdio.h>
@@ -12,14 +13,18 @@ extern int fs_load_file(char *pth, uint8_t **buf, long *len)
 	long length;
 	uint8_t *data;
 
-	if(!(fd = fopen(pth, "rb")))
+	if(!(fd = fopen(pth, "rb"))) {
+		ERR_LOG(("Failed to open file: %s", pth));
 		return -1;
+}
 
 	fseek(fd, 0, SEEK_END);
 	length = ftell(fd);
 	
-	if(!(data = malloc(length + 1)))
+	if(!(data = malloc(length + 1))) {
+		ERR_LOG(("Failed to allocate memory"));
 		goto err_close_fd;
+	}
 
 	fseek(fd, 0, SEEK_SET);
 	fread(data, length, 1, fd);
@@ -44,15 +49,19 @@ extern int fs_load_png(char *pth, uint8_t **buf, int *w, int *h)
 	SDL_Surface *surf;
 	uint8_t *buffer;
 
-	if(!(surf = IMG_Load(pth)))
+	if(!(surf = IMG_Load(pth))) {
+		ERR_LOG(("Failed to load image: %s", pth));
 		return -1;
+}
 
 	width = surf->w;
 	height = surf->h;
 	size = surf->pitch * surf->h;
 
-	if(!(buffer = malloc(size)))
+	if(!(buffer = malloc(size))) {
+		ERR_LOG(("Failed to allocate memory"));
 		return -1;
+	}
 
 	memcpy(buffer, surf->pixels, size);
 	SDL_FreeSurface(surf);

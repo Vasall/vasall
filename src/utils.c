@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "error.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,8 +12,10 @@ extern int strins(char *buf, char *ins, int pos)
 	int buf_len = strlen(buf) + strlen(ins) + 2;
 	char *tmp;
 
-	if(!(tmp = calloc(buf_len, sizeof(char))))
+	if(!(tmp = calloc(buf_len, sizeof(char)))) {
+		ERR_LOG(("Failed to allocate memory"));
 		return -1;
+	}
 
 	strncpy(tmp, buf, pos);
 	len = strlen(tmp);
@@ -33,28 +36,39 @@ extern char *get_bin_dir(char *pth)
 	char exe_dir[512];
 
 	if(!(p = strrchr(pth, '/'))) {
-		if(!getcwd(exe_dir, sizeof(exe_dir)))
+		if(!getcwd(exe_dir, sizeof(exe_dir))) {
+			ERR_LOG(("Failed to get working-directory"));
 			return NULL;
+		}
 	}
 	else {
 		*p = '\0';
 
-		if(!getcwd(path_save, sizeof(path_save)))
+		if(!getcwd(path_save, sizeof(path_save))) {
+			ERR_LOG(("Failed to get working-directory"));
 			return NULL;
+		}
 
-		if(chdir(pth) < 0)
+		if(chdir(pth) < 0) {
+			ERR_LOG(("Failed to change directory"));
 			return NULL;
+		}
 
-		if(!getcwd(exe_dir, sizeof(exe_dir)))
+		if(!getcwd(exe_dir, sizeof(exe_dir))) {
+			ERR_LOG(("Failed to get working-directory"));
 			return NULL;
+		}
 
 		if(chdir(path_save) < 0) {
+			ERR_LOG(("Failed to change directoy"));
 			return NULL;
 		}
 	}
-	
-	if(!(ret_buf = malloc(strlen(exe_dir) + 1)))
+
+	if(!(ret_buf = malloc(strlen(exe_dir) + 1))) {
+		ERR_LOG(("Failed to allocate memory"));
 		return NULL;
+	}
 
 	strcpy(ret_buf, exe_dir);
 	return ret_buf;
@@ -66,8 +80,10 @@ void join_paths(char *dst, char *pth1, char *pth2)
 	char *rm, *fn;
 	char *dst_buf;
 
-	if(!(dst_buf = malloc(strlen(pth1) + strlen(pth2) + 1)))
+	if(!(dst_buf = malloc(strlen(pth1) + strlen(pth2) + 1))) {
+		ERR_LOG(("Failed to allocate memory"));
 		return;
+	}
 
 	if(!pth1 && !pth2) {
 		strcpy(dst, "");
@@ -125,6 +141,11 @@ extern SDL_Surface *crop_surf(SDL_Surface* in, SDL_Rect *in_rect,
 			in->format->Gmask,
 			in->format->Bmask,
 			in->format->Amask);
+
+	if(out == NULL) {
+		ERR_LOG(("Failed to get directory"));
+		return NULL;
+	}
 
 	SDL_BlitSurface(in, in_rect, out, out_rect);
 	return out;

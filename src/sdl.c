@@ -1,4 +1,5 @@
 #include "sdl.h"
+#include "error.h"
 #include "mbasic.h"
 
 #include <stdio.h>
@@ -7,11 +8,15 @@
 
 extern int sdl_init(void)
 {
-	if(SDL_Init(SDL_INIT_EVERYTHING) < 0)
+	if(SDL_Init(SDL_INIT_EVERYTHING) < 0) {
+		ERR_LOG(("Failed to initialize SDL-subsystem"));
 		return -1;
+	}
 
-	if(TTF_Init() < 0)
+	if(TTF_Init() < 0) {
+		ERR_LOG(("Failed to initialize TTF-subsystem"));
 		goto err_quit_sdl;
+	}
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
@@ -49,8 +54,10 @@ extern int sdl_fill_rounded(SDL_Surface *surf, int xo, int yo, int w, int h,
 	w = (xo + w >= surf->w) ? (surf->w - xo) : (w);
 	h = (yo + h >= surf->h) ? (surf->h - yo) : (h);
 
-	if(SDL_LockSurface(surf) < 0)
+	if(SDL_LockSurface(surf) < 0) {
+		ERR_LOG(("Failed to lock surface"));
 		return -1;
+	}
 
 	pixels = (uint32_t *)surf->pixels;
 

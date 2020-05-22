@@ -1,4 +1,5 @@
 #include "model.h"
+#include "error.h"
 #include "list.h"
 
 #include <stdio.h>
@@ -97,11 +98,15 @@ extern short mdl_set(char *name)
 	if(!name || strlen(name) >= MDL_NAME_MAX)
 		return -1;
 
-	if((slot = mdl_get_slot()) < 0)
+	if((slot = mdl_get_slot()) < 0) {
+		ERR_LOG(("The model-table is already full"));
 		return -1;
+	}
 
-	if(!(mdl = malloc(sizeof(struct model))))
+	if(!(mdl = malloc(sizeof(struct model)))) {
+		ERR_LOG(("Failed to allocate memory"));
 		return -1;
+	}
 
 	/* Copy the key for this model */
 	strcpy(mdl->name, name);
@@ -194,13 +199,17 @@ extern void mdl_set_mesh(short slot, int idxnum, int *idx, int vtxnum,
 
 	/* Allocate memory for the indices */
 	mdl->idx_num = idxnum;
-	if(!(mdl->idx_buf = malloc(idxnum * sizeof(int))))
+	if(!(mdl->idx_buf = malloc(idxnum * sizeof(int)))) {
+		ERR_LOG(("Failed to allocate memory"));
 		goto err_set_failed;
+}
 
 	/* Allocate memory for the vertex-data */
 	mdl->vtx_num = vtxnum;
-	if(!(mdl->vtx_buf = malloc(vtxnum * vtx_size)))
+	if(!(mdl->vtx_buf = malloc(vtxnum * vtx_size))) {
+		ERR_LOG(("Failed to allocate memory"));
 		goto err_set_failed;
+	}
 
 	/* Copy the indices into the allocated index-buffer */
 	memcpy(mdl->idx_buf, idx, idxnum * sizeof(int));
@@ -296,8 +305,10 @@ static int mdl_load_obj(char *pth, int *idxnum, int **idx, int *vtxnum,
 	struct dyn_stack *idx_in = NULL, *idx_conv = NULL, *idx_out = NULL;
 
 	/* Open the file in read-mode */
-	if((fd = fopen(pth, "r")) == NULL)
+	if((fd = fopen(pth, "r")) == NULL) {
+		ERR_LOG(("Failed to open %s", pth));
 		return -1;
+	}
 
 	/* Create buffers to read input data into */
 	if(!(vtx_in = stcCreate(VEC3_SIZE))) goto err_set_ret;

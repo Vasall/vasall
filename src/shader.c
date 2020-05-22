@@ -1,4 +1,5 @@
 #include "shader.h"
+#include "error.h"
 #include "filesystem.h"
 
 #include <stdlib.h>
@@ -58,23 +59,30 @@ extern short shd_set(char *name, char *vs, char *fs)
 {
 	short slot;
 	int success;
+	char infoLog[512];
 	uint32_t fshd = 0;
 	uint32_t vshd = 0;
 	char *vtx_src = NULL;
 	char *frg_src = NULL;
 
-	if((slot = shd_get_slot()) < 0)
+	if((slot = shd_get_slot()) < 0) {
+		ERR_LOG(("Shader-table already full"));
 		return -1;
+	}
 
 	if(!vs || !fs)
 		return -1;
 
-	if((shaders.prog[slot] = glCreateProgram()) == 0)
+	if((shaders.prog[slot] = glCreateProgram()) == 0) {
+		ERR_LOG(("Failed to create shader-program"));
 		goto err_cleanup;
+	}
 
 	/* Load vertex-shader and attach the vertex-shader */
-	if(fs_load_file(vs, (uint8_t **)&vtx_src, NULL) < 0)
+	if(fs_load_file(vs, (uint8_t **)&vtx_src, NULL) < 0) {
+		ERR_LOG(("Failed to load vtx-shader: %s", vs));
 		goto err_cleanup;
+	}
 
 	/* Create and initialize the vertex-shader */
 	vshd = glCreateShader(GL_VERTEX_SHADER);
@@ -82,14 +90,19 @@ extern short shd_set(char *name, char *vs, char *fs)
 	glCompileShader(vshd);
 
 	glGetShaderiv(vshd, GL_COMPILE_STATUS, &success);
-	if(!success)
+	if(!success) {
+		glGetShaderInfoLog(vshd, 512, NULL, infoLog);
+		ERR_LOG(("Failed to compile shader %s", infoLog));
 		goto err_cleanup;
+	}
 
 	glAttachShader(shaders.prog[slot], vshd);
 
 	/* Load and attach the fragment-shader */
-	if(fs_load_file(fs, (uint8_t **)&frg_src, NULL) < 0)
+	if(fs_load_file(fs, (uint8_t **)&frg_src, NULL) < 0) {
+		ERR_LOG(("Failed to load frg-shader: %s", fs));
 		goto err_cleanup;
+	}
 
 	/* Create and initialize the fragment-shader */
 	fshd = glCreateShader(GL_FRAGMENT_SHADER);
@@ -97,8 +110,11 @@ extern short shd_set(char *name, char *vs, char *fs)
 	glCompileShader(fshd);
 
 	glGetShaderiv(fshd, GL_COMPILE_STATUS, &success);
-	if(!success)
+	if(!success) {
+		glGetShaderInfoLog(fshd, 512, NULL, infoLog);
+		ERR_LOG(("Failed to compile shader %s", infoLog));
 		goto err_cleanup;
+	}
 
 	glAttachShader(shaders.prog[slot], fshd);
 
@@ -175,6 +191,9 @@ extern short shd_get(char *name)
 
 extern void shd_use(short slot, int *loc)
 {
+	if(shd_check_slot(slot))
+		return;
+
 	glUseProgram(shaders.prog[slot]);
 
 	glEnableVertexAttribArray(0);

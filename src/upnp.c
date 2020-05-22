@@ -1,4 +1,5 @@
 #include "upnp.h"
+#include "error.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,12 +16,16 @@ extern int upnp_prep(struct upnp_handle *hdl)
 		return -1;
 
 	/* Discover all uPnP devices */
-	if(!(dev = upnpDiscover(2000, NULL, NULL, 0, 0, 2, NULL)))
+	if(!(dev = upnpDiscover(2000, NULL, NULL, 0, 0, 2, NULL))) {
+		ERR_LOG(("Failed to discover uPnP-devices"));
 		goto err_free_dev;
+	}
 
 	/* Retrieve a valid Internet Gateway Device */
-	if((UPNP_GetValidIGD(dev, &urls, &data, addr, 64)) != 1)
+	if((UPNP_GetValidIGD(dev, &urls, &data, addr, 64)) != 1) {
+		ERR_LOG(("Faild to retrieve valid uPnP IGD"));
 		goto err_free_urls;
+	}
 
 	hdl->urls = urls;
 	hdl->data = data;

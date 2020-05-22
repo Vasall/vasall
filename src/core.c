@@ -61,6 +61,8 @@ extern void core_proc_evt(void)
 
 extern void core_update(void)
 {
+	net_update();
+
 	win_update();
 
 	if(core.update)

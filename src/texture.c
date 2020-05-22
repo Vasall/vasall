@@ -1,4 +1,5 @@
 #include "texture.h"
+#include "error.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,8 +60,10 @@ extern short tex_set(char *name, uint8_t *px, int w, int h)
 {
 	short slot;
 
-	if((slot = tex_get_slot()) < 0)
+	if((slot = tex_get_slot()) < 0) {
+		ERR_LOG(("Texture-table already full"));
 		return -1;
+	}
 
 	glGenTextures(1, &textures.handle[slot]);
 	glBindTexture(GL_TEXTURE_2D, textures.handle[slot]);
@@ -112,7 +115,7 @@ extern short tex_get(char *name)
 
 extern void tex_use(short slot)
 {
-	if(slot < 0)
+	if(tex_check_slot(slot))
 		return;
 
 	glBindTexture(GL_TEXTURE_2D, textures.handle[slot]);
@@ -130,11 +133,15 @@ extern short tex_load_png(char *name, char *pth)
 	int w, h, ret = 0;
 	uint8_t *px;
 	
-	if(fs_load_png(pth, &px, &w, &h) < 0)
+	if(fs_load_png(pth, &px, &w, &h) < 0) {
+		ERR_LOG(("Failed to load texture: %s", pth));
 		return -1;
+	}
 
-	if(tex_set(name, px, w, h) < 0)
+	if(tex_set(name, px, w, h) < 0) {
+		ERR_LOG(("Failed add texture to table"));
 		ret = -1;
+	}
 
 	free(px);
 	return ret;

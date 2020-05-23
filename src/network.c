@@ -18,7 +18,7 @@ struct network_wrapper network;
 
 
 /* Initialize the server-structs */
-static int init_serv(void)
+static int init_serv_addr(void)
 {
 	int size = sizeof(struct sockaddr_in6);
 
@@ -149,34 +149,17 @@ static int net_get_intern(void)
 }
 
 
-extern int net_init(void)
+/* Initialize the socket-table */
+static int net_sock_init(void)
 {
-	int sockfd;
-	int port;
 	int i;
+	int port;
+	int sockfd;
 	struct sockaddr_in6 addr;
 	struct sockaddr *addr_ptr = (struct sockaddr *)&addr;
-	int addr_sz = sizeof(struct sockaddr_in6);
+	int addr_sz = sizeof(addr);
 	struct socket_table *tbl = &network.sock;
-
-	/* Initialize the basic address-structs */
-	if(init_serv() < 0) {
-		ERR_LOG(("Failed to setup server-addresses"));
-		return -1;
-	}
-
-	/* Discover the external address and test port preservation */
-	if(net_discover() < 0) {
-		ERR_LOG(("Failed to contact discovery-server"));
-		return -1;
-	}
-
-	/* Discover the internal address */
-	if(net_get_intern() < 0) {
-		ERR_LOG(("Failed to get internal address"));
-		return -1;
-	}
-
+		
 	/* Setup all sockets */
 	for(i = 0; i < SOCK_NUM; i++) {
 		port = SOCK_MIN_PORT + i;
@@ -199,7 +182,7 @@ extern int net_init(void)
 		addr.sin6_port = htons(port);
 		addr.sin6_addr = in6addr_any;
 
-		/* Bind the socket to the  */
+		/* Bind the socket to the port  */
 		if(bind(sockfd, addr_ptr, addr_sz) < 0) {
 			ERR_LOG(("Failed to bind port"));
 			goto err_close_socks;
@@ -244,7 +227,8 @@ err_close_socks:
 }
 
 
-extern void net_close(void)
+/* Close all sockets and clear the socket-table */
+static void net_sock_close(void)
 {
 	int i;
 	struct socket_table *tbl = &network.sock;
@@ -261,6 +245,67 @@ extern void net_close(void)
 		/* Reset the mask of the entry */
 		tbl->mask[i] = 0;
 	}
+	
+}
+
+
+/* Initialize the peer-table */
+static int net_peer_init(void)
+{
+	int i;
+	struct peer_table *tbl = &network.peers;
+
+	for(i = 0; i < PEER_NUM; i++)
+		tbl->mask[i] = 0;
+
+	return 0;
+}
+
+
+extern int net_init(void)
+{
+	/* Initialize the basic address-structs */
+	if(init_serv_addr() < 0) {
+		ERR_LOG(("Failed to setup server-addresses"));
+		return -1;
+	}
+
+	/* Discover the external address and test port preservation */
+	if(net_discover() < 0) {
+		ERR_LOG(("Failed to contact discovery-server"));
+		return -1;
+	}
+
+	/* Discover the internal address */
+	if(net_get_intern() < 0) {
+		ERR_LOG(("Failed to get internal address"));
+		return -1;
+	}
+
+	/* Initialize the socket-table */
+	if(net_sock_init() < 0) {
+		ERR_LOG(("Failed to initialize the socket-table"));
+		return -1;
+	}
+
+	/* Initialize the peer-table */
+	if(net_peer_init() < 0) {
+		ERR_LOG(("Failed to initalize the peer-table"));
+		goto err_sock_close;
+	}
+
+	return 0;
+
+err_sock_close:
+	net_sock_close();
+	return -1;
+}
+
+
+extern void net_close(void)
+{
+	/* Close all sockets and clear the socket-table */
+	net_sock_close();
 }
 
 
@@ -302,7 +347,6 @@ extern int net_btob_4to6(struct in_addr *src, struct in6_addr *dst)
 }
 
 
-/* NOTE: This function is not thread safe */
 extern char *net_str_addr6(struct in6_addr *addr)
 {
 	static char buf[INET6_ADDRSTRLEN];

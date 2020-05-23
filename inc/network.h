@@ -59,16 +59,30 @@ struct peer_table {
 #define NET_F_PMP      0x04
 #define NET_F_PCP      0x08
 
+#define USE_LOCAL 1
+
 /*
  * Define the IPv6-addresses and ports of the default servers.
  */
+#if !USE_LOCAL
 #define MAIN_IP        "0:0:0:0:0:ffff:4e2e:bbb1"
+#else
+#define MAIN_IP        "::1"
+#endif
 #define MAIN_PORT      4242
 
+#if !USE_LOCAL
 #define DISCO_IP       "0:0:0:0:0:ffff:4e2f:27b2"
+#else
+#define DISCO_IP       "::1"
+#endif
 #define DISCO_PORT     4243
 
+#if !USE_LOCAL
 #define PROXY_IP       "0:0:0:0:0:ffff:4e2f:27b2"
+#else
+#define PROXY_IP       "::1"
+#endif
 #define PROXY_PORT     4244 
 
 struct network_wrapper {
@@ -83,6 +97,8 @@ struct network_wrapper {
 	struct sockaddr_in6 proxy_addr;
 
 	struct upnp_handle upnp;
+
+	struct peer_table peers;
 };
 
 
@@ -195,5 +211,17 @@ extern int net_btob_4to6(struct in_addr *src, struct in6_addr *dst);
  * Returns: A string containing the address in text form
  */
 extern char *net_str_addr6(struct in6_addr *addr);
+
+
+/*
+ *  
+ */
+extern int net_req_token(char *uname, char *pswd);
+
+
+/*
+ * 
+ */
+extern int net_req_peers(void);
 
 #endif

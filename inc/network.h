@@ -54,16 +54,29 @@ struct peer_table {
 
 };
 
+struct net_hdr {
+	uint8_t opcode;
+	
+	int encrypted:1,
+	    tool: 7;
+	
+	uint16_t len;
+
+	uint32_t dst_id;
+	uint32_t src_id;
+} __attribute__((__packed__));
+
+
 #define NET_F_PPR      0x01
 #define NET_F_UPNP     0x02
 #define NET_F_PMP      0x04
 #define NET_F_PCP      0x08
 
-#define USE_LOCAL 1
-
 /*
  * Define the IPv6-addresses and ports of the default servers.
  */
+#define USE_LOCAL 1
+
 #if !USE_LOCAL
 #define MAIN_IP        "0:0:0:0:0:ffff:4e2e:bbb1"
 #else
@@ -121,6 +134,14 @@ extern int net_init(void);
  * remove entries from the NAT.
  */
 extern void net_close(void);
+
+
+/*
+ * Get an unused slot in the socket-table to open a new connection on.
+ *
+ * Returns: An unused slot or -1 if an error occurred
+ */
+extern int net_get_slot(void);
 
 
 #define NET_USEANY -1

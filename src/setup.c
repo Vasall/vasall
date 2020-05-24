@@ -56,11 +56,10 @@ int load_ui(void)
 	SDL_Rect body0 = {0, 0, 400, 80};
 	SDL_Rect body1 = {40, 96, 320, 24};
 	SDL_Rect body2 = {40, 176, 320, 24};
-	SDL_Color mns_text_col = { 0xF9, 0xF9, 0xF9, 0xFF };
 	SDL_Color mns_input_bck_col = {0x37, 0x37, 0x37, 0xFF};
 	SDL_Color mns_input_bor_col = {0x28, 0x28, 0x28, 0xFF};
 	SDL_Color mns_form_bck_col = {0x3D, 0x3B, 0x3C, 0xfb};
-	short mns_form_corners[] = {8, 8, 8, 8};
+	short mns_form_corners[4] = {8, 8, 8, 8};
 	SDL_Color mns_title_bck_col = {0xd3, 0x34, 0x5a, 0xff};
 	SDL_Color mns_login_bck_col = {0xff, 0x00, 0x00, 0xff};
 	short mns_title_cor[] = {5, 5, 0, 0};

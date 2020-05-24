@@ -309,6 +309,56 @@ extern void net_close(void)
 }
 
 
+extern int net_get_slot(void)
+{
+	int i;
+
+	for(i = 0; i < SOCK_NUM; i++) {
+		if(network.sock.mask[i] == 0)
+			return i;
+	}
+
+	return -1;
+}
+
+
+extern int net_sendto(short slot, struct sockaddr_in6 *dst, char *buf, int len)
+{
+	struct socket_table *tbl = &network.sock;
+	int dst_sz = sizeof(struct sockaddr_in6);
+
+	if(slot >= 0 && slot < SOCK_NUM) {
+		if(tbl->mask[slot] == 0)
+			return -1;
+
+		return sendto(tbl->fd[slot], buf, len, 0, dst, dst_sz);
+	}
+	else if(slot == NET_USEANY) {
+		int tmp_slot = net_get_slot();
+		if(tmp_slot < 0) return -1;
+
+		return sendto(tbl->fd[tmp_slot], buf, len , 0, dst, dst_sz);
+	}
+
+	return -1;
+}
+
+
+extern int net_send(short slot, char *buf, int len)
+{
+	struct socket_table *tbl = &network.sock;
+	int dst_sz = sizeof(struct sockaddr_in6);	
+
+	if(slot < 0 || slot >= SOCK_NUM)
+		return -1;
+
+	if(tbl->mask[i] == 0)
+		return -1;
+
+	return sendto(tbl->fd[slot], buf, len, 0, )
+}
+
+
 extern void net_update(void)
 {
 	int i;

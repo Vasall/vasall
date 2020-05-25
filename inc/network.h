@@ -6,6 +6,53 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+/*
+ * 
+ */
+struct net_evt {
+	unsigned char type;
+
+	short slot;
+	struct sockaddr_in6 addr;
+
+	unsigned int id;
+
+	char *buf;
+	int len;
+};
+
+struct net_evt_ele;
+struct net_evt_ele {
+	struct net_evt_ele *next;
+	struct net_evt evt;
+};
+
+
+/*
+ * 
+ */
+extern int net_push_evt(unsigned char type, short slot,
+		struct sockaddr_in6 *addr, unsigned int id, char *buf, 
+		int len);
+
+
+/*
+ * Pull an event from the event-list and copy it to the given pointer.
+ *
+ * @evt: A pointer to write the event to
+ *
+ * Returns: 1 if an event has been returned, 0 if there're no more events and
+ * 	-1 if an error occurred
+ */
+extern int net_pull_evt(struct net_evt *evt);
+
+
+/*
+ * 
+ */
+extern void net_del_evt(struct net_evt *evt);
+
+
 /* An entry in the send-que, to verify the packet reached it's destination */
 struct sock_pck_que {
 	struct lcp_pck_que *next;
@@ -58,14 +105,16 @@ struct net_hdr {
 	uint8_t opcode;
 	
 	int encrypted:1,
-	    tool: 7;
+	    pad0: 1,
+	    pad1: 1,
+	    pad2: 1,
+	    ttl: 4;
 	
 	uint16_t len;
 
 	uint32_t dst_id;
 	uint32_t src_id;
 } __attribute__((__packed__));
-
 
 #define NET_F_PPR      0x01
 #define NET_F_UPNP     0x02
@@ -112,6 +161,8 @@ struct network_wrapper {
 	struct upnp_handle upnp;
 
 	struct peer_table peers;
+
+	struct net_evt_ele *evt;
 };
 
 
@@ -154,15 +205,14 @@ extern int net_get_slot(void);
  * this function will not check if the packet reached it's destination. To have
  * a safe option, use lcp_send() instead.
  *
- * @slot: LCP_USENEW for a new socket, LCP_USEANY for an unused slot and an 
- * 	  index for a slot
+ * @fd: The socket-descriptor
  * @dst: The destination to send the packet to
  * @buf: The buffer to send
  * @len: The length of the buffer in bytes
  *
  * Returns: 0 on success or -1 if an error occurred
  */
-extern int net_sendto(short slot, struct sockaddr_in6 *dst, char *buf, int len);
+extern int net_sendto(int fd, struct sockaddr_in6 *dst, char *buf, int len);
 
 
 /*

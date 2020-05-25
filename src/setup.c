@@ -52,10 +52,17 @@ static void try_login(ui_node *n, SDL_Event *e)
 
 int load_ui(void)
 {
-	char one = 1;
+	int one = 1;
 	SDL_Rect body0 = {0, 0, 400, 80};
 	SDL_Rect body1 = {40, 96, 320, 24};
 	SDL_Rect body2 = {40, 176, 320, 24};
+	
+	/* 
+	 * FIXME:
+	 * If a this very position, there are not bytes, the UI will not be 
+	 * rendered correctly.
+	 */
+
 	SDL_Color mns_input_bck_col = {0x37, 0x37, 0x37, 0xFF};
 	SDL_Color mns_input_bor_col = {0x28, 0x28, 0x28, 0xFF};
 	SDL_Color mns_form_bck_col = {0x3D, 0x3B, 0x3C, 0xfb};

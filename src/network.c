@@ -17,6 +17,84 @@
 struct network_wrapper network;
 
 
+extern int net_push_evt(unsigned char type, short slot,
+		struct sockaddr_in6 *addr, unsigned int id, char *buf,
+		int len)
+{
+	struct net_evt_ele *evt;
+
+	if(!(evt = malloc(sizeof(struct net_evt_ele)))) {
+		ERR_LOG(("Failed to allocate memory"));
+		return -1;
+	}
+
+	evt->next = NULL;
+	evt->evt.type = type;
+	evt->evt.slot = slot;
+	evt->evt.addr = *addr;
+	evt->evt.id = id;
+
+	if(!(evt->evt.buf = malloc(len))) {
+		ERR_LOG(("Failed to allocate memory"));
+		free(evt);
+		return -1;
+	}
+
+	memcpy(evt->evt.buf, buf, len);
+	evt->evt.len = len;
+
+
+	if(network.evt == NULL) {
+		network.evt = evt;
+		return 0;
+	}
+	else {
+		struct net_evt_ele *ptr = network.evt;
+
+		while(ptr != NULL) {
+			if(ptr->next == NULL) {
+				ptr->next = evt;
+				return 0;
+			}
+
+			ptr = ptr->next;
+		}
+	}
+	
+
+	free(evt->evt.buf);
+	free(evt);
+	return -1;
+}
+
+
+extern int net_pull_evt(struct net_evt *evt)
+{
+	struct net_evt_ele *ptr;
+
+	if(evt == NULL)
+		return -1;
+
+	if(network.evt == NULL)
+		return 0;
+
+	*evt = network.evt->evt;
+	ptr = network.evt->next;
+	free(network.evt);
+	network.evt = ptr;
+	return 1;
+}
+
+
+extern void net_del_evt(struct net_evt *evt)
+{
+	if(evt == NULL || evt->buf == NULL)
+		return;
+
+	free(evt->buf);
+}
+
+
 /* Initialize the server-structs */
 static int init_serv_addr(void)
 {
@@ -322,25 +400,11 @@ extern int net_get_slot(void)
 }
 
 
-extern int net_sendto(short slot, struct sockaddr_in6 *dst, char *buf, int len)
+extern int net_sendto(int fd, struct sockaddr_in6 *dst, char *buf, int len)
 {
-	struct socket_table *tbl = &network.sock;
-	int dst_sz = sizeof(struct sockaddr_in6);
-
-	if(slot >= 0 && slot < SOCK_NUM) {
-		if(tbl->mask[slot] == 0)
-			return -1;
-
-		return sendto(tbl->fd[slot], buf, len, 0, dst, dst_sz);
-	}
-	else if(slot == NET_USEANY) {
-		int tmp_slot = net_get_slot();
-		if(tmp_slot < 0) return -1;
-
-		return sendto(tbl->fd[tmp_slot], buf, len , 0, dst, dst_sz);
-	}
-
-	return -1;
+	struct sockaddr *addr = (struct sockaddr *)dst;
+	int addr_sz = sizeof(struct sockaddr_in6);
+	return sendto(fd, buf, len, 0, addr, addr_sz);
 }
 
 
@@ -348,14 +412,16 @@ extern int net_send(short slot, char *buf, int len)
 {
 	struct socket_table *tbl = &network.sock;
 	int dst_sz = sizeof(struct sockaddr_in6);	
+	struct sockaddr *addr;
 
 	if(slot < 0 || slot >= SOCK_NUM)
 		return -1;
 
-	if(tbl->mask[i] == 0)
+	if(tbl->mask[slot] == 0)
 		return -1;
 
-	return sendto(tbl->fd[slot], buf, len, 0, )
+	addr = (struct sockaddr *)&tbl->dst[slot];
+	return sendto(tbl->fd[slot], buf, len, 0, addr, dst_sz);
 }
 
 

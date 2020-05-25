@@ -20,9 +20,6 @@ MKFILE_DIR := $(dir $(MKFILE_PTH))
 LIB_PTH    := lib
 LIB_DIRS   := $(sort $(dir $(wildcard $(MKFILE_DIR)$(LIB_PTH)/*/)))
 
-# Set static libararies
-LIBS       := 
-
 # The compiler to use
 CC         := gcc
 # Error flags for compiling
@@ -32,11 +29,14 @@ CFLAGS     := -g -O0 -ansi -std=c89 -pedantic -I. -I./inc/ -I./$(LIB_PTH)/
 SDL_CFLAGS := $(shell pkg-config --cflags sdl2 SDL2_ttf SDL2_image)
 override CFLAGS += $(SDL_CFLAGS)
 
-
 # The linker to use
 LINKER     := gcc
+# Set libararies
+LIBS       := -lm -lgmp -lGL -lGLU -lglut
+STAT_LIBS  := $(shell find $(MKFILE_DIR)$(LIB_PTH)/ -type f -name "*.a")
+override LIBS += $(STAT_LIBS)
 # Linking flags here
-LFLAGS     := -Wall -I. $(LIBS) -lm -lgmp -lGL -lGLU -lglut ./lib/miniupnpc/libminiupnpc.a
+LFLAGS     := -Wall -I. $(LIBS)
 SDL_LFLAGS  := $(shell pkg-config --libs sdl2 SDL2_ttf SDL2_image)
 override LFLAGS += $(SDL_LFLAGS)
 

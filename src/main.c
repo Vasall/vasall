@@ -5,8 +5,27 @@
 #include "core.h"
 #include "setup.h"
 
-void handle_events(void);
+int main(void)
+{
+	struct net_evt evt;
 
+	if(net_init() < 0)
+		return -1;
+
+	printf("Internal: %s\n", net_str_addr6(&network.int_addr));
+	printf("External: %s\n", net_str_addr6(&network.ext_addr));
+
+	while(1) {
+		while(net_pull_evt(&evt)) {
+
+		}
+	}
+
+
+	return 0;
+}
+
+#if 0
 int main(int argc, char **argv)
 {
 	vec3_t dir = {1.0, -1.0, 1.0};
@@ -111,3 +130,4 @@ err_close_net:
 	net_close();
 	return -1;
 }
+#endif

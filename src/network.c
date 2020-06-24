@@ -1,5 +1,7 @@
 #include "network.h"
 #include "error.h"
+#define DEF_HEADER
+#include "header.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,330 +13,21 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <ifaddrs.h>
-
+#include <openssl/sha.h>
 
 /* Redefine global network-wrapper */
 struct network_wrapper network;
 
 
-extern int net_push_evt(unsigned char type, short slot,
-		struct sockaddr_in6 *addr, unsigned int id, char *buf,
-		int len)
-{
-	struct net_evt_ele *evt;
-
-	if(!(evt = malloc(sizeof(struct net_evt_ele)))) {
-		ERR_LOG(("Failed to allocate memory"));
-		return -1;
-	}
-
-	evt->next = NULL;
-	evt->evt.type = type;
-	evt->evt.slot = slot;
-	evt->evt.addr = *addr;
-	evt->evt.id = id;
-
-	if(!(evt->evt.buf = malloc(len))) {
-		ERR_LOG(("Failed to allocate memory"));
-		free(evt);
-		return -1;
-	}
-
-	memcpy(evt->evt.buf, buf, len);
-	evt->evt.len = len;
-
-
-	if(network.evt == NULL) {
-		network.evt = evt;
-		return 0;
-	}
-	else {
-		struct net_evt_ele *ptr = network.evt;
-
-		while(ptr != NULL) {
-			if(ptr->next == NULL) {
-				ptr->next = evt;
-				return 0;
-			}
-
-			ptr = ptr->next;
-		}
-	}
-	
-
-	free(evt->evt.buf);
-	free(evt);
-	return -1;
-}
-
-
-extern int net_pull_evt(struct net_evt *evt)
-{
-	struct net_evt_ele *ptr;
-
-	if(evt == NULL)
-		return -1;
-
-	if(network.evt == NULL)
-		return 0;
-
-	*evt = network.evt->evt;
-	ptr = network.evt->next;
-	free(network.evt);
-	network.evt = ptr;
-	return 1;
-}
-
-
-extern void net_del_evt(struct net_evt *evt)
-{
-	if(evt == NULL || evt->buf == NULL)
-		return;
-
-	free(evt->buf);
-}
-
-
-/* Initialize the server-structs */
-static int init_serv_addr(void)
-{
-	int size = sizeof(struct sockaddr_in6);
-
-	/* Setup the default server-addresses */
-	memset(&network.main_addr, 0, size);
-	network.main_addr.sin6_family = AF_INET6;
-	network.main_addr.sin6_port = htons(MAIN_PORT);
-	if(inet_pton(AF_INET6, MAIN_IP, &network.main_addr.sin6_addr) < 0) {
-		ERR_LOG(("Failed to convert main-addr to binary"));
-		return -1;
-	}
-
-	memset(&network.disco_addr, 0, size);
-	network.disco_addr.sin6_family = AF_INET6;
-	network.disco_addr.sin6_port = htons(DISCO_PORT);
-	if(inet_pton(AF_INET6, DISCO_IP, &network.disco_addr.sin6_addr) < 0) {
-		ERR_LOG(("Failed to convert disco-addr to binary"));
-		return -1;
-	}
-
-	memset(&network.proxy_addr, 0, size);
-	network.proxy_addr.sin6_family = AF_INET6;
-	network.proxy_addr.sin6_port = htons(PROXY_PORT);
-	if(inet_pton(AF_INET6, PROXY_IP, &network.proxy_addr.sin6_addr) < 0) {
-		ERR_LOG(("Failed to convert proxy-addr to binary"));
-		return -1;
-	}
-
-	return 0;
-}
-
-
-/* Get the external address and check if port preservation is enabled */
-static int net_discover(void)
-{
-	int sockfd;
-	int port;
-	struct sockaddr_in6 cli;
-	struct sockaddr *cli_ptr = (struct sockaddr *)&cli;
-	struct sockaddr *serv_ptr;
-	struct sockaddr_in6 res;
-	int size = sizeof(struct sockaddr_in6);
-	struct timeval tv;
-	int tv_sz = sizeof(struct timeval);
-
-	if((sockfd = socket(PF_INET6, SOCK_DGRAM, 0)) < 0) {
-		ERR_LOG(("Failed to create socket"));
-		return -1;
-	}
-
-	/* Set timeout for receiving data */
-	tv.tv_sec = 1;
-	tv.tv_usec = 0;
-	if(setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, tv_sz) < 0) {
-		ERR_LOG(("Failed to set timeout"));
-		goto err_close_sockfd;
-	}
-
-	/* Choose a random port */
-	port = 27000 + (rand() % 2525);
-
-	/* Bind the socket to the port */
-	memset(&cli, 0, size);
-	cli.sin6_family = AF_INET6;
-	cli.sin6_port = htons(port);
-	cli.sin6_addr = in6addr_any;
-	if(bind(sockfd, cli_ptr, size) < 0) {
-		ERR_LOG(("bind()"));
-		goto err_close_sockfd;
-	}
-
-	serv_ptr = (struct sockaddr *)&network.disco_addr;
-
-	/* Send a request to the stun-server */
-	if(sendto(sockfd, "hi\0", 3, 0, serv_ptr, size) < 0) {
-		ERR_LOG(("Failed to send data"));
-		goto err_close_sockfd;
-	}
-
-	/* Listen for a response from the server */
-	if(recvfrom(sockfd, &res, size, 0, NULL, NULL) < 0) {
-		ERR_LOG(("Failed to receive data"));
-		goto err_close_sockfd;
-	}
-
-	/* Copy the external IPv6-address and port */
-	network.ext_addr = res.sin6_addr;
-
-	if(ntohs(res.sin6_port) == port) {
-		network.flg = network.flg | NET_F_PPR;
-	}
-
-	close(sockfd);
-	return 0;
-
-err_close_sockfd:
-	close(sockfd);
-	return -1;
-}
-
-
-/* Get the internal address */
-static int net_get_intern(void)
-{
-	struct ifaddrs *addrs;
-	struct ifaddrs *tmp;
-	struct sockaddr_in *paddr;
-	int ret = -1;
-
-	getifaddrs(&addrs);
-	tmp = addrs;
-
-	while(tmp) {
-		if (tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_INET) {
-			paddr = (struct sockaddr_in *)tmp->ifa_addr;
-			if(*(int *)&paddr->sin_addr != 0x0100007F) {
-				net_btob_4to6(&paddr->sin_addr, &network.int_addr);
-				ret = 0;
-				break;
-			}
-		}
-
-		tmp = tmp->ifa_next;
-	}
-
-	freeifaddrs(addrs);
-	return ret;
-}
-
-
-/* Initialize the socket-table */
-static int net_sock_init(void)
-{
-	int i;
-	int port;
-	int sockfd;
-	struct sockaddr_in6 addr;
-	struct sockaddr *addr_ptr = (struct sockaddr *)&addr;
-	int addr_sz = sizeof(addr);
-	struct socket_table *tbl = &network.sock;
-		
-	/* Setup all sockets */
-	for(i = 0; i < SOCK_NUM; i++) {
-		port = SOCK_MIN_PORT + i;
-
-		if((sockfd = socket(PF_INET6, SOCK_DGRAM, 0)) < 0) {
-			ERR_LOG(("Failed to create socket"));
-			goto err_close_socks;
-		}
-
-		tbl->mask[i] = SOCK_M_INIT;
-		tbl->fd[i] = sockfd;
-		tbl->int_port[i] = port;
-		tbl->ext_port[i] = port;
-		tbl->tout[i] = -1;
-		tbl->status[i] = 0;
-		tbl->que[i] = NULL;
-
-		memset(&addr, 0, addr_sz);
-		addr.sin6_family = AF_INET6;
-		addr.sin6_port = htons(port);
-		addr.sin6_addr = in6addr_any;
-
-		/* Bind the socket to the port  */
-		if(bind(sockfd, addr_ptr, addr_sz) < 0) {
-			ERR_LOG(("Failed to bind port"));
-			goto err_close_socks;
-		}
-
-		/* Set socket non-blocking */
-		if(fcntl(sockfd, F_SETFL, O_NONBLOCK)  < 0) {
-			ERR_LOG(("Failed to set port non-blocking"));
-			goto err_close_socks;
-		}
-
-		/* Create a new uPnP entry on the NAT if possible */
-		if((network.flg & NET_F_UPNP) != 0 ) {
-			if(upnp_add(&network.upnp, port, port) != 0) {
-				ERR_LOG(("Failed to forward port using uPnP"));
-				goto err_close_socks;
-			}
-
-			/* Mark upnp as active */
-			tbl->mask[i] += SOCK_M_UPNP;
-		}
-	}
-
-	return 0;
-
-err_close_socks:
-	/* Close all opened sockets */
-	for(; i >= 0; i--) {
-		if(tbl->mask[i] == 0)
-			continue;
-
-		if((tbl->mask[i] & SOCK_M_UPNP) != 0)
-			upnp_remv(&network.upnp, tbl->ext_port[i]);
-
-		close(tbl->fd[i]);
-
-		/* Reset the mask of the entry */
-		tbl->mask[i] = 0;
-	}
-
-	return -1;
-}
-
-
-/* Close all sockets and clear the socket-table */
-static void net_sock_close(void)
-{
-	int i;
-	struct socket_table *tbl = &network.sock;
-
-	for(i = 0; i < SOCK_NUM; i++) {
-		if(tbl->mask[i] == 0)
-			continue;
-
-		if((tbl->mask[i] & SOCK_M_UPNP) != 0)
-			upnp_remv(&network.upnp, tbl->ext_port[i]);
-
-		close(tbl->fd[i]);
-
-		/* Reset the mask of the entry */
-		tbl->mask[i] = 0;
-	}
-	
-}
-
-
-/* Initialize the peer-table */
 static int net_peer_init(void)
 {
 	int i;
-	struct peer_table *tbl = &network.peers;
+
+	network.peers.num = 0;
+	network.peers.con_num = 0;
 
 	for(i = 0; i < PEER_NUM; i++)
-		tbl->mask[i] = 0;
+		network.peers.mask[i] = 0;
 
 	return 0;
 }
@@ -342,57 +35,342 @@ static int net_peer_init(void)
 
 extern int net_init(void)
 {
-	/* Initialize the basic address-structs */
-	if(init_serv_addr() < 0) {
-		ERR_LOG(("Failed to setup server-addresses"));
-		return -1;
-	}
+	struct sockaddr_in6 disco;
+	struct sockaddr_in6 proxy;
+	int tmp = sizeof(struct sockaddr_in6);
+	struct lcp_evt evt;
+	char running = 1;
 
-	/* Discover the external address and test port preservation */
-	if(net_discover() < 0) {
-		ERR_LOG(("Failed to contact discovery-server"));
+	/* Set the address and port of the disco-server */
+	memset(&network.main_addr, 0, tmp);
+	network.main_addr.sin6_family = AF_INET6;
+	network.main_addr.sin6_port = htons(MAIN_PORT);
+	if(inet_pton(AF_INET6, MAIN_IP, &network.main_addr.sin6_addr) < 0)
 		return -1;
-	}
 
-	/* Discover the internal address */
-	if(net_get_intern() < 0) {
-		ERR_LOG(("Failed to get internal address"));
+	/* Set the address and port of the disco-server */
+	memset(&disco, 0, tmp);
+	disco.sin6_family = AF_INET6;
+	disco.sin6_port = htons(DISCO_PORT);
+	if(inet_pton(AF_INET6, DISCO_IP, &disco.sin6_addr) < 0)
 		return -1;
-	}
 
-	/* Initialize the socket-table */
-	if(net_sock_init() < 0) {
-		ERR_LOG(("Failed to initialize the socket-table"));
+	/* Set the address and port of the proxy-server */
+	memset(&proxy, 0, tmp);
+	proxy.sin6_family = AF_INET6;
+	proxy.sin6_port = htons(PROXY_PORT);
+	if(inet_pton(AF_INET6, PROXY_IP, &proxy.sin6_addr) < 0)
 		return -1;
-	}
+
+	/* Initialize the LCP-context */
+	if(!(network.ctx = lcp_init(rand() % 3000 + 10000, 0, 0, &disco, &proxy)))
+		return -1;
+
+	/* Set initial values */
+	network.status = 0;
+	network.tout = 0;
 
 	/* Initialize the peer-table */
-	if(net_peer_init() < 0) {
-		ERR_LOG(("Failed to initalize the peer-table"));
-		goto err_sock_close;
+	if(net_peer_init() < 0)
+		goto err_close_ctx;
+
+
+	printf("Connect to server: %s:%d\n",
+			lcp_str_addr(AF_INET6, &network.main_addr.sin6_addr),
+			ntohs(network.main_addr.sin6_port));
+
+	/* Connect to server */
+	if(!(lcp_connect(network.ctx, -1, &network.main_addr, LCP_CON_F_DIRECT,
+					LCP_F_ENC)))
+		goto err_close_ctx;
+
+	while(running) {
+		lcp_update(network.ctx);
+
+		while(lcp_pull_evt(network.ctx, &evt)) {	
+			if(evt.type == LCP_CONNECTED) {
+				running = 0;
+				break;
+			}
+			else if(evt.type == LCP_FAILED || 
+					evt.type == LCP_TIMEDOUT) {
+				goto err_close_ctx;
+			}
+			lcp_del_evt(&evt);
+		}
 	}
 
 	return 0;
 
-err_sock_close:
-	net_sock_close();
+err_close_ctx:
+	lcp_close(network.ctx);
 	return -1;
 }
 
 
 extern void net_close(void)
 {
-	/* Close all sockets and clear the socket-table */
-	net_sock_close();
+	/* Close LCP-context */
+	lcp_close(network.ctx);
 }
 
 
-extern int net_get_slot(void)
+extern int net_update(void)
+{
+	struct lcp_evt evt;
+	char *ptr;
+	int tmp;
+	time_t ti;
+
+	uint8_t op;
+	uint16_t len;
+	uint32_t dst_id;
+	uint32_t src_id;
+	uint16_t mod;
+	uint32_t key;
+
+	/* Processing incoming packets and send out requests */
+	lcp_update(network.ctx);
+
+	while(lcp_pull_evt(network.ctx, &evt)) {
+		if(evt.type == LCP_RECEIVED) {
+			/* Check length of packet */
+			if(evt.len < REQ_HDR_SIZE)
+				goto del;
+
+			/* Extract data from header */
+			tmp = hdr_get(evt.buf, &op, &len, &dst_id, &src_id, 
+					&mod, &key);
+
+			/* Set pointer*/
+			ptr = evt.buf + tmp;
+
+			if(op == REQ_OP_INSERT) {
+				if(network.status == 1) {
+					/* If the request got rejected */
+					if(ptr[0] != 1) {
+						/* Update status */
+						network.status = 0;
+
+						/* Run callback-function */
+						if(network.on_failed != NULL)
+							network.on_failed(NULL, 
+									0);
+						goto del;
+					}
+
+					/* Copy both the peer-id and -key */
+					memcpy(&network.id, ptr + 1, 4);
+					memcpy(network.key, ptr + 5, 16);
+
+					printf("my id: %d\n", network.id);
+
+					/* Check if any peers are includes */
+					tmp = ptr[21];
+					if(tmp > 0) {
+						net_add_peers(ptr + 22, tmp);
+						printf("Server send %d peers\n", tmp);
+					}
+
+					/* Update status */
+					network.status = 2;
+					network.tout = 0;
+
+					/* Run callback-function */
+					if(network.on_success != NULL)
+						network.on_success(NULL, 0);
+				}	
+			}
+			else if(op == REQ_OP_LIST) {
+				int num = ptr[0];
+
+				if(num > 0) {
+					printf("Add %d peers\n", num);
+					net_add_peers(ptr + 1, num);
+
+				}
+				else {
+					printf("Didn't receive any peers\n");
+				}
+			}
+		}
+
+del:
+		lcp_del_evt(&evt);
+	}
+
+	time(&ti);
+
+	if(network.status == 0x02) {
+		/* Get new peers from the server */
+		if(network.peers.num == 0 && ti > network.tout) {
+			/* Send a request to the server */
+			net_list(NULL, NULL);
+
+			/* Update timeout */
+			network.tout = ti + 5;
+		}
+
+		/* Connect to peers if necessary */
+		if(network.peers.con_num == 0 && network.peers.num > 0) {
+			net_con_peers();	
+		}
+	}
+
+	return 0;
+}
+
+
+static int hashSHA256(void* input, unsigned long length, unsigned char *md)
+{
+	SHA256_CTX context;
+	if(!SHA256_Init(&context))
+		return -1;
+
+	if(!SHA256_Update(&context, (unsigned char*)input, length))
+		return -1;
+
+	if(!SHA256_Final(md, &context))
+		return -1;
+
+	return 0;
+}
+
+
+extern int net_insert(char *uname, char *pswd, net_cfnc on_success, 
+		net_cfnc on_failed)
+{
+	int tmp;
+	uint8_t pswd_enc[32];
+	char pck[512];
+
+	/* Passed buffers are invalid */
+	if(uname == NULL || pswd == NULL)
+		return -1;
+
+	/* If a request is already pending */
+	if(network.status != 0)
+		return -1;
+
+	/* Check if username has a valid length */
+	tmp = strlen(uname);
+	if(tmp < 5 || tmp > 16)
+		return -1;
+
+	/* Update status and callback-functions */
+	network.status = 1;
+	network.on_success = on_success;
+	network.on_failed = on_failed;
+
+	/* Encrypt password */
+	hashSHA256(pswd, strlen(pswd), pswd_enc);
+
+
+	tmp = hdr_set(pck, REQ_OP_INSERT, tmp + 33, 0x1, 0x0, 0, NULL);
+	strcpy(pck + tmp, uname);
+	memcpy(pck + tmp + strlen(uname) + 1, pswd_enc, 32);
+	pck[tmp + strlen(uname) + 33] = network.ctx->con_flg; 
+
+	/* Send request */
+	return lcp_send(network.ctx, &network.main_addr, pck, 
+			tmp + strlen(uname) + 34);
+}
+
+
+extern int net_list(net_cfnc on_success, net_cfnc on_failed)
+{
+	time_t ti;
+	uint16_t ti_mod;
+
+	char pck[512];
+
+	/* Get the time-modulator */
+	time(&ti);
+	ti_mod = ti % 4096;
+
+	/* Send request to server */
+	hdr_set(pck, REQ_OP_LIST, 0, 0x01, network.id, ti_mod, network.key);
+	return lcp_send(network.ctx, &network.main_addr, pck, REQ_HDR_SIZEW);
+}
+
+
+extern int net_add_peers(char *buf, int num)
 {
 	int i;
+	int j;
+	int tmp;
+	uint32_t id;
+	struct sockaddr_in6 addr;
+	int sz = sizeof(struct sockaddr_in6);
+	unsigned char flg;
+	char *ptr = buf;
+	struct peer_table *tbl = &network.peers;
 
-	for(i = 0; i < SOCK_NUM; i++) {
-		if(network.sock.mask[i] == 0)
+	for(i = 0; i < num; i++) {
+		/* Copy peer-id */
+		id = *(uint32_t *)ptr;
+
+		/* Copy peer-address */
+		memset(&addr, 0, sz);
+		addr.sin6_family = AF_INET6;
+		memcpy(&addr.sin6_addr, ptr + 4, 16);
+		addr.sin6_port = ntohs(*(short *)(ptr + 20));	
+
+		/* Copy peer-connection-flag */
+		flg = *(unsigned char *)(buf + 22);
+
+		/* If the peer has the same id as this peer */
+		if(id == network.id)
+			continue;
+
+		/* Check if the peer is already in the table */
+		tmp = 0;
+		for(j = 0; j < PEER_NUM; j++) {
+			if(tbl->mask[j] != 0 && tbl->id[j] == id) {
+				tmp = 1;
+				break;
+			}
+		}
+
+		if(tmp)
+			continue;
+
+		/* Try to insert peer into empty slot */
+		for(j = 0; j < PEER_NUM; j++) {
+			if(tbl->mask[j] == PEER_M_NONE) {
+				tbl->mask[j] = PEER_M_SET;
+				tbl->id[j] = id;
+				tbl->addr[j] = addr;
+				tbl->flag[j] = flg;
+
+				tbl->con[j] = NULL;
+				tbl->obj[j] = -1;
+
+				printf("Added peer at slot %d\n", j);
+				tbl->num++;
+				break;
+			}
+		}
+
+		/* Update pointer */
+		ptr += 23;
+	}
+
+	return 0;
+}
+
+
+extern int net_sel_peer(struct in6_addr *addr, unsigned short *port)
+{
+	int i;
+	struct peer_table *tbl = &network.peers;
+
+	for(i = 0; i < PEER_TABLE; i++) {
+		if(tbl->mask[i] == PEER_M_NONE)
+			continue;
+
+		if(*addr == tbl->addr.sin6_addr[i] && 
+				*port = tbl->addr.sin6_port)
 			return i;
 	}
 
@@ -400,73 +378,22 @@ extern int net_get_slot(void)
 }
 
 
-extern int net_sendto(int fd, struct sockaddr_in6 *dst, char *buf, int len)
-{
-	struct sockaddr *addr = (struct sockaddr *)dst;
-	int addr_sz = sizeof(struct sockaddr_in6);
-	return sendto(fd, buf, len, 0, addr, addr_sz);
-}
-
-
-extern int net_send(short slot, char *buf, int len)
-{
-	struct socket_table *tbl = &network.sock;
-	int dst_sz = sizeof(struct sockaddr_in6);	
-	struct sockaddr *addr;
-
-	if(slot < 0 || slot >= SOCK_NUM)
-		return -1;
-
-	if(tbl->mask[slot] == 0)
-		return -1;
-
-	addr = (struct sockaddr *)&tbl->dst[slot];
-	return sendto(tbl->fd[slot], buf, len, 0, addr, dst_sz);
-}
-
-
-extern void net_update(void)
+extern int net_con_peers(void)
 {
 	int i;
-	struct socket_table *tbl = &network.sock;
+	struct peer_table *tbl = &network.peers;
 
-	for(i = 0; i < SOCK_NUM; i++) {
-		if(tbl->mask[i] == 0)
+	for(i = 0; i < PEER_NUM; i++) {
+		if(tbl->con_num + tbl->pen_num >= CONNECTION_NUM)
+			break;
+
+		if(tbl->mask[i] == PEER_M_NONE)
+			continue;
+
+		/* Already trying to establish a connection */
+		if((tbl->mask[i] & PEER_M_PENDING) == PEER_M_PENDING)
 			continue;
 	}
-}
 
-
-extern void net_print_sock(void)
-{
-	int i;
-	struct socket_table *tbl = &network.sock;
-
-	printf("NUM\tMASK\tFD\tINT_PORT\tEXT_PORT\tTOUT\n");
-	for(i = 0; i < SOCK_NUM; i++) {
-		printf("%d\t%d\t%d\t%d   \t%d   \t%lu\n", i,
-				tbl->mask[i], tbl->fd[i], 
-				tbl->int_port[i], tbl->ext_port[i], 
-				tbl->tout[i]);
-	}
-	printf("\n");
-}
-
-
-extern int net_btob_4to6(struct in_addr *src, struct in6_addr *dst)
-{
-	char *ptr = (char *)dst;
-	memset(ptr, 0, sizeof(struct in6_addr));
-	memset(ptr + 10, 0xff, 2);
-	memcpy(ptr + 12, src, sizeof(struct in_addr));
 	return 0;
-}
-
-
-extern char *net_str_addr6(struct in6_addr *addr)
-{
-	static char buf[INET6_ADDRSTRLEN];
-	if(inet_ntop(AF_INET6, addr, buf, INET6_ADDRSTRLEN) == NULL)
-		ERR_LOG(("Failed to convert address to text"));
-	return buf;
 }

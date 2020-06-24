@@ -31,13 +31,12 @@ int load_resources(void)
 	return 0;
 }
 
-
-static void try_login(ui_node *n, SDL_Event *e)
+static void test1(char *buf, int len)
 {
 	ui_node *node;
 	char zero = 0;
 
-	if(n || e){/* Prevent warnings for not using parameters */}
+	if(buf || len) {/* Prevent warning for not using parameters */}
 
 	/* Update core functions */
 	core.proc_evt = &game_proc_evt;
@@ -47,6 +46,33 @@ static void try_login(ui_node *n, SDL_Event *e)
 	/* Switch from menuscreen to gamescreen */
 	node = ui_get("mns");
 	ui_mod_flag(node, FLG_ACT, &zero);
+}
+
+static void test2(char *buf, int len)
+{
+	if(buf || len) {/* Prevent warning for not using parameters */}
+	printf("Failed\n");
+}
+
+static void try_login(ui_node *n, SDL_Event *e)
+{
+	int r;
+	char uname[17];
+	char pswd[65];
+	struct ui_node *node;
+	struct ui_input *inp;
+
+	node = ui_get("mns_user");
+	inp = node->element;
+	strcpy(uname, inp->buffer);
+
+	node = ui_get("mns_pswd");
+	inp = node->element;
+	strcpy(pswd, inp->buffer);
+
+	if(n || e){/* Prevent warnings for not using parameters */}
+
+	net_insert(uname, pswd, &test1, &test2);
 }
 
 

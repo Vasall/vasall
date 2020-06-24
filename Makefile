@@ -31,9 +31,9 @@ override CFLAGS += $(SDL_CFLAGS)
 
 # The linker to use
 LINKER     := gcc
-# Set libararies
-LIBS       := -lm -lgmp -lGL -lGLU -lglut
-STAT_LIBS  := $(shell find $(MKFILE_DIR)$(LIB_PTH)/ -type f -name "*.a")
+# Set libararies (FIXME: switch the variables)
+LIBS       := $(shell find $(MKFILE_DIR)$(LIB_PTH)/ -type f -name "*.a")
+STAT_LIBS  := -lm -lgmp -lGL -lGLU -lglut -lcrypto
 override LIBS += $(STAT_LIBS)
 # Linking flags here
 LFLAGS     := -Wall -I. $(LIBS)

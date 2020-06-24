@@ -9,6 +9,7 @@
 /tools
 /dev
 /lib
+/cli-dbg
 
 # for ctags vim
 /tags

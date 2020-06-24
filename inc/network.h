@@ -1,125 +1,34 @@
 #ifndef _NETWORK_H
 #define _NETWORK_H
 
-#include "upnp.h"
 #include <time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-/*
- * 
- */
-struct net_evt {
-	unsigned char type;
-
-	short slot;
-	struct sockaddr_in6 addr;
-
-	unsigned int id;
-
-	char *buf;
-	int len;
-};
-
-struct net_evt_ele;
-struct net_evt_ele {
-	struct net_evt_ele *next;
-	struct net_evt evt;
-};
-
-
-/*
- * 
- */
-extern int net_push_evt(unsigned char type, short slot,
-		struct sockaddr_in6 *addr, unsigned int id, char *buf, 
-		int len);
-
-
-/*
- * Pull an event from the event-list and copy it to the given pointer.
- *
- * @evt: A pointer to write the event to
- *
- * Returns: 1 if an event has been returned, 0 if there're no more events and
- * 	-1 if an error occurred
- */
-extern int net_pull_evt(struct net_evt *evt);
-
-
-/*
- * 
- */
-extern void net_del_evt(struct net_evt *evt);
-
-
-/* An entry in the send-que, to verify the packet reached it's destination */
-struct sock_pck_que {
-	struct lcp_pck_que *next;
-
-	char *buf;
-	int len;
-
-	char count;
-	time_t tout;
-};
-
-/* 10 client-sockets + 1 server-socket */
-#define SOCK_NUM       11
-#define SOCK_MIN_PORT  25253
-
-#define SOCK_M_NONE    0x00
-#define SOCK_M_INIT    0x01
-#define SOCK_M_USE     0x02
-#define SOCK_M_PPR     0x04
-#define SOCK_M_UPNP    0x08
-
-struct socket_table {	
-	unsigned short     mask[SOCK_NUM];
-	int                fd[SOCK_NUM];
-
-	unsigned short     int_port[SOCK_NUM];
-	unsigned short     ext_port[SOCK_NUM];
-
-	struct             sockaddr_in6 dst[SOCK_NUM];
-	uint32_t           id[SOCK_NUM];
-
-	time_t             tout[SOCK_NUM];
-
-	uint8_t            status[SOCK_NUM];
-	struct             sock_pck_que *que[SOCK_NUM];
-};
-
+#include "lcp/inc/lcp.h"
 
 #define PEER_NUM       32
+#define CONNECTION_NUM 5
+
+#define PEER_M_NONE        0x00
+#define PEER_M_SET         0x01
+#define PEER_M_CON         0x02
+#define PEER_M_AWAIT       0x04
+#define PEER_M_PENDING     0x08
 
 struct peer_table {
-	unsigned short     mask[PEER_NUM];
-	unsigned short     socket[PEER_NUM];
+	int num;
+	int con_num;
+	int pen_num;
 
-	uint32_t           id[SOCK_NUM];
+	unsigned short         mask[PEER_NUM];
+	uint32_t               id[PEER_NUM];
+	struct sockaddr_in6    addr[PEER_NUM];
+	unsigned char          flag[PEER_NUM];
+	struct lcp_con         *con[PEER_NUM];
+	unsigned short         obj[PEER_NUM]; 
 
 };
-
-struct net_hdr {
-	uint8_t opcode;
-	
-	int encrypted:1,
-	    pad0: 1,
-	    pad1: 1,
-	    pad2: 1,
-	    ttl: 4;
-	
-	uint16_t len;
-
-	uint32_t dst_id;
-	uint32_t src_id;
-} __attribute__((__packed__));
-
-#define NET_F_PPR      0x01
-#define NET_F_UPNP     0x02
-#define NET_F_PMP      0x04
-#define NET_F_PCP      0x08
 
 /*
  * Define the IPv6-addresses and ports of the default servers.
@@ -147,22 +56,25 @@ struct net_hdr {
 #endif
 #define PROXY_PORT     4244 
 
-struct network_wrapper {
-	struct socket_table sock;
+/* Callback-function for network-events */
+typedef void (*net_cfnc)(char *buf, int len);
 
-	struct in6_addr int_addr;
-	struct in6_addr ext_addr;
-	uint8_t flg;
+struct network_wrapper {
+	struct lcp_ctx *ctx;
 
 	struct sockaddr_in6 main_addr;
-	struct sockaddr_in6 disco_addr;
-	struct sockaddr_in6 proxy_addr;
-
-	struct upnp_handle upnp;
 
 	struct peer_table peers;
 
 	struct net_evt_ele *evt;
+
+	char status;
+	net_cfnc on_success;
+	net_cfnc on_failed;
+	time_t tout;
+		
+	uint32_t id;
+	uint8_t key[16];
 };
 
 
@@ -188,111 +100,72 @@ extern void net_close(void);
 
 
 /*
- * Get an unused slot in the socket-table to open a new connection on.
- *
- * Returns: An unused slot or -1 if an error occurred
- */
-extern int net_get_slot(void);
-
-
-#define NET_USEANY -1
-#define NET_USENEW -2
-
-/*
- * Send a packet to the given destination. This function will use a given slot,
- * use a new slot or create a new socket to send the message, depending on the
- * value passed in slot. Sending packets using this function is not safe, as
- * this function will not check if the packet reached it's destination. To have
- * a safe option, use lcp_send() instead.
- *
- * @fd: The socket-descriptor
- * @dst: The destination to send the packet to
- * @buf: The buffer to send
- * @len: The length of the buffer in bytes
- *
- * Returns: 0 on success or -1 if an error occurred
- */
-extern int net_sendto(int fd, struct sockaddr_in6 *dst, char *buf, int len);
-
-
-/*
- * Send a packet to the given destination and verify that it reached it's
- * destination. If the transmission failed, this function will retry sending
- * the packet to the destination two more times. If that failed, an error-evt
- * will be pushed into the event-queue.
- *
- * @slot: The socket-slot to use (has to be connected already)
- * @buf: The buffer to send to the other maschine
- * @len: The length of the buffer
- *
- * Returns: 0 on success or -1 if an error occurred
- */
-extern int net_send(short slot, char *buf, int len);
-
-
-/*
- * Connect to a different maschine and establish a connection.
- *
- * @dst: The address of the other maschine to connect to
- * @flg: Options on how to establish the connection
- *
- * Returns: Either a slot in the socket-table or -1 if an error occurred
- */
-extern short net_connect(struct sockaddr_in6 *dst, uint8_t flg);
-
-
-/*
- * Close a connection and reset the socket.
- *
- * @slot: The slot in the socket-table
- */
-extern void net_disconnect(short slot);
-
-
-/*
- * Update all sockets in the socket-table and send keep-alive messages if
- * necessary. Also process incomming packages.
- */
-extern void net_update(void);
-
-
-/*
- * Show the socket-table in the console. 
- */
-extern void net_print_sock(void);
-
-
-/*
- * Convert a binary IPv4-address to a binary IPv6-address.
- *
- * @src: The IPv4-address to convert
- * @dst: The IPv6-address to convert
- *
- * Returns: 0 on success or -1 if an error occurred
- */
-extern int net_btob_4to6(struct in_addr *src, struct in6_addr *dst);
-
-
-/*
- * Convert an IPv6-address to a string.
- * IMPORTANT: This function is not thread-safe!
- *
- * @addr: Pointer to the address
- *
- * Returns: A string containing the address in text form
- */
-extern char *net_str_addr6(struct in6_addr *addr);
-
-
-/*
- *  
- */
-extern int net_req_token(char *uname, char *pswd);
-
-
-/*
  * 
  */
-extern int net_req_peers(void);
+extern int net_update(void);
+
+
+/*
+ * Create a new key and insert yourself as a new peer into the peer-list.
+ * Note that this function will block progression, until the server respondes or
+ * if the connection timed out. Once a reponse has come, the values will be
+ * filled in if successfull, and the function will return the according value.
+ *
+ * @uname: The buffer containing the null-terminated username
+ * @pswd: The buffer containing the null-terminated unencrypted password
+ * @on_success: A callback-function in case the request is successfull
+ * @on_failed: A callback-function in case the request failed
+ *
+ * Returns: 1 on success, 0 if data are invalid and -1 if an error occurred
+ */
+extern int net_insert(char *uname, char *pswd, net_cfnc on_success, 
+		net_cfnc on_failed);
+
+
+/*
+ * Request a list of peers from the server.
+ *
+ * @on_success: A callback-function in case the request is successfull
+ * @on_failed: A callback-function in case the request failed
+ *
+ * Returns: 0 on success or -1 if an error occurred
+ */
+extern int net_list(net_cfnc on_success, net_cfnc on_failed);
+
+
+/*
+ * Process a received peer-buffer and inser the received buffers into the
+ * peer-table. For each peer, the following data is required:
+ * - The peer-id (4 bytes)
+ * - The peer-IPv6-address (16 bytes)
+ * - The peer-port (2 bytes)
+ * - The peer-connection-flag (1 byte)
+ *
+ * @buf: The buffer containing the peer-data
+ * @num: The number of peers in the buffer
+ *
+ * Returns: 0 on success or -1 if an error occurred
+ */
+extern int net_add_peers(char *buf, int num);
+
+
+/*
+ * Search for a peer in the peer-table by searching to an IPv6-address and port.
+ *
+ * @addr: The IPv6-address to search for
+ * @port: The port-number in the Big-Endian-format to search for
+ *
+ * Returns: Either the slot in the peer-table or -1 if an error occurred
+ */
+extern int net_sel_peer(struct in6_addr *addr, unsigned short *port);
+
+
+/*
+ * Try to connect to peers from the peer-table and establish reliable
+ * connections. 
+ *
+ * Returns: 0 on success or -1 if an error occurred
+ */
+extern int net_con_peers(void);
 
 #endif

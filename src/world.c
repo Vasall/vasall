@@ -152,11 +152,17 @@ extern int wld_gen_terrain(void)
 	if(!(hImg = loadPPMHeightmap("res/images/heightmap_256.ppm", 256)))
 		goto err_free;
 
+	world.size[0] = 40;
+	world.size[1] = 40;
+
 	heights = world.heights;
 	for(x = 0; x < world.size[0]; x++) {
 		for(z = 0; z < world.size[1]; z++) {
 			i = twodim(z, x, world.size[1]);
+#if 0
 			heights[i] = (40.0 * hImg[x][z] + 10.0) * 1.0;
+#endif
+			heights[i] = 0.0;
 		}
 	}
 
@@ -169,8 +175,8 @@ extern int wld_gen_terrain(void)
 		for(x = 0; x < world.size[0] - 1; x++) {
 			vec3_t ctl, ctr, cbl, cbr;
 			
-			xpos = x - 128.0;
-			zpos = z - 128.0;
+			xpos = x;
+			zpos = z;
 
 			ctl[0] = xpos;
 			ctl[1] = heights[twodim(x, z, world.size[0])];

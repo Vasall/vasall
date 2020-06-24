@@ -87,6 +87,9 @@ void game_update(void)
 {
 	vec3_t vel, forw, right;
 
+	/* Update network */
+	net_update();
+
 	/* Rotate the camera */	
 	cam_rot(input.camera[0], input.camera[1]);
 

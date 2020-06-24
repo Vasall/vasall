@@ -1,35 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <termios.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 #include "filesystem.h"
 #include "core.h"
 #include "setup.h"
 
-int main(void)
-{
-	struct net_evt evt;
-
-	if(net_init() < 0)
-		return -1;
-
-	printf("Internal: %s\n", net_str_addr6(&network.int_addr));
-	printf("External: %s\n", net_str_addr6(&network.ext_addr));
-
-	while(1) {
-		while(net_pull_evt(&evt)) {
-
-		}
-	}
-
-
-	return 0;
-}
-
-#if 0
 int main(int argc, char **argv)
 {
 	vec3_t dir = {1.0, -1.0, 1.0};
-	vec3_t pos = {125.0, 0.0, 125.0};
+	vec3_t pos = {15.0, 0.0, 15.0};
 	short tmp;
 
 	if(argc || argv) {/* Prevent warnings for not using parameters */}
@@ -40,8 +22,8 @@ int main(int argc, char **argv)
 	if(net_init() < 0)
 		return 0;
 
-	printf("Internal: %s\n", net_str_addr6(&network.int_addr));
-	printf("External: %s\n", net_str_addr6(&network.ext_addr));
+	printf("Internal: %s\n", lcp_str_addr(AF_INET6, &network.ctx->int_addr));
+	printf("External: %s\n", lcp_str_addr(AF_INET6, &network.ctx->ext_addr));
 
 	/* Initialize the sdl-subsystem */
 	if(sdl_init() < 0)
@@ -66,7 +48,7 @@ int main(int argc, char **argv)
 	/* Load the basic resources (fonts, shaders, textures, models) */
 	if(load_resources() < 0)
 		goto err_close_input;
-	
+
 	/* Initialize the camera */
 	if(cam_init(45.0, 800.0 / 600.0, 0.1, 1000.0) < 0)
 		goto err_close_input;
@@ -130,4 +112,3 @@ err_close_net:
 	net_close();
 	return -1;
 }
-#endif

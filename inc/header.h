@@ -59,9 +59,10 @@ struct req_hdr {
 #define REQ_OP_REMOVE       0x05  /* Remove peer from the peer-table          */
 #define REQ_OP_KEEPALIVE    0x06  /* Prolong peer-timeout                     */
 #define REQ_OP_VALIDATE     0x07  /* Validate a peer-id and -key              */
-#define REQ_OP_REGISTER     0x08  /* Register new user                        */
-#define REQ_OP_DELETE       0x09  /* Delete user from database                */
-#define REQ_OP_LIST         0x0a  /* Request a list of peers                  */
+#define REQ_OP_LIST         0x08  /* Request a list of peers                  */
+#define REQ_OP_CONVEY       0x09  /* Try to contact peer via middle-man       */
+#define REQ_OP_REGISTER     0x0a  /* Register new user                        */
+#define REQ_OP_DELETE       0x0b  /* Delete user from database                */
 
 
 /*

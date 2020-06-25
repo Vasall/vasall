@@ -8,7 +8,7 @@
 #include "lcp/inc/lcp.h"
 
 #define PEER_NUM       32
-#define CONNECTION_NUM 5
+#define PEER_CON_NUM   5
 
 #define PEER_M_NONE        0x00
 #define PEER_M_SET         0x01
@@ -105,6 +105,16 @@ extern void net_close(void);
 extern int net_update(void);
 
 
+/* 
+ * Handle incoming packets and respond accordingly.
+ *
+ * @evt: Pointer to the LCP-event
+ *
+ * Returns: 0 by default
+ */
+extern int peer_handle(struct lcp_evt *evt);
+
+
 /*
  * Create a new key and insert yourself as a new peer into the peer-list.
  * Note that this function will block progression, until the server respondes or
@@ -157,8 +167,17 @@ extern int net_add_peers(char *buf, int num);
  *
  * Returns: Either the slot in the peer-table or -1 if an error occurred
  */
-extern int net_sel_peer(struct in6_addr *addr, unsigned short *port);
+extern int net_peer_sel_addr(struct in6_addr *addr, unsigned short *port);
 
+
+/*
+ * Search for a peer in the peer-table by searching for a peer-ID.
+ *
+ * @id: Pointer to a buffer containing the peer-id to search for
+ *
+ * Returns: Either the slot in the peer-table or -1 if an error occurred
+ */
+extern int net_peer_sel_id(uint32_t *id);
 
 /*
  * Try to connect to peers from the peer-table and establish reliable

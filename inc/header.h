@@ -123,7 +123,6 @@ extern int hdr_set(char *out, uint8_t op, uint16_t len, uint32_t dst_id,
 		uint32_t src_id, uint16_t mod, uint8_t *key)
 {
 	uint8_t key_buf[18];
-	uint32_t key_hash;
 	struct req_hdr hdr;
 	int written = REQ_HDR_SIZE;
 
@@ -134,14 +133,14 @@ extern int hdr_set(char *out, uint8_t op, uint16_t len, uint32_t dst_id,
 	hdr.src_id = src_id;
 
 	if(mod > 0) {	
-		uint32_t tmp;
+		uint32_t key_hash;
 		memset(key_buf, 0, 16);
 		memcpy(key_buf, key, 16);
 		memcpy(key_buf + 16, &mod, 2);
-		tmp = _hash(key_buf, 18);
+		key_hash = _hash(key_buf, 18);
 
 		hdr.mod = mod;
-		hdr.src_key = tmp;
+		hdr.src_key = key_hash;
 
 		written = REQ_HDR_SIZEW;
 	}
@@ -163,8 +162,10 @@ extern int hdr_get(char *in, uint8_t *op, uint16_t *len, uint32_t *dst_id,
 	if(dst_id) *dst_id = hdr.dst_id;
 	if(src_id) *src_id = hdr.src_id;
 	if(mod) *mod = hdr.mod;
-	if(hdr.mod > 0 && key != NULL) {
-		memcpy(key, in + REQ_HDR_SIZE, 4);
+	if(hdr.mod > 0) {
+		if(key != NULL)
+			memcpy(key, in + REQ_HDR_SIZE, 4);
+	
 		read = REQ_HDR_SIZEW;
 	}
 

@@ -36,7 +36,15 @@ static void test1(char *buf, int len)
 	ui_node *node;
 	char zero = 0;
 
+	vec3_t dir = {1.0, -1.0, 1.0};
+	short slot;
+
 	if(buf || len) {/* Prevent warning for not using parameters */}
+
+	/* Setup camera */
+	cam_trg_obj(core.obj);
+	camera.dist = 10.0;
+	cam_set_dir(dir);
 
 	/* Update core functions */
 	core.proc_evt = &game_proc_evt;
@@ -56,7 +64,6 @@ static void test2(char *buf, int len)
 
 static void try_login(ui_node *n, SDL_Event *e)
 {
-	int r;
 	char uname[17];
 	char pswd[65];
 	struct ui_node *node;

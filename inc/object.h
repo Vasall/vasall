@@ -29,6 +29,7 @@ enum object_attr {
 
 struct object_table {
 	uint32_t  mask[OBJ_SLOTS];
+	uint32_t  id[OBJ_SLOTS];
 	vec3_t    pos[OBJ_SLOTS];
 	vec3_t    vel[OBJ_SLOTS];
 	vec3_t    dir[OBJ_SLOTS];
@@ -68,6 +69,8 @@ extern void obj_close(void);
  * @model: The slot of the model in the model-table
  * @data: A buffer containing additional data
  * @len: The length of the data-buffer in bytes
+ *
+ * Returns: The index of the object in the object-table
  */
 extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 		char *data, int len);

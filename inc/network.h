@@ -12,9 +12,9 @@
 
 #define PEER_M_NONE        0x00
 #define PEER_M_SET         0x01
-#define PEER_M_CON         0x02
-#define PEER_M_AWAIT       0x04
-#define PEER_M_PENDING     0x08
+#define PEER_M_AWAIT       0x02
+#define PEER_M_PENDING     0x04
+#define PEER_M_CONNECTED   0x08
 
 struct peer_table {
 	int num;
@@ -24,6 +24,7 @@ struct peer_table {
 	unsigned short         mask[PEER_NUM];
 	uint32_t               id[PEER_NUM];
 	struct sockaddr_in6    addr[PEER_NUM];
+	unsigned short         port[PEER_NUM];
 	unsigned char          flag[PEER_NUM];
 	struct lcp_con         *con[PEER_NUM];
 	unsigned short         obj[PEER_NUM]; 
@@ -141,6 +142,17 @@ extern int net_insert(char *uname, char *pswd, net_cfnc on_success,
  * Returns: 0 on success or -1 if an error occurred
  */
 extern int net_list(net_cfnc on_success, net_cfnc on_failed);
+
+
+/*
+ * Enter a new peer into the peer-table and await further instructions from the
+ * middleman.
+ *
+ * @id: Pointer to buffer containing the ID of the new peer
+ *
+ * Returns: The slot-number on success or -1 if an error occurred
+ */
+extern int net_add_peer(uint32_t *id);
 
 
 /*

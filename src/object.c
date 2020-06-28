@@ -59,6 +59,7 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 		return -1;
 
 	objects.mask[slot] = mask;
+	objects.id[slot] = id;
 	vec3_cpy(objects.pos[slot], pos);
 	vec3_set(objects.vel[slot], 0, 0, 0);
 	vec3_set(objects.dir[slot], 1, 0, 1);

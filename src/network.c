@@ -3,6 +3,8 @@
 #define DEF_HEADER
 #include "header.h"
 
+#include "core.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,6 +27,7 @@ static int net_peer_init(void)
 
 	network.peers.num = 0;
 	network.peers.con_num = 0;
+	network.peers.pen_num = 0;
 
 	for(i = 0; i < PEER_NUM; i++)
 		network.peers.mask[i] = 0;
@@ -75,9 +78,7 @@ extern int net_init(void)
 		goto err_close_ctx;
 
 
-	printf("Connect to server: %s:%d\n",
-			lcp_str_addr(AF_INET6, &network.main_addr.sin6_addr),
-			ntohs(network.main_addr.sin6_port));
+	printf("Connect to server: %s\n", lcp_str_addr6(&network.main_addr));
 
 	/* Connect to server */
 	if(!(lcp_connect(network.ctx, -1, &network.main_addr, LCP_CON_F_DIRECT,
@@ -119,15 +120,39 @@ extern int net_update(void)
 {
 	struct lcp_evt evt;
 	time_t ti;
+	struct peer_table *tbl = &network.peers;
 
 	/* Processing incoming packets and send out requests */
 	lcp_update(network.ctx);
 
 	while(lcp_pull_evt(network.ctx, &evt)) {
-		if(evt.type == LCP_RECEIVED) {
+		if(evt.type == LCP_CONNECTED) {
+			int sl;
+			struct in6_addr addr;
+			unsigned short port;
+
+			memcpy(&addr, &evt.addr.sin6_addr, 16);
+			port = evt.addr.sin6_port;
+
+			printf("Connected to %s\n", lcp_str_addr6(&evt.addr));
+
+			if((sl = net_peer_sel_addr(&addr, &port)) < 0) {
+				struct sockaddr_in6 peer_addr;
+
+				/* Update entry-mask */
+				tbl->mask[sl] = PEER_M_SET | PEER_M_CONNECTED;
+
+					
+			}
+		}
+		else if(evt.type == LCP_RECEIVED) {
 			/* Handle packets if they seem valid */
 			if(evt.len >= REQ_HDR_SIZE)
 				peer_handle(&evt);
+		}
+
+		else if(evt.type == LCP_FAILED || evt.type == LCP_TIMEDOUT) {
+			printf("Couldn't connect to peer");
 		}
 
 		lcp_del_evt(&evt);
@@ -136,8 +161,10 @@ extern int net_update(void)
 	time(&ti);
 
 	if(network.status == 0x02) {
+		int num;
+
 		/* Get new peers from the server */
-		if(network.peers.num == 0 && ti > network.tout) {
+		if(tbl->num == 0 && ti > network.tout) {
 			/* Send a request to the server */
 			net_list(NULL, NULL);
 
@@ -146,7 +173,8 @@ extern int net_update(void)
 		}
 
 		/* Connect to peers if necessary */
-		if(network.peers.con_num == 0 && network.peers.num > 0) {
+		num = tbl->con_num + tbl->pen_num;
+		if(num < 1 && tbl->num > 0) {
 			net_con_peers();	
 		}
 	}
@@ -159,7 +187,6 @@ extern int peer_handle(struct lcp_evt *evt)
 {
 	char *ptr;
 	int tmp;
-	time_t ti;
 
 	uint8_t op;
 	uint16_t len;
@@ -167,8 +194,11 @@ extern int peer_handle(struct lcp_evt *evt)
 	uint32_t src_id;
 	uint16_t mod;
 	uint32_t key;
-	
+
 	char pck[512];
+
+	struct peer_table *tbl = &network.peers;
+	struct lcp_ctx *ctx = network.ctx;
 
 	/* Extract data from header */
 	tmp = hdr_get(evt->buf, &op, &len, &dst_id, &src_id, &mod, &key);
@@ -178,6 +208,12 @@ extern int peer_handle(struct lcp_evt *evt)
 
 	if(op == REQ_OP_INSERT) {
 		if(network.status == 1) {
+			uint32_t id;
+			uint32_t mask;
+			float pos[3];
+			int mdl;
+			int num;
+
 			/* If the request got rejected */
 			if(ptr[0] != 1) {
 				/* Update status */
@@ -194,15 +230,36 @@ extern int peer_handle(struct lcp_evt *evt)
 			memcpy(&network.id, ptr + 1, 4);
 			memcpy(network.key, ptr + 5, 16);
 
+			/* Insert object */
+			id = network.id;
+			memcpy(pos, ptr + 21, 3 * sizeof(float));
+			mask = OBJ_M_ENTITY;
+			mdl = mdl_get("plr");
+
+			printf("Pos: %.2f, %.2f, %.2f", pos[0], pos[1], pos[2]);
+
+			if((num = obj_set(id, mask, pos, mdl, NULL, 0)) < 0) {
+				/* Run callback-function */
+				if(network.on_failed != NULL)
+					network.on_failed(NULL, 0);
+
+				printf("Failed\n");
+				return 0;
+			}
+
+			printf("%d >>>>>>\n", num);
+
+			core.obj = num;
+
 			/* Check if any peers are includes */
-			tmp = ptr[21];
+			tmp = ptr[33];
 			if(tmp > 0)
-				net_add_peers(ptr + 22, tmp);
+				net_add_peers(ptr + 34, tmp);
 
 			/* Update status */
 			network.status = 2;
 			network.tout = 0;
-
+			
 			/* Run callback-function */
 			if(network.on_success != NULL)
 				network.on_success(NULL, 0);
@@ -215,56 +272,110 @@ extern int peer_handle(struct lcp_evt *evt)
 	}
 	else if(op == REQ_OP_CONVEY) {
 		char res = ptr[0];
-		short slot_num = *(short *)(ptr + 1);
+
+		printf("Code %d\n", res);
 
 		/* Failed */
 		if(res < 0) {
-			int slot = net_peer_sel_id(ptr + 1);
+			int slot = net_peer_sel_id((uint32_t *)ptr + 1);
 
 			/* Reset entry in peer-table */
 			if(slot > 0)
-				network.peers.mask[slot] = PEER_M_NONE;
+				tbl->mask[slot] = PEER_M_NONE;
 		}
 		/* Check if connection can be established */
 		else if(res == 1) {
-			int n = network.peers.con_num + network.peers.pen_num;
+			short slot_num = *(short *)(ptr + 1);
+			uint32_t id = *(uint32_t *)(ptr + 2);
+
 			int ti_mod = time(NULL) % 4096;
 			int size = 0;
 
-			/* Send response-header */
-			tmp = hdr_set(pck, REQ_OP_CONVEY, 1, 4, 0x1, network.id,
-					ti_mod, network.key);
+			tmp = REQ_HDR_SIZEW;
+			ptr = pck + tmp;	
 
-			ptr = pck + tmp;
+			/* If possible accept request */
+			if(tbl->con_num + tbl->pen_num < PEER_CON_NUM) {
+				int slot = lcp_get_slot(ctx);
+				short port = ctx->sock.ext_port[slot];
+				int n;
+
+				ptr[1] = 1;
+				memcpy(ptr + 4, &ctx->ext_addr, 16);
+				memcpy(ptr + 20, &port, 2);
+				ptr[22] = ctx->con_flg;
+
+				size = 19;
+
+				/* Add peer to peer-table */
+				n = net_add_peer(&id);
+
+				/* Set my own port */
+				tbl->port[n] = port;
+			}
+			else {
+				ptr[1] = 0;
+			}
+
+			/* Send response-header */
+			hdr_set(pck, REQ_OP_CONVEY, 4 + size, 0x1,
+					network.id, ti_mod, network.key);
 
 			ptr[0] = 2;
 
 			/* Copy slot-number */
-			memcpy(pck + 2, &slot_num, 2);
-
-			if(n < PEER_CON_NUM) {
-				int slot = lcp_get_slot(network.ctx);
-				short port = network.ctx.sock.ext_port[slot];
-
-				ptr[1] = 1;
-				memcpy(ptr + 4, &network.ctx->ext_addr, 16);
-				memcpy(ptr + 20, &port, 2);
-				ptr[22] = network.ctx->con_flg;
-
-				size = 19;
-			}
-			else {
-				pck[tmp + 1] = 0;
-			}
+			memcpy(ptr + 2, &slot_num, 2);
 
 			/* Send packet */
-			lcp_send(network.ctx, &network.main_addr, pck, 
-					tmp + 4 + size);
+			lcp_send(ctx, &network.main_addr, pck, tmp + 4 + size);
 		}
 		/* Establish new connection */
 		else if(res == 3) {
 			uint32_t id;
+			struct sockaddr_in6 addr;
+			char flg;
+			uint16_t proxy_num;	
+			int slot_num;
+			struct lcp_con *con;
+			unsigned short port;
 
+			/* Get the peer-Id */
+			memcpy(&id, ptr + 1, 4);
+
+			/* Copy the address */
+			lcp_addr(&addr, ptr + 5, ptr + 21);
+
+			/* Get the connection-flag */
+			flg = ptr[23];
+
+			/* Get the proxy-number */
+			memcpy(&proxy_num, ptr + 24, 2);
+
+			/* Get the slot */
+			if((slot_num = net_peer_sel_id(&id)) < 0)
+				return -1;
+
+			/* Update slot-mask */
+			tbl->mask[slot_num] = PEER_M_SET | PEER_M_PENDING;
+
+			/* Set attributes */
+			tbl->addr[slot_num] = addr;
+			tbl->flag[slot_num] = flg;
+
+			/* Initate connection */
+			port = tbl->port[slot_num];
+			if(!(con = lcp_connect(ctx, port, &addr, flg, 0))) {
+				tbl->mask[slot_num] = PEER_M_NONE;
+				return -1;
+			}
+
+			con->proxy_id = proxy_num;
+
+			/* Set connection-pointer */
+			tbl->con[slot_num] = con; 
+
+			/* Adjust the number of pending-connections */
+			tbl->pen_num++;
 		}
 	}
 
@@ -316,7 +427,6 @@ extern int net_insert(char *uname, char *pswd, net_cfnc on_success,
 	/* Encrypt password */
 	hashSHA256(pswd, strlen(pswd), pswd_enc);
 
-
 	tmp = hdr_set(pck, REQ_OP_INSERT, tmp + 33, 0x1, 0x0, 0, NULL);
 	strcpy(pck + tmp, uname);
 	memcpy(pck + tmp + strlen(uname) + 1, pswd_enc, 32);
@@ -335,6 +445,8 @@ extern int net_list(net_cfnc on_success, net_cfnc on_failed)
 
 	char pck[512];
 
+	if(on_success || on_failed) {/* Prev warning for not using params */}
+
 	/* Get the time-modulator */
 	time(&ti);
 	ti_mod = ti % 4096;
@@ -345,9 +457,22 @@ extern int net_list(net_cfnc on_success, net_cfnc on_failed)
 }
 
 
-extern int net_add_peer(uint32_t id, struct sockaddr_in6 *addr)
+extern int net_add_peer(uint32_t *id)
 {
+	int i;
+	struct peer_table *tbl = &network.peers;
 
+	for(i = 0; i < PEER_NUM; i++) {
+		if(tbl->mask[i] == PEER_M_NONE) {
+			tbl->mask[i] = PEER_M_SET | PEER_M_AWAIT;
+			tbl->id[i] = *id;
+
+			tbl->num++;
+			return i;
+		}
+	}
+
+	return -1;
 }
 
 
@@ -357,24 +482,12 @@ extern int net_add_peers(char *buf, int num)
 	int j;
 	int tmp;
 	uint32_t id;
-	struct sockaddr_in6 addr;
-	int sz = sizeof(struct sockaddr_in6);
-	unsigned char flg;
 	char *ptr = buf;
 	struct peer_table *tbl = &network.peers;
 
 	for(i = 0; i < num; i++) {
 		/* Copy peer-id */
 		id = *(uint32_t *)ptr;
-
-		/* Copy peer-address */
-		memset(&addr, 0, sz);
-		addr.sin6_family = AF_INET6;
-		memcpy(&addr.sin6_addr, ptr + 4, 16);
-		addr.sin6_port = ntohs(*(short *)(ptr + 20));	
-
-		/* Copy peer-connection-flag */
-		flg = *(unsigned char *)(buf + 22);
 
 		/* If the peer has the same id as this peer */
 		if(id == network.id)
@@ -397,20 +510,14 @@ extern int net_add_peers(char *buf, int num)
 			if(tbl->mask[j] == PEER_M_NONE) {
 				tbl->mask[j] = PEER_M_SET;
 				tbl->id[j] = id;
-				tbl->addr[j] = addr;
-				tbl->flag[j] = flg;
 
-				tbl->con[j] = NULL;
-				tbl->obj[j] = -1;
-
-				printf("Added peer at slot %d\n", j);
 				tbl->num++;
 				break;
 			}
 		}
 
 		/* Update pointer */
-		ptr += 23;
+		ptr += 4;
 	}
 
 	return 0;
@@ -426,8 +533,8 @@ extern int net_peer_sel_addr(struct in6_addr *addr, unsigned short *port)
 		if(tbl->mask[i] == PEER_M_NONE)
 			continue;
 
-		if(*addr == tbl->addr.sin6_addr[i] && 
-				*port = tbl->addr.sin6_port)
+		if(memcmp(addr, &tbl->addr[i].sin6_addr, 16) == 0 && 
+				*port == tbl->addr[i].sin6_port)
 			return i;
 	}
 
@@ -463,39 +570,42 @@ extern int net_con_peers(void)
 	short ti;
 
 	for(i = 0; i < PEER_NUM; i++) {
-		if(tbl->con_num + tbl->pen_num >= CONNECTION_NUM)
+		if(tbl->con_num + tbl->pen_num >= PEER_CON_NUM)
 			break;
 
-		if(tbl->mask[i] == PEER_M_NONE)
+		/* Hasn't initiated a connection yet */
+		if(tbl->mask[i] != PEER_M_SET)
 			continue;
-
-		/* Await command from server */
-		if((tbl->mask[i] & PEER_M_AWAIT) == PEER_M_AWAIT)
-			continue;
-
-		/* Trying to establish connection */
-		if((tbl->mask[i] & PEER_M_PENDING) == PEER_M_PENDING)
-			continue;
-
 
 		/* Get an external port to establish the connection with */
 		if((slot = lcp_get_slot(network.ctx)) < 0)
 			continue;
 
-		port = network.ctx->sock.ext_port[slot];	
+		port = network.ctx->sock.ext_port[slot];
 
 		/* Update mask */
-		tbl->mask[i] = tbl->mask[i] | PEER_M_AWAIT;
+		tbl->mask[i] |= PEER_M_AWAIT;
+
+		/* Update number of pending connections */
+		tbl->pen_num++;
+
+		/* Set my own port */
+		tbl->port[i] = port;
 
 		/* Set header */
 		ti = time(NULL) % 4096;
-		tmp = hdr_set(pck, REQ_OP_CONTACT, 5, 0x1, network.id, ti, 
+		tmp = hdr_set(pck, REQ_OP_CONVEY, 23, 0x1, network.id, ti, 
 				network.key);
 
 		/* Fill in payload */
+		pck[tmp] = 0;
+		memcpy(pck + tmp + 1, &tbl->id[i], 4);
+		memcpy(pck + tmp + 5, &network.ctx->ext_addr, 16);
+		memcpy(pck + tmp + 21, &port, 2);
+		pck[tmp + 23] = network.ctx->con_flg;
 
-
-		lcp_send(network.ctx, &network.main_addr, pck, tmp + 5);
+		/* Send packet */
+		lcp_send(network.ctx, &network.main_addr, pck, tmp + 23);
 	}
 
 	return 0;

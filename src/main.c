@@ -8,22 +8,16 @@
 #include "core.h"
 #include "setup.h"
 
-int main(int argc, char **argv)
+int main(void)
 {
-	vec3_t dir = {1.0, -1.0, 1.0};
-	vec3_t pos = {15.0, 0.0, 15.0};
-	short tmp;
-
-	if(argc || argv) {/* Prevent warnings for not using parameters */}
-
-	srand(time(0)); 
+	srand(time(0));
 
 	/* Initialize the network-system */
 	if(net_init() < 0)
 		return 0;
 
-	printf("Internal: %s\n", lcp_str_addr(AF_INET6, &network.ctx->int_addr));
-	printf("External: %s\n", lcp_str_addr(AF_INET6, &network.ctx->ext_addr));
+	printf("Internal: %s\n", lcp_str_ip(AF_INET6, &network.ctx->int_addr));
+	printf("External: %s\n", lcp_str_ip(AF_INET6, &network.ctx->ext_addr));
 
 	/* Initialize the sdl-subsystem */
 	if(sdl_init() < 0)
@@ -68,15 +62,6 @@ int main(int argc, char **argv)
 	/* Initialize the core */
 	if(core_init() < 0)
 		goto err_close_obj;
-
-	/* Add player-object */
-	tmp = mdl_get("plr");
-	if((core.obj = obj_set(0, OBJ_M_ENTITY, pos, tmp, NULL, 0)) < 0)
-		goto err_close_obj;
-
-	cam_trg_obj(core.obj);
-	camera.dist = 10.0;
-	cam_set_dir(dir);
 
 	while(core.running) {
 		core_proc_evt();

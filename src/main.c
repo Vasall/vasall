@@ -10,6 +10,7 @@
 
 int main(void)
 {
+	/* Set seed */
 	srand(time(0));
 
 	/* Initialize the network-system */

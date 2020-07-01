@@ -488,12 +488,25 @@ extern int net_add_peer(uint32_t *id)
 {
 	int i;
 	struct peer_table *tbl = &network.peers;
+	int tmp;
+
+
+	/* Check if the peer is already in the table */
+	tmp = 0;
+	for(i = 0; i < PEER_SLOTS; i++) {
+		if(tbl->mask[i] != 0 && tbl->id[i] == *id) {
+			return -1;
+		}
+	}
+
 
 	for(i = 0; i < PEER_SLOTS; i++) {
 		if(tbl->mask[i] == PEER_M_NONE) {
 			tbl->mask[i] = PEER_M_SET;
 			tbl->status[i] = PEER_S_AWAIT;
 			tbl->id[i] = *id;
+
+			printf("Insert peer %d with id %d\n", i, *id);
 
 			tbl->num++;
 			return i;

@@ -8,22 +8,24 @@
 #include "asset.h"
 #include "model.h"
 
-#define OBJ_SLOTS 128
-#define OBJ_DATA_MAX 128
+#define OBJ_SLOTS      128
+#define OBJ_DATA_MAX   128
 
-#define OBJ_M_NONE 0x00
-#define OBJ_M_MOVE 0x01
-#define OBJ_M_MODEL 0x02
-#define OBJ_M_DATA 0x03
+#define OBJ_M_NONE     0x00
+#define OBJ_M_MOVE     0x01
+#define OBJ_M_MODEL    0x02
+#define OBJ_M_DATA     0x03
 
 #define OBJ_M_ENTITY (OBJ_M_MOVE|OBJ_M_MODEL)
 
 enum object_attr {
+	OBJ_ATTR_ID =     0x00,
 	OBJ_ATTR_MASK =   0x01,
 	OBJ_ATTR_POS =    0x02,
 	OBJ_ATTR_VEL =    0x03,
-	OBJ_ATTR_DIR =    0x04,
-	OBJ_ATTR_BUF =    0x05
+	OBJ_ATTR_ACL =    0x04,
+	OBJ_ATTR_DIR =    0x05,
+	OBJ_ATTR_BUF =    0x06
 
 };
 
@@ -32,6 +34,7 @@ struct object_table {
 	uint32_t  id[OBJ_SLOTS];
 	vec3_t    pos[OBJ_SLOTS];
 	vec3_t    vel[OBJ_SLOTS];
+	vec3_t    acl[OBJ_SLOTS];
 	vec3_t    dir[OBJ_SLOTS];
 	short     model[OBJ_SLOTS];
 	short     anim[OBJ_SLOTS];
@@ -113,6 +116,17 @@ extern short obj_sel_id(uint32_t id);
  * @slot: The slot of the object
  */
 extern void obj_update_matrix(short slot);
+
+
+/*
+ * Get a list of all object-ids and write them to the pointer.
+ *
+ * @ptr: Address to write the object-id-list to
+ * @size: The number of objects written to the pointer
+ *
+ * Returns: The number of bytes written to the pointer
+ */
+extern short obj_list(void *ptr, short *num);
 
 
 /*

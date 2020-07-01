@@ -36,8 +36,7 @@ static void test1(char *buf, int len)
 	ui_node *node;
 	char zero = 0;
 
-	vec3_t dir = {1.0, -1.0, 1.0};
-	short slot;
+	vec3_t dir = {-1.0, 1.0, -1.0};
 
 	if(buf || len) {/* Prevent warning for not using parameters */}
 

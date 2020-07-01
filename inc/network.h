@@ -7,28 +7,38 @@
 
 #include "lcp/inc/lcp.h"
 
-#define PEER_NUM       32
+#define PEER_SLOTS    32
 #define PEER_CON_NUM   5
 
 #define PEER_M_NONE        0x00
 #define PEER_M_SET         0x01
-#define PEER_M_AWAIT       0x02
-#define PEER_M_PENDING     0x04
-#define PEER_M_CONNECTED   0x08
+
+#define PEER_S_SET         0x01
+#define PEER_S_AWAIT       0x02
+#define PEER_S_PENDING     0x04
+#define PEER_S_CONNECTED   0x08
+#define PEER_S_SYNCED      0x10
+#define PEER_S_6           0x20
+#define PEER_S_7           0x40
+#define PEER_S_8           0x80
 
 struct peer_table {
 	int num;
 	int con_num;
 	int pen_num;
 
-	unsigned short         mask[PEER_NUM];
-	uint32_t               id[PEER_NUM];
-	struct sockaddr_in6    addr[PEER_NUM];
-	unsigned short         port[PEER_NUM];
-	unsigned char          flag[PEER_NUM];
-	struct lcp_con         *con[PEER_NUM];
-	unsigned short         obj[PEER_NUM]; 
+	unsigned char          mask[PEER_SLOTS];
 
+	unsigned char          status[PEER_SLOTS];
+	time_t                 tout[PEER_SLOTS];
+
+	uint32_t               id[PEER_SLOTS];
+	uint32_t               mdl[PEER_SLOTS];
+	struct sockaddr_in6    addr[PEER_SLOTS];
+	unsigned short         port[PEER_SLOTS];
+	unsigned char          flag[PEER_SLOTS];
+	struct lcp_con         *con[PEER_SLOTS];
+	unsigned short         obj[PEER_SLOTS]; 
 };
 
 /*
@@ -168,7 +178,7 @@ extern int net_add_peer(uint32_t *id);
  *
  * Returns: 0 on success or -1 if an error occurred
  */
-extern int net_add_peers(char *buf, int num);
+extern int net_add_peers(char *buf, short num);
 
 
 /*
@@ -179,7 +189,7 @@ extern int net_add_peers(char *buf, int num);
  *
  * Returns: Either the slot in the peer-table or -1 if an error occurred
  */
-extern int net_peer_sel_addr(struct in6_addr *addr, unsigned short *port);
+extern short net_peer_sel_addr(struct in6_addr *addr, unsigned short *port);
 
 
 /*
@@ -189,7 +199,7 @@ extern int net_peer_sel_addr(struct in6_addr *addr, unsigned short *port);
  *
  * Returns: Either the slot in the peer-table or -1 if an error occurred
  */
-extern int net_peer_sel_id(uint32_t *id);
+extern short net_peer_sel_id(uint32_t *id);
 
 /*
  * Try to connect to peers from the peer-table and establish reliable

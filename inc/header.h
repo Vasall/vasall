@@ -13,16 +13,17 @@ struct req_hdr {
 	uint8_t op;
 
 
-	uint32_t 
-		/* 
-		 * Reserved for future use.
-		 */
-		mod: 12,
+	/*
+	 * The packet-flags indicating certain things, ie if the packet includes
+	 * a key.
+	 */
+	uint8_t flg;
 
-		/*
-		 * Length of the buffer. Set 0 if no buffer is attached.
-		 */
-		len: 12;
+	/*
+	 * Reserved bytes for future use.
+	 */
+	uint16_t res;
+
 
 	/* 
 	 * The Peer-ID, indicating the peers the packet should be relayed to.
@@ -37,6 +38,11 @@ struct req_hdr {
 	uint32_t src_id;
 
 	/*
+	 * The time-modulator used for ensuring the safety of the key.
+	 */
+	uint32_t ti_mod;
+
+	/*
 	 * Optional peer-key which is practiacally the hashed valued of the
 	 * peer-key-buffer combined with the mod-attribute(time % 4086) using 
 	 * djb2 by Dan Bernstein. This attribute should only be used if mod 
@@ -49,8 +55,10 @@ struct req_hdr {
 #define REQ_HDR_SIZE     12
 
 /* The size of the header in bytes with the peer-key */
-#define REQ_HDR_SIZEW    16
+#define REQ_HDR_SIZEW    20
 
+/* Request-flags */
+#define REQ_F_KEY    0x01
 
 /* Define the op-codes */
 #define REQ_OP_SUCCESS      0x01  /* Return success                           */
@@ -75,7 +83,6 @@ struct req_hdr {
  *
  * @out: Pointer to write the header to
  * @op: The op-code for this packet
- * @len: The length of the payload (has to be smaller than 4096)
  * @src_id: The peer-id from where the packet originated (0 if unknown)
  * @dst_id: The peer-id to where the packet should be relayed to
  * @mod: The modulator to make the key more secure. (0 if key is unknown)
@@ -84,8 +91,9 @@ struct req_hdr {
  * Returns: The amount of bytes written to the pointer or -1 if an error
  * 	occurred
  */
-extern int hdr_set(char *out, uint8_t op, uint16_t len, uint32_t dst_id, 
-		uint32_t src_id, uint16_t mod, uint8_t *key);
+extern int hdr_set(char *out, uint8_t op, uint32_t dst_id, 
+		uint32_t src_id, uint32_t mod, uint8_t *key);
+
 
 /*
  * Extract the values from a header and parse them into the given variables.
@@ -94,7 +102,6 @@ extern int hdr_set(char *out, uint8_t op, uint16_t len, uint32_t dst_id,
  *
  * @in: The buffer to read the header from
  * @op: A pointer to write the op-code to
- * @len: A pointer to write the length of the payload to
  * @src_id: A pointer to write the source-id to
  * @dst_id: A pointer to write the destination-id to
  * @mod: A pointer to write the modulator-value to
@@ -102,8 +109,8 @@ extern int hdr_set(char *out, uint8_t op, uint16_t len, uint32_t dst_id,
  *
  * Returns: The number of bytes read from the buffer or -1 if an error occurred
  */
-extern int hdr_get(char *in, uint8_t *op, uint16_t *len, uint32_t *dst_id,
-		uint32_t *src_id, uint16_t *mod, uint32_t *key);
+extern int hdr_get(char *in, uint8_t *op, uint32_t *dst_id,
+		uint32_t *src_id, uint32_t *mod, uint32_t *key);
 
 
 #ifdef DEF_HEADER
@@ -119,16 +126,17 @@ static uint32_t _hash(uint8_t *buf, int l)
 	return hash % 0xffffffff;
 }
 
-extern int hdr_set(char *out, uint8_t op, uint16_t len, uint32_t dst_id, 
-		uint32_t src_id, uint16_t mod, uint8_t *key)
+
+extern int hdr_set(char *out, uint8_t op, uint32_t dst_id, 
+		uint32_t src_id, uint32_t mod, uint8_t *key)
 {
-	uint8_t key_buf[18];
+	uint8_t key_buf[20];
 	struct req_hdr hdr;
 	int written = REQ_HDR_SIZE;
 
-	memset(&hdr, 0, 12);
+	memset(&hdr, 0, REQ_HDR_SIZE);
 	hdr.op = op;
-	hdr.len = len;
+	hdr.flg = 0;
 	hdr.dst_id = dst_id;
 	hdr.src_id = src_id;
 
@@ -136,10 +144,11 @@ extern int hdr_set(char *out, uint8_t op, uint16_t len, uint32_t dst_id,
 		uint32_t key_hash;
 		memset(key_buf, 0, 16);
 		memcpy(key_buf, key, 16);
-		memcpy(key_buf + 16, &mod, 2);
-		key_hash = _hash(key_buf, 18);
+		memcpy(key_buf + 16, &mod, 4);
+		key_hash = _hash(key_buf, 20);
 
-		hdr.mod = mod;
+		hdr.flg = hdr.flg | REQ_F_KEY;
+		hdr.ti_mod = mod;
 		hdr.src_key = key_hash;
 
 		written = REQ_HDR_SIZEW;
@@ -149,8 +158,9 @@ extern int hdr_set(char *out, uint8_t op, uint16_t len, uint32_t dst_id,
 	return written;
 }
 
-extern int hdr_get(char *in, uint8_t *op, uint16_t *len, uint32_t *dst_id,
-		uint32_t *src_id, uint16_t *mod, uint32_t *key)
+
+extern int hdr_get(char *in, uint8_t *op, uint32_t *dst_id,
+		uint32_t *src_id, uint32_t *mod, uint32_t *key)
 {
 	struct req_hdr hdr;
 	int read = REQ_HDR_SIZE;
@@ -158,15 +168,18 @@ extern int hdr_get(char *in, uint8_t *op, uint16_t *len, uint32_t *dst_id,
 	memcpy(&hdr, in, REQ_HDR_SIZE);
 
 	if(op) *op = hdr.op;
-	if(len) *len = hdr.len;
 	if(dst_id) *dst_id = hdr.dst_id;
 	if(src_id) *src_id = hdr.src_id;
-	if(mod) *mod = hdr.mod;
-	if(hdr.mod > 0) {
-		if(key != NULL)
-			memcpy(key, in + REQ_HDR_SIZE, 4);
-	
-		read = REQ_HDR_SIZEW;
+
+	/* If request contains key */
+	if((hdr.flg & REQ_F_KEY) == REQ_F_KEY) {
+		if(mod) *mod = hdr.ti_mod;
+		if(hdr.ti_mod > 0) {
+			if(key != NULL)
+				memcpy(key, in + REQ_HDR_SIZE, 4);
+		
+			read = REQ_HDR_SIZEW;
+		}
 	}
 
 	return read;

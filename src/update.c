@@ -93,7 +93,7 @@ void game_update(void)
 	/* Rotate the camera */	
 	cam_rot(input.camera[0], input.camera[1]);
 
-	/* Set player-velocity */
+	/* Set object-acceleration */
 	vec3_cpy(forw, camera.forward);
 	forw[1] = 0.0;
 	vec3_nrm(forw, forw);

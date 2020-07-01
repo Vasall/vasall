@@ -152,6 +152,36 @@ extern void obj_update_matrix(short slot)
 }
 
 
+extern short obj_list(void *ptr, short *num)
+{
+	short obj_num = 0;
+	short i;
+
+	char *buf_ptr = (char *)ptr + 2;
+
+	for(i = 0; i < OBJ_SLOTS; i++) {
+		if(objects.mask[i] == OBJ_M_NONE)
+			continue;
+
+		/* Write the id */
+		*buf_ptr = 0;
+		memcpy(buf_ptr + 1, &objects.id[i], 4);
+		buf_ptr += 5;
+
+		obj_num++;
+	}	
+
+	if(obj_num == 0)
+		return 0;
+
+	if(num != NULL)
+		*num = obj_num;
+
+	memcpy(ptr, &obj_num, 2);
+	return 2 + (obj_num * sizeof(uint32_t));
+}
+
+
 extern void obj_print(short slot)
 {
 	if(obj_check_slot(slot))

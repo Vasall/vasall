@@ -43,11 +43,11 @@ INSTALLATION
     $ mkdir bin obj lib
    
   Additionally we have to get a module:
-    $ cd lib
+    $ cd lib/lcp
     $ svn checkout https://github.com/miniupnp/miniupnp/trunk/miniupnpc
 
   Build the module using the following command:
-    $ cd miniupnpc && make && cd ../../
+    $ cd miniupnpc && make && cd ../../../
 
   Compile the sourcecode:
     $ make

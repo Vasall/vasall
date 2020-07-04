@@ -492,8 +492,6 @@ extern int peer_handle(struct lcp_evt *evt)
 	else if(op == REQ_OP_UPDATE) {
 		short num;
 
-		printf("UPDATE!!!!!\n");
-
 		memcpy(&num, ptr, 2);
 		obj_update(ptr + 2, num);
 	}

@@ -56,7 +56,7 @@ struct cache_entry {
 /*
  * Define the IPv6-addresses and ports of the default servers.
  */
-#define USE_LOCAL 1
+#define USE_LOCAL 0
 
 #if !USE_LOCAL
 #define MAIN_IP        "0:0:0:0:0:ffff:4e2e:bbb1"

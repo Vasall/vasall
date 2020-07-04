@@ -173,7 +173,7 @@ extern int net_update(void)
 			if(evt.len >= REQ_HDR_SIZE)
 				peer_handle(&evt);
 		}
-		else if(evt.type == LCP_FAILED || evt.type == LCP_TIMEDOUT) {
+		else if(evt.type == LCP_TIMEDOUT) {
 			short slot;
 			struct in6_addr addr;
 			unsigned short port;

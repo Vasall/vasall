@@ -73,6 +73,11 @@ struct req_hdr {
 #define REQ_OP_DELETE       0x0b  /* Delete user from database                */
 
 
+#define REQ_OP_SYNC         0x10  /* Syncronize the object list of two peers  */
+#define REQ_OP_REQUEST      0x11  /* Request data about certain objects       */
+#define REQ_OP_SUBMIT       0x12  /* Submit a list of objects to a peer       */
+#define REQ_OP_UPDATE       0x13  /* Send a packet containing object-updates  */
+
 /*
  * Write a header to the given buffer, which has to be allocated already to fit
  * the header. If mod is greater than 0 and a key-buffer is specified, then this
@@ -162,19 +167,19 @@ extern int hdr_set(char *out, uint8_t op, uint32_t dst_id,
 extern int hdr_get(char *in, uint8_t *op, uint32_t *dst_id,
 		uint32_t *src_id, uint32_t *mod, uint32_t *key)
 {
-	struct req_hdr hdr;
+	struct req_hdr *hdr = (struct req_hdr *)in;
 	int read = REQ_HDR_SIZE;
 
-	memcpy(&hdr, in, REQ_HDR_SIZE);
-
-	if(op) *op = hdr.op;
-	if(dst_id) *dst_id = hdr.dst_id;
-	if(src_id) *src_id = hdr.src_id;
+	if(op) *op = hdr->op;
+	if(dst_id) *dst_id = hdr->dst_id;
+	if(src_id) *src_id = hdr->src_id;
 
 	/* If request contains key */
-	if((hdr.flg & REQ_F_KEY) == REQ_F_KEY) {
-		if(mod) *mod = hdr.ti_mod;
-		if(hdr.ti_mod > 0) {
+	if((hdr->flg & REQ_F_KEY) == REQ_F_KEY) {
+		if(hdr->ti_mod > 0) {
+			if(mod)
+				*mod = hdr->ti_mod;
+
 			if(key != NULL)
 				memcpy(key, in + REQ_HDR_SIZE, 4);
 		

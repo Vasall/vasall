@@ -12,6 +12,7 @@
 
 #define PEER_M_NONE        0x00
 #define PEER_M_SET         0x01
+#define PEER_M_CONNECTED   0x02
 
 #define PEER_S_SET         0x01
 #define PEER_S_AWAIT       0x02
@@ -39,6 +40,17 @@ struct peer_table {
 	unsigned char          flag[PEER_SLOTS];
 	struct lcp_con         *con[PEER_SLOTS];
 	unsigned short         obj[PEER_SLOTS]; 
+};
+
+struct cache_entry;
+struct cache_entry {
+	struct cache_entry *next;
+	struct cache_entry *prev;
+	uint32_t id;
+	uint32_t src;
+
+	char status;
+	time_t tout;
 };
 
 /*
@@ -86,6 +98,10 @@ struct network_wrapper {
 		
 	uint32_t id;
 	uint8_t key[16];
+
+	struct cache_entry *cache;
+
+	int count;
 };
 
 
@@ -201,6 +217,7 @@ extern short net_peer_sel_addr(struct in6_addr *addr, unsigned short *port);
  */
 extern short net_peer_sel_id(uint32_t *id);
 
+
 /*
  * Try to connect to peers from the peer-table and establish reliable
  * connections. 
@@ -208,5 +225,36 @@ extern short net_peer_sel_id(uint32_t *id);
  * Returns: 0 on success or -1 if an error occurred
  */
 extern int net_con_peers(void);
+
+
+/*
+ * Insert a list of object-id into the object-cache.
+ *
+ *
+ * Returns: 0 on success or -1 if an error occurred
+ */
+extern int net_obj_insert(void *in, short in_num, uint32_t src, uint32_t **out,
+		short *out_num);
+
+
+/*
+ * 
+ */
+extern struct cache_entry *net_obj_find(uint32_t id);
+
+
+/*
+ *  
+ */
+extern int net_obj_submit(void *ptr, short num, uint32_t src);
+
+
+/*
+ * Go through the object-cache and send requests to the different peers
+ * containing the list of the required objects.
+ *
+ * Returns: 0 on success or -1 if an error occurred
+ */
+extern int net_obj_update(void);
 
 #endif

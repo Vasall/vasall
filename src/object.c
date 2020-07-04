@@ -1,11 +1,13 @@
 #include "object.h"
 #include "world.h"
+#include "network.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 
+/* Redefine global object-wrapper */
 struct object_table objects;
 
 
@@ -15,6 +17,8 @@ extern int obj_init(void)
 
 	for(i = 0; i < OBJ_SLOTS; i++)
 		objects.mask[i] = OBJ_M_NONE;
+
+	objects.num = 0;
 
 	return 0;
 }
@@ -80,6 +84,8 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 	z = objects.pos[slot][2];
 	objects.pos[slot][1] = wld_get_height(x, z) + 2.2;
 	obj_update_matrix(slot);
+
+	objects.num++;
 	return slot;
 }
 
@@ -90,6 +96,8 @@ extern void obj_del(short slot)
 		return;
 
 	objects.mask[slot] = OBJ_M_NONE;
+
+	objects.num--;
 }
 
 
@@ -131,6 +139,22 @@ extern int obj_mod(short slot, short attr, void *data, int len)
 }
 
 
+extern short obj_sel_id(uint32_t id)
+{
+	short i;
+
+	for(i = 0; i < OBJ_SLOTS; i++) {
+		if(objects.mask[i] == OBJ_M_NONE)
+			continue;
+
+		if(objects.id[i] == id)
+			return i;
+	}
+
+	return -1;
+}
+
+
 extern void obj_update_matrix(short slot)
 {
 	float rot;
@@ -152,21 +176,20 @@ extern void obj_update_matrix(short slot)
 }
 
 
-extern short obj_list(void *ptr, short *num)
+extern int obj_list(void *ptr, short *num, short max)
 {
 	short obj_num = 0;
 	short i;
 
-	char *buf_ptr = (char *)ptr + 2;
+	char *buf_ptr = (char *)ptr;
 
-	for(i = 0; i < OBJ_SLOTS; i++) {
+	for(i = 0; i < OBJ_SLOTS && obj_num < max; i++) {
 		if(objects.mask[i] == OBJ_M_NONE)
 			continue;
 
 		/* Write the id */
-		*buf_ptr = 0;
-		memcpy(buf_ptr + 1, &objects.id[i], 4);
-		buf_ptr += 5;
+		memcpy(buf_ptr, &objects.id[i], 4);
+		buf_ptr += 4;
 
 		obj_num++;
 	}	
@@ -177,8 +200,148 @@ extern short obj_list(void *ptr, short *num)
 	if(num != NULL)
 		*num = obj_num;
 
-	memcpy(ptr, &obj_num, 2);
-	return 2 + (obj_num * sizeof(uint32_t));
+	return obj_num * sizeof(uint32_t);
+}
+
+
+extern int obj_collect(void *in, short in_num, void **out, short *out_num)
+{
+	int i;
+	uint32_t *id_ptr = (uint32_t *)in;
+	int written = 0;
+	short slot;
+
+	char *out_buf;
+	char *ptr;
+
+	short num = 0;
+
+	if(!(out_buf = malloc(in_num * 44)))
+		return 0;
+	
+	ptr = out_buf;
+
+	for(i = 0; i < in_num; i++) {
+		if((slot = obj_sel_id(*id_ptr)) >= 0) {
+			/* Copy object-id */
+			memcpy(ptr, id_ptr, 4);
+			ptr += 4;
+
+			/* Copy object-mask */
+			memcpy(ptr, &objects.mask[slot], 4);
+			ptr += 4;
+
+			/* Copy the position */
+			memcpy(ptr, objects.pos[slot], 12);
+			ptr += 12;
+
+			/* Copy the velocity of the object */
+			memcpy(ptr, objects.vel[slot], 12);
+			ptr += 12;
+
+			/* Copy the acceleration of the object */
+			memcpy(ptr, objects.acl[slot], 12);
+			ptr += 12;
+
+			/* Increment the number of objects */
+			num++;
+
+			/* Update number of bytes written */
+			written += 44;
+		}
+
+		/* Go to the next id */
+		id_ptr++;
+	}
+
+	*out = out_buf;
+	if(out_num) *out_num = num;
+	return written;
+}
+
+
+extern int obj_submit(void *in)
+{
+	uint32_t id;
+	uint32_t mask;
+	vec3_t pos;
+	short slot;
+	short mdl;
+	char *ptr = in;
+
+	memcpy(&id,   ptr,       4);
+	memcpy(&mask, ptr +  4,  4);
+	memcpy(pos,   ptr +  8, 12);
+
+	mdl = mdl_get("plr");
+
+	if((slot = obj_set(id, mask, pos, mdl, NULL, 0)) < 0)
+		return -1;
+
+	memcpy(objects.vel[slot], ptr + 20, 12);
+	memcpy(objects.acl[slot], ptr + 32, 12);
+
+	printf("Added object %d at slot %d\n", id, slot);
+	return 0;
+}
+
+
+extern int obj_collect_updates(void **out, short *out_num)
+{
+	short i;
+	short num = 0;
+	char *buf;
+	char *ptr;
+	int written = 0;
+
+	if(!(buf = malloc(objects.num * 40)))
+		return -1;
+
+	ptr = buf;
+
+	for(i = 0; i < objects.num; i++) {
+		if(objects.mask[i] == OBJ_M_NONE)
+			continue;
+
+		memcpy(ptr, &objects.id[i], 4);
+		memcpy(ptr + 4, objects.pos, 12);
+		memcpy(ptr + 16, objects.vel, 12);
+		memcpy(ptr + 28, objects.acl, 12);
+
+		ptr += 40;
+		written += 40;
+		num++;
+	}
+
+	*out = buf;
+	*out_num = num;
+	return written;
+}
+
+
+extern int obj_update(void *in, short num)
+{
+	uint32_t id;
+	short i;
+	char *ptr = in;
+	short slot;
+
+	for(i = 0; i < num; i++) {
+		memcpy(&id, ptr, 4);
+
+		if(id == network.id)
+			continue;
+
+		if((slot = obj_sel_id(id)) >= 0) {
+			memcpy(objects.pos[slot], ptr +  4, 12);
+			memcpy(objects.vel[slot], ptr + 16, 12);
+			memcpy(objects.acl[slot], ptr + 28, 12);
+		}
+
+		ptr += 40;
+	}
+
+	return 0;
 }
 
 
@@ -190,6 +353,7 @@ extern void obj_print(short slot)
 	printf("Display object %d:\n", slot);
 	printf("Pos: "); vec3_print(objects.pos[slot]); printf("\n");
 	printf("Vel: "); vec3_print(objects.vel[slot]); printf("\n");
+	printf("Acl: "); vec3_print(objects.acl[slot]); printf("\n");
 	printf("Dir: "); vec3_print(objects.dir[slot]); printf("\n");
 }
 

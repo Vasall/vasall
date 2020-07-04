@@ -14,9 +14,11 @@
 #define OBJ_M_NONE     0x00
 #define OBJ_M_MOVE     0x01
 #define OBJ_M_MODEL    0x02
-#define OBJ_M_DATA     0x03
+#define OBJ_M_DATA     0x04
+#define OBJ_M_PEER     0x08
 
 #define OBJ_M_ENTITY (OBJ_M_MOVE|OBJ_M_MODEL)
+#define OBJ_M_PLAYER (OBJ_M_MOVE|OBJ_M_MODEL|OBJ_M_PEER)
 
 enum object_attr {
 	OBJ_ATTR_ID =     0x00,
@@ -30,6 +32,8 @@ enum object_attr {
 };
 
 struct object_table {
+	short num;
+	
 	uint32_t  mask[OBJ_SLOTS];
 	uint32_t  id[OBJ_SLOTS];
 	vec3_t    pos[OBJ_SLOTS];
@@ -105,7 +109,7 @@ extern int obj_mod(short slot, short attr, void *data, int len);
  *
  * @id: the id to search for
  *
- * Returns: The slot of the obejct with the id or -1 if an error occurred
+ * Returns: The slot of the object with the id or -1 if an error occurred
  */
 extern short obj_sel_id(uint32_t id);
 
@@ -122,12 +126,48 @@ extern void obj_update_matrix(short slot);
  * Get a list of all object-ids and write them to the pointer.
  *
  * @ptr: Address to write the object-id-list to
- * @size: The number of objects written to the pointer
+ * @num: The number of objects written to the pointer
+ * @max: The max-amount of objects to write to the pointer
  *
- * Returns: The number of bytes written to the pointer
+ * Returns: The number of bytes written to the pointer or -1 if an error
+ * 	occurred
  */
-extern short obj_list(void *ptr, short *num);
+extern int obj_list(void *ptr, short *num, short max);
 
+
+/*
+ * Get the data for the given ids.
+ * Format:
+ *  0 (1), [ID] (4), [Mask] (4), [Pos] (12), [Vel] (12), [Acl] (12)
+ *
+ *
+ * @in: The list of ids to collect the data for
+ * @in_num: The number of ids
+ * @out: A ponter to attach the data to
+ *
+ * Returns: The number of bytes written to out or -1 if an error occurred
+ */
+extern int obj_collect(void *in, short in_num, void **out, short *out_num);
+
+
+/*
+ * Submit a single object into the object-list.
+ *
+ * @in: The object-buffer
+ */
+extern int obj_submit(void *in);
+
+
+/*
+ * 
+ */
+extern int obj_collect_updates(void **out, short *out_num);
+
+
+/*
+ * Update the objects.
+ */
+extern int obj_update(void *in, short num);
 
 /*
  * Print data about an object in the terminal.

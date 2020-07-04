@@ -50,10 +50,10 @@ INSTALLATION
     $ svn checkout https://github.com/miniupnp/miniupnp/trunk/miniupnpc
 
   Build the module using the following command:
-    $ cd miniupnpc && make && cd ../../
+    $ cd miniupnpc && make && cd ..
     
   Compile the networking-library:
-    $ mkdir obj && make && cd ..
+    $ mkdir obj && make && cd ../..
 
   Compile the sourcecode:
     $ make

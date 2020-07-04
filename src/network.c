@@ -210,7 +210,7 @@ extern int net_update(void)
 		}
 
 		network.count++;
-		if(network.count >= 40) {
+		if(network.count >= 80) {
 			char pck[980];
 			int tmp;
 			uint32_t ti_mod = time(NULL) % 0xffffffff;

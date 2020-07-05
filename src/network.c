@@ -97,8 +97,9 @@ extern int net_init(void)
 				running = 0;
 				break;
 			}
-			else if(evt.type == LCP_FAILED || 
-					evt.type == LCP_TIMEDOUT) {
+			else if(evt.type == LCP_UNAVAILABLE ||
+					evt.type == LCP_FAILED) {
+				ERR_LOG(("Failed to contact server"));
 				goto err_close_ctx;
 			}
 			lcp_del_evt(&evt);

@@ -103,10 +103,8 @@ extern short mdl_set(char *name)
 		return -1;
 	}
 
-	if(!(mdl = malloc(sizeof(struct model)))) {
-		ERR_LOG(("Failed to allocate memory"));
+	if(!(mdl = malloc(sizeof(struct model))))
 		return -1;
-	}
 
 	/* Copy the key for this model */
 	strcpy(mdl->name, name);
@@ -199,17 +197,13 @@ extern void mdl_set_mesh(short slot, int idxnum, int *idx, int vtxnum,
 
 	/* Allocate memory for the indices */
 	mdl->idx_num = idxnum;
-	if(!(mdl->idx_buf = malloc(idxnum * sizeof(int)))) {
-		ERR_LOG(("Failed to allocate memory"));
+	if(!(mdl->idx_buf = malloc(idxnum * sizeof(int))))
 		goto err_set_failed;
-}
 
 	/* Allocate memory for the vertex-data */
 	mdl->vtx_num = vtxnum;
-	if(!(mdl->vtx_buf = malloc(vtxnum * vtx_size))) {
-		ERR_LOG(("Failed to allocate memory"));
+	if(!(mdl->vtx_buf = malloc(vtxnum * vtx_size)))
 		goto err_set_failed;
-	}
 
 	/* Copy the indices into the allocated index-buffer */
 	memcpy(mdl->idx_buf, idx, idxnum * sizeof(int));

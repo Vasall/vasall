@@ -1,6 +1,7 @@
 #include "text.h"
 #include "utf8.h"
 #include "utils.h"
+#include "error.h"
 
 #include <stdlib.h>
 
@@ -36,11 +37,15 @@ extern short txt_font_ttf(char *pth, int size)
 {
 	TTF_Font *font;
 
-	if(texts.font_num >= (FONT_NUM - 1))
+	if(texts.font_num >= (FONT_NUM - 1)) {
+		ERR_LOG(("Font-table is already full"));
 		return -1;
+	}
 
-	if(!(font = TTF_OpenFont(pth, size)))
+	if(!(font = TTF_OpenFont(pth, size))) {
+		ERR_LOG(("Failed to load font %s", pth));
 		return -1;
+	}
 
 	texts.fonts[texts.font_num] = font;
 	texts.font_num++;

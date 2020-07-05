@@ -92,7 +92,8 @@ extern short shd_set(char *name, char *vs, char *fs)
 	glGetShaderiv(vshd, GL_COMPILE_STATUS, &success);
 	if(!success) {
 		glGetShaderInfoLog(vshd, 512, NULL, infoLog);
-		ERR_LOG(("Failed to compile shader %s", infoLog));
+		ERR_LOG(("Failed to compile shader"));
+		printf("  %s: %s", vs, infoLog);
 		goto err_cleanup;
 	}
 
@@ -112,7 +113,8 @@ extern short shd_set(char *name, char *vs, char *fs)
 	glGetShaderiv(fshd, GL_COMPILE_STATUS, &success);
 	if(!success) {
 		glGetShaderInfoLog(fshd, 512, NULL, infoLog);
-		ERR_LOG(("Failed to compile shader %s", infoLog));
+		ERR_LOG(("Failed to compile shader"));
+		printf("  %s: %s", fs, infoLog);
 		goto err_cleanup;
 	}
 

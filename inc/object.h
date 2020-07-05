@@ -34,18 +34,20 @@ enum object_attr {
 struct object_table {
 	short num;
 	
-	uint32_t  mask[OBJ_SLOTS];
-	uint32_t  id[OBJ_SLOTS];
-	vec3_t    pos[OBJ_SLOTS];
-	vec3_t    vel[OBJ_SLOTS];
-	vec3_t    acl[OBJ_SLOTS];
-	vec3_t    dir[OBJ_SLOTS];
-	short     model[OBJ_SLOTS];
-	short     anim[OBJ_SLOTS];
-	float     prog[OBJ_SLOTS];
-	mat4_t    mat[OBJ_SLOTS];
-	int       len[OBJ_SLOTS];
-	char      buf[OBJ_SLOTS][OBJ_DATA_MAX];
+	uint32_t   mask[OBJ_SLOTS];
+	uint32_t   id[OBJ_SLOTS];
+	vec3_t     pos[OBJ_SLOTS];
+	vec3_t     vel[OBJ_SLOTS];
+	vec3_t     acl[OBJ_SLOTS];
+	vec3_t     dir[OBJ_SLOTS];
+	short      model[OBJ_SLOTS];
+	short      anim[OBJ_SLOTS];
+	float      prog[OBJ_SLOTS];
+	mat4_t     mat[OBJ_SLOTS];
+	int        len[OBJ_SLOTS];
+	char       buf[OBJ_SLOTS][OBJ_DATA_MAX];
+
+	uint16_t   dif[OBJ_SLOTS];
 };
 
 

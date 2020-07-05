@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include "error.h"
 #include "filesystem.h"
 #include "core.h"
 #include "setup.h"
@@ -14,15 +15,19 @@ int main(void)
 	srand(time(0));
 
 	/* Initialize the network-system */
-	if(net_init() < 0)
+	if(net_init() < 0) {
+		ERR_LOG(("Failed to initialize the network-wrapper"));
 		return 0;
+	}
 
 	printf("Internal: %s\n", lcp_str_ip(AF_INET6, &network.ctx->int_addr));
 	printf("External: %s\n", lcp_str_ip(AF_INET6, &network.ctx->ext_addr));
 
 	/* Initialize the sdl-subsystem */
-	if(sdl_init() < 0)
+	if(sdl_init() < 0) {
+		ERR_LOG(("Failed to initialize SDL-subsystem"));
 		goto err_close_net;
+	}
 
 	/* Initialize asset-table(shaders, textures, fonts) */
 	if(ast_init() < 0)

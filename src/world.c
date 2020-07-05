@@ -1,16 +1,19 @@
 #include "world.h"
 #include "mbasic.h"
 #include "world_utils.h"
+#include "error.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 
-struct world world;
+/* Redefine the global world-wrapper */
+struct world_wrapper world;
 
 
 static int twodim(int x, int y, int w) {return y * w + x;}
+
 
 extern int wld_init(void)
 {
@@ -22,13 +25,11 @@ extern int wld_init(void)
 	del[0] = world.size[0] / 2.0;
 	del[1] = world.size[1] / 2.0;	
 
-	memset(world.pos, 0, VEC3_SIZE);
-
-	world.min_pos[0] = world.pos[0] - del[0];
-	world.min_pos[1] = world.pos[2] - del[1];
+	world.min_pos[0] = -del[0];
+	world.min_pos[1] = -del[1];
 	
-	world.max_pos[0] = world.pos[0] + del[0];
-	world.max_pos[1] = world.pos[2] + del[1];
+	world.max_pos[0] = del[0];
+	world.max_pos[1] = del[1];
 	
 	world.ptnum = (WORLD_SIZE * WORLD_SIZE);
 	if(!(world.heights = malloc(sizeof(float) * (world.ptnum))))
@@ -37,9 +38,15 @@ extern int wld_init(void)
 	memset(world.heights, 0, world.ptnum);
 	memset(&world.rot, 0, sizeof(vec3_t));
 
-	wld_gen_terrain();
+	if(wld_gen_terrain() < 0) {
+		ERR_LOG(("Failed to generate terrain"));	
+		free(world.heights);
+		return -1;
+	}
+
 	return 0;
 }
+
 
 extern void wld_close(void)
 {
@@ -49,12 +56,14 @@ extern void wld_close(void)
 	free(world.heights);
 }
 
+
 extern void wld_render(void) 
 {
 	mat4_t idt;
 	mat4_idt(idt);
 	mdl_render(world.terrain, idt);
 }
+
 
 extern float wld_get_height(float x, float z)
 {
@@ -127,6 +136,7 @@ extern float wld_get_height(float x, float z)
 	return ret;
 }
 
+
 extern int wld_gen_terrain(void)
 {
 	int vtx_num, x, z, w, count, i, j, idx_num, *idx = NULL;
@@ -152,17 +162,15 @@ extern int wld_gen_terrain(void)
 	if(!(hImg = loadPPMHeightmap("res/images/heightmap_256.ppm", 256)))
 		goto err_free;
 
-	world.size[0] = 40;
-	world.size[1] = 40;
+	world.size[0] = WORLD_SIZE;
+	world.size[1] = WORLD_SIZE;
 
 	heights = world.heights;
 	for(x = 0; x < world.size[0]; x++) {
 		for(z = 0; z < world.size[1]; z++) {
 			i = twodim(z, x, world.size[1]);
-#if 0
 			heights[i] = (40.0 * hImg[x][z] + 10.0) * 1.0;
-#endif
-			heights[i] = 0.0;
+			heights[i] = 0;
 		}
 	}
 

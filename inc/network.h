@@ -12,13 +12,13 @@
 
 #define PEER_M_NONE        0x00
 #define PEER_M_SET         0x01
-#define PEER_M_CONNECTED   0x02
+#define PEER_M_CON         0x02
 
 #define PEER_S_SET         0x01
-#define PEER_S_AWAIT       0x02
-#define PEER_S_PENDING     0x04
-#define PEER_S_CONNECTED   0x08
-#define PEER_S_SYNCED      0x10
+#define PEER_S_AWA         0x02
+#define PEER_S_PEN         0x04
+#define PEER_S_CON         0x08
+#define PEER_S_SYN         0x10
 #define PEER_S_6           0x20
 #define PEER_S_7           0x40
 #define PEER_S_8           0x80
@@ -56,7 +56,7 @@ struct cache_entry {
 /*
  * Define the IPv6-addresses and ports of the default servers.
  */
-#define USE_LOCAL 0
+#define USE_LOCAL 1
 
 #if !USE_LOCAL
 #define MAIN_IP        "0:0:0:0:0:ffff:4e2e:bbb1"

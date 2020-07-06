@@ -50,7 +50,6 @@ extern short txt_font_ttf(char *pth, int size)
 	texts.fonts[texts.font_num] = font;
 	texts.font_num++;
 	return texts.font_num - 1;
-
 }
 
 

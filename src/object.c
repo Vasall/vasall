@@ -103,32 +103,39 @@ extern void obj_del(short slot)
 
 extern int obj_mod(short slot, short attr, void *data, int len)
 {
-	if(obj_check_slot(slot))
-		return -1;
-
-	if(!objects.mask[slot])
+	if(obj_check_slot(slot) || objects.mask[slot] == OBJ_M_NONE)
 		return -1;
 
 	switch(attr) {
 		case(OBJ_ATTR_MASK):
 			objects.mask[slot] = *(uint32_t *)data;
+			objects.dif[slot] |= (1 << OBJ_ATTR_MASK);
 			break;
 
 		case(OBJ_ATTR_POS):
 			vec3_cpy(objects.pos[slot], data);
+			objects.dif[slot] |= (1 << OBJ_ATTR_POS);
 			break;
 		
 		case(OBJ_ATTR_VEL):
 			vec3_cpy(objects.vel[slot], data);
+			objects.dif[slot] |= (1 << OBJ_ATTR_VEL);
 			break;
 		
+		case(OBJ_ATTR_ACL):
+			vec3_cpy(objects.acl[slot], data);
+			objects.dif[slot] |= (1 << OBJ_ATTR_ACL);
+			break;
+
 		case(OBJ_ATTR_DIR):
 			vec3_cpy(objects.dir[slot], data);
+			objects.dif[slot] |= (1 << OBJ_ATTR_DIR);
 			break;
 		
 		case(OBJ_ATTR_BUF):
 			objects.len[slot] = len;
 			memcpy(objects.buf[slot], data, len);
+			objects.dif[slot] |= (1 << OBJ_ATTR_BUF);
 			break;
 
 		default:

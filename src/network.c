@@ -42,6 +42,7 @@ extern int net_init(void)
 	struct sockaddr_in6 disco;
 	struct sockaddr_in6 proxy;
 	int tmp = sizeof(struct sockaddr_in6);
+	struct sockaddr_in6 *addr;
 	struct lcp_evt evt;
 	char running = 1;
 
@@ -82,11 +83,11 @@ extern int net_init(void)
 	network.cache = NULL;
 	network.count = 0;
 
-	printf("Connect to server: %s\n", lcp_str_addr6(&network.main_addr));
+	addr = &network.main_addr;
+	printf("Connect to server: %s\n", lcp_str_addr6(addr));
 
 	/* Connect to server */
-	if(!(lcp_connect(network.ctx, -1, &network.main_addr, LCP_CON_F_DIRECT,
-					LCP_F_ENC)))
+	if(!(lcp_connect(network.ctx, -1, addr, LCP_CON_F_DIRECT, LCP_F_ENC)))
 		goto err_close_ctx;
 
 	while(running) {
@@ -97,8 +98,7 @@ extern int net_init(void)
 				running = 0;
 				break;
 			}
-			else if(evt.type == LCP_UNAVAILABLE ||
-					evt.type == LCP_FAILED) {
+			else if(evt.type == LCP_UNAVAILABLE) {
 				ERR_LOG(("Failed to contact server"));
 				goto err_close_ctx;
 			}
@@ -131,6 +131,7 @@ extern int net_update(void)
 	lcp_update(network.ctx);
 
 	while(lcp_pull_evt(network.ctx, &evt)) {
+		/* Connected to a peer */
 		if(evt.type == LCP_CONNECTED) {
 			short slot;
 			struct in6_addr addr;
@@ -148,8 +149,8 @@ extern int net_update(void)
 				int tmp;
 
 				/* Update entry-mask */
-				tbl->mask[slot] |= PEER_M_CONNECTED;
-				tbl->status[slot] = PEER_S_CONNECTED;
+				tbl->mask[slot] |= PEER_M_CON;
+				tbl->status[slot] = PEER_S_CON;
 
 				/* Update num of connected and pending peers */
 				tbl->con_num++;
@@ -169,11 +170,17 @@ extern int net_update(void)
 						tmp + size + 2);
 			}
 		}
+		/* Received a packet */
 		else if(evt.type == LCP_RECEIVED) {
 			/* Handle packets if they seem valid */
 			if(evt.len >= REQ_HDR_SIZE)
 				peer_handle(&evt);
 		}
+		/* Failed to deliver a packet */
+		else if(evt.type == LCP_FAILED) {
+
+		}
+		/* Peer timed out */
 		else if(evt.type == LCP_TIMEDOUT) {
 			short slot;
 			struct in6_addr addr;
@@ -229,7 +236,7 @@ extern int net_update(void)
 			free(lst_buf);
 
 			for(i = 0; i < PEER_SLOTS; i++) {
-				if((tbl->mask[i] & PEER_M_CONNECTED) != PEER_M_CONNECTED)
+				if((tbl->mask[i] & PEER_M_CON) != PEER_M_CON)
 					continue;
 
 				lcp_send(network.ctx, &tbl->addr[i], pck,
@@ -417,7 +424,7 @@ extern int peer_handle(struct lcp_evt *evt)
 				return -1;
 
 			/* Update slot-mask */
-			tbl->status[slot_num] = PEER_S_PENDING;
+			tbl->status[slot_num] = PEER_S_PEN;
 
 			/* Set attributes */
 			tbl->addr[slot_num] = addr;
@@ -590,7 +597,7 @@ extern int net_add_peer(uint32_t *id)
 	for(i = 0; i < PEER_SLOTS; i++) {
 		if(tbl->mask[i] == PEER_M_NONE) {
 			tbl->mask[i] = PEER_M_SET;
-			tbl->status[i] = PEER_S_AWAIT;
+			tbl->status[i] = PEER_S_AWA;
 			tbl->id[i] = *id;
 
 			tbl->num++;
@@ -704,7 +711,7 @@ extern int net_con_peers(void)
 			continue;
 
 		/* If the peers are already connected */
-		if(tbl->status[i] >= PEER_S_PENDING)
+		if(tbl->status[i] >= PEER_S_PEN)
 			continue;
 
 		/* Get an external port to establish the connection with */
@@ -714,7 +721,7 @@ extern int net_con_peers(void)
 		port = network.ctx->sock.ext_port[slot];
 
 		/* Update mask */
-		tbl->status[i] = PEER_S_AWAIT;
+		tbl->status[i] = PEER_S_AWA;
 
 		/* Update number of pending connections */
 		tbl->pen_num++;

@@ -30,44 +30,64 @@ int main(void)
 	}
 
 	/* Initialize asset-table(shaders, textures, fonts) */
-	if(ast_init() < 0)
+	if(ast_init() < 0) {
+		ERR_LOG(("Failed to initialize asset-tables"));
 		goto err_close_sdl;
+	}
 
 	/* Initialize the model-table */
-	if(mdl_init() < 0)
+	if(mdl_init() < 0) {
+		ERR_LOG(("Initialize the model-table"));
 		goto err_free_ast;
+	}
 
 	/* Initialize the window and opengl-context */
-	if(win_init() < 0)
+	if(win_init() < 0) {
+		ERR_LOG(("Failed to setup window"));
 		goto err_close_mdl;
+	}
 
 	/* Initialize the input-device-table and input-table */
-	if(inp_init() < 0)
+	if(inp_init() < 0) {
+		ERR_LOG(("Setup the input-handler"));
 		goto err_close_window;
+	}
 
 	/* Load the basic resources (fonts, shaders, textures, models) */
-	if(load_resources() < 0)
+	if(load_resources() < 0) {
+		ERR_LOG(("Failed to load resources"));
 		goto err_close_input;
+	}
 
 	/* Initialize the camera */
-	if(cam_init(45.0, 800.0 / 600.0, 0.1, 1000.0) < 0)
+	if(cam_init(45.0, 800.0 / 600.0, 0.1, 1000.0) < 0) {
+		ERR_LOG(("Failed to setup camera"));
 		goto err_close_input;
+	}
 
 	/* Initialize the world and world-objects */
-	if(wld_init() < 0)
+	if(wld_init() < 0) {
+		ERR_LOG(("Failed to initialize the world"));
 		goto err_close_camera;
+	}
 
 	/* Initialize the object-table */
-	if(obj_init() < 0)
+	if(obj_init() < 0) {
+		ERR_LOG(("Failed to initialize the object-table"));
 		goto err_close_world;
+	}
 
 	/* Load the user-interface-nodes */
-	if(load_ui() < 0)
+	if(load_ui() < 0) {
+		ERR_LOG(("Failed to load useriterface"));
 		goto err_close_obj;
+	}
 
 	/* Initialize the core */
-	if(core_init() < 0)
+	if(core_init() < 0) {
+		ERR_LOG(("Failed to setup core-handler"));
 		goto err_close_obj;
+	}
 
 	while(core.running) {
 		core_proc_evt();

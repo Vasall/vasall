@@ -19,7 +19,7 @@ extern int cam_init(float aov, float asp, float near, float far)
 	vec3_set(camera.right, 0.0, 0.0, 1.0);
 
 	/* Set the sensitivity of the mouse */
-	camera.sens = 0.5;
+	camera.sens = 0.01;
 
 	/* Calculate the initial distance */
 	camera.dist = vec3_mag(camera.pos);

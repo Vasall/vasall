@@ -19,19 +19,19 @@ extern int wld_init(void)
 {
 	vec2_t del;
 
-	world.size[0] = WORLD_SIZE;
-	world.size[1] = WORLD_SIZE;
+	world.size[0] = CHUNK_SIZE;
+	world.size[1] = CHUNK_SIZE;
 
 	del[0] = world.size[0] / 2.0;
 	del[1] = world.size[1] / 2.0;	
 
 	world.min_pos[0] = -del[0];
 	world.min_pos[1] = -del[1];
-	
+
 	world.max_pos[0] = del[0];
 	world.max_pos[1] = del[1];
-	
-	world.ptnum = (WORLD_SIZE * WORLD_SIZE);
+
+	world.ptnum = (CHUNK_SIZE * CHUNK_SIZE);
 	if(!(world.heights = malloc(sizeof(float) * (world.ptnum))))
 		return -1;
 
@@ -57,9 +57,12 @@ extern void wld_close(void)
 }
 
 
-extern void wld_render(void) 
+extern void wld_render(float interp) 
 {
 	mat4_t idt;
+
+	if(interp) {/* Prevent warning for not using parameter */}
+
 	mat4_idt(idt);
 	mdl_render(world.terrain, idt);
 }
@@ -80,10 +83,8 @@ extern float wld_get_height(float x, float z)
 
 	/* Check if the position is in range */
 	if(map_idx[0] < 0 || map_idx[0] >= world.size[0] ||
-				map_idx[1] < 0 ||
-				map_idx[1] >= world.size[1]) {
+			map_idx[1] < 0 || map_idx[1] >= world.size[1])
 		return 0;
-	}
 
 	heights[0] = world.heights[twodim(map_idx[0], 
 			map_idx[1], world.size[0])];
@@ -99,7 +100,7 @@ extern float wld_get_height(float x, float z)
 
 	if(coord[0] <= (1 - coord[1])) {
 		vec3_t v1, v2, v3;
-	       	
+
 		v1[0] = 0.0;
 		v1[1] = heights[0];
 		v1[2] = 0.0;
@@ -116,7 +117,7 @@ extern float wld_get_height(float x, float z)
 	}
 	else {
 		vec3_t v1, v2, v3;
-	       	
+
 		v1[0] = 1.0;
 		v1[1] = heights[1];
 		v1[2] = 0.0;
@@ -128,7 +129,7 @@ extern float wld_get_height(float x, float z)
 		v3[0] = 0.0;
 		v3[1] = heights[2];
 		v3[2] = 1.0;
-		
+
 		ret = vec3_barry_centric(v1, v2, v3, coord);
 
 	}
@@ -140,8 +141,9 @@ extern float wld_get_height(float x, float z)
 extern int wld_gen_terrain(void)
 {
 	int vtx_num, x, z, w, count, i, j, idx_num, *idx = NULL;
-	float **hImg = NULL, *heights = NULL, xpos, zpos;
+	float *heights = NULL, xpos, zpos;
 	vec3_t *vtx = NULL, *last_row = NULL, *nrm = NULL, *col = NULL;
+	int foo = 1;
 
 	w = world.size[0];
 
@@ -159,17 +161,13 @@ extern int wld_gen_terrain(void)
 	if(!(nrm = calloc(vtx_num, VEC3_SIZE)))
 		goto err_free;
 
-	if(!(hImg = loadPPMHeightmap("res/images/heightmap_256.ppm", 256)))
-		goto err_free;
-
-	world.size[0] = WORLD_SIZE;
-	world.size[1] = WORLD_SIZE;
+	world.size[0] = CHUNK_SIZE;
+	world.size[1] = CHUNK_SIZE;
 
 	heights = world.heights;
 	for(x = 0; x < world.size[0]; x++) {
 		for(z = 0; z < world.size[1]; z++) {
 			i = twodim(z, x, world.size[1]);
-			heights[i] = (40.0 * hImg[x][z] + 10.0) * 1.0;
 			heights[i] = 0;
 		}
 	}
@@ -182,13 +180,13 @@ extern int wld_gen_terrain(void)
 	for(z = 0; z < world.size[1] - 1; z++) {
 		for(x = 0; x < world.size[0] - 1; x++) {
 			vec3_t ctl, ctr, cbl, cbr;
-			
+
 			xpos = x;
 			zpos = z;
 
 			ctl[0] = xpos;
 			ctl[1] = heights[twodim(x, z, world.size[0])];
-		       	ctl[2] = zpos;
+			ctl[2] = zpos;
 
 			ctr[0] = xpos + 1.0;
 			ctr[1] = heights[twodim(x + 1, z, world.size[0])];
@@ -237,39 +235,17 @@ extern int wld_gen_terrain(void)
 	/* Calculate the colors for the vertices */
 	for(j = 0; j < idx_num - 2; j += 3) {
 		vec3_t col_tmp;
-		vec3_t v, mid;
-		vec3_set(mid, 0.0, 0.0, 0.0);
 
-		for(i = 0; i < 3; i++) {
-			vec3_cpy(v, vtx[idx[j + i]]);
-			vec3_add(mid, v, mid);
+		foo++;
+		if(foo % 2 == 0) {
+			col_tmp[0] = 0.0;
+			col_tmp[1] = 0.0;
+			col_tmp[2] = 0.0;
 		}
-		vec3_inv_scl(mid, 3, mid);
-
-		if (mid[1] <= 15) {
-			col_tmp[0] = 0.79;
-			col_tmp[1] = 0.69;
-			col_tmp[2] = 0.39;	
-		}
-		else if (mid[1] > 15 && mid[1] <= 20) {
-			col_tmp[0] = 0.53;
-			col_tmp[1] = 0.72;
-			col_tmp[2] = 0.32;
-		}
-		else if (mid[1] > 20 && mid[1] <= 30) {
-			col_tmp[0] = 0.31;
-			col_tmp[1] = 0.67;
-			col_tmp[2] = 0.36;
-		}
-		else if (mid[1] > 30 && mid[1] <= 35) {
-			col_tmp[0] = 0.47;
-			col_tmp[1] = 0.47;
-			col_tmp[2] = 0.47;
-		}
-		else {	
-			col_tmp[0] = 0.78;
-			col_tmp[1] = 0.78;
-			col_tmp[2] = 0.82;
+		else {
+			col_tmp[0] = 1.0;
+			col_tmp[1] = 1.0;
+			col_tmp[2] = 1.0;
 		}
 
 		memcpy(col[idx[j]], col_tmp, VEC3_SIZE);
@@ -278,7 +254,7 @@ extern int wld_gen_terrain(void)
 	/* Calculate the normal-vectors */
 	for(i = 0; i < idx_num - 2; i += 3) {
 		vec3_t v1, v2, v3, del1, del2, nrm_tmp;
-		
+
 		vec3_cpy(v1, vtx[idx[i]]);
 		vec3_cpy(v2, vtx[idx[i + 1]]);
 		vec3_cpy(v3, vtx[idx[i + 2]]);
@@ -296,10 +272,9 @@ extern int wld_gen_terrain(void)
 	/* Allocate memory for the model-struct */
 	if((world.terrain = mdl_set("wld_")) < 0)
 		goto err_free;
-	
+
 	mdl_set_shader(world.terrain, shd_get("col"));
-	mdl_set_mesh(world.terrain, idx_num, (int32_t *)idx, vtx_num, vtx, 
-			nrm, col, 0);
+	mdl_set_mesh(world.terrain, idx_num, idx, vtx_num, vtx, nrm, col, 0);
 
 	if(vtx) free(vtx);
 	if(col) free(col);

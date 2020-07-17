@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 /* The request header */
 struct req_hdr {
@@ -73,10 +74,11 @@ struct req_hdr {
 #define REQ_OP_DELETE       0x0b  /* Delete user from database                */
 
 
-#define REQ_OP_SYNC         0x11  /* Syncronize the object list of two peers  */
-#define REQ_OP_REQUEST      0x12  /* Request data about certain objects       */
-#define REQ_OP_SUBMIT       0x13  /* Submit a list of objects to a peer       */
-#define REQ_OP_UPDATE       0x14  /* Send a packet containing object-updates  */
+#define REQ_OP_EXCHANGE     0x11  /* Exchange peer-data                       */
+#define REQ_OP_SYNC         0x12  /* Syncronize the object list of two peers  */
+#define REQ_OP_REQUEST      0x13  /* Request data about certain objects       */
+#define REQ_OP_SUBMIT       0x14  /* Submit a list of objects to a peer       */
+#define REQ_OP_UPDATE       0x15  /* Send a packet containing object-updates  */
 
 /*
  * Write a header to the given buffer, which has to be allocated already to fit
@@ -90,14 +92,13 @@ struct req_hdr {
  * @op: The op-code for this packet
  * @src_id: The peer-id from where the packet originated (0 if unknown)
  * @dst_id: The peer-id to where the packet should be relayed to
- * @mod: The modulator to make the key more secure. (0 if key is unknown)
  * @key: The key-buffer, required mod to be greater than 0
  *
  * Returns: The amount of bytes written to the pointer or -1 if an error
  * 	occurred
  */
 extern int hdr_set(char *out, uint8_t op, uint32_t dst_id, 
-		uint32_t src_id, uint32_t mod, uint8_t *key);
+		uint32_t src_id, uint8_t *key);
 
 
 /*
@@ -133,7 +134,7 @@ static uint32_t _hash(uint8_t *buf, int l)
 
 
 extern int hdr_set(char *out, uint8_t op, uint32_t dst_id, 
-		uint32_t src_id, uint32_t mod, uint8_t *key)
+		uint32_t src_id, uint8_t *key)
 {
 	uint8_t key_buf[20];
 	struct req_hdr hdr;
@@ -145,15 +146,16 @@ extern int hdr_set(char *out, uint8_t op, uint32_t dst_id,
 	hdr.dst_id = dst_id;
 	hdr.src_id = src_id;
 
-	if(mod > 0) {	
+	if(key != NULL) {	
+		uint32_t ti_mod = time(NULL) % 0xffffffff; 
 		uint32_t key_hash;
 		memset(key_buf, 0, 16);
 		memcpy(key_buf, key, 16);
-		memcpy(key_buf + 16, &mod, 4);
+		memcpy(key_buf + 16, &ti_mod, 4);
 		key_hash = _hash(key_buf, 20);
 
 		hdr.flg = hdr.flg | REQ_F_KEY;
-		hdr.ti_mod = mod;
+		hdr.ti_mod = ti_mod;
 		hdr.src_key = key_hash;
 
 		written = REQ_HDR_SIZEW;

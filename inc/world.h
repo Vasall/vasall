@@ -4,7 +4,8 @@
 #include "asset.h"
 #include "model.h"
 
-#define WORLD_SIZE 256
+#define CHUNK_SIZE 128
+
 
 struct world_wrapper {
 	int2_t size;
@@ -37,8 +38,10 @@ extern void wld_close(void);
 
 /*
  * Render the terrain and the static objects in the world.
+ *
+ * @interp: The interpolation-factor
  */
-extern void wld_render(void);
+extern void wld_render(float interp);
 
 
 /*

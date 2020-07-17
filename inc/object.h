@@ -18,7 +18,7 @@
 #define OBJ_M_PEER     0x08
 
 #define OBJ_M_ENTITY (OBJ_M_MOVE|OBJ_M_MODEL)
-#define OBJ_M_PLAYER (OBJ_M_MOVE|OBJ_M_MODEL|OBJ_M_PEER)
+#define OBJ_M_PLAYER (OBJ_M_ENTITY|OBJ_M_PEER)
 
 enum object_attr {
 	OBJ_ATTR_ID =     0x00,
@@ -26,9 +26,7 @@ enum object_attr {
 	OBJ_ATTR_POS =    0x02,
 	OBJ_ATTR_VEL =    0x03,
 	OBJ_ATTR_ACL =    0x04,
-	OBJ_ATTR_DIR =    0x05,
-	OBJ_ATTR_BUF =    0x06
-
+	OBJ_ATTR_BUF =    0x05
 };
 
 struct object_table {
@@ -47,7 +45,7 @@ struct object_table {
 	int        len[OBJ_SLOTS];
 	char       buf[OBJ_SLOTS][OBJ_DATA_MAX];
 
-	uint16_t   dif[OBJ_SLOTS];
+	int64_t    last[OBJ_SLOTS];
 };
 
 
@@ -125,7 +123,8 @@ extern void obj_update_matrix(short slot);
 
 
 /*
- * Get a list of all object-ids and write them to the pointer.
+ * Get a list of all object-ids and write them to the pointer. Note that the
+ * first two written bytes are the number of objects.
  *
  * @ptr: Address to write the object-id-list to
  * @num: The number of objects written to the pointer
@@ -157,7 +156,7 @@ extern int obj_collect(void *in, short in_num, void **out, short *out_num);
  *
  * @in: The object-buffer
  */
-extern int obj_submit(void *in);
+extern int obj_submit(void *in, int64_t ts);
 
 
 /*
@@ -189,7 +188,9 @@ extern void obj_sys_update(float delt);
 
 /*
  * Render all objects in the object-table.
+ *
+ * @interp: The interpolation-factor
  */
-extern void obj_sys_render(void);
+extern void obj_sys_render(float interp);
 
 #endif

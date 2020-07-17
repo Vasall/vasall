@@ -244,13 +244,11 @@ void INPUT_ONTEXTINPUT(ui_node *node, SDL_Event *evt)
 		return;
 	}
 
-	if(u8_strlen(ele->buffer) >= ele->limit - 1) {
+	if(u8_strlen(ele->buffer) >= ele->limit - 1)
 		return;
-	}
 
-	if(u8_strins(ele->buffer, evt->text.text, ele->pos) < 0) {
+	if(u8_strins(ele->buffer, evt->text.text, ele->pos) < 0)
 		return;
-	}
 
 	ele->pos++;
 

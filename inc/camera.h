@@ -116,8 +116,8 @@ extern void cam_zoom(int val);
  * Change the rotation of the camera. This function will then update the
  * view-matrix of the camera.
  *
- * @d_yaw: The delta-yaw value
- * @d_pitch: The delta pitch value
+ * @d_yaw: The delta-yaw value (up and down)
+ * @d_pitch: The delta pitch value (left and right)
  */
 extern void cam_rot(float d_yaw, float d_pitch);
 

@@ -18,6 +18,9 @@ typedef int int2_t[2];
 #define INT3 (sizeof(int)*3)
 typedef int int3_t[3];
 
+#define SHORT2 (sizeof(short)*2)
+typedef short short2_t[2];
+
 /*
  * Set the values of a 3d-vector.
  *

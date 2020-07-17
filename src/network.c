@@ -67,9 +67,15 @@ extern int net_init(void)
 	if(inet_pton(AF_INET6, PROXY_IP, &proxy.sin6_addr) < 0)
 		return -1;
 
+#if 0
 	/* Initialize the LCP-context */
 	if(!(network.ctx = lcp_init(rand() % 3000 + 10000, 0, 0, &disco, &proxy)))
 		return -1;
+#else
+	/* Initialize the LCP-context */
+	if(!(network.ctx = lcp_init(rand() % 3000 + 10000, 0, LCP_NET_F_OPEN, &disco, &proxy)))
+		return -1;
+#endif
 
 	/* Set initial values */
 	network.status = 0;
@@ -143,10 +149,9 @@ extern int net_update(void)
 			/* Mark peer as connected */
 			if((slot = net_peer_sel_addr(&addr, &port)) >= 0) {
 				char pck[534];
-				int size;
-				uint32_t mod = time(NULL) % 0xffffffff;
-				short num;
 				int tmp;
+				struct timeval rt;
+				uint32_t ts;
 
 				/* Update entry-mask */
 				tbl->mask[slot] |= PEER_M_CON;
@@ -159,15 +164,26 @@ extern int net_update(void)
 				printf("Connected to %s on slot %d\n", 
 						lcp_str_addr6(&evt.addr), slot);
 
-				/* Send synchronization packet to peer */
-				tmp = hdr_set(pck, REQ_OP_SYNC, tbl->id[slot], 
-						network.id, mod, network.key);
+				/* Send exchange packet to peer */
+				tmp = hdr_set(pck, REQ_OP_EXCHANGE,
+						tbl->id[slot], network.id, 
+						network.key);
 
-				size = obj_list(pck + tmp + 2, &num, 128);
-				memcpy(pck + tmp, &num, 2);	
+				memset(pck + tmp, 0, 20);
 
-				lcp_send(network.ctx, &tbl->addr[slot], pck,
-						tmp + size + 2);
+				/* Get current real-time and timestamp */
+				gettimeofday(&rt, NULL);
+				ts = SDL_GetTicks();
+
+				/* Attach real-time */
+				memcpy(pck + tmp, &rt.tv_sec, 8);
+				memcpy(pck + tmp + 8, &rt.tv_usec, 8);
+
+				/* Attach timestamp */
+				memcpy(pck + tmp + 16, &ts, 4);
+
+				/* Send packet to peer */
+				lcp_send(network.ctx, &tbl->addr[slot], pck, tmp + 20);
 			}
 		}
 		/* Received a packet */
@@ -189,11 +205,9 @@ extern int net_update(void)
 			memcpy(&addr, &evt.addr.sin6_addr, 16);
 			port = evt.addr.sin6_port;
 
-			/* Remove peer */
-			if((slot = net_peer_sel_addr(&addr, &port)) >= 0) {
-				printf("Reset peer\n");
+			/* Remove peer from the peer-table */
+			if((slot = net_peer_sel_addr(&addr, &port)) >= 0)
 				tbl->mask[slot] = PEER_M_NONE;
-			}
 		}
 
 		lcp_del_evt(&evt);
@@ -221,14 +235,13 @@ extern int net_update(void)
 		if(network.count >= 80) {
 			char pck[980];
 			int tmp;
-			uint32_t ti_mod = time(NULL) % 0xffffffff;
 			void *lst_buf;
 			short lst_num;
 			int lst_size;
 			short i;
 
 			tmp = hdr_set(pck, REQ_OP_UPDATE, 0x00, network.id,
-					ti_mod, network.key);
+					network.key);
 				
 			lst_size = obj_collect_updates(&lst_buf, &lst_num);
 			memcpy(pck + tmp, &lst_num, 2);
@@ -239,8 +252,8 @@ extern int net_update(void)
 				if((tbl->mask[i] & PEER_M_CON) != PEER_M_CON)
 					continue;
 
-				lcp_send(network.ctx, &tbl->addr[i], pck,
-						tmp + lst_size);	
+				tmp += lst_size;
+				lcp_send(network.ctx, &tbl->addr[i], pck, tmp);
 			}
 			network.count = 0;
 		}
@@ -267,6 +280,8 @@ extern int peer_handle(struct lcp_evt *evt)
 	struct peer_table *tbl = &network.peers;
 	struct lcp_ctx *ctx = network.ctx;
 
+	short p_slot;
+
 	/* Extract data from header */
 	tmp = hdr_get(evt->buf, &op, &dst_id, &src_id, &mod, &key);
 	len = evt->len - tmp;
@@ -275,6 +290,10 @@ extern int peer_handle(struct lcp_evt *evt)
 
 	/* Set pointer */
 	ptr = evt->buf + tmp;
+
+	/* Get the slot in the peer-table */
+	p_slot = net_peer_sel_id(&src_id);
+
 
 	if(op == REQ_OP_INSERT) {
 		if(network.status == 1) {
@@ -316,14 +335,12 @@ extern int peer_handle(struct lcp_evt *evt)
 			}
 
 			/* Set the index of the core-object */
-			core.obj = slot;
+			core.obj[0] = slot;
 
 			/* Check if any peers are includes */
 			memcpy(&peer_num, ptr + 33, 2);
-			if(peer_num > 0) {
-				printf("Received %d peers from server\n", peer_num);
+			if(peer_num > 0)
 				net_add_peers(ptr + 35, peer_num);
-			}
 
 			/* Update status */
 			network.status = 2;
@@ -354,8 +371,6 @@ extern int peer_handle(struct lcp_evt *evt)
 		else if(res == 1) {
 			short slot_num = *(short *)(ptr + 1);
 			uint32_t id = *(uint32_t *)(ptr + 3);
-
-			int ti_mod = time(NULL) % 4096;
 			int size = 0;
 
 			tmp = REQ_HDR_SIZEW;
@@ -387,7 +402,7 @@ extern int peer_handle(struct lcp_evt *evt)
 
 			/* Send response-header */
 			hdr_set(pck, REQ_OP_CONVEY, 0x1, network.id,
-					ti_mod, network.key);
+					network.key);
 
 			ptr[0] = 2;
 
@@ -402,13 +417,15 @@ extern int peer_handle(struct lcp_evt *evt)
 			uint32_t id;
 			struct sockaddr_in6 addr;
 			char flg;
-			uint16_t proxy_num;	
-			int slot_num;
+			uint16_t proxy_num;
 			struct lcp_con *con;
 			unsigned short port;
 
 			/* Get the peer-id */
 			memcpy(&id, ptr + 1, 4);
+
+			/* Get the peer-slot */
+			p_slot = net_peer_sel_id(&id);
 
 			/* Copy the address */
 			lcp_addr(&addr, ptr + 5, ptr + 21);
@@ -420,22 +437,20 @@ extern int peer_handle(struct lcp_evt *evt)
 			memcpy(&proxy_num, ptr + 24, 2);
 
 			/* Get the slot in the peer-table */
-			if((slot_num = net_peer_sel_id(&id)) < 0)
+			if(p_slot  < 0)
 				return -1;
 
 			/* Update slot-mask */
-			tbl->status[slot_num] = PEER_S_PEN;
+			tbl->status[p_slot] = PEER_S_PEN;
 
 			/* Set attributes */
-			tbl->addr[slot_num] = addr;
-			tbl->flag[slot_num] = flg;
+			tbl->addr[p_slot] = addr;
+			tbl->flag[p_slot] = flg;
 
-			printf("Connect to port %d\n", tbl->addr[slot_num].sin6_port);
-
-			/* Initate connection */
-			port = tbl->port[slot_num];
+			/* Initiate connection */
+			port = tbl->port[p_slot];
 			if(!(con = lcp_connect(ctx, port, &addr, flg, 0))) {
-				tbl->mask[slot_num] = PEER_M_NONE;
+				tbl->mask[p_slot] = PEER_M_NONE;
 				return -1;
 			}
 
@@ -443,65 +458,108 @@ extern int peer_handle(struct lcp_evt *evt)
 			con->proxy_id = proxy_num;
 
 			/* Set connection-pointer */
-			tbl->con[slot_num] = con; 
+			tbl->con[p_slot] = con; 
 
 			/* Adjust the number of pending-connections */
 			tbl->pen_num++;
 		}
 	}
+	else if(op == REQ_OP_EXCHANGE) {
+		long int p_sec;
+		long int p_usec;
+		long int p_ts = 0;
+		struct timeval rt;
+		long int ts = 0;
+		int size;
+		long int del;
+
+		/* TODO: Rework the timestamp exchange */
+
+		/* Extract data from packet */
+		memcpy(&p_sec, ptr, 8);
+		memcpy(&p_usec, ptr + 8, 8);
+		memcpy(&p_ts, ptr + 16, 4);
+
+		/* Get current real-time and the current timestamp */
+		gettimeofday(&rt, NULL);
+		ts = SDL_GetTicks();
+
+		/* Get the relative time-difference to set timestamp back */
+		del = (rt.tv_sec - p_sec) * 1000;
+		del += (rt.tv_usec / 1000) - (p_usec / 1000);
+		del = (ts - del) - p_ts;	
+
+		/* Insert timedelta into peer-table */
+		tbl->ti_del[p_slot] = del;
+		printf("Timedelta of %ld milliseconds\n", tbl->ti_del[p_slot]);
+			
+		/* Update status */
+		tbl->status[p_slot] = PEER_S_EXC; 
+
+		/* Synchronize the object-tables */
+		tmp = hdr_set(pck, REQ_OP_SYNC, src_id, network.id,
+				network.key);
+
+		/* Attach list of objects */
+		size = obj_list(pck + tmp, NULL, 128);	
+
+		/* Send packet */
+		lcp_send(network.ctx, &tbl->addr[p_slot], pck, tmp + size);
+	}
 	else if(op == REQ_OP_SYNC) {
 		short num;
-		uint32_t *req_buf;
-		short req_num;
-		uint32_t ti_mod = time(NULL) % 0xffffffff;
+		char *buf;
+		int written;
 
 		memcpy(&num, ptr, 2);
 
+		printf("Sync %d\n", num);
+
 		/* Insert object-ids into cache */
-		net_obj_insert(ptr + 2, num, src_id, &req_buf, &req_num);
+		written = net_obj_insert(ptr + 2, num, src_id, &buf, NULL);
 
 		/* Send response-header */
 		tmp = hdr_set(pck, REQ_OP_REQUEST, src_id, network.id,
-					ti_mod, network.key);
+					network.key);
 
-		/* Send object-request to peer */
-		memcpy(pck + tmp, &req_num, 2);
-		memcpy(pck + tmp + 2, req_buf, req_num * 4);
-		free(req_buf);
-		lcp_send(network.ctx, &evt->addr, pck, tmp + 2 + req_num * 4);
+		/* Attach payload to the packet */
+		memcpy(pck + tmp, buf, written);
+		free(buf);
+
+		/* Send the packet */
+		lcp_send(network.ctx, &evt->addr, pck, tmp + written);
 	}
 	else if(op == REQ_OP_REQUEST) {
 		short num;
-		void *res_buf;
-		short res_num;
-		int res_len;
-		uint32_t ti_mod = time(NULL) % 0xffffffff;
-	
+		void *obj_buf;
+		int written;
+
 		memcpy(&num, ptr, 2);
-		res_len = obj_collect(ptr + 2, num, &res_buf, &res_num);
+		
+		printf("Request %d\n", num);
 
-		/* Send response-header */
+		written = obj_collect(ptr + 2, num, &obj_buf, NULL);
+
+		/* Set response-header */
 		tmp = hdr_set(pck, REQ_OP_SUBMIT, src_id, network.id,
-					ti_mod, network.key);
+					network.key);
 
-		/* Send object-request to peer */
-		memcpy(pck + tmp, &res_num, 2);
-		memcpy(pck + tmp + 2, res_buf, res_len);
-		free(res_buf);
-		lcp_send(network.ctx, &evt->addr, pck, tmp + 2 + res_len);
+		/* Attach payload to packet */
+		memcpy(pck + tmp, obj_buf, written);
+		free(obj_buf);
+
+		/* Send the packet */
+		lcp_send(network.ctx, &evt->addr, pck, tmp + written);
 	}
 	else if(op == REQ_OP_SUBMIT) {
 		short num;
 
-		/* Submit the objects and push them in to the object-table */
 		memcpy(&num, ptr, 2);
-		net_obj_submit(ptr + 2, num, src_id);
-	}
-	else if(op == REQ_OP_UPDATE) {
-		short num;
 
-		memcpy(&num, ptr, 2);
-		obj_update(ptr + 2, num);
+		printf("Submit %d\n", num);
+
+		/* Submit list of objects */
+		net_obj_submit(ptr + 2, num, src_id);
 	}
 
 	return 0;
@@ -552,7 +610,7 @@ extern int net_insert(char *uname, char *pswd, net_cfnc on_success,
 	/* Encrypt password */
 	hashSHA256(pswd, strlen(pswd), pswd_enc);
 
-	tmp = hdr_set(pck, REQ_OP_INSERT, 0x1, 0x0, 0, NULL);
+	tmp = hdr_set(pck, REQ_OP_INSERT, 0x1, 0x0, NULL);
 	strcpy(pck + tmp, uname);
 	memcpy(pck + tmp + strlen(uname) + 1, pswd_enc, 32);
 	pck[tmp + strlen(uname) + 33] = network.ctx->con_flg; 
@@ -565,19 +623,12 @@ extern int net_insert(char *uname, char *pswd, net_cfnc on_success,
 
 extern int net_list(net_cfnc on_success, net_cfnc on_failed)
 {
-	time_t ti;
-	uint16_t ti_mod;
-
 	char pck[512];
 
 	if(on_success || on_failed) {/* Prev warning for not using params */}
 
-	/* Get the time-modulator */
-	time(&ti);
-	ti_mod = ti % 4096;
-
 	/* Send request to server */
-	hdr_set(pck, REQ_OP_LIST, 0x01, network.id, ti_mod, network.key);
+	hdr_set(pck, REQ_OP_LIST, 0x01, network.id, network.key);
 	return lcp_send(network.ctx, &network.main_addr, pck, REQ_HDR_SIZEW);
 }
 
@@ -589,9 +640,8 @@ extern int net_add_peer(uint32_t *id)
 
 	/* Check if the peer is already in the table */
 	for(i = 0; i < PEER_SLOTS; i++) {
-		if(tbl->mask[i] != 0 && tbl->id[i] == *id) {
+		if(tbl->mask[i] != 0 && tbl->id[i] == *id)
 			return -1;
-		}
 	}
 
 	for(i = 0; i < PEER_SLOTS; i++) {
@@ -701,7 +751,6 @@ extern int net_con_peers(void)
 	unsigned short port;
 	char pck[256];
 	int tmp;
-	uint32_t ti;
 
 	for(i = 0; i < PEER_SLOTS; i++) {
 		if(tbl->con_num + tbl->pen_num >= PEER_CON_NUM)
@@ -710,7 +759,7 @@ extern int net_con_peers(void)
 		if(tbl->mask[i] == PEER_M_NONE)
 			continue;
 
-		/* If the peers are already connected */
+		/* If the connection is pending or established */
 		if(tbl->status[i] >= PEER_S_PEN)
 			continue;
 
@@ -718,6 +767,7 @@ extern int net_con_peers(void)
 		if((slot = lcp_get_slot(network.ctx)) < 0)
 			continue;
 
+		/* Get the external-port of the socket */
 		port = network.ctx->sock.ext_port[slot];
 
 		/* Update mask */
@@ -730,9 +780,7 @@ extern int net_con_peers(void)
 		tbl->port[i] = port;
 
 		/* Set header */
-		ti = time(NULL) % 0xffffffff;
-		tmp = hdr_set(pck, REQ_OP_CONVEY, 0x1, network.id, ti, 
-				network.key);
+		tmp = hdr_set(pck, REQ_OP_CONVEY, 0x1, network.id, network.key);
 
 		/* Fill in payload */
 		pck[tmp] = 0;
@@ -749,7 +797,7 @@ extern int net_con_peers(void)
 }
 
 
-extern int net_obj_insert(void *in, short in_num, uint32_t src, uint32_t **out,
+extern int net_obj_insert(void *in, short in_num, uint32_t src, char **out,
 		short *out_num)
 {
 	int i;
@@ -758,14 +806,19 @@ extern int net_obj_insert(void *in, short in_num, uint32_t src, uint32_t **out,
 	uint32_t id;
 	uint32_t *id_ptr = (uint32_t *)in;
 
-	uint32_t *out_buf;
+	char *out_buf;
+	uint32_t *ptr;
 	uint32_t num = 0;
 
-	if(in == NULL || in_num <= 0)
+	int written = 0;
+
+	if(in == NULL || in_num <= 0 || out == NULL)
 		return -1;
 
-	if(!(out_buf = malloc(in_num * sizeof(uint32_t))))
+	if(!(out_buf = malloc(in_num * 4 + 2)))
 		return -1;
+
+	ptr = (uint32_t *)(out_buf + 2);
 
 	/* Get the tail of the linked-list */
 	if((cur = network.cache) != NULL) {
@@ -775,6 +828,8 @@ extern int net_obj_insert(void *in, short in_num, uint32_t src, uint32_t **out,
 
 	for(i = 0; i < in_num; i++) {
 		id = *id_ptr;
+
+		printf("Insert %d\n", id);
 
 		/* An object with the id is not yet registered or cached */
 		if(obj_sel_id(id) < 0 && net_obj_find(id) == NULL) {
@@ -797,23 +852,29 @@ extern int net_obj_insert(void *in, short in_num, uint32_t src, uint32_t **out,
 			else
 				cur->next = ent;
 
-			printf("Insert object %d\n", id);
-
 			/* Update tail-pointer */
 			cur = ent;
 
 			/* Add object to the request-list */
-			out_buf[num] = id;
+			memcpy(ptr, &id, 4);
 			num++;
+			written += 4;
+			ptr++;
 		}
 
 		/* Update id-pointer to the next id*/
 		id_ptr++;
 	}
 
+	/* Copy number to buffer */
+	memcpy(out_buf, &num, 2);
+
+	printf("Inserted %d\n", num);
+
+	/* Set the output-variables */
 	*out = out_buf;
-	*out_num = num;
-	return 0;
+	if(out_num != NULL) *out_num = num;
+	return written + 2;
 }
 
 
@@ -835,26 +896,51 @@ extern struct cache_entry *net_obj_find(uint32_t id)
 extern int net_obj_submit(void *ptr, short num, uint32_t src)
 {
 	short i;
-	uint32_t id;
+	uint32_t obj_id;
 	struct cache_entry *ent;
 	struct cache_entry *prev;
-	char *buf_ptr = ptr;
+	char *buf_ptr;
+	short src_slot;
+	int64_t ts;
+
+	/* Get the slot of the peer */
+	if((src_slot = net_peer_sel_id(&src)) < 0)
+		return -1;
+
+	/* Extract data from packet */
+	memcpy(&ts, ptr + 2, 4);
+
+	/* Adjust timestamp */
+	ts += network.peers.ti_del[src_slot];
+
+	/* Set pointer to read object-data */
+	buf_ptr = ptr + 4;
+
+	printf("Submit %d objects\n", num);
 
 	for(i = 0; i < num; i++) {
-		memcpy(&id, buf_ptr, 4);
+		/* Get the id of the object */
+		memcpy(&obj_id, buf_ptr, 4);
 
-		if((ent = net_obj_find(id)) != NULL) {
+		/* Get the object from the object-cache */
+		if((ent = net_obj_find(obj_id)) != NULL) {
 			if(ent->src != src)
 				continue;
 
-			obj_submit(buf_ptr);
+			/* Push the objects into the object-table */
+			obj_submit(buf_ptr, ts);
 
+			/* Remove the object from the object-cache */
 			if((prev = ent->prev) == NULL)
 				network.cache = ent->next;
 			else
 				prev->next = ent->next;
+
+			/* Free the allocated memory */
+			free(ent);
 		}
 
+		/* Go to the next object */
 		buf_ptr += 52;
 	}
 

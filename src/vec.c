@@ -55,6 +55,13 @@ extern float vec3_mag(vec3_t v)
 extern void vec3_nrm(vec3_t v, vec3_t res)
 {
 	float len = vec3_mag(v);
+	if(len == 0.0) {
+		res[0] = 0.0;
+		res[1] = 0.0;
+		res[2] = 0.0;
+		return;
+	}
+
 	res[0] = v[0] / len;
 	res[1] = v[1] / len;
 	res[2] = v[2] / len;

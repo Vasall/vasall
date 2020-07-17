@@ -7,11 +7,11 @@
 #define DEVICE_NUM 4
 
 struct input_wrapper {
-	char mask[DEVICE_NUM];
-	int id[DEVICE_NUM];
-	uint8_t type[DEVICE_NUM];
-	char name[DEVICE_NUM][24];
-	void *ptr[DEVICE_NUM];
+	char       mask[DEVICE_NUM];
+	int        id[DEVICE_NUM];
+	uint8_t    type[DEVICE_NUM];
+	char       name[DEVICE_NUM][24];
+	void       *ptr[DEVICE_NUM];
 
 	vec2_t movement;
 	vec2_t camera;

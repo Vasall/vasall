@@ -2,13 +2,14 @@
 #define _NETWORK_H
 
 #include <time.h>
+#include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 
 #include "lcp/inc/lcp.h"
 
-#define PEER_SLOTS    32
-#define PEER_CON_NUM   5
+#define PEER_SLOTS         18
+#define PEER_CON_NUM       6
 
 #define PEER_M_NONE        0x00
 #define PEER_M_SET         0x01
@@ -18,8 +19,8 @@
 #define PEER_S_AWA         0x02
 #define PEER_S_PEN         0x04
 #define PEER_S_CON         0x08
-#define PEER_S_SYN         0x10
-#define PEER_S_6           0x20
+#define PEER_S_EXC         0x10
+#define PEER_S_SYN         0x20
 #define PEER_S_7           0x40
 #define PEER_S_8           0x80
 
@@ -40,6 +41,8 @@ struct peer_table {
 	unsigned char          flag[PEER_SLOTS];
 	struct lcp_con         *con[PEER_SLOTS];
 	unsigned short         obj[PEER_SLOTS]; 
+
+	long int               ti_del[PEER_SLOTS];
 };
 
 struct cache_entry;
@@ -127,7 +130,9 @@ extern void net_close(void);
 
 
 /*
- * 
+ * Register incoming packets and process requests.
+ *
+ * Returns: 0 on success or -1 if an error occurred
  */
 extern int net_update(void);
 
@@ -137,7 +142,7 @@ extern int net_update(void);
  *
  * @evt: Pointer to the LCP-event
  *
- * Returns: 0 by default
+ * Returns: This function will always return 0
  */
 extern int peer_handle(struct lcp_evt *evt);
 
@@ -228,23 +233,48 @@ extern int net_con_peers(void);
 
 
 /*
- * Insert a list of object-id into the object-cache.
- *
+ * Insert a list of object-id into the object-cache and then get the list of
+ * objects that still have to be requested from other peers. Note that the
+ * returned id-buffer has to be freed after usage to prevent memory-leaks.
+ * This function has the purpose to prevent duplicated and enable
+ * object-synchronization with multible peers at the same time, therefore it
+ * will not yet push objects into the object-table. Note that the first two
+ * bytes of the returned buffer contain the number of ids written.
+ *  
+ * @in: The list of id(each id has to be 4 bytes)
+ * @in_num: The number of ids starting from the given pointer-address
+ * @src: The id of the peer that sent the list of ids
+ * @out: A pointer to attach the object-ids to that still have to be set up
+ * @out_num: A pointer to write the number of returned ids to
  *
  * Returns: 0 on success or -1 if an error occurred
  */
-extern int net_obj_insert(void *in, short in_num, uint32_t src, uint32_t **out,
+extern int net_obj_insert(void *in, short in_num, uint32_t src, char **out,
 		short *out_num);
 
 
 /*
- * 
+ * Find an object with a given id in the object-cache and return the pointer to
+ * that object.
+ *
+ * @id: The object-id to search for
+ *
+ * Returns: Either a pointer to the cache-object or NULL if an error occurred
  */
 extern struct cache_entry *net_obj_find(uint32_t id);
 
 
 /*
- *  
+ * This function will remove the objects from the object-cache and push them
+ * into the object-table with the given dataset. Note that to prevent hacking,
+ * the source-peer-id has to be equal to the peer-id from where the original
+ * object-id came from.
+ *
+ * @ptr: The address containing the object-data
+ * @num: The number of objects in the buffer
+ * @src: The id of the peer that sent the object-data
+ *
+ * Returns: 0 on success or -1 if an error occurred
  */
 extern int net_obj_submit(void *ptr, short num, uint32_t src);
 

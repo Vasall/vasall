@@ -58,10 +58,15 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 	short slot;
 	float x;
 	float z;
+	uint32_t ts;
+
+	/* Get current timestamp */
+	ts = SDL_GetTicks();
 
 	if((slot = obj_get_slot()) < 0)
 		return -1;
 
+	/* Copy the valued and initialize the attributes */
 	objects.mask[slot] = mask;
 	objects.id[slot] = id;
 	vec3_cpy(objects.pos[slot], pos);
@@ -80,9 +85,15 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 		memcpy(objects.buf[slot], data, len);
 	}
 
+	/* Get the height of the terrain at the objects-position */
 	x = objects.pos[slot][0];
 	z = objects.pos[slot][2];
 	objects.pos[slot][1] = wld_get_height(x, z) + 2.2;
+
+	/* Set last update-time */
+	objects.last[slot] = ts;
+
+	/* Initialize the object-matrix */
 	obj_update_matrix(slot);
 
 	objects.num++;
@@ -109,33 +120,23 @@ extern int obj_mod(short slot, short attr, void *data, int len)
 	switch(attr) {
 		case(OBJ_ATTR_MASK):
 			objects.mask[slot] = *(uint32_t *)data;
-			objects.dif[slot] |= (1 << OBJ_ATTR_MASK);
 			break;
 
 		case(OBJ_ATTR_POS):
 			vec3_cpy(objects.pos[slot], data);
-			objects.dif[slot] |= (1 << OBJ_ATTR_POS);
 			break;
 		
 		case(OBJ_ATTR_VEL):
 			vec3_cpy(objects.vel[slot], data);
-			objects.dif[slot] |= (1 << OBJ_ATTR_VEL);
 			break;
 		
 		case(OBJ_ATTR_ACL):
 			vec3_cpy(objects.acl[slot], data);
-			objects.dif[slot] |= (1 << OBJ_ATTR_ACL);
-			break;
-
-		case(OBJ_ATTR_DIR):
-			vec3_cpy(objects.dir[slot], data);
-			objects.dif[slot] |= (1 << OBJ_ATTR_DIR);
 			break;
 		
 		case(OBJ_ATTR_BUF):
 			objects.len[slot] = len;
 			memcpy(objects.buf[slot], data, len);
-			objects.dif[slot] |= (1 << OBJ_ATTR_BUF);
 			break;
 
 		default:
@@ -169,14 +170,17 @@ extern void obj_update_matrix(short slot)
 	if(obj_check_slot(slot))
 		return;
 
+	/* Reset the model-matrix to an identity-matrix */
 	mat4_idt(objects.mat[slot]);
 
+	/* Set the rotation of the model */
 	rot = atan2(-objects.dir[slot][2], objects.dir[slot][0]);
 	objects.mat[slot][0x0] =  cos(rot);
 	objects.mat[slot][0x2] = -sin(rot);
 	objects.mat[slot][0x8] =  sin(rot);
 	objects.mat[slot][0xa] =  cos(rot);
 
+	/* Set the position of the model */
 	objects.mat[slot][0xc] = objects.pos[slot][0];
 	objects.mat[slot][0xd] = objects.pos[slot][1];
 	objects.mat[slot][0xe] = objects.pos[slot][2];
@@ -188,11 +192,13 @@ extern int obj_list(void *ptr, short *num, short max)
 	short obj_num = 0;
 	short i;
 
-	char *buf_ptr = (char *)ptr;
+	char *buf_ptr = (char *)ptr + 2;
 
 	for(i = 0; i < OBJ_SLOTS && obj_num < max; i++) {
 		if(objects.mask[i] == OBJ_M_NONE)
 			continue;
+
+		printf("list %d\n", objects.id[i]);
 
 		/* Write the id */
 		memcpy(buf_ptr, &objects.id[i], 4);
@@ -207,7 +213,8 @@ extern int obj_list(void *ptr, short *num, short max)
 	if(num != NULL)
 		*num = obj_num;
 
-	return obj_num * sizeof(uint32_t);
+	memcpy(ptr, &obj_num, 2);
+	return (obj_num * sizeof(uint32_t)) + 2;
 }
 
 
@@ -222,13 +229,20 @@ extern int obj_collect(void *in, short in_num, void **out, short *out_num)
 	char *ptr;
 
 	short num = 0;
+	uint32_t ts;
 
-	if(!(out_buf = malloc(in_num * 44)))
+	/* Get the current timestamp */
+	ts = SDL_GetTicks();
+
+	/* Allocate memory for the return-buffer */
+	if(!(out_buf = malloc(in_num * 44 + 6)))
 		return 0;
-	
-	ptr = out_buf;
+
+	/* Set the starting-pointer to write the object-data */
+	ptr = out_buf + 6;
 
 	for(i = 0; i < in_num; i++) {
+		printf("Check %u\n", *id_ptr);
 		if((slot = obj_sel_id(*id_ptr)) >= 0) {
 			/* Copy object-id */
 			memcpy(ptr, id_ptr, 4);
@@ -261,13 +275,22 @@ extern int obj_collect(void *in, short in_num, void **out, short *out_num)
 		id_ptr++;
 	}
 
+	/* Copy the object-number and the timestamp into the buffer */
+	memcpy(out_buf, &num, 2);
+	memcpy(out_buf + 2, &ts, 4);
+
+	/* Set return-variables */
 	*out = out_buf;
 	if(out_num) *out_num = num;
-	return written;
+
+	printf("Collected %d\n", num);
+
+	/* Return the number of written bytes */
+	return written + 6;
 }
 
 
-extern int obj_submit(void *in)
+extern int obj_submit(void *in, int64_t ts)
 {
 	uint32_t id;
 	uint32_t mask;
@@ -287,6 +310,7 @@ extern int obj_submit(void *in)
 
 	memcpy(objects.vel[slot], ptr + 20, 12);
 	memcpy(objects.acl[slot], ptr + 32, 12);
+	objects.last[slot] = ts;
 
 	printf("Added object %d at slot %d\n", id, slot);
 	return 0;
@@ -314,6 +338,7 @@ extern int obj_collect_updates(void **out, short *out_num)
 		memcpy(ptr + 4, objects.pos, 12);
 		memcpy(ptr + 16, objects.vel, 12);
 		memcpy(ptr + 28, objects.acl, 12);
+
 
 		ptr += 40;
 		written += 40;
@@ -392,9 +417,11 @@ extern void obj_sys_update(float delt)
 }
 
 
-extern void obj_sys_render(void)
+extern void obj_sys_render(float interp)
 {
 	int i;
+
+	if(interp) {/* Prevent warning for not using parameters */}
 
 	for(i = 0; i < OBJ_SLOTS; i++) {
 		if((objects.mask[i] & OBJ_M_MODEL) == OBJ_M_MODEL) {

@@ -12,14 +12,32 @@
 #include "camera.h"
 #include "world.h"
 
+
+/* The updates-per-second */
+#define GAME_HERTZ       60
+#define TICK_TIME        (1000/GAME_HERTZ)
+#define MAX_UPDATE_NUM   5
+
+/* The shares-per-second */
+#define SHARE_HERZ       30
+#define SHARE_TIME       (1000/SHARE_HERZ)
+
+#define LOC_OBJ_NUM      1
+#define SHARE_BUF_SIZE   15
+
 struct core_wrapper {
 	char running;
+
+	uint32_t last_update;
+	uint32_t last_render;
 
 	void (*proc_evt)(SDL_Event *evt);
 	void (*update)(void);
 	void (*render)(void);
 
-	short obj;
+	short obj[LOC_OBJ_NUM];
+
+
 };
 
 

@@ -12,13 +12,18 @@ struct core_wrapper core;
 
 extern int core_init(void)
 {
+	short i;
+
 	core.running = 1;
 
 	core.proc_evt = NULL;
 	core.update = NULL;
 	core.render = NULL;
 
-	core.obj = -1;
+	for(i = 0; i < LOC_OBJ_NUM; i++)
+		core.obj[i] = -1;
+
+	core.mod = 0;
 	return 0;
 }
 
@@ -26,16 +31,21 @@ extern int core_init(void)
 extern void core_proc_evt(void)
 {
 	SDL_Event evt;
+	uint32_t type;
+	uint32_t mod;
+	SDL_Keycode key;
 
 	while(SDL_PollEvent(&evt)) {
-		if(evt.type == SDL_QUIT) {
+		type = evt.type;
+		mod = evt.key.keysym.mod;
+		key = evt.key.keysym.sym;
+		
+		if(type == SDL_QUIT) {
 			core.running = 0;
 			return;
 		}
 
-		if(evt.type == SDL_KEYDOWN && 
-				evt.key.keysym.scancode == 20 &&
-				evt.key.keysym.mod & KMOD_CTRL) {
+		if(type == SDL_KEYDOWN && key == SDLK_q && (mod & KMOD_CTRL)) {
 			core.running = 0;
 			return;
 		}

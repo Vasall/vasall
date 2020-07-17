@@ -31,6 +31,7 @@ int load_resources(void)
 	return 0;
 }
 
+/* If login was successfull */
 static void test1(char *buf, int len)
 {
 	ui_node *node;
@@ -41,27 +42,27 @@ static void test1(char *buf, int len)
 	if(buf || len) {/* Prevent warning for not using parameters */}
 
 	/* Setup camera */
-	cam_trg_obj(core.obj);
+	cam_trg_obj(core.obj[0]);
 	camera.dist = 10.0;
 	cam_set_dir(dir);
-
-	/* Update core functions */
-	core.proc_evt = &game_proc_evt;
-	core.update = &game_update;
-	core.render = &game_render;
 
 	/* Switch from menuscreen to gamescreen */
 	node = ui_get("mns");
 	ui_mod_flag(node, FLG_ACT, &zero);
+
+	/* Start the game-loop */
+	game_start();
 }
 
+/* If login failed */
 static void test2(char *buf, int len)
 {
 	if(buf || len) {/* Prevent warning for not using parameters */}
 	printf("Failed\n");
 }
 
-static void try_login(ui_node *n, SDL_Event *e)
+/* Login into the server and insert peer into cluster */
+static void login(ui_node *n, SDL_Event *e)
 {
 	char uname[17];
 	char pswd[65];
@@ -91,7 +92,7 @@ int load_ui(void)
 	
 	/* 
 	 * FIXME:
-	 * If a this very position, there are not bytes, the UI will not be 
+	 * If at this very position, there are not bytes, the UI will not be 
 	 * rendered correctly.
 	 */
 
@@ -140,7 +141,7 @@ int load_ui(void)
 	ui_mod_style(ui_get("mns_title"), STY_BCK_COL, &mns_title_bck_col);
 	ui_mod_style(ui_get("mns_title"), STY_COR_RAD, &mns_title_cor);
 
-	ui_bind_event(ui_get("mns_login"), EVT_MOUSEDOWN, &try_login);
+	ui_bind_event(ui_get("mns_login"), EVT_MOUSEDOWN, &login);
 	ui_mod_style(ui_get("mns_login"), STY_BCK, &one);
 	ui_mod_style(ui_get("mns_login"), STY_BCK_COL, &mns_login_bck_col);
 

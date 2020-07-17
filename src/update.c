@@ -2,6 +2,19 @@
 
 #include <stdlib.h>
 
+void game_start(void)
+{
+	/* Update core functions */
+	core.proc_evt = &game_proc_evt;
+	core.update = &game_update;
+	core.render = &game_render;
+
+	/* Setup timers */
+	core.last_update = SDL_GetTicks();
+	core.last_render = SDL_GetTicks();
+}
+
+
 void game_proc_evt(SDL_Event *evt)
 {
 	int mod_ctrl;
@@ -13,22 +26,23 @@ void game_proc_evt(SDL_Event *evt)
 	switch(evt->type) {
 		case(SDL_CONTROLLERAXISMOTION):
 			axis = evt->caxis.axis;
-			val = evt->caxis.value * 0.000001;
+			val = evt->caxis.value;
 
-			if(axis == 0) {
-				input.movement[0] = val;
-			}
-			else if(axis == 1) {
-				input.movement[1] = val;
-			}
+			/* Convert range to [-1; 1]*/
+			if(val < 0.0) val = val / 32768.0;
+			else val = val / 32767.0;
 
-			else if(axis == 2) {
-				input.camera[0] = val;
+			/*
+			 * Set the value of the dedicated input-buffer. Note
+			 * that the first element is for vertical data and the
+			 * second element for horizontal data.
+			 */
+			switch(axis) {
+				case 0: input.movement[0] = val; break;
+				case 1: input.movement[1] = val; break;
+				case 2: input.camera[0] = val; break;
+				case 3: input.camera[1] = val; break;
 			}
-			else if(axis == 3) {
-				input.camera[1] = val;
-			}
-
 			break;
 
 		case(SDL_MOUSEWHEEL):
@@ -36,90 +50,87 @@ void game_proc_evt(SDL_Event *evt)
 			break;
 
 		case(SDL_MOUSEMOTION):
+			/* If left mouse button pressed */
 			if(evt->motion.state == SDL_BUTTON_LMASK) {
-				/* If left mouse button pressed */
-				cam_rot(-evt->motion.xrel / 50.0,
-						-evt->motion.yrel / 50.0);
+				int x = -evt->motion.xrel;
+				int y = -evt->motion.yrel;
+
+				/* Rotate the camera */
+				cam_rot(x, y);
 			}
 			break;
-		/* 
-		case(XSDL_KEYDOWN):
-			mod = evt->key.keysym.mod;
-			mod_ctrl = mod & (KMOD_LCTRL | KMOD_RCTRL);
-			switch(evt->key.keysym.sym) {
-				case(SDLK_w):
-					camMovDir(FORWARD);
-					break;
-				case(XSDLK_s):
-					camMovDir(BACK);
-					break;
-				case(XSDLK_a):
-					camMovDir(LEFT);
-					break;
-				case(XSDLK_d):
-					camMovDir(RIGHT);
-					break;
-				case(XSDLK_q):
-					camZoom(1);
-					break;
-				case(XSDLK_e):
-					camZoom(-1);
-					break;
-				case(XSDLK_UP):
-					camRot(0.0, -0.1);
-					break;
-				case(XSDLK_DOWN):
-					camRot(0.0, 0.1);
-					break;
-				case(XSDLK_RIGHT):
-					camRot(0.1, 0.0);
-					break;
-				case(XSDLK_LEFT):
-					camRot(-0.1, 0.0);
-					break;
-			}
-			break;
-		*/
 	}
 }
 
-void game_update(void)
-{
-	vec3_t vel, forw, right;
 
-	/* Update network */
-	net_update();
+static void game_proc_input(void)
+{
+	vec3_t acl, forw, right, fac;
+
+	/*
+	 * Control the camera.
+	 */
 
 	/* Rotate the camera */	
 	cam_rot(input.camera[0], input.camera[1]);
 
-	/* Set object-acceleration */
-	vec3_cpy(forw, camera.forward);
-	forw[1] = 0.0;
-	vec3_nrm(forw, forw);
+	/*
+	 * Control the speed and direction of the character.
+	 */
 
+	/* Get direction of the camera */
 	vec3_cpy(right, camera.right);
 	right[1] = 0.0;
 	vec3_nrm(right, right);
 
-	vec3_scl(forw, input.movement[1], forw);
+	vec3_cpy(forw, camera.forward);
+	forw[1] = 0.0;
+	vec3_nrm(forw, forw);
+
+	/* Combine input-direction and camera-direction */
 	vec3_scl(right, input.movement[0], right);
+	vec3_scl(forw, input.movement[1], forw);
 
-	vec3_add(forw, right, vel);
+	vec3_add(forw, right, fac);
+	vec3_nrm(fac, fac);
 
-	vec3_cpy(objects.vel[core.obj], vel);
+	/* Calculate the actual acceleration for the player */
+	vec3_scl(fac, 5.0, acl);
 
-	obj_sys_update(5.0);
+	/* Copy the acceleration to the player-object */
+	vec3_cpy(objects.vel[core.obj], acl);
+}
 
-	/* Update the camera-position */
-	cam_update();
+
+void game_update(void)
+{
+	/* Get the current time */
+	uint32_t now = SDL_GetTicks();
+	int count = 0;
+
+	while(now - core.last_update > TICK_TIME && count < MAX_UPDATE_NUM) {
+		/* Process the game-input and update objects */
+		game_proc_input();
+
+		/* Update the objects in the object-table */
+		obj_sys_update(TICK_TIME / 1000.0);
+
+		/* Update the camera-position */
+		cam_update();
+
+		core.last_update += TICK_TIME;
+		count++;
+	}
 }
 
 void game_render(void)
 {
+	uint32_t now = SDL_GetTicks();
+	float interp = MIN(1.0, (float)((now - core.last_update) / TICK_TIME));
+
 	/* Render the world */
-	wld_render();
+	wld_render(interp);
 
 	/* Render the objects */
-	obj_sys_render();
+	obj_sys_render(interp);
 }

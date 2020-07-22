@@ -33,9 +33,8 @@ err_quit_sdl:
 
 extern void sdl_close(void)
 {
-	if(TTF_WasInit()) {
+	if(TTF_WasInit())
 		TTF_Quit();
-	}
 
 	SDL_Quit();
 }

@@ -23,7 +23,10 @@ extern int core_init(void)
 	for(i = 0; i < LOC_OBJ_NUM; i++)
 		core.obj[i] = -1;
 
-	core.mod = 0;
+	core.last_update = 0;
+	core.last_render = 0;
+	core.last_share = 0;
+
 	return 0;
 }
 

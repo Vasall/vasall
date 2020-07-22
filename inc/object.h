@@ -7,6 +7,7 @@
 #include "sdl.h"
 #include "asset.h"
 #include "model.h"
+#include "core.h"
 
 #define OBJ_SLOTS      128
 #define OBJ_DATA_MAX   128
@@ -36,7 +37,6 @@ struct object_table {
 	uint32_t   id[OBJ_SLOTS];
 	vec3_t     pos[OBJ_SLOTS];
 	vec3_t     vel[OBJ_SLOTS];
-	vec3_t     acl[OBJ_SLOTS];
 	vec3_t     dir[OBJ_SLOTS];
 	short      model[OBJ_SLOTS];
 	short      anim[OBJ_SLOTS];
@@ -44,6 +44,8 @@ struct object_table {
 	mat4_t     mat[OBJ_SLOTS];
 	int        len[OBJ_SLOTS];
 	char       buf[OBJ_SLOTS][OBJ_DATA_MAX];
+
+	vec3_t     mov[OBJ_SLOTS];
 
 	int64_t    last[OBJ_SLOTS];
 };

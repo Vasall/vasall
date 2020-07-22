@@ -11,13 +11,27 @@ extern int inp_init(void)
 {
 	int i;
 
+	/* Clear the device-list */
 	for(i = 0; i < DEVICE_NUM; i++)
 		input.mask[i] = 0;
 
+	/* Load all available input-devices */
 	for(i = 0; i < SDL_NumJoysticks(); i++) {
 		if(inp_add_device(i) < 0)
 			goto err_close_input;
 	}
+
+	/* Initialize the share-buffer */
+	input.share.num = 0;
+	input.share.timer = 0;
+
+	/* Clear the share-buffer */
+	for(i = 0; i < SHARE_SLOTS; i++)
+		input.share.mask[i] = 0;
+
+	/* Clear the input-buffers */
+	memset(input.mov, 0, 8);
+	memset(input.mov_old, 0, 8);
 
 	return 0;
 

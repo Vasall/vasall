@@ -40,7 +40,7 @@ struct peer_table {
 	unsigned short         port[PEER_SLOTS];
 	unsigned char          flag[PEER_SLOTS];
 	struct lcp_con         *con[PEER_SLOTS];
-	unsigned short         obj[PEER_SLOTS]; 
+	unsigned short         obj[PEER_SLOTS][1]; 
 
 	long int               ti_del[PEER_SLOTS];
 };

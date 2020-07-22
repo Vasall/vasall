@@ -125,15 +125,11 @@ extern int obj_mod(short slot, short attr, void *data, int len)
 		case(OBJ_ATTR_POS):
 			vec3_cpy(objects.pos[slot], data);
 			break;
-		
+
 		case(OBJ_ATTR_VEL):
 			vec3_cpy(objects.vel[slot], data);
 			break;
-		
-		case(OBJ_ATTR_ACL):
-			vec3_cpy(objects.acl[slot], data);
-			break;
-		
+
 		case(OBJ_ATTR_BUF):
 			objects.len[slot] = len;
 			memcpy(objects.buf[slot], data, len);
@@ -261,7 +257,7 @@ extern int obj_collect(void *in, short in_num, void **out, short *out_num)
 			ptr += 12;
 
 			/* Copy the acceleration of the object */
-			memcpy(ptr, objects.acl[slot], 12);
+			memcpy(ptr, objects.mov[slot], 12);
 			ptr += 12;
 
 			/* Increment the number of objects */
@@ -309,7 +305,7 @@ extern int obj_submit(void *in, int64_t ts)
 		return -1;
 
 	memcpy(objects.vel[slot], ptr + 20, 12);
-	memcpy(objects.acl[slot], ptr + 32, 12);
+	memcpy(objects.mov[slot], ptr + 32, 12);
 	objects.last[slot] = ts;
 
 	printf("Added object %d at slot %d\n", id, slot);
@@ -337,7 +333,7 @@ extern int obj_collect_updates(void **out, short *out_num)
 		memcpy(ptr, &objects.id[i], 4);
 		memcpy(ptr + 4, objects.pos, 12);
 		memcpy(ptr + 16, objects.vel, 12);
-		memcpy(ptr + 28, objects.acl, 12);
+		memcpy(ptr + 28, objects.mov, 12);
 
 
 		ptr += 40;
@@ -367,7 +363,7 @@ extern int obj_update(void *in, short num)
 		if((slot = obj_sel_id(id)) >= 0) {
 			memcpy(objects.pos[slot], ptr +  4, 12);
 			memcpy(objects.vel[slot], ptr + 16, 12);
-			memcpy(objects.acl[slot], ptr + 28, 12);
+				memcpy(objects.mov[slot], ptr + 28, 12);
 		}
 
 		ptr += 40;
@@ -385,8 +381,8 @@ extern void obj_print(short slot)
 	printf("Display object %d:\n", slot);
 	printf("Pos: "); vec3_print(objects.pos[slot]); printf("\n");
 	printf("Vel: "); vec3_print(objects.vel[slot]); printf("\n");
-	printf("Acl: "); vec3_print(objects.acl[slot]); printf("\n");
 	printf("Dir: "); vec3_print(objects.dir[slot]); printf("\n");
+	printf("Mov: "); vec3_print(objects.mov[slot]); printf("\n");
 }
 
 
@@ -394,11 +390,36 @@ extern void obj_sys_update(float delt)
 {
 	vec3_t pos;
 	vec3_t del;
+	vec3_t v_old;
+	vec3_t acl;
+	vec3_t vel;
 	int i;
-		
+	float t_speed = 12.0;
+
 	for(i = 0; i < OBJ_SLOTS; i++) {
 		if((objects.mask[i] & OBJ_M_MOVE) == OBJ_M_MOVE) {
 			float x, z;
+
+
+			/*
+			 * Control the speed and direction of the character.
+			 *
+			 * v_new = v_old * (1 - del_t * t_speed) + v_end * (del_t * t_speed)
+			 * v_new - v_end * (del_t * t_speed) = v_old * (1 - del_t * t_speed)
+			 * v_old = (v_new - v_end * (del_t * t_speed)) / (1 - del_t * t_speed)
+			 */
+
+			/* Friction */
+			vec3_cpy(v_old, objects.vel[i]);
+			vec3_scl(v_old, (1.0 - TICK_TIME_S * t_speed), v_old);
+
+			/* Acceleration */
+			vec3_scl(objects.mov[i], 6.0, vel);
+			vec3_scl(vel, (TICK_TIME_S * t_speed), acl);
+
+			/* Copy the acceleration to the player-object */
+			vec3_add(v_old, acl, objects.vel[i]);
+
 
 			vec3_cpy(pos, objects.pos[i]);
 			vec3_scl(objects.vel[i], delt, del);
@@ -407,7 +428,7 @@ extern void obj_sys_update(float delt)
 			x = objects.pos[i][0];
 			z = objects.pos[i][2];
 			objects.pos[i][1] = wld_get_height(x, z) + 2.2;
-			
+
 			if(vec3_mag(del) > 0.0) {
 				vec3_nrm(del, objects.dir[i]);
 				obj_update_matrix(i);

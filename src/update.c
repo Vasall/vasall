@@ -12,16 +12,14 @@ void game_start(void)
 	/* Setup timers */
 	core.last_update = SDL_GetTicks();
 	core.last_render = SDL_GetTicks();
+	core.last_share = SDL_GetTicks();
 }
 
 
 void game_proc_evt(SDL_Event *evt)
 {
-	int mod_ctrl;
 	uint8_t axis;
 	float val;
-
-	if(mod_ctrl) {/* Prevent warning for not using mod_ctrl */}
 
 	switch(evt->type) {
 		case(SDL_CONTROLLERAXISMOTION):
@@ -38,10 +36,10 @@ void game_proc_evt(SDL_Event *evt)
 			 * second element for horizontal data.
 			 */
 			switch(axis) {
-				case 0: input.movement[0] = val; break;
-				case 1: input.movement[1] = val; break;
-				case 2: input.camera[0] = val; break;
-				case 3: input.camera[1] = val; break;
+				case 0: input.mov[0] = val; break;
+				case 1: input.mov[1] = val; break;
+				case 2: input.cam[0] = val; break;
+				case 3: input.cam[1] = val; break;
 			}
 			break;
 
@@ -65,18 +63,15 @@ void game_proc_evt(SDL_Event *evt)
 
 static void game_proc_input(void)
 {
-	vec3_t acl, forw, right, fac;
+	vec3_t forw, right, mov;
+	short obj = core.obj[0];
 
 	/*
 	 * Control the camera.
 	 */
 
 	/* Rotate the camera */	
-	cam_rot(input.camera[0], input.camera[1]);
-
-	/*
-	 * Control the speed and direction of the character.
-	 */
+	cam_rot(input.cam[0], input.cam[1]);
 
 	/* Get direction of the camera */
 	vec3_cpy(right, camera.right);
@@ -88,17 +83,39 @@ static void game_proc_input(void)
 	vec3_nrm(forw, forw);
 
 	/* Combine input-direction and camera-direction */
-	vec3_scl(right, input.movement[0], right);
-	vec3_scl(forw, input.movement[1], forw);
+	vec3_scl(right, input.mov[0], right);
+	vec3_scl(forw, input.mov[1], forw);
 
-	vec3_add(forw, right, fac);
-	vec3_nrm(fac, fac);
+	vec3_add(forw, right, mov);
+	vec3_nrm(mov, mov);
 
-	/* Calculate the actual acceleration for the player */
-	vec3_scl(fac, 5.0, acl);
+	/* If the movement direction has changed */
+	if(vec2_cmp(mov, input.mov_old) == 0) {
+		short num = input.share.num;
+		uint32_t ti = SDL_GetTicks();
+		uint8_t off = 0;
 
-	/* Copy the acceleration to the player-object */
-	vec3_cpy(objects.vel[core.obj], acl);
+		if(input.share.timer == 0)
+			input.share.timer = ti;
+		else
+			off = ti - input.share.timer;
+
+		/* Push new entry in share-buffer */	
+		input.share.mask[num] = SHARE_M_MOV;
+		if(input.share.off[num] == 0)
+			input.share.off[num] = off;
+		input.share.obj[num] = objects.id[obj];
+		vec2_set(input.share.mov[num], mov[0], mov[2]);
+
+		/* Increment share-buffer-number */
+		/* input.share.num++; */
+
+		/* Remeber current state to check for changes */
+		vec3_cpy(input.mov_old, mov);
+
+		/* Copy the movement-direction into the object */
+		vec3_cpy(objects.mov[obj], mov);
+	}
 }
 
 
@@ -108,12 +125,12 @@ void game_update(void)
 	uint32_t now = SDL_GetTicks();
 	int count = 0;
 
-	while(now - core.last_update > TICK_TIME && count < MAX_UPDATE_NUM) {
+	while(now - core.last_update > TICK_TIME && count < MAX_UPDATE_NUM) {	
 		/* Process the game-input and update objects */
 		game_proc_input();
 
 		/* Update the objects in the object-table */
-		obj_sys_update(TICK_TIME / 1000.0);
+		obj_sys_update(TICK_TIME_S);
 
 		/* Update the camera-position */
 		cam_update();
@@ -121,6 +138,8 @@ void game_update(void)
 		core.last_update += TICK_TIME;
 		count++;
 	}
+
+	now = SDL_GetTicks();
 }
 
 void game_render(void)
@@ -129,7 +148,6 @@ void game_render(void)
 	float interp = MIN(1.0, (float)((now - core.last_update) / TICK_TIME));
 
 	/* Render the world */
-	wld_render(interp);
 
 	/* Render the objects */
 	obj_sys_render(interp);

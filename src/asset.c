@@ -330,7 +330,7 @@ extern short tex_load_png(char *name, char *pth)
 {
 	int w, h, ret = 0;
 	uint8_t *px;
-	
+
 	if(fs_load_png(pth, &px, &w, &h) < 0) {
 		ERR_LOG(("Failed to load texture: %s", pth));
 		return -1;

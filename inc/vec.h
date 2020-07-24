@@ -24,10 +24,18 @@ typedef short short2_t[2];
 
 
 extern void   vec2_set(vec2_t v, float x, float y);
+extern void   vec2_clr(vec2_t v);
 extern void   vec2_cpy(vec2_t out, vec2_t in);
 extern int    vec2_cmp(vec2_t v1, vec2_t v2);
+extern void   vec2_add(vec2_t v1, vec2_t v2, vec2_t out);
+extern void   vec2_sub(vec2_t v1, vec2_t v2, vec2_t out);
+extern void   vec2_scl(vec2_t v1, float f, vec2_t out);
+extern float  vec2_mag(vec2_t v);
+extern void   vec2_nrm(vec2_t in, vec2_t out);
+extern void   vec2_print(vec2_t v);
 
 extern void   vec3_set(vec3_t v, float x, float y, float z);
+extern void   vec3_clr(vec3_t v);
 extern void   vec3_cpy(vec3_t dst, vec3_t src);
 extern int    vec3_cmp(vec3_t v1, vec3_t v2);
 extern void   vec3_add(vec3_t v1, vec3_t v2, vec3_t res);

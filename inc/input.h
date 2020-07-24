@@ -12,11 +12,12 @@
 struct share_buffer {
 	short     num;
 	uint32_t  timer;
+	uint32_t  obj;
 
 	uint32_t    mask[SHARE_SLOTS];
 	uint8_t     off[SHARE_SLOTS];
-	uint32_t    obj[SHARE_SLOTS];
 	vec2_t      mov[SHARE_SLOTS];
+	uint32_t    btn[SHARE_SLOTS];
 };
 
 
@@ -37,7 +38,7 @@ struct input_wrapper {
 	/* The share-buffer to share with peers */
 	struct share_buffer share;
 
-	vec3_t mov_old;
+	vec2_t mov_old;
 };
 
 
@@ -76,5 +77,16 @@ extern int inp_add_device(int idx);
  * @id: The id of the device to remove
  */
 extern void inp_remv_device(int id);
+
+
+/*
+ * Collect all entries from the share-buffer and write them in the default
+ * share-format to the buffer.
+ *
+ * @buf: The buffer to write the data to (has to be allocated already)
+ *
+ * Returns: The number of bytes written
+ */
+extern int inp_col_share(char *buf);
 
 #endif

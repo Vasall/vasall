@@ -63,20 +63,27 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 	/* Get current timestamp */
 	ts = SDL_GetTicks();
 
+	/* Get slot to place object on */
 	if((slot = obj_get_slot()) < 0)
 		return -1;
 
 	/* Copy the valued and initialize the attributes */
 	objects.mask[slot] = mask;
 	objects.id[slot] = id;
+
+	/* Setup position, velocity and direction */
 	vec3_cpy(objects.pos[slot], pos);
-	vec3_set(objects.vel[slot], 0, 0, 0);
+	vec3_clr(objects.vel[slot]);
+	vec3_clr(objects.mov[slot]);
+
+	/* Setup model-data */
 	vec3_set(objects.dir[slot], 1, 0, 1);
 	objects.model[slot] = model;
 	objects.anim[slot] = 0;
 	objects.prog[slot] = 0.0;
 	mat4_idt(objects.mat[slot]);
 
+	/* Setup object-data-buffer */
 	objects.len[slot] = 0;
 
 	if(data && len) {
@@ -88,14 +95,19 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 	/* Get the height of the terrain at the objects-position */
 	x = objects.pos[slot][0];
 	z = objects.pos[slot][2];
-	objects.pos[slot][1] = wld_get_height(x, z) + 2.2;
+	objects.pos[slot][1] = wld_get_height(x, z) + 5.6;
 
 	/* Set last update-time */
-	objects.last[slot] = ts;
+	objects.last_ack_ts[slot] = 0;
+	objects.last_upd_ts[slot] = ts;
+
+	/* Set last acknowledged positio */
+	vec3_cpy(objects.last_pos[slot], pos);
 
 	/* Initialize the object-matrix */
 	obj_update_matrix(slot);
 
+	/* Increment number of objects in the object-table */
 	objects.num++;
 	return slot;
 }
@@ -256,9 +268,9 @@ extern int obj_collect(void *in, short in_num, void **out, short *out_num)
 			memcpy(ptr, objects.vel[slot], 12);
 			ptr += 12;
 
-			/* Copy the acceleration of the object */
-			memcpy(ptr, objects.mov[slot], 12);
-			ptr += 12;
+			/* Copy the mov-force of the object */
+			vec2_cpy((float *)ptr, objects.mov[slot]);
+			ptr += VEC2_SIZE;
 
 			/* Increment the number of objects */
 			num++;
@@ -278,8 +290,6 @@ extern int obj_collect(void *in, short in_num, void **out, short *out_num)
 	/* Set return-variables */
 	*out = out_buf;
 	if(out_num) *out_num = num;
-
-	printf("Collected %d\n", num);
 
 	/* Return the number of written bytes */
 	return written + 6;
@@ -304,71 +314,107 @@ extern int obj_submit(void *in, int64_t ts)
 	if((slot = obj_set(id, mask, pos, mdl, NULL, 0)) < 0)
 		return -1;
 
-	memcpy(objects.vel[slot], ptr + 20, 12);
-	memcpy(objects.mov[slot], ptr + 32, 12);
-	objects.last[slot] = ts;
+	vec3_cpy(objects.vel[slot], (float *)(ptr + 20));
+	vec2_cpy(objects.mov[slot], (float *)(ptr + 32));
+	
+	objects.last_ack_ts[slot] = ts;
+	objects.last_upd_ts[slot] = ts;
+
+	vec3_cpy(objects.last_vel[slot], (float *)(ptr + 20));
 
 	printf("Added object %d at slot %d\n", id, slot);
 	return 0;
 }
 
 
-extern int obj_collect_updates(void **out, short *out_num)
-{
-	short i;
-	short num = 0;
-	char *buf;
-	char *ptr;
-	int written = 0;
-
-	if(!(buf = malloc(objects.num * 40)))
-		return -1;
-
-	ptr = buf;
-
-	for(i = 0; i < objects.num; i++) {
-		if(objects.mask[i] == OBJ_M_NONE)
-			continue;
-
-		memcpy(ptr, &objects.id[i], 4);
-		memcpy(ptr + 4, objects.pos, 12);
-		memcpy(ptr + 16, objects.vel, 12);
-		memcpy(ptr + 28, objects.mov, 12);
-
-
-		ptr += 40;
-		written += 40;
-		num++;
-	}
-
-	*out = buf;
-	*out_num = num;
-	return written;
-}
-
-
-extern int obj_update(void *in, short num)
+extern int obj_update(void *in)
 {
 	uint32_t id;
-	short i;
-	char *ptr = in;
 	short slot;
+	uint32_t ti;
+	short num;
+	short i;
+	char *ptr;
+
+	uint32_t mask;
+	uint8_t off;
+
+	float t_speed = 12.0;
+
+	uint32_t cur_ti;
+	vec3_t pos;
+	vec3_t vel;
+	vec2_t mov;
+	vec3_t dir;
+		
+	vec3_t acl;
+	vec3_t del;
+
+	/* Extract general information */
+	memcpy(&ti, in, 4);
+	memcpy(&id, in + 4, 4);
+	memcpy(&num, in + 8, 2);
+
+	/* Set pointer */
+	ptr = in + 10;
+
+	/* Get the slot of the object */
+	if((slot = obj_sel_id(id)) < 0)
+		return -1;
+
+	/* Get object-data to current state */
+	cur_ti = objects.last_ack_ts[slot];	
+	vec3_cpy(pos, objects.last_pos[slot]);
+	vec3_cpy(vel, objects.last_vel[slot]);
+	vec2_cpy(mov, objects.mov[slot]);
 
 	for(i = 0; i < num; i++) {
-		memcpy(&id, ptr, 4);
+		while(cur_ti < ti) {
+			/* Friction */
+			vec3_scl(vel, (1.0 - TICK_TIME_S * t_speed), vel);
 
-		if(id == network.id)
-			continue;
+			/* Acceleration */
+			vec3_set(acl, mov[0], 0, mov[1]);
+			vec3_scl(acl, 6, acl);
+			vec3_scl(acl, (TICK_TIME_S * t_speed), acl);
 
-		if((slot = obj_sel_id(id)) >= 0) {
-			memcpy(objects.pos[slot], ptr +  4, 12);
-			memcpy(objects.vel[slot], ptr + 16, 12);
-				memcpy(objects.mov[slot], ptr + 28, 12);
+			/* Update velocity of the player-object */
+			vec3_add(vel, acl, vel);
+
+			vec3_scl(vel, TICK_TIME_S, del);
+			vec3_add(pos, del, pos);
+
+			pos[1] = wld_get_height(pos[0], pos[2]) + 5.6;
+		
+			if(del[0] + del[2] != 0.0) {
+				vec3_nrm(del, dir);
+			}
+
+			cur_ti += TICK_TIME;
 		}
 
-		ptr += 40;
+		memcpy(&mask, ptr, 4);
+		ptr += 4;
+
+		memcpy(&off, ptr, 1);
+		ptr += 1;
+
+		if((mask & SHARE_M_MOV) == SHARE_M_MOV) {
+			vec2_cpy(mov, (float *)ptr);
+			ptr += VEC2_SIZE;
+		}
+
+		ti += off;
 	}
 
+	vec3_cpy(objects.pos[slot], pos);
+	vec3_cpy(objects.vel[slot], vel);
+	vec2_cpy(objects.mov[slot], mov);
+	vec3_cpy(objects.dir[slot], dir);
+
+	objects.last_ack_ts[slot] = ti;
+	vec3_cpy(objects.last_pos[slot], pos);
+	vec3_cpy(objects.last_vel[slot], vel);
 	return 0;
 }
 
@@ -382,7 +428,7 @@ extern void obj_print(short slot)
 	printf("Pos: "); vec3_print(objects.pos[slot]); printf("\n");
 	printf("Vel: "); vec3_print(objects.vel[slot]); printf("\n");
 	printf("Dir: "); vec3_print(objects.dir[slot]); printf("\n");
-	printf("Mov: "); vec3_print(objects.mov[slot]); printf("\n");
+	printf("Mov: "); vec2_print(objects.mov[slot]); printf("\n");
 }
 
 
@@ -400,26 +446,17 @@ extern void obj_sys_update(float delt)
 		if((objects.mask[i] & OBJ_M_MOVE) == OBJ_M_MOVE) {
 			float x, z;
 
-
-			/*
-			 * Control the speed and direction of the character.
-			 *
-			 * v_new = v_old * (1 - del_t * t_speed) + v_end * (del_t * t_speed)
-			 * v_new - v_end * (del_t * t_speed) = v_old * (1 - del_t * t_speed)
-			 * v_old = (v_new - v_end * (del_t * t_speed)) / (1 - del_t * t_speed)
-			 */
-
 			/* Friction */
 			vec3_cpy(v_old, objects.vel[i]);
 			vec3_scl(v_old, (1.0 - TICK_TIME_S * t_speed), v_old);
 
 			/* Acceleration */
-			vec3_scl(objects.mov[i], 6.0, vel);
+			vec3_set(vel, objects.mov[i][0], 0, objects.mov[i][1]);
+			vec3_scl(vel, 6.0, vel);
 			vec3_scl(vel, (TICK_TIME_S * t_speed), acl);
 
-			/* Copy the acceleration to the player-object */
-			vec3_add(v_old, acl, objects.vel[i]);
-
+			/* Update velocity of the player-object */
+			vec3_add(v_old, acl, objects.vel[i]);	
 
 			vec3_cpy(pos, objects.pos[i]);
 			vec3_scl(objects.vel[i], delt, del);
@@ -427,7 +464,7 @@ extern void obj_sys_update(float delt)
 
 			x = objects.pos[i][0];
 			z = objects.pos[i][2];
-			objects.pos[i][1] = wld_get_height(x, z) + 2.2;
+			objects.pos[i][1] = wld_get_height(x, z) + 5.6;
 
 			if(vec3_mag(del) > 0.0) {
 				vec3_nrm(del, objects.dir[i]);

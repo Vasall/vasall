@@ -22,6 +22,11 @@
 #define SDL_A_MASK 0xff000000
 #endif
 
+
+typedef SDL_Color color_t;
+typedef SDL_Rect rect_t;
+
+
 /*
  * Initialize the SDL-framework and it's submodules.
  *

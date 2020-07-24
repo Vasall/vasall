@@ -63,7 +63,7 @@ void game_proc_evt(SDL_Event *evt)
 
 static void game_proc_input(void)
 {
-	vec3_t forw, right, mov;
+	vec2_t forw, right, mov;
 	short obj = core.obj[0];
 
 	/*
@@ -73,21 +73,20 @@ static void game_proc_input(void)
 	/* Rotate the camera */	
 	cam_rot(input.cam[0], input.cam[1]);
 
-	/* Get direction of the camera */
-	vec3_cpy(right, camera.right);
-	right[1] = 0.0;
-	vec3_nrm(right, right);
 
-	vec3_cpy(forw, camera.forward);
-	forw[1] = 0.0;
-	vec3_nrm(forw, forw);
+	/* Get direction of the camera */
+	vec2_set(right, camera.right[0], camera.right[2]);
+	vec2_nrm(right, right);
+
+	vec2_set(forw, camera.forward[0], camera.forward[2]);
+	vec2_nrm(forw, forw);
 
 	/* Combine input-direction and camera-direction */
-	vec3_scl(right, input.mov[0], right);
-	vec3_scl(forw, input.mov[1], forw);
+	vec2_scl(right, input.mov[0], right);
+	vec2_scl(forw, input.mov[1], forw);
 
-	vec3_add(forw, right, mov);
-	vec3_nrm(mov, mov);
+	vec2_add(forw, right, mov);
+	vec2_nrm(mov, mov);
 
 	/* If the movement direction has changed */
 	if(vec2_cmp(mov, input.mov_old) == 0) {
@@ -100,27 +99,31 @@ static void game_proc_input(void)
 		else
 			off = ti - input.share.timer;
 
+		if(input.share.obj == 0)
+			input.share.obj = objects.id[obj];
+
 		/* Push new entry in share-buffer */	
 		input.share.mask[num] = SHARE_M_MOV;
 		if(input.share.off[num] == 0)
 			input.share.off[num] = off;
-		input.share.obj[num] = objects.id[obj];
-		vec2_set(input.share.mov[num], mov[0], mov[2]);
+		vec2_cpy(input.share.mov[num], mov);
 
 		/* Increment share-buffer-number */
-		/* input.share.num++; */
+		input.share.num++;
 
 		/* Remeber current state to check for changes */
-		vec3_cpy(input.mov_old, mov);
+		vec2_cpy(input.mov_old, mov);
 
 		/* Copy the movement-direction into the object */
-		vec3_cpy(objects.mov[obj], mov);
+		vec2_cpy(objects.mov[obj], mov);
 	}
 }
 
 
 void game_update(void)
 {
+	static int c = 0;
+
 	/* Get the current time */
 	uint32_t now = SDL_GetTicks();
 	int count = 0;
@@ -135,6 +138,20 @@ void game_update(void)
 		/* Update the camera-position */
 		cam_update();
 
+		/* Send update packet */
+		if(c % 3 == 0 && c != 0) {
+			char pck[512];
+			int tmp;
+				
+			/* Only send if something has changed */
+			if(input.share.num > 0) {
+				/* Send packet to all connected peers */
+				tmp = inp_col_share(pck);
+				net_broadcast(pck, tmp);
+			}
+		}
+		c++;
+
 		core.last_update += TICK_TIME;
 		count++;
 	}
@@ -148,6 +165,7 @@ void game_render(void)
 	float interp = MIN(1.0, (float)((now - core.last_update) / TICK_TIME));
 
 	/* Render the world */
+	wld_render(interp);
 
 	/* Render the objects */
 	obj_sys_render(interp);

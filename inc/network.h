@@ -92,6 +92,9 @@ struct network_wrapper {
 
 	struct peer_table peers;
 
+	short con_num;
+	short con[PEER_CON_NUM];
+
 	struct net_evt_ele *evt;
 
 	char status;
@@ -231,6 +234,29 @@ extern short net_peer_sel_id(uint32_t *id);
  */
 extern int net_con_peers(void);
 
+
+/*
+ * Add a peer-index to the list of connected peers.
+ *
+ * @slot: The slot of the peer in the peer-table
+ *
+ * Returns: Either the index in the connected-table or -1 if an error occurred
+ */
+extern int net_con_add(short slot);
+
+
+/*
+ * Remove a peer-index from the list of connected-peers.
+ *
+ * @slot: The slot of the peer in the peer-table
+ */
+extern void net_con_remv(short slot);
+
+
+/* 
+ *
+ */
+extern int net_broadcast(char *buf, int len);
 
 /*
  * Insert a list of object-id into the object-cache and then get the list of

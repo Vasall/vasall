@@ -22,10 +22,10 @@ int load_resources(void)
 	if(shd_set("uv", "res/shaders/uv.vert", "res/shaders/uv.frag") < 0)
 		return -1;
 
-	if(tex_load_png("plr", "res/textures/finn2.png") < 0)
+	if(tex_load_png("plr", "res/textures/base.png") < 0)
 		return -1;
 
-	if(mdl_load("plr", "res/models/finn.obj", tex_get("plr"), shd_get("uv")) < 0)
+	if(mdl_load("plr", "res/models/base.obj", tex_get("plr"), shd_get("uv")) < 0)
 		return -1;
 
 	return 0;
@@ -86,22 +86,23 @@ static void login(ui_node *n, SDL_Event *e)
 int load_ui(void)
 {
 	int one = 1;
-	SDL_Rect body0 = {0, 0, 400, 80};
-	SDL_Rect body1 = {40, 96, 320, 24};
-	SDL_Rect body2 = {40, 176, 320, 24};
-	
+	rect_t body0 = {0, 0, 400, 80};
+	rect_t body1 = {40, 96, 320, 24};
+	rect_t body2 = {40, 176, 320, 24};
+	struct ui_node *tmp;
+
 	/* 
 	 * FIXME:
 	 * If at this very position, there are not bytes, the UI will not be 
 	 * rendered correctly.
 	 */
 
-	SDL_Color mns_input_bck_col = {0x37, 0x37, 0x37, 0xFF};
-	SDL_Color mns_input_bor_col = {0x28, 0x28, 0x28, 0xFF};
-	SDL_Color mns_form_bck_col = {0x3D, 0x3B, 0x3C, 0xfb};
+	color_t mns_input_bck_col = {0x37, 0x37, 0x37, 0xFF};
+	color_t mns_input_bor_col = {0x28, 0x28, 0x28, 0xFF};
+	color_t mns_form_bck_col = {0x3D, 0x3B, 0x3C, 0xfb};
 	short mns_form_corners[4] = {8, 8, 8, 8};
-	SDL_Color mns_title_bck_col = {0xd3, 0x34, 0x5a, 0xff};
-	SDL_Color mns_login_bck_col = {0xff, 0x00, 0x00, 0xff};
+	color_t mns_title_bck_col = {0xd3, 0x34, 0x5a, 0xff};
+	color_t mns_login_bck_col = {0xff, 0x00, 0x00, 0xff};
 	short mns_title_cor[] = {5, 5, 0, 0};
 
 	/* Create the menu-sceen */
@@ -111,7 +112,7 @@ int load_ui(void)
 	ui_add_wrapper(ui_get("mns_form"), "mns_title", 0, 0, 400, 80);
 	ui_add_text(ui_get("mns_title"), "label0", &body0, "VASALL", &WHITE, 3, 0);
 
-	ui_add_text(ui_get("mns_form"), "label1", &body1, "Email:", &WHITE, 2, TEXT_LEFT);
+	ui_add_text(ui_get("mns_form"), "label1", &body1, "Username:", &WHITE, 2, TEXT_LEFT);
 	ui_add_input(ui_get("mns_form"), "mns_user", 40, 120, 320, 40, "");
 
 	ui_add_text(ui_get("mns_form"), "label2", &body2, "Password:", &WHITE, 2, TEXT_LEFT);
@@ -120,30 +121,35 @@ int load_ui(void)
 
 	ui_add_button(ui_get("mns_form"), "mns_login", 40, 270, 320, 40, "Login");
 
-	ui_mod_style(ui_get("mns_user"), STY_VIS, &one);
-	ui_mod_style(ui_get("mns_user"), STY_BCK, &one);
-	ui_mod_style(ui_get("mns_user"), STY_BCK_COL, &mns_input_bck_col);
-	ui_mod_style(ui_get("mns_user"), STY_BOR, &one);
-	ui_mod_style(ui_get("mns_user"), STY_BOR_COL, &mns_input_bor_col);
+	tmp = ui_get("mns_user");
+	ui_mod_style(tmp, STY_VIS, &one);
+	ui_mod_style(tmp, STY_BCK, &one);
+	ui_mod_style(tmp, STY_BCK_COL, &mns_input_bck_col);
+	ui_mod_style(tmp, STY_BOR, &one);
+	ui_mod_style(tmp, STY_BOR_COL, &mns_input_bor_col);
 
-	ui_mod_style(ui_get("mns_pswd"), STY_VIS, &one);
-	ui_mod_style(ui_get("mns_pswd"), STY_BCK, &one);
-	ui_mod_style(ui_get("mns_pswd"), STY_BCK_COL, &mns_input_bck_col);
-	ui_mod_style(ui_get("mns_pswd"), STY_BOR, &one);
-	ui_mod_style(ui_get("mns_pswd"), STY_BOR_COL, &mns_input_bor_col);
+	tmp = ui_get("mns_pswd");
+	ui_mod_style(tmp, STY_VIS, &one);
+	ui_mod_style(tmp, STY_BCK, &one);
+	ui_mod_style(tmp, STY_BCK_COL, &mns_input_bck_col);
+	ui_mod_style(tmp, STY_BOR, &one);
+	ui_mod_style(tmp, STY_BOR_COL, &mns_input_bor_col);
 
-	ui_mod_style(ui_get("mns_form"), STY_VIS, &one);
-	ui_mod_style(ui_get("mns_form"), STY_BCK, &one);
-	ui_mod_style(ui_get("mns_form"), STY_BCK_COL, &mns_form_bck_col);
-	ui_mod_style(ui_get("mns_form"), STY_COR_RAD, &mns_form_corners);
+	tmp = ui_get("mns_form");
+	ui_mod_style(tmp, STY_VIS, &one);
+	ui_mod_style(tmp, STY_BCK, &one);
+	ui_mod_style(tmp, STY_BCK_COL, &mns_form_bck_col);
+	ui_mod_style(tmp, STY_COR_RAD, &mns_form_corners);
 
-	ui_mod_style(ui_get("mns_title"), STY_VIS, &one);
-	ui_mod_style(ui_get("mns_title"), STY_BCK_COL, &mns_title_bck_col);
-	ui_mod_style(ui_get("mns_title"), STY_COR_RAD, &mns_title_cor);
+	tmp = ui_get("mns_title");
+	ui_mod_style(tmp, STY_VIS, &one);
+	ui_mod_style(tmp, STY_BCK_COL, &mns_title_bck_col);
+	ui_mod_style(tmp, STY_COR_RAD, &mns_title_cor);
 
-	ui_bind_event(ui_get("mns_login"), EVT_MOUSEDOWN, &login);
-	ui_mod_style(ui_get("mns_login"), STY_BCK, &one);
-	ui_mod_style(ui_get("mns_login"), STY_BCK_COL, &mns_login_bck_col);
+	tmp = ui_get("mns_login");
+	ui_bind_event(tmp, EVT_MOUSEDOWN, &login);
+	ui_mod_style(tmp, STY_BCK, &one);
+	ui_mod_style(tmp, STY_BCK_COL, &mns_login_bck_col);
 
 	win_build_pipe();
 	return 0;

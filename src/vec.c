@@ -13,6 +13,11 @@ extern void vec2_set(vec2_t v, float x, float y)
 	v[1] = y;
 }
 
+extern void vec2_clr(vec2_t v)
+{
+	memset(v, 0, VEC2_SIZE);
+}
+
 extern void vec2_cpy(vec2_t out, vec2_t in)
 {
 	memcpy(out, in, VEC2_SIZE);
@@ -26,6 +31,48 @@ extern int vec2_cmp(vec2_t v1, vec2_t v2)
 	return 1;
 }
 
+extern void vec2_add(vec2_t v1, vec2_t v2, vec2_t out)
+{
+	out[0] = v1[0] + v2[0];
+	out[1] = v1[1] + v2[1];
+}
+
+extern void vec2_sub(vec2_t v1, vec2_t v2, vec2_t out)
+{
+	out[0] = v1[0] - v2[0];
+	out[1] = v1[1] - v2[1];
+}
+
+extern void vec2_scl(vec2_t v1, float f, vec2_t out)
+{
+	out[0] = v1[0] * f;
+	out[1] = v1[1] * f;
+}
+
+extern float vec2_mag(vec2_t v)
+{
+	double len = (v[0] * v[0]) + (v[1] * v[1]);
+	return (float)sqrt(len);
+}
+
+extern void vec2_nrm(vec2_t in, vec2_t out)
+{
+	float len = vec2_mag(in);
+	if(len == 0.0) {
+		out[0] = 0.0;
+		out[1] = 0.0;
+		return;
+	}
+
+	out[0] = in[0] / len;
+	out[1] = in[1] / len;
+}
+
+extern void vec2_print(vec2_t v)
+{
+	printf("%.2f/%.2f", v[0], v[1]);
+}
+
 
 
 extern void vec3_set(vec3_t v, float x, float y, float z)
@@ -33,6 +80,11 @@ extern void vec3_set(vec3_t v, float x, float y, float z)
 	v[0] = x;
 	v[1] = y;
 	v[2] = z;
+}
+
+extern void vec3_clr(vec3_t v)
+{
+	memset(v, 0, VEC3_SIZE);
 }
 
 extern void vec3_cpy(vec3_t out, vec3_t in)

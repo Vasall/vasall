@@ -24,14 +24,15 @@ extern int inp_init(void)
 	/* Initialize the share-buffer */
 	input.share.num = 0;
 	input.share.timer = 0;
+	input.share.obj = 0;
 
 	/* Clear the share-buffer */
 	for(i = 0; i < SHARE_SLOTS; i++)
 		input.share.mask[i] = 0;
 
 	/* Clear the input-buffers */
-	memset(input.mov, 0, 8);
-	memset(input.mov_old, 0, 8);
+	vec2_clr(input.mov);
+	vec2_clr(input.mov_old);
 
 	return 0;
 
@@ -124,4 +125,58 @@ extern void inp_remv_device(int id)
 
 	SDL_GameControllerClose(input.ptr[slot]);
 	input.mask[slot] = 0;
+}
+
+
+extern int inp_col_share(char *buf)
+{
+	short i;
+	short num = input.share.num;
+	char *ptr;
+	uint32_t mask;
+	int written = 0;
+	uint32_t ti; 
+	uint8_t off = 0;
+	uint8_t tmp;
+
+	if(num  < 1)
+		return 0;
+
+	ti = input.share.timer;
+	memcpy(buf, &input.share.timer, 4);
+	memcpy(buf + 4, &input.share.obj, 4);
+	memcpy(buf + 8, &num, 2);
+
+	written += 10;
+	ptr = buf + 10;
+
+	for(i = 0; i < num; i++) {
+		mask = input.share.mask[i];
+		memcpy(ptr, &mask, 4);
+		ptr += 4;
+		written += 4;
+
+		tmp = input.share.off[i];
+		input.share.off[i] -= off;
+		off = tmp;
+
+		memcpy(ptr, &input.share.off[i], 1);
+		ptr += 1;
+		written += 1;
+
+		if((mask & SHARE_M_MOV) == SHARE_M_MOV) {
+			vec2_cpy((float *)ptr, input.share.mov[i]);
+			ptr += VEC2_SIZE;
+			written += VEC2_SIZE;
+		}
+
+		input.share.mask[i] = 0;
+		input.share.off[i] = 0;
+		memset(input.share.mov[i], 0, VEC2_SIZE);
+	}
+
+	input.share.num = 0;
+	input.share.timer = 0;
+	input.share.obj = 0;
+	return written;
 }

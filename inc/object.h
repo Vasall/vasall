@@ -7,16 +7,17 @@
 #include "sdl.h"
 #include "asset.h"
 #include "model.h"
+#include "input.h"
 #include "core.h"
 
 #define OBJ_SLOTS      128
 #define OBJ_DATA_MAX   128
 
-#define OBJ_M_NONE     0x00
-#define OBJ_M_MOVE     0x01
-#define OBJ_M_MODEL    0x02
-#define OBJ_M_DATA     0x04
-#define OBJ_M_PEER     0x08
+#define OBJ_M_NONE     (0<<0)
+#define OBJ_M_MOVE     (1<<0)
+#define OBJ_M_MODEL    (1<<1)
+#define OBJ_M_DATA     (1<<2)
+#define OBJ_M_PEER     (1<<3)
 
 #define OBJ_M_ENTITY (OBJ_M_MOVE|OBJ_M_MODEL)
 #define OBJ_M_PLAYER (OBJ_M_ENTITY|OBJ_M_PEER)
@@ -35,19 +36,25 @@ struct object_table {
 	
 	uint32_t   mask[OBJ_SLOTS];
 	uint32_t   id[OBJ_SLOTS];
+	
 	vec3_t     pos[OBJ_SLOTS];
 	vec3_t     vel[OBJ_SLOTS];
+	vec2_t     mov[OBJ_SLOTS];
+	
 	vec3_t     dir[OBJ_SLOTS];
 	short      model[OBJ_SLOTS];
 	short      anim[OBJ_SLOTS];
 	float      prog[OBJ_SLOTS];
 	mat4_t     mat[OBJ_SLOTS];
+
 	int        len[OBJ_SLOTS];
 	char       buf[OBJ_SLOTS][OBJ_DATA_MAX];
 
-	vec3_t     mov[OBJ_SLOTS];
+	uint32_t   last_ack_ts[OBJ_SLOTS];
+	uint32_t   last_upd_ts[OBJ_SLOTS];
 
-	int64_t    last[OBJ_SLOTS];
+	vec3_t     last_pos[OBJ_SLOTS];
+	vec3_t     last_vel[OBJ_SLOTS];
 };
 
 
@@ -162,15 +169,10 @@ extern int obj_submit(void *in, int64_t ts);
 
 
 /*
- * 
- */
-extern int obj_collect_updates(void **out, short *out_num);
-
-
-/*
  * Update the objects.
  */
-extern int obj_update(void *in, short num);
+extern int obj_update(void *in);
+
 
 /*
  * Print data about an object in the terminal.

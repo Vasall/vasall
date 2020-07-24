@@ -238,14 +238,14 @@ extern int wld_gen_terrain(void)
 
 		foo++;
 		if(foo % 2 == 0) {
-			col_tmp[0] = 0.0;
-			col_tmp[1] = 0.0;
-			col_tmp[2] = 0.0;
+			col_tmp[0] = 0.11;
+			col_tmp[1] = 0.11;
+			col_tmp[2] = 0.11;
 		}
 		else {
-			col_tmp[0] = 1.0;
-			col_tmp[1] = 1.0;
-			col_tmp[2] = 1.0;
+			col_tmp[0] = 0.98;
+			col_tmp[1] = 0.98;
+			col_tmp[2] = 0.98;
 		}
 
 		memcpy(col[idx[j]], col_tmp, VEC3_SIZE);

@@ -45,6 +45,7 @@ extern int net_init(void)
 	struct sockaddr_in6 *addr;
 	struct lcp_evt evt;
 	char running = 1;
+	short i;
 
 	/* Set the address and port of the disco-server */
 	memset(&network.main_addr, 0, tmp);
@@ -84,6 +85,11 @@ extern int net_init(void)
 	/* Initialize the peer-table */
 	if(net_peer_init() < 0)
 		goto err_close_ctx;
+
+	/* Initialize connected peer-table */
+	network.con_num = 0;
+	for(i = 0; i < PEER_CON_NUM; i++)
+		network.con[i] = -1;
 
 	/* Initialize the object-cache */
 	network.cache = NULL;
@@ -153,6 +159,9 @@ extern int net_update(void)
 				struct timeval rt;
 				uint32_t ts;
 
+				/* Add peer to connected-list */
+				net_con_add(slot);
+
 				/* Update entry-mask */
 				tbl->mask[slot] |= PEER_M_CON;
 				tbl->status[slot] = PEER_S_CON;
@@ -205,9 +214,13 @@ extern int net_update(void)
 			memcpy(&addr, &evt.addr.sin6_addr, 16);
 			port = evt.addr.sin6_port;
 
-			/* Remove peer from the peer-table */
-			if((slot = net_peer_sel_addr(&addr, &port)) >= 0)
+			if((slot = net_peer_sel_addr(&addr, &port)) >= 0) {
+				/* Remove peer from connected list */
+				net_con_remv(slot);
+
+				/* Remove peer from the peer-table */
 				tbl->mask[slot] = PEER_M_NONE;
+			}
 		}
 
 		lcp_del_evt(&evt);
@@ -230,33 +243,35 @@ extern int net_update(void)
 		else if(num < 1 && tbl->num > 0) {
 			net_con_peers();
 		}
+	}
 
-		network.count++;
-		if(network.count >= 80) {
-			char pck[980];
-			int tmp;
-			void *lst_buf;
-			short lst_num;
-			int lst_size;
-			short i;
+	return 0;
+}
 
-			tmp = hdr_set(pck, REQ_OP_UPDATE, 0x00, network.id,
-					network.key);
-				
-			lst_size = obj_collect_updates(&lst_buf, &lst_num);
-			memcpy(pck + tmp, &lst_num, 2);
-			memcpy(pck + tmp + 2, lst_buf, lst_size);
-			free(lst_buf);
 
-			for(i = 0; i < PEER_SLOTS; i++) {
-				if((tbl->mask[i] & PEER_M_CON) != PEER_M_CON)
-					continue;
+extern int net_broadcast(char *buf, int len)
+{
+	char pck[532];
+	int tmp;
+	short i;
+	short slot;
+	struct peer_table *tbl = &network.peers;
 
-				tmp += lst_size;
-				lcp_send(network.ctx, &tbl->addr[i], pck, tmp);
-			}
-			network.count = 0;
-		}
+	/* Copy buffer into packet */
+	memcpy(pck + 20, buf, len);
+
+	for(i = 0; i < PEER_CON_NUM; i++) {
+		if(network.con[i] == -1)
+			continue;
+
+		/* Set header of packet */
+		slot = network.con[i];
+		tmp = hdr_set(pck, REQ_OP_UPDATE, tbl->id[slot], 
+				network.id, network.key);
+
+		/* Send packet */
+		/* TODO: Handle failed */
+		lcp_send(network.ctx, &tbl->addr[slot], pck, tmp + len);
 	}
 
 	return 0;
@@ -552,14 +567,18 @@ extern int peer_handle(struct lcp_evt *evt)
 		lcp_send(network.ctx, &evt->addr, pck, tmp + written);
 	}
 	else if(op == REQ_OP_SUBMIT) {
-		short num;
-
-		memcpy(&num, ptr, 2);
-
-		printf("Submit %d\n", num);
-
 		/* Submit list of objects */
-		net_obj_submit(ptr + 2, num, src_id);
+		net_obj_submit(ptr + 2, *(short *)ptr, src_id);
+	}
+	else if(op == REQ_OP_UPDATE) {
+		uint32_t ti;
+
+		memcpy(&ti, ptr, 4);
+		ti += tbl->ti_del[p_slot];
+		memcpy(ptr, &ti, 4);
+
+		/* Update object-movement and action */
+		obj_update(ptr);
 	}
 
 	return 0;
@@ -794,6 +813,40 @@ extern int net_con_peers(void)
 	}
 
 	return 0;
+}
+
+
+extern int net_con_add(short slot)
+{
+	int i;
+
+	if(network.con_num >= PEER_CON_NUM)
+		return -1;
+
+	for(i = 0; i < PEER_CON_NUM; i++) {
+		if(network.con[i] == -1) {
+			network.con[i] = slot;
+			network.con_num++;
+			printf("Added connected at slot %d\n", i);
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+
+extern void net_con_remv(short slot)
+{
+	short i;
+
+	for(i = 0; i < PEER_CON_NUM; i++) {
+		if(network.con[i] == slot) {
+			network.con[i] = -1;
+			network.con_num--;
+			break;
+		}
+	}
 }
 
 

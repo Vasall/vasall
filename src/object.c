@@ -206,8 +206,6 @@ extern int obj_list(void *ptr, short *num, short max)
 		if(objects.mask[i] == OBJ_M_NONE)
 			continue;
 
-		printf("list %d\n", objects.id[i]);
-
 		/* Write the id */
 		memcpy(buf_ptr, &objects.id[i], 4);
 		buf_ptr += 4;
@@ -250,7 +248,6 @@ extern int obj_collect(void *in, short in_num, void **out, short *out_num)
 	ptr = out_buf + 6;
 
 	for(i = 0; i < in_num; i++) {
-		printf("Check %u\n", *id_ptr);
 		if((slot = obj_sel_id(*id_ptr)) >= 0) {
 			/* Copy object-id */
 			memcpy(ptr, id_ptr, 4);
@@ -322,7 +319,6 @@ extern int obj_submit(void *in, int64_t ts)
 
 	vec3_cpy(objects.last_vel[slot], (float *)(ptr + 20));
 
-	printf("Added object %d at slot %d\n", id, slot);
 	return 0;
 }
 

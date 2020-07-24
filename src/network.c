@@ -528,8 +528,6 @@ extern int peer_handle(struct lcp_evt *evt)
 
 		memcpy(&num, ptr, 2);
 
-		printf("Sync %d\n", num);
-
 		/* Insert object-ids into cache */
 		written = net_obj_insert(ptr + 2, num, src_id, &buf, NULL);
 
@@ -550,8 +548,6 @@ extern int peer_handle(struct lcp_evt *evt)
 		int written;
 
 		memcpy(&num, ptr, 2);
-		
-		printf("Request %d\n", num);
 
 		written = obj_collect(ptr + 2, num, &obj_buf, NULL);
 
@@ -827,7 +823,6 @@ extern int net_con_add(short slot)
 		if(network.con[i] == -1) {
 			network.con[i] = slot;
 			network.con_num++;
-			printf("Added connected at slot %d\n", i);
 			return i;
 		}
 	}
@@ -882,8 +877,6 @@ extern int net_obj_insert(void *in, short in_num, uint32_t src, char **out,
 	for(i = 0; i < in_num; i++) {
 		id = *id_ptr;
 
-		printf("Insert %d\n", id);
-
 		/* An object with the id is not yet registered or cached */
 		if(obj_sel_id(id) < 0 && net_obj_find(id) == NULL) {
 			/* Allocate memory for the struct */
@@ -921,8 +914,6 @@ extern int net_obj_insert(void *in, short in_num, uint32_t src, char **out,
 
 	/* Copy number to buffer */
 	memcpy(out_buf, &num, 2);
-
-	printf("Inserted %d\n", num);
 
 	/* Set the output-variables */
 	*out = out_buf;
@@ -968,8 +959,6 @@ extern int net_obj_submit(void *ptr, short num, uint32_t src)
 
 	/* Set pointer to read object-data */
 	buf_ptr = ptr + 4;
-
-	printf("Submit %d objects\n", num);
 
 	for(i = 0; i < num; i++) {
 		/* Get the id of the object */

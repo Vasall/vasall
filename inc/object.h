@@ -51,7 +51,8 @@ struct object_table {
 	
 	vec3_t     pos[OBJ_SLOTS];
 	vec3_t     vel[OBJ_SLOTS];
-	
+
+	vec3_t     prev_pos[OBJ_SLOTS];
 	vec3_t     dir[OBJ_SLOTS];
 	short      model[OBJ_SLOTS];
 	short      anim[OBJ_SLOTS];

@@ -80,6 +80,8 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 	z = objects.pos[slot][2];
 	objects.pos[slot][1] = wld_get_height(x, z) + 5.6;
 
+	vec3_cpy(objects.prev_pos[slot], objects.pos[slot]);
+
 	/* Setup model-data */
 	vec3_set(objects.dir[slot], 1, 0, 1);
 	objects.model[slot] = model;
@@ -422,6 +424,8 @@ extern void obj_sys_input(void)
 	vec3_t pos;
 	vec3_t vel;
 	vec2_t mov;
+
+	vec3_t prev;
 	vec3_t dir;
 
 	vec3_t acl;
@@ -458,6 +462,8 @@ extern void obj_sys_input(void)
 				vec3_add(vel, acl, vel);
 
 				vec3_scl(vel, TICK_TIME_S, del);
+
+				vec3_cpy(prev, pos);
 				vec3_add(pos, del, pos);
 
 				pos[1] = wld_get_height(pos[0], pos[2]) + 5.6;
@@ -472,6 +478,8 @@ extern void obj_sys_input(void)
 			vec3_cpy(objects.pos[i], pos);
 			vec3_cpy(objects.vel[i], vel);
 			vec2_cpy(objects.mov[i], mov);
+			/* TODO Check if this is better
+			 * vec3_cpy(objects.prev_pos[i], prev);*/
 
 			inp_i++;
 			if(inp_i >= inp_num) {	
@@ -479,7 +487,6 @@ extern void obj_sys_input(void)
 
 				vec3_cpy(objects.last_pos[i], pos);
 				vec3_cpy(objects.last_vel[i], vel);
-				vec2_cpy(objects.mov[i], mov);
 
 				objects.last_ack_ts[i] = cur_ti;
 				objects.last_upd_ts[i] = cur_ti;
@@ -511,6 +518,8 @@ extern void obj_sys_update(void)
 	vec3_t acl;
 	vec3_t del;
 
+	vec3_t prev;
+
 	float t_speed = 12.0;
 	float tmp = TICK_TIME_S * t_speed;
 
@@ -534,6 +543,7 @@ extern void obj_sys_update(void)
 
 			/* Get position-delta and move object */
 			vec3_scl(vel, TICK_TIME_S, del);
+			vec3_cpy(prev, pos);
 			vec3_add(pos, del, pos);
 
 			/* Get height at new position */
@@ -541,6 +551,7 @@ extern void obj_sys_update(void)
 
 			vec3_cpy(objects.pos[i], pos);
 			vec3_cpy(objects.vel[i], vel);
+			vec3_cpy(objects.prev_pos[i], prev);
 
 			/* Adjust direction if moving */
 			if(del[0] + del[2] != 0.0) {
@@ -549,9 +560,6 @@ extern void obj_sys_update(void)
 		}
 
 		objects.last_upd_ts[i] = ts;
-
-		/* Update model-matrix */
-		obj_update_matrix(i);
 	}
 }
 
@@ -559,11 +567,22 @@ extern void obj_sys_update(void)
 extern void obj_sys_render(float interp)
 {
 	int i;
+	vec3_t del;
+	vec3_t pos;
 
 	if(interp) {/* Prevent warning for not using parameters */}
 
 	for(i = 0; i < OBJ_SLOTS; i++) {
 		if((objects.mask[i] & OBJ_M_MODEL) == OBJ_M_MODEL) {
+			vec3_sub(objects.pos[i], objects.prev_pos[i], del);
+			vec3_scl(del, interp, del);
+			vec3_add(objects.pos[i], del, pos);
+
+			/* Set the position of the model */
+			objects.mat[i][0xc] = pos[0];
+			objects.mat[i][0xd] = pos[1];
+			objects.mat[i][0xe] = pos[2];
+
 			mdl_render(objects.model[i], objects.mat[i]);
 		}
 	}

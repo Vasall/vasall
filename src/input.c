@@ -1,4 +1,5 @@
 #include "input.h"
+#include "network.h"
 
 #include <stdlib.h>
 
@@ -135,15 +136,16 @@ extern int inp_col_share(char *buf)
 	char *ptr;
 	uint32_t mask;
 	int written = 0;
-	uint32_t ti; 
 	uint8_t off = 0;
 	uint8_t tmp;
+	int32_t ts;
 
 	if(num  < 1)
 		return 0;
 
-	ti = input.share.timer;
-	memcpy(buf, &input.share.timer, 4);
+	ts = input.share.timer + network.time_del;
+	
+	memcpy(buf, &ts, 4);
 	memcpy(buf + 4, &input.share.obj, 4);
 	memcpy(buf + 8, &num, 2);
 

@@ -31,6 +31,18 @@ enum object_attr {
 	OBJ_ATTR_BUF =    0x05
 };
 
+#define OBJ_INPUT_SLOTS   6
+
+struct object_inputs {
+	short num;
+	
+	uint32_t     mask[OBJ_INPUT_SLOTS];
+	uint32_t     ts[OBJ_INPUT_SLOTS];
+
+	vec2_t       mov[OBJ_INPUT_SLOTS];
+	uint16_t     act[OBJ_INPUT_SLOTS];
+};
+
 struct object_table {
 	short num;
 	
@@ -39,7 +51,6 @@ struct object_table {
 	
 	vec3_t     pos[OBJ_SLOTS];
 	vec3_t     vel[OBJ_SLOTS];
-	vec2_t     mov[OBJ_SLOTS];
 	
 	vec3_t     dir[OBJ_SLOTS];
 	short      model[OBJ_SLOTS];
@@ -49,6 +60,13 @@ struct object_table {
 
 	int        len[OBJ_SLOTS];
 	char       buf[OBJ_SLOTS][OBJ_DATA_MAX];
+
+	/* Last input */
+	vec2_t     mov[OBJ_SLOTS];
+	uint16_t   act[OBJ_SLOTS];
+
+	/* Input-buffer-list */
+	struct object_inputs  inp[OBJ_SLOTS];
 
 	uint32_t   last_ack_ts[OBJ_SLOTS];
 	uint32_t   last_upd_ts[OBJ_SLOTS];
@@ -168,10 +186,20 @@ extern int obj_collect(void *in, short in_num, void **out, short *out_num);
 extern int obj_submit(void *in, int64_t ts);
 
 
+extern int obj_add_inputs(uint32_t ts, void *in);
+
 /*
- * Update the objects.
+ * Attach a new input to an object.
+ *
+ * @slot: The slot the objects is on in the object-table
+ * @mask: The input-mask
+ * @ts: The timestamp of the input
+ * @mov: The move-vector if enabled in the mask, use NULL otherwise
+ * @act: The action-mask if enabled in the mask, use NULL otherwise
+ *
+ * Returns: 0 on success or -1 if an error occurred
  */
-extern int obj_update(void *in);
+extern int obj_add_input(short slot, uint32_t mask, uint32_t ts, vec2_t mov, uint16_t act);
 
 
 /*
@@ -182,12 +210,12 @@ extern int obj_update(void *in);
 extern void obj_print(short slot);
 
 
+extern void obj_sys_input(void);
+
 /*
  * A system-function to update all objects in the object-table.
- *
- * @delt: The time since the last frame in milliseconds
  */
-extern void obj_sys_update(float delt);
+extern void obj_sys_update(void);
 
 
 /*

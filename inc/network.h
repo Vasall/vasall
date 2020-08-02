@@ -41,8 +41,6 @@ struct peer_table {
 	unsigned char          flag[PEER_SLOTS];
 	struct lcp_con         *con[PEER_SLOTS];
 	unsigned short         obj[PEER_SLOTS][1]; 
-
-	long int               ti_del[PEER_SLOTS];
 };
 
 struct cache_entry;
@@ -107,6 +105,11 @@ struct network_wrapper {
 
 	struct cache_entry *cache;
 
+	/* Time difference to the universal server-timer */
+	uint32_t time_del;
+
+
+	/* Varaibles used for debugging and prototyping */
 	int count;
 };
 
@@ -302,7 +305,7 @@ extern struct cache_entry *net_obj_find(uint32_t id);
  *
  * Returns: 0 on success or -1 if an error occurred
  */
-extern int net_obj_submit(void *ptr, short num, uint32_t src);
+extern int net_obj_submit(void *ptr, uint32_t ts, short num, uint32_t src);
 
 
 /*

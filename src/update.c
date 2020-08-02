@@ -12,7 +12,6 @@ void game_start(void)
 	/* Setup timers */
 	core.last_update = SDL_GetTicks();
 	core.last_render = SDL_GetTicks();
-	core.last_share = SDL_GetTicks();
 }
 
 
@@ -64,7 +63,7 @@ void game_proc_evt(SDL_Event *evt)
 static void game_proc_input(void)
 {
 	vec2_t forw, right, mov;
-	short obj = core.obj[0];
+	short obj = core.obj;
 
 	/*
 	 * Control the camera.
@@ -114,8 +113,8 @@ static void game_proc_input(void)
 		/* Remeber current state to check for changes */
 		vec2_cpy(input.mov_old, mov);
 
-		/* Copy the movement-direction into the object */
-		vec2_cpy(objects.mov[obj], mov);
+		/* Add input to object input-buffer */
+		obj_add_input(obj, 1, ti, mov, 0);
 	}
 }
 
@@ -132,8 +131,11 @@ void game_update(void)
 		/* Process the game-input and update objects */
 		game_proc_input();
 
+		/* Process object-inputs */
+		obj_sys_input();
+
 		/* Update the objects in the object-table */
-		obj_sys_update(TICK_TIME_S);
+		obj_sys_update();
 
 		/* Update the camera-position */
 		cam_update();
@@ -155,8 +157,6 @@ void game_update(void)
 		core.last_update += TICK_TIME;
 		count++;
 	}
-
-	now = SDL_GetTicks();
 }
 
 void game_render(void)

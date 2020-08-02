@@ -22,7 +22,6 @@
 /* The shares-per-second */
 #define SHARE_HERZ       30
 #define SHARE_TIME       (1000.0/SHARE_HERZ)
-#define LOC_OBJ_NUM      1
 
 struct core_wrapper {
 	char running;
@@ -33,9 +32,8 @@ struct core_wrapper {
 
 	uint32_t last_update;
 	uint32_t last_render;
-	uint32_t last_share;
 
-	short obj[LOC_OBJ_NUM];
+	short obj;
 };
 
 

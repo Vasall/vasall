@@ -4,7 +4,7 @@
 #include "sdl.h"
 #include "vec.h"
 
-#define SHARE_SLOTS 16
+#define SHARE_SLOTS    16
 
 #define SHARE_M_MOV    0x01
 
@@ -16,8 +16,9 @@ struct share_buffer {
 
 	uint32_t    mask[SHARE_SLOTS];
 	uint8_t     off[SHARE_SLOTS];
+
 	vec2_t      mov[SHARE_SLOTS];
-	uint32_t    btn[SHARE_SLOTS];
+	uint32_t    act[SHARE_SLOTS];
 };
 
 

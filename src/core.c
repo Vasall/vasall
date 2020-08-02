@@ -12,20 +12,16 @@ struct core_wrapper core;
 
 extern int core_init(void)
 {
-	short i;
-
 	core.running = 1;
 
 	core.proc_evt = NULL;
 	core.update = NULL;
 	core.render = NULL;
 
-	for(i = 0; i < LOC_OBJ_NUM; i++)
-		core.obj[i] = -1;
+	core.obj = -1;
 
 	core.last_update = 0;
 	core.last_render = 0;
-	core.last_share = 0;
 
 	return 0;
 }

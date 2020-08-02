@@ -138,6 +138,7 @@ extern int net_update(void)
 	struct lcp_evt evt;
 	time_t ti;
 	struct peer_table *tbl = &network.peers;
+	int size;
 
 	/* Processing incoming packets and send out requests */
 	lcp_update(network.ctx);
@@ -156,8 +157,6 @@ extern int net_update(void)
 			if((slot = net_peer_sel_addr(&addr, &port)) >= 0) {
 				char pck[534];
 				int tmp;
-				struct timeval rt;
-				uint32_t ts;
 
 				/* Add peer to connected-list */
 				net_con_add(slot);
@@ -173,26 +172,16 @@ extern int net_update(void)
 				printf("Connected to %s on slot %d\n", 
 						lcp_str_addr6(&evt.addr), slot);
 
-				/* Send exchange packet to peer */
-				tmp = hdr_set(pck, REQ_OP_EXCHANGE,
-						tbl->id[slot], network.id, 
-						network.key);
 
-				memset(pck + tmp, 0, 20);
+				/* Synchronize the object-tables */
+				tmp = hdr_set(pck, REQ_OP_SYNC, tbl->id[slot],
+						network.id, network.key);
 
-				/* Get current real-time and timestamp */
-				gettimeofday(&rt, NULL);
-				ts = SDL_GetTicks();
+				/* Attach list of objects */
+				size = obj_list(pck + tmp, NULL, 128);
 
-				/* Attach real-time */
-				memcpy(pck + tmp, &rt.tv_sec, 8);
-				memcpy(pck + tmp + 8, &rt.tv_usec, 8);
-
-				/* Attach timestamp */
-				memcpy(pck + tmp + 16, &ts, 4);
-
-				/* Send packet to peer */
-				lcp_send(network.ctx, &tbl->addr[slot], pck, tmp + 20);
+				/* Send packet */
+				lcp_send(network.ctx, &tbl->addr[slot], pck, tmp + size);
 			}
 		}
 		/* Received a packet */
@@ -282,7 +271,7 @@ extern int peer_handle(struct lcp_evt *evt)
 {
 	char *ptr;
 	int tmp;
-
+		
 	uint8_t op;
 	uint16_t len;
 	uint32_t dst_id;
@@ -296,6 +285,9 @@ extern int peer_handle(struct lcp_evt *evt)
 	struct lcp_ctx *ctx = network.ctx;
 
 	short p_slot;
+
+	struct timeval serv_ti;
+	struct timeval loc_ti;
 
 	/* Extract data from header */
 	tmp = hdr_get(evt->buf, &op, &dst_id, &src_id, &mod, &key);
@@ -335,9 +327,18 @@ extern int peer_handle(struct lcp_evt *evt)
 			memcpy(&network.id, ptr + 1, 4);
 			memcpy(network.key, ptr + 5, 16);
 
+			/* Copy the server timestamp */
+			memcpy(&serv_ti.tv_sec, ptr + 21, 8);
+			memcpy(&serv_ti.tv_usec, ptr + 29, 8);
+		
+			gettimeofday(&loc_ti, NULL);
+			network.time_del = (loc_ti.tv_sec - serv_ti.tv_sec) * 1000;
+			network.time_del += (loc_ti.tv_usec - serv_ti.tv_usec) / 1000;
+			network.time_del = network.time_del - SDL_GetTicks();
+
 			/* Insert object into object-table */
 			id = network.id;
-			memcpy(pos, ptr + 21, 3 * sizeof(float));
+			memcpy(pos, ptr + 37, 3 * sizeof(float));
 			mask = OBJ_M_PLAYER;
 			mdl = mdl_get("plr");
 
@@ -350,12 +351,12 @@ extern int peer_handle(struct lcp_evt *evt)
 			}
 
 			/* Set the index of the core-object */
-			core.obj[0] = slot;
+			core.obj = slot;
 
 			/* Check if any peers are includes */
-			memcpy(&peer_num, ptr + 33, 2);
+			memcpy(&peer_num, ptr + 49, 2);
 			if(peer_num > 0)
-				net_add_peers(ptr + 35, peer_num);
+				net_add_peers(ptr + 51, peer_num);
 
 			/* Update status */
 			network.status = 2;
@@ -479,48 +480,6 @@ extern int peer_handle(struct lcp_evt *evt)
 			tbl->pen_num++;
 		}
 	}
-	else if(op == REQ_OP_EXCHANGE) {
-		long int p_sec;
-		long int p_usec;
-		long int p_ts = 0;
-		struct timeval rt;
-		long int ts = 0;
-		int size;
-		long int del;
-
-		/* TODO: Rework the timestamp exchange */
-
-		/* Extract data from packet */
-		memcpy(&p_sec, ptr, 8);
-		memcpy(&p_usec, ptr + 8, 8);
-		memcpy(&p_ts, ptr + 16, 4);
-
-		/* Get current real-time and the current timestamp */
-		gettimeofday(&rt, NULL);
-		ts = SDL_GetTicks();
-
-		/* Get the relative time-difference to set timestamp back */
-		del = (rt.tv_sec - p_sec) * 1000;
-		del += (rt.tv_usec / 1000) - (p_usec / 1000);
-		del = (ts - del) - p_ts;	
-
-		/* Insert timedelta into peer-table */
-		tbl->ti_del[p_slot] = del;
-		printf("Timedelta of %ld milliseconds\n", tbl->ti_del[p_slot]);
-			
-		/* Update status */
-		tbl->status[p_slot] = PEER_S_EXC; 
-
-		/* Synchronize the object-tables */
-		tmp = hdr_set(pck, REQ_OP_SYNC, src_id, network.id,
-				network.key);
-
-		/* Attach list of objects */
-		size = obj_list(pck + tmp, NULL, 128);	
-
-		/* Send packet */
-		lcp_send(network.ctx, &tbl->addr[p_slot], pck, tmp + size);
-	}
 	else if(op == REQ_OP_SYNC) {
 		short num;
 		char *buf;
@@ -546,6 +505,7 @@ extern int peer_handle(struct lcp_evt *evt)
 		short num;
 		void *obj_buf;
 		int written;
+		uint32_t ts;
 
 		memcpy(&num, ptr, 2);
 
@@ -555,26 +515,38 @@ extern int peer_handle(struct lcp_evt *evt)
 		tmp = hdr_set(pck, REQ_OP_SUBMIT, src_id, network.id,
 					network.key);
 
+		/* Attach timestamp */
+		ts = SDL_GetTicks() + network.time_del;
+		memcpy(pck + tmp, &ts, 4);
+
 		/* Attach payload to packet */
-		memcpy(pck + tmp, obj_buf, written);
+		memcpy(pck + tmp + 4, obj_buf, written);
 		free(obj_buf);
 
 		/* Send the packet */
 		lcp_send(network.ctx, &evt->addr, pck, tmp + written);
 	}
 	else if(op == REQ_OP_SUBMIT) {
+		short num;
+		uint32_t ts;
+
+		memcpy(&ts, ptr, 4);
+
+		ts -= network.time_del;
+
+		memcpy(&num, ptr + 4, 2);
+
 		/* Submit list of objects */
-		net_obj_submit(ptr + 2, *(short *)ptr, src_id);
+		net_obj_submit(ptr + 6, ts, num, src_id);
 	}
 	else if(op == REQ_OP_UPDATE) {
-		uint32_t ti;
+		uint32_t ts;
 
-		memcpy(&ti, ptr, 4);
-		ti += tbl->ti_del[p_slot];
-		memcpy(ptr, &ti, 4);
+		ts = *(uint32_t *)ptr;
+		ts -= network.time_del;
 
-		/* Update object-movement and action */
-		obj_update(ptr);
+		/* Update the object */
+		obj_add_inputs(ts, ptr + 4);
 	}
 
 	return 0;
@@ -937,7 +909,7 @@ extern struct cache_entry *net_obj_find(uint32_t id)
 }
 
 
-extern int net_obj_submit(void *ptr, short num, uint32_t src)
+extern int net_obj_submit(void *ptr, uint32_t ts, short num, uint32_t src)
 {
 	short i;
 	uint32_t obj_id;
@@ -945,20 +917,13 @@ extern int net_obj_submit(void *ptr, short num, uint32_t src)
 	struct cache_entry *prev;
 	char *buf_ptr;
 	short src_slot;
-	int64_t ts;
 
 	/* Get the slot of the peer */
 	if((src_slot = net_peer_sel_id(&src)) < 0)
 		return -1;
 
-	/* Extract data from packet */
-	memcpy(&ts, ptr + 2, 4);
-
-	/* Adjust timestamp */
-	ts += network.peers.ti_del[src_slot];
-
 	/* Set pointer to read object-data */
-	buf_ptr = ptr + 4;
+	buf_ptr = ptr;
 
 	for(i = 0; i < num; i++) {
 		/* Get the id of the object */

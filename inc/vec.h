@@ -23,35 +23,36 @@ typedef short short2_t[2];
 
 
 
-extern void   vec2_set(vec2_t v, float x, float y);
-extern void   vec2_clr(vec2_t v);
+extern void   vec2_set(vec2_t out, float x, float y);
+extern void   vec2_clr(vec2_t in);
 extern void   vec2_cpy(vec2_t out, vec2_t in);
-extern int    vec2_cmp(vec2_t v1, vec2_t v2);
-extern void   vec2_add(vec2_t v1, vec2_t v2, vec2_t out);
-extern void   vec2_sub(vec2_t v1, vec2_t v2, vec2_t out);
-extern void   vec2_scl(vec2_t v1, float f, vec2_t out);
-extern float  vec2_mag(vec2_t v);
+extern int    vec2_cmp(vec2_t in1, vec2_t in2);
+extern void   vec2_add(vec2_t in1, vec2_t in2, vec2_t out);
+extern void   vec2_sub(vec2_t in1, vec2_t in2, vec2_t out);
+extern void   vec2_scl(vec2_t in1, float f, vec2_t out);
+extern float  vec2_mag(vec2_t in);
 extern void   vec2_nrm(vec2_t in, vec2_t out);
-extern void   vec2_print(vec2_t v);
+extern void   vec2_print(vec2_t in);
 
-extern void   vec3_set(vec3_t v, float x, float y, float z);
-extern void   vec3_clr(vec3_t v);
-extern void   vec3_cpy(vec3_t dst, vec3_t src);
-extern int    vec3_cmp(vec3_t v1, vec3_t v2);
-extern void   vec3_add(vec3_t v1, vec3_t v2, vec3_t res);
-extern void   vec3_sub(vec3_t v1, vec3_t v2, vec3_t res);
-extern void   vec3_scl(vec3_t v, float f, vec3_t res);
-extern void   vec3_inv_scl(vec3_t v, float f, vec3_t res);
-extern float  vec3_mag(vec3_t v);
-extern void   vec3_nrm(vec3_t v, vec3_t res);
-extern float  vec3_dot(vec3_t v1, vec3_t v2);
-extern void   vec3_cross(vec3_t v1, vec3_t v2, vec3_t res);
-extern void   vec3_rot_x(vec3_t v, float angle, vec3_t res);
-extern void   vec3_rot_y(vec3_t v, float angle, vec3_t res);
-extern void   vec3_rot_z(vec3_t v, float angle, vec3_t res);
-extern void   vec3_rot_axes(vec3_t v, float angle, vec3_t axis, vec3_t res);
-extern void   vec3_trans(vec3_t v, mat3_t mat, vec3_t res);
-extern void   vec3_print(vec3_t v);
+extern void   vec3_set(vec3_t out, float x, float y, float z);
+extern void   vec3_clr(vec3_t in);
+extern void   vec3_cpy(vec3_t out, vec3_t in);
+extern void   vec3_cpy_v2(vec3_t out, vec2_t in);
+extern int    vec3_cmp(vec3_t in1, vec3_t in2);
+extern void   vec3_add(vec3_t in1, vec3_t in2, vec3_t out);
+extern void   vec3_sub(vec3_t in1, vec3_t in2, vec3_t out);
+extern void   vec3_scl(vec3_t in, float f, vec3_t out);
+extern void   vec3_inv_scl(vec3_t in, float f, vec3_t out);
+extern float  vec3_mag(vec3_t in);
+extern void   vec3_nrm(vec3_t in, vec3_t out);
+extern float  vec3_dot(vec3_t in1, vec3_t in2);
+extern void   vec3_cross(vec3_t in1, vec3_t in2, vec3_t out);
+extern void   vec3_rot_x(vec3_t in, float angle, vec3_t out);
+extern void   vec3_rot_y(vec3_t in, float angle, vec3_t out);
+extern void   vec3_rot_z(vec3_t in, float angle, vec3_t out);
+extern void   vec3_rot_axes(vec3_t in, float angle, vec3_t axis, vec3_t out);
+extern void   vec3_trans(vec3_t in, mat3_t mat, vec3_t out);
+extern void   vec3_print(vec3_t in);
 
 extern float  vec3_barry_centric(vec3_t p1, vec3_t p2, vec3_t p3, vec2_t pos);
 

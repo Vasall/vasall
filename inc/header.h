@@ -74,11 +74,10 @@ struct req_hdr {
 #define REQ_OP_DELETE       0x0b  /* Delete user from database                */
 
 
-#define REQ_OP_EXCHANGE     0x11  /* Exchange peer-data                       */
-#define REQ_OP_SYNC         0x12  /* Syncronize the object list of two peers  */
-#define REQ_OP_REQUEST      0x13  /* Request data about certain objects       */
-#define REQ_OP_SUBMIT       0x14  /* Submit a list of objects to a peer       */
-#define REQ_OP_UPDATE       0x15  /* Send a packet containing object-updates  */
+#define REQ_OP_SYNC         0x11  /* Syncronize the object list of two peers  */
+#define REQ_OP_REQUEST      0x12  /* Request data about certain objects       */
+#define REQ_OP_SUBMIT       0x13  /* Submit a list of objects to a peer       */
+#define REQ_OP_UPDATE       0x14  /* Send a packet containing object-updates  */
 
 /*
  * Write a header to the given buffer, which has to be allocated already to fit

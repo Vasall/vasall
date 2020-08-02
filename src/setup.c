@@ -42,7 +42,7 @@ static void test1(char *buf, int len)
 	if(buf || len) {/* Prevent warning for not using parameters */}
 
 	/* Setup camera */
-	cam_trg_obj(core.obj[0]);
+	cam_trg_obj(core.obj);
 	camera.dist = 10.0;
 	cam_set_dir(dir);
 

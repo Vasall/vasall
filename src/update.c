@@ -162,11 +162,13 @@ void game_update(void)
 void game_render(void)
 {
 	uint32_t now = SDL_GetTicks();
-	float interp = MIN(1.0, (float)((now - core.last_update) / TICK_TIME));
+	float interp = MIN(1.0, (float)((now - core.last_render) / TICK_TIME));
 
 	/* Render the world */
 	wld_render(interp);
 
 	/* Render the objects */
 	obj_sys_render(interp);
+
+	core.last_render = now;
 }

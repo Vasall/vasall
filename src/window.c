@@ -17,7 +17,8 @@ const char *frgShd = "#version 330 core\n \
 
 static int win_conf_opengl(void)
 {
-	glClearColor(0.06, 0.06, 0.06, 1.0);
+	/* glClearColor(0.06, 0.06, 0.06, 1.0); */
+	glClearColor(0.9, 0.9, 0.9, 1.0);
 	glProvokingVertex(GL_FIRST_VERTEX_CONVENTION);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -86,13 +87,13 @@ static int win_load_cursors(void)
 
 extern int win_init(void)
 {
-	int win_flgs = SDL_WINDOW_OPENGL;
+	int win_flgs = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
 	struct ui_node *root = NULL;
 
 	if(!(window.win = SDL_CreateWindow("Vasall",
 					SDL_WINDOWPOS_UNDEFINED,
 					SDL_WINDOWPOS_UNDEFINED,
-					800, 600, win_flgs)))
+					WIN_W, WIN_H, win_flgs)))
 		return -1;
 
 	if(!(window.gl_ctx = SDL_GL_CreateContext(window.win)))
@@ -107,8 +108,8 @@ extern int win_init(void)
 	window.hover = NULL;
 	window.active = NULL;
 
-	window.win_w = 800;
-	window.win_h = 600;
+	window.win_w = WIN_W;
+	window.win_h = WIN_H;
 
 	if(!(root = ui_add(NULL, NULL, UI_WRAPPER, "root", NULL)))
 		goto err_delete_shader;

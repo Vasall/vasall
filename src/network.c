@@ -603,8 +603,8 @@ extern int net_insert(char *uname, char *pswd, net_cfnc on_success,
 	pck[tmp + strlen(uname) + 33] = network.ctx->con_flg; 
 
 	/* Send request */
-	return lcp_send(network.ctx, &network.main_addr, pck, 
-			tmp + strlen(uname) + 34);
+	tmp = tmp + strlen(uname) + 34;
+	return lcp_send(network.ctx, &network.main_addr, pck, tmp);
 }
 
 

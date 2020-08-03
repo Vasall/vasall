@@ -80,8 +80,6 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 	z = objects.pos[slot][2];
 	objects.pos[slot][1] = wld_get_height(x, z) + 5.6;
 
-	vec3_cpy(objects.prev_pos[slot], objects.pos[slot]);
-
 	/* Setup model-data */
 	vec3_set(objects.dir[slot], 1, 0, 1);
 	objects.model[slot] = model;
@@ -97,6 +95,10 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 		objects.len[slot] = len;
 		memcpy(objects.buf[slot], data, len);
 	}
+
+	/* Set interpolation variables */
+	vec3_cpy(objects.prev_pos[slot], objects.pos[slot]);
+	vec3_cpy(objects.prev_dir[slot], objects.dir[slot]);
 
 	/* Setup last input */
 	vec3_clr(objects.mov[slot]);
@@ -124,7 +126,6 @@ extern void obj_del(short slot)
 		return;
 
 	objects.mask[slot] = OBJ_M_NONE;
-
 	objects.num--;
 }
 
@@ -425,8 +426,9 @@ extern void obj_sys_input(void)
 	vec3_t vel;
 	vec2_t mov;
 
-	vec3_t prev;
 	vec3_t dir;
+
+	vec3_t prev;
 
 	vec3_t acl;
 	vec3_t del;
@@ -468,9 +470,9 @@ extern void obj_sys_input(void)
 
 				pos[1] = wld_get_height(pos[0], pos[2]) + 5.6;
 
-				if(del[0] + del[2] != 0.0) {
-					vec3_nrm(del, dir);
-				}
+
+				if(ABS(vel[0] + vel[1]) >= 0.0004)
+					vec3_nrm(vel, dir);
 
 				cur_ti += TICK_TIME;
 			}
@@ -478,6 +480,7 @@ extern void obj_sys_input(void)
 			vec3_cpy(objects.pos[i], pos);
 			vec3_cpy(objects.vel[i], vel);
 			vec2_cpy(objects.mov[i], mov);
+			vec3_cpy(objects.dir[i], dir);
 			/* TODO Check if this is better
 			 * vec3_cpy(objects.prev_pos[i], prev);*/
 
@@ -553,9 +556,9 @@ extern void obj_sys_update(void)
 			vec3_cpy(objects.vel[i], vel);
 			vec3_cpy(objects.prev_pos[i], prev);
 
-			/* Adjust direction if moving */
-			if(del[0] + del[2] != 0.0) {
-				vec3_nrm(del, objects.dir[i]);
+			if(ABS(vel[0] + vel[1]) >= 0.0004) {
+				vec3_cpy(objects.prev_dir[i], objects.dir[i]);
+				vec3_nrm(vel, objects.dir[i]);
 			}
 		}
 
@@ -569,6 +572,8 @@ extern void obj_sys_render(float interp)
 	int i;
 	vec3_t del;
 	vec3_t pos;
+	vec3_t dir;
+	float rot;
 
 	if(interp) {/* Prevent warning for not using parameters */}
 
@@ -578,10 +583,21 @@ extern void obj_sys_render(float interp)
 			vec3_scl(del, interp, del);
 			vec3_add(objects.pos[i], del, pos);
 
+			vec3_sub(objects.dir[i], objects.prev_dir[i], del);
+			vec3_scl(del, interp, del);
+			vec3_add(objects.dir[i], del, dir);
+
 			/* Set the position of the model */
 			objects.mat[i][0xc] = pos[0];
 			objects.mat[i][0xd] = pos[1];
 			objects.mat[i][0xe] = pos[2];
+
+			/* Set the rotation of the model */
+			rot = atan2(-dir[2], dir[0]);
+			objects.mat[i][0x0] =  cos(rot);
+			objects.mat[i][0x2] = -sin(rot);
+			objects.mat[i][0x8] =  sin(rot);
+			objects.mat[i][0xa] =  cos(rot);
 
 			mdl_render(objects.model[i], objects.mat[i]);
 		}

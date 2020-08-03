@@ -8,10 +8,13 @@
 
 #define PIPE_LEN 32
 
+#define WIN_W 800
+#define WIN_H 600
+
 enum cursors {
 	CURSOR_ARROW = 0,
 	CURSOR_IBEAM = 1,
-	CURSOR_HAND = 2
+	CURSOR_HAND  = 2
 };
 
 struct window_wrapper {

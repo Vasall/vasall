@@ -52,7 +52,6 @@ struct object_table {
 	vec3_t     pos[OBJ_SLOTS];
 	vec3_t     vel[OBJ_SLOTS];
 
-	vec3_t     prev_pos[OBJ_SLOTS];
 	vec3_t     dir[OBJ_SLOTS];
 	short      model[OBJ_SLOTS];
 	short      anim[OBJ_SLOTS];
@@ -62,11 +61,15 @@ struct object_table {
 	int        len[OBJ_SLOTS];
 	char       buf[OBJ_SLOTS][OBJ_DATA_MAX];
 
-	/* Last input */
+	/* Vars used for interpolation */
+	vec3_t     prev_pos[OBJ_SLOTS];
+	vec3_t     prev_dir[OBJ_SLOTS];
+
+	/* Vars used to store most recent input */
 	vec2_t     mov[OBJ_SLOTS];
 	uint16_t   act[OBJ_SLOTS];
 
-	/* Input-buffer-list */
+	/* Buffer containing all recent inputs */
 	struct object_inputs  inp[OBJ_SLOTS];
 
 	uint32_t   last_ack_ts[OBJ_SLOTS];

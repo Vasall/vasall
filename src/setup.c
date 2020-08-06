@@ -90,6 +90,7 @@ int load_ui(void)
 	rect_t body1 = {40, 96, 320, 24};
 	rect_t body2 = {40, 176, 320, 24};
 	struct ui_node *tmp;
+	void *ele;
 
 	/* 
 	 * FIXME:
@@ -106,14 +107,19 @@ int load_ui(void)
 	short mns_title_cor[] = {5, 5, 0, 0};
 
 	/* Create the menu-sceen */
-	ui_add_wrapper(ui_get("root"), "mns", 0, 0, 800, 600);
-	ui_add_wrapper(ui_get("mns"), "mns_form", 200, 80, 400, 380);
+	ui_add(UI_WRAPPER, ui_get("root"), "mns", NULL, sdl_rect(0, 0, 800, 600));
+	ui_add(UI_WRAPPER, ui_get("mns"), "mns_form", NULL, sdl_rect(200, 80, 400, 380));
 
-	ui_add_wrapper(ui_get("mns_form"), "mns_title", 0, 0, 400, 80);
-	ui_add_text(ui_get("mns_title"), "label0", &body0, "VASALL", &WHITE, 3, 0);
+	ui_add(UI_WRAPPER, ui_get("mns_form"), "mns_title", NULL, sdl_rect(0, 0, 400, 80));
 
-	ui_add_text(ui_get("mns_form"), "label1", &body1, "Username:", &WHITE, 2, TEXT_LEFT);
-	ui_add_input(ui_get("mns_form"), "mns_user", 40, 120, 320, 40, "");
+	ele = ui_new_text("VASALL\0", sdl_color(0xff, 0xff, 0xff, 0xff), 3, 0);
+	ui_add(UI_TEXT, ui_get("mns_title"), "label0", ele, sdl_rect(0, 0, 400, 80));
+
+	ele = ui_new_text("Username\0", sdl_color(0xff, 0xff, 0xff, 0xff, 2, TEXT_LEFT));
+	ui_add(UI_TEXT, ui_get("mns_form"), "label1", ele, sdl_rect(40, 96, 320, 24));
+
+
+	ui_add(UI_INPUT, ui_get("mns_form"), "mns_user", 40, 120, 320, 40, "");
 
 	ui_add_text(ui_get("mns_form"), "label2", &body2, "Password:", &WHITE, 2, TEXT_LEFT);
 	ui_add_input(ui_get("mns_form"), "mns_pswd", 40, 200, 320, 40, "");

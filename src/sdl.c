@@ -111,3 +111,28 @@ extern int sdl_fill_rounded(SDL_Surface *surf, int xo, int yo, int w, int h,
 	SDL_UnlockSurface(surf);
 	return  0;
 }
+
+extern rect_t sdl_rect(int x, int y, int w, int h)
+{
+	static rect_t r;
+
+	r.x = x;
+	r.y = y;
+	r.w = w;
+	r.h = h;
+
+	return r;
+}
+
+
+extern color_t sdl_color(int r, int g, int b, int a)
+{
+	static color_t col;
+
+	col.r = r;
+	col.g = g;
+	col.b = b;
+	col.a = a;
+
+	return col;
+}

@@ -8,13 +8,13 @@ typedef struct ui_node ui_node;
 typedef void (*ui_node_callback)(ui_node *n, SDL_Event *e);
 typedef void (*ui_render_callback)(ui_node *n, ui_node *rel);
 
-typedef enum ui_node_tag {
+typedef enum ui_tag {
 	UI_WRAPPER,
 	UI_TEXT,
 	UI_BUTTON,
 	UI_INPUT,
 	UI_LABEL
-} ui_node_tag;
+} ui_tag;
 
 typedef enum ui_constr_type {
 	CONSTR_SET,
@@ -118,7 +118,7 @@ typedef struct ui_node_events {
 struct ui_node {
 	char strid[20];
 	short layer;
-	ui_node_tag tag;
+	ui_tag tag;
 
 	ui_node *parent;
 
@@ -149,15 +149,15 @@ struct ui_node {
 	SDL_Surface *surf;
 };
 
-extern const ui_node_flags NULL_FLAGS;
-extern const ui_node_style NULL_STYLE;
-extern const ui_node_events NULL_EVENTS;
+extern const ui_node_flags   NULL_FLAGS;
+extern const ui_node_style   NULL_STYLE;
+extern const ui_node_events  NULL_EVENTS;
 
 const float STD_CORNERS[18];
 extern const float STD_UV[12];
 
-extern struct ui_node *ui_add(struct ui_node *par, void *ele, 
-		enum ui_node_tag tag, char *strid, SDL_Rect *body);
+extern struct ui_node *ui_add(enum ui_tag tag, struct ui_node *par, void *ele,
+		char *id, rect_t body);
 
 extern void ui_remv(struct ui_node *n);
 

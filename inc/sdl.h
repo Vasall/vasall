@@ -55,5 +55,11 @@ extern void sdl_close(void);
  * Returns: 0 on success or -1 if an error occurred
  */
 extern int sdl_fill_rounded(SDL_Surface *surf, int xo, int yo, int w, int h, 
-		SDL_Color col, short *cor);
+	SDL_Color col, short *cor);
+
+
+extern rect_t sdl_rect(int x, int y, int w, int h);
+
+extern color_t sdl_color(int r, int g, int b, int a);
+
 #endif

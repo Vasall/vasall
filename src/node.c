@@ -23,16 +23,31 @@ const float STD_UV[12] = {
 	0.0, 1.0, 1.0, 1.0, 1.0, 0.0
 };
 
-extern ui_node *ui_add(ui_node *par, void *ele, ui_node_tag tag, char *strid,
-		SDL_Rect *rect)
+static int ui_init_wrapper(struct ui_node *n)
+{
+	n->flags = WRAPPER_FLAGS;
+	n->style = WRAPPER_STYLE;
+	return 0;
+}
+
+static int ui_init_text(struct ui_node *n)
+{
+	n->flags = NULL_FLAGS;
+	n->style = TEXT_STYLE;
+	n->render = &TEXT_RENDER;
+	return 0;
+}
+
+extern ui_node *ui_add(enum ui_tag tag, struct ui_node *par, void *ele,
+		char *id, rect_t rect)
 {
 	int i;
-	ui_node *node;
+	struct ui_node *node;
 
-	if(!(node = malloc(sizeof(ui_node))))
+	if(!(node = malloc(sizeof(struct ui_node))))
 		return NULL;
 
-	strcpy(node->strid, strid);
+	strcpy(node->strid, id);
 
 	node->child_num = 0;
 	for(i = 0; i < CHILD_NUM; i++)
@@ -54,9 +69,9 @@ extern ui_node *ui_add(ui_node *par, void *ele, ui_node_tag tag, char *strid,
 	for(i = 0; i < 6; i++)
 		node->size_constr[i] = NULL;
 
-	memset(&node->rel, 0, sizeof(SDL_Rect));
-	memset(&node->body, 0, sizeof(SDL_Rect));
-	memset(&node->abs, 0, sizeof(SDL_Rect));
+	memset(&node->rel,  0, sizeof(rect_t));
+	memset(&node->body, 0, sizeof(rect_t));
+	memset(&node->abs,  0, sizeof(rect_t));
 
 	node->vao = 0;
 	for(i = 0; i < 2; i++)
@@ -93,23 +108,27 @@ extern ui_node *ui_add(ui_node *par, void *ele, ui_node_tag tag, char *strid,
 	if(rect != NULL) {
 		ui_set_pos_constr(node, "ver",  CONSTR_SET,
 				CONSTR_HORI, 0, CONSTR_LEFT,
-				rect->x, CONSTR_PX);
+				rect.x, CONSTR_PX);
 
 		ui_set_pos_constr(node, "hor", CONSTR_SET,
 				CONSTR_VERT, 0, CONSTR_LEFT,
-				rect->y, CONSTR_PX);
+				rect.y, CONSTR_PX);
 
 		ui_set_size_constr(node, "s_h", CONSTR_SET,
-				CONSTR_HORI, 0, rect->w, CONSTR_PX);
+				CONSTR_HORI, 0, rect.w, CONSTR_PX);
 
 		ui_set_size_constr(node, "s_v", CONSTR_SET,
-				CONSTR_VERT, 0, rect->h, CONSTR_PX);
+				CONSTR_VERT, 0, rect.h, CONSTR_PX);
 	}
 
 	ui_adjust(node);
 	
 	if(node->parent == NULL)
 		ui_enable_tex(node);
+
+	switch(tag) {
+		case UI_WRAPPER: ui_init_wrapper(node); break;
+	}
 
 	ui_prerender(node);
 	return node;

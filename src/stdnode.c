@@ -340,56 +340,21 @@ void INPUT_RENDER(ui_node *n, ui_node *rel)
 	}
 }
 
-ui_node *ui_add_wrapper(ui_node *par, char* id, int x, int y,
-		int w, int h)
+extern void *ui_new_text(char *text, color_t col, uint8_t font, uint8_t opt)
 {
-	ui_node *ele = NULL, *node = NULL;
-	SDL_Rect body;
+	struct ui_text *ele = NULL;
 
-	body.x = x;
-	body.y = y;
-	body.w = w;
-	body.h = h;
-
-	if(!(node = ui_add(par, NULL, UI_WRAPPER, id, &body)))
-		goto err_free_ele;
-
-	node->flags = WRAPPER_FLAGS;
-	node->style = WRAPPER_STYLE;
-	return node;
-
-err_free_ele:
-	free(ele);
-	return NULL;
-}
-
-ui_node *ui_add_text(ui_node *par, char* id, SDL_Rect *body,
-		char *text, SDL_Color *col, uint8_t font, uint8_t opt)
-{
-	ui_text *ele = NULL;
-	ui_node *node;
-
-	if(!(ele = malloc(sizeof(ui_text))))
+	if(!(ele = malloc(sizeof(struct ui_text))))
 		return NULL;
 
-	if(!(ele->text = malloc((strlen(text) + 1)* sizeof(char))))
+	if(!(ele->text = malloc((strlen(text) + 1))))
 		goto err_free_ele;
 
 	strcpy(ele->text, text);
-	memcpy(&ele->col, col, sizeof(SDL_Color));
+	memcpy(&ele->col, &col, sizeof(color_t));
 	ele->font = font;
 	ele->opt = opt;
-
-	if(!(node = ui_add(par, ele, UI_TEXT, id, body)))
-		goto err_free_text;
-
-	node->flags = NULL_FLAGS;
-	node->style = TEXT_STYLE;
-	node->render = &TEXT_RENDER;
-	return node;
-
-err_free_text:
-	free(ele->text);
+	return (void *)ele;
 
 err_free_ele:
 	free(ele);

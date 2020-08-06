@@ -57,10 +57,8 @@ void INPUT_ONTEXTINPUT(ui_node *n, SDL_Event *evt);
 void INPUT_RENDER(ui_node *n, ui_node *rel);
 
 
-ui_node *ui_add_wrapper(ui_node *par, char* id, int x, int y,
-		int w, int h);
-ui_node *ui_add_text(ui_node *par, char* id, SDL_Rect *body,
-		char *text, SDL_Color *col, uint8_t font, uint8_t opt);
+extern void *ui_new_text(char *text, color_t col, uint8_t font, uint8_t opt);
+
 ui_node *ui_add_button(ui_node *par, char* id, int x, int y,
 		int w, int h, char *label);
 ui_node *ui_add_input(ui_node *par, char* id, int x, int y,

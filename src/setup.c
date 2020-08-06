@@ -121,6 +121,7 @@ int load_ui(void)
 
 	ui_add(UI_INPUT, ui_get("mns_form"), "mns_user", 40, 120, 320, 40, "");
 
+
 	ui_add_text(ui_get("mns_form"), "label2", &body2, "Password:", &WHITE, 2, TEXT_LEFT);
 	ui_add_input(ui_get("mns_form"), "mns_pswd", 40, 200, 320, 40, "");
 	/* ((ui_input *)ui_get("mns_pswd")->element)->hide = 1; */

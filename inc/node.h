@@ -35,8 +35,9 @@ typedef enum ui_constr_unit {
 } ui_constr_unit;
 
 typedef enum ui_constr_rel {
-	UI_CONSTR_REL = 0,     /* Calculate size relative to parent node */
-	UI_CONSTR_ABS = 1      /* Calculate size relative to window */
+	UI_CONSTR_REL = 0,     /* Calculate size relative to parent-node-size */
+	UI_CONSTR_ABS = 1,     /* Calculate size relative to surface-size */
+	UI_CONSTR_WIN = 2      /* Calculate size relative to window-size */
 } ui_constr_rel;
 
 typedef enum ui_constr_type {
@@ -149,9 +150,8 @@ struct ui_node {
 
 	void *element;
 
-	ui_render_fnc render;
-
-	ui_fnc del;
+	ui_render_fnc  render;
+	ui_fnc         del;
 
 	ui_node_flags   flags;
 	ui_node_style   style;
@@ -160,9 +160,11 @@ struct ui_node {
 	ui_constr   pos_constr;
 	ui_constr   size_constr;
 
-	rect_t rel;
+	/* The position and size of the node relative to the window */
 	rect_t body;
-	rect_t abs;
+
+	/* The position and size of the node relative to the parent node */
+	rect_t rel_body;
 
 	uint32_t vao;
 	uint32_t bao[2];
@@ -202,11 +204,12 @@ extern void ui_remv(ui_node *n);
  * Get a node from the node-tree by searching for a certain node-id. Note that
  * this function will always return the first result.
  *
+ * @n: The node to start from searching
  * @id: The id of the node to search for
  *
  * Returns: Either a pointer to the node or NULL if an error occurred
  */
-extern ui_node *ui_get(char *id);
+extern ui_node *ui_get(ui_node *n, char *id);
 
 
 #define UI_DOWN_PRE  (0<<0)

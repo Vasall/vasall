@@ -43,6 +43,22 @@ const float STD_UV[12] = {
 	0.0, 1.0, 1.0, 1.0, 1.0, 0.0
 };
 
+
+static int ui_add_child(ui_node *n, ui_node *c)
+{
+	short i;
+
+	for(i = 0; i < UI_CHILD_NUM; i++) {
+		if(n->children[i] == NULL) {
+			n->children[i] = c;
+			n->child_num++;
+			return 0;
+		}
+	}
+
+	return -1;
+}
+
 static int ui_init_wrapper(ui_node *n)
 {
 	n->flags = WRAPPER_FLAGS;
@@ -60,7 +76,7 @@ static int ui_init_text(ui_node *n)
 extern ui_node *ui_add(ui_tag tag, ui_node *par, void *ele, char *id)
 {
 	int i;
-	struct ui_node *node;
+	ui_node *node;
 
 	/* Allocate memory for the node */
 	if(!(node = malloc(sizeof(ui_node))))
@@ -90,9 +106,8 @@ extern ui_node *ui_add(ui_tag tag, ui_node *par, void *ele, char *id)
 	node->render = NULL;
 	node->del = NULL;
 
-	memset(&node->rel,  0, sizeof(rect_t));
-	memset(&node->body, 0, sizeof(rect_t));
-	memset(&node->abs,  0, sizeof(rect_t));
+	memset(&node->body,  0, sizeof(rect_t));
+	memset(&node->rel_body, 0, sizeof(rect_t));
 
 	node->vao = 0;
 	for(i = 0; i < 2; i++)
@@ -101,41 +116,28 @@ extern ui_node *ui_add(ui_tag tag, ui_node *par, void *ele, char *id)
 	node->surf = NULL;
 
 	if(par != NULL) {
-		int childp = -1;
-
 		node->layer = par->layer + 1;
 		node->parent = par;
 
-		for(i = 0; i < CHILD_NUM; i++) {
-			if(par->children[i] == NULL) {
-				childp = i;
-				break;
-			}
-		}
-
-		if(childp == -1)
+		/* Attach node as child to parent */
+		if(ui_add_child(par, node) < 0)
 			goto err_free_node;
-
-		par->children[childp] = node;
-		par->child_num++;
 	}
 	else {
 		node->layer = 0;
 		node->parent = NULL;
-		window.root = node;
-		node->style.vis = 0;
 	}
 
-	ui_adjust(node);
-	
-	if(node->parent == NULL)
-		ui_enable_tex(node);
-
+	/* Call the custom initialization-function for the node-type */
 	switch(tag) {
 		case UI_WRAPPER: ui_init_wrapper(node); break;
 	}
 
-	ui_prerender(node);
+	/* Adjust the size of the node */
+	ui_adjust(node);
+
+	/* Prerender the node */
+	ui_update(node);
 	return node;
 
 err_free_node:
@@ -143,7 +145,8 @@ err_free_node:
 	return NULL;
 }
 
-static void ui_delete_node(ui_node *n, void *data)
+
+static void ui_del_node(ui_node *n, void *data)
 {
 	int i;
 
@@ -159,133 +162,139 @@ static void ui_delete_node(ui_node *n, void *data)
 		glDeleteVertexArrays(1, &n->vao);
 	}
 
-	for(i = 0; i < 6; i++) {
-		free(n->pos_constr[i]);
-		free(n->size_constr[i]);
-	}
 	free(n);
 }
 
 extern void ui_remv(ui_node *n)
 {
-	uint8_t flg = RUN_DOWN_AFT | RUN_DOWN_ALL;
-	ui_run_down(n, &ui_delete_node, NULL, flg);
+	uint8_t flg;
+	ui_node *par;
+	short i;
+	short j = 0;
+
+	/* Remove node from child-list of parent node */
+	par = n->parent;
+	if(par != NULL) {
+		for(i = 0; i < par->child_num; i++) {
+			if(par->children[i] == n) {
+				/* Reorder child-list */
+				for(i++; i < par->child_num; i++) {
+					par->children[i - 1] = par->children[i];
+				}
+				par->child_num--;
+				break;
+			}
+		}
+	}
+
+	/* Free allocated memory and delete surfaces and textures */
+	flg = UI_DOWN_POST | UI_DOWN_ALL;
+	ui_down(n, &ui_del_node, NULL, flg);
 }
 
-static ui_node *ui_search_node(ui_node *n, char *strid)
+
+extern ui_node *ui_get(ui_node *n, char *id)
 {
-	int i;
+	short i;
 	ui_node *res;
 
-	if(strcmp(n->strid, strid) == 0)
+	if(strcmp(n->id, id) == 0)
 		return n;
 
 	for(i = 0; i < n->child_num; i++) {
-		if((res = ui_search_node(n->children[i], strid)))
+		if((res = ui_get(n->children[i], id)) != NULL)
 			return res;
 	}
 
 	return NULL;
 }
 
-extern ui_node *ui_get(char *strid)
-{
-	return ui_search_node(window.root, strid);
-	
-}
 
 static void ui_prerender_node(ui_node *n, ui_node *rel, char flg)
 {
 	int i;
-	rect_t rend;
+	rect_t body;
 	ui_node_style *style;
-
-	if(n == NULL || rel == NULL)
-		return;
 
 	if(n->flags.active == 0)
 		return;
 
-	if(flg && n->surf != NULL)
+	if(flg == 1 && n->surf != NULL)
 		return;
 
 	if(flg == 0)
 		flg = 1;
 
-	if(n->surf != NULL && n->tex != 0) {
-		SDL_LockSurface(n->surf);
-		memset(n->surf->pixels, 0, n->surf->h * n->surf->pitch);
-		SDL_UnlockSurface(n->surf);
-	}
-
-	memcpy(&rend, &n->abs, sizeof(rect));
-	rend.x -= rel->abs.x;
-	rend.y -= rel->abs.y;
+	memcpy(&body, &n->rel_body, sizeof(rect));
 
 	style = &n->style;
 
 	/* Ignore if the node should not be visible */
-	if(style->vis != 0) {	
-		/* Render border if enabled */
-		if(style->bor > 0) {
-			short w = style->bor;
-			sdl_fill_rounded(rel->surf,
-					rend.x - w,
-					rend.y - w,
-					rend.w + (w * 2),
-					rend.h + (w * 2),
-					style->bor_col,
-					style->cor_rad);
-		}
+	if(style->vis == 0)
+		goto next;
 
-		/* Render background if enabled */
-		if(style->bck > 0) {
-			sdl_fill_rounded(rel->surf,
-					rend.x,
-					rend.y,
-					rend.w,
-					rend.h,
-					style->bck_col,
-					style->cor_rad);
-		}
+	/* Render border if enabled */
+	if(style->bor > 0) {
+		sdl_fill_rounded(rel->surf,
+				body.x,
+				body.y,
+				body.w,
+				body.h,
+				style->bor_col,
+				style->cor_rad);
+	}
+
+	/* Render background if enabled */
+	if(style->bck > 0) {
+		short w = style->bor;
+		sdl_fill_rounded(rel->surf,
+				body.x + w,
+				body.y + w,
+				body.w - (2 * w),
+				body.h - (2 * w),
+				style->bck_col,
+				style->cor_rad);
 	}
 
 	/* Run custum render-function */
-	if(n->render != NULL) {
+	if(n->render != NULL)
 		n->render(n, rel);
-	}
 
-	if(n->surf != NULL && n->tex != 0) {
-		for(i = 0; i < n->child_num; i++) {
-			ui_prerender_node(n->children[i], n, flg);
-		}
-		/* Update the texture of the node */
-		glBindTexture(GL_TEXTURE_2D, n->tex);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, n->surf->w,
-				n->surf->h, GL_RGBA, GL_UNSIGNED_BYTE,
-				n->surf->pixels);
-	}
-	else {
-		/* Draw the child nodes on the relative-surface */
-		for(i = 0; i < n->child_num; i++) {
-			ui_prerender_node(n->children[i], rel, flg);
-		}
-	}
+next:
+	for(i = 0; i < n->child_num; i++)
+		ui_prerender_node(n->children[i], rel, flg);
 }
 
 extern void ui_update(ui_node *n)
 {
-	ui_node *start = n;
+	ui_node *s = n;
 
-	while(start->parent != NULL) {
-		if(start->surf != NULL)
+	/* Search for a render-node with an attached surface */
+	while(s->parent != NULL) {
+		if(s->surf != NULL)
 			break;
 
-		start = start->parent;
+		s = s->parent;
 	}
 
-	ui_prerender_node(start, start, 0);
+	/* If no render-node has been found */
+	if(s->surf == NULL)
+		return;
+
+	/* Clear surface */
+	SDL_LockSurface(s->surf);
+	memset(s->surf->pixels, 0, s->surf->h * s->surf->pitch);
+	SDL_UnlockSurface(s->surf);
+
+	/* Recursivly draw all nodes onto surface */
+	ui_prerender_node(s, s, 0);
+
+	/* Update the texture of the node */
+	glBindTexture(GL_TEXTURE_2D, s->tex);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, s->surf->w, s->surf->h,
+			GL_RGBA, GL_UNSIGNED_BYTE, s->surf->pixels);
 }
+
 
 extern void ui_render(ui_node *n)
 {
@@ -305,37 +314,39 @@ extern void ui_render(ui_node *n)
 	}
 }
 
+
 extern void ui_down(ui_node *n, ui_fnc fnc, void *data, uint8_t flg)
 {
-	int i;
+	short i;
 
-	/* Skip with XSDL_RECDOWN_ALL enabled */
-	if((flg & 1) == 0 && n->flags.active == 0)
+	/* Show only active branches be processed */
+	if((flg & UI_DOWN_ALL) != UI_DOWN_ALL && n->flags.active == 0)
 		return;
 
-	/* Skip with XSDL_RECDOWN_AFT enabled */
-	if(((flg >> 1) & 1) == 0)
+	/* Preorder */
+	if((flg & UI_DOWN_PRE) == UI_DOWN_PRE)
 		func(n, data);
 
 	/* Apply function to all child nodes */
-	for(i = 0; i < n->child_num; i++) {
-		ui_run_down(n->children[i], func, data, flg);
-	}
+	for(i = 0; i < n->child_num; i++)
+		ui_down(n->children[i], func, data, flg);
 
-	/* Use with XSDL_RECDOWN_AFT enabled */
-	if(((flg >> 1) & 1) == 1)
+	/* Postorder */
+	if((flg & UI_DOWN_POST) == UI_DOWN_POST)
 		func(n, data);
 }
+
 
 extern void ui_up(ui_node *n, ui_fnc fnc, void *data)
 {
 	ui_node *ptr = n;
 
-	while(ptr != NULL) {
+	while(ptr) {
 		func(ptr, data);
 		ptr = ptr->parent;
 	}
 }
+
 
 extern void ui_show_node(ui_node *node, void *data)
 {
@@ -361,165 +372,63 @@ extern void ui_show_node(ui_node *node, void *data)
 	printf("\n");
 }
 
+
 extern void ui_show(ui_node *n)
 {
 	printf("\nNODE-TREE:\n");
 	ui_down(n, &ui_show_node, NULL, 0);
 }
 
+static void ui_adjust_pos(ui_constr *constr, rect_t *out_abs, rect_t *out_rel,
+		ui_node *rel, ui_node *rend)
+{
+	
+}
+
 static void ui_adjust_node(ui_node *n, void *data)
 {
 	int i, value;
+	
 	ui_node *par;
-	ui_node_style *style;
-	SDL_Rect r, p, *use, *rel, *body, *abs;
-	ui_pos_constr *pos_c;
-	ui_size_constr *size_c;
+	ui_node *rend;
 
-	if(data){/* Prevent warning for not using parameters */}
+	rect_t win, *rel;
 
+	/* Create shortcuts for the parent- and render-node */
 	par = n->parent;
-	style = &n->style;
+	rend = (ui_node *)data;
 
-	rel = &n->rel;
-	body = &n->body;
-	abs = &n->abs;
-
-	r.x = 0;
-	r.y = 0;
-	r.w = window.win_w;
-	r.h = window.win_h;
+	/* The window-size and default position */
+	win.x = 0;
+	win.y = 0;
+	win.w = window.win_w;
+	win.h = window.win_h;
 
 	/* Calculate the size of the parent-node */
-	if(par == NULL) memcpy(&p, &r, sizeof(SDL_Rect));
-	else memcpy(&p, &par->body, sizeof(SDL_Rect));
+	if(par == NULL) memcpy(rel, &win, sizeof(rect_t));
+	else memcpy(rel, &par->body, sizeof(rect_t));
 
-	memcpy(rel, &p, sizeof(SDL_Rect));
-
-	for(i = 0; i < 6; i++) {
-		if(!(pos_c = n->pos_constr[i]))
-			continue;
-
-		/* Determite the relative element */
-		if(pos_c->rel == 1) use = &r;
-		else use = &p;
-
-		if(pos_c->axis == CONSTR_HORI) {
-			if(pos_c->unit == CONSTR_PCT) {
-				value = (int)(use->w * pos_c->value);
-			}
-			else {
-				value = (int)pos_c->value;
-			}
-
-			if(pos_c->type == CONSTR_MIN) {
-				if(rel->x < value) {
-					rel->x = value;
-				}
-			}
-			else if(pos_c->type == CONSTR_MAX) {
-				if(rel->x > value) {
-					rel->x = value;
-				}
-			}
-			else {
-				rel->x = use->x + value;
-			}
-		}
-		else if(pos_c->axis == CONSTR_VERT) {
-			if(pos_c->unit == CONSTR_PCT) {
-				value = (int)(use->h * pos_c->value);
-			}
-			else {
-				value = (int)pos_c->value;
-			}
-
-			if(pos_c->type == CONSTR_MIN) {
-				if(rel->y < value) {
-					rel->y = value;
-				}
-			}
-			else if(pos_c->type == CONSTR_MAX) {
-				if(rel->y > value) {
-					rel->y = value;
-				}
-			}
-			else {
-				rel->y = use->y + value;
-			}
-		}
-	}
-
-	for(i = 0; i < 6; i++) {
-		if(!(size_c = n->size_constr[i]))
-			continue;
-
-		/* Determite the relative element */
-		if(size_c->rel == 1) use = &r;
-		else use = &p;
-
-		if(size_c->axis == CONSTR_HORI) {
-			if(size_c->unit == CONSTR_PCT) {
-				value = (int)(use->w * size_c->value);
-			}
-			else {
-				value = (int)size_c->value;
-			}
-
-			if(size_c->type == CONSTR_MIN) {
-				if(rel->w < value) {
-					rel->w = value;
-				}
-			}
-			else if(size_c->type == CONSTR_MAX) {
-				if(rel->w > value) {
-					rel->w = value;
-				}
-			}
-			else {
-				rel->w = value;
-			}
-		}
-		else if(size_c->axis == CONSTR_VERT) {
-			if(size_c->unit == CONSTR_PCT) {
-				value = (int)(use->h * size_c->value);
-			}
-			else {
-				value = (int)size_c->value;
-			}
-
-			if(size_c->type == CONSTR_MIN) {
-				if(rel->h < value) {
-					rel->h = value;
-				}
-			}
-			else if(size_c->type == CONSTR_MAX) {
-				if(rel->h > value) {
-					rel->h = value;
-				}
-			}
-			else {
-				rel->h = value;
-			}
-		}
-	}
-
-	/* Calculate the absolute position and size of the element */
-	abs->x = rel->x - style->bor;
-	abs->y = rel->y - style->bor;
-	abs->w = rel->w + (style->bor * 2);
-	abs->h = rel->h + (style->bor * 2);
-
-	/* Calculate the position and size to be used by child nodes */
-	body->x = rel->x + style->ins[3];
-	body->y = rel->y + style->ins[0];
-	body->w = rel->w - (style->ins[1] + style->ins[3]);
-	body->h = rel->h - (style->ins[0] + style->ins[2]);
+	/* Set position */
+	ui_adjust_pos(&n->pos_constr, &n->body, &n->rel_body, rel, &rend->body)
 }
 
 extern void ui_adjust(ui_node *n)
 {
-	ui_run_down(n, &ui_adjust_node, NULL, 0);
+	ui_node *rel = n;
+
+	/* Search for a render-node with an attached surface */
+	while(rel->parent != NULL) {
+		if(rel->surf != NULL)
+			break;
+
+		rel = rel->parent;
+	}
+
+	/* If no render-node has been found */
+	if(rel->surf == NULL)
+		rel = NULL;
+
+	ui_run_down(n, &ui_adjust_node, rel, 0);
 }
 
 static int ui_init_buffers(ui_node *n)

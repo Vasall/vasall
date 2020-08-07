@@ -25,7 +25,8 @@
 
 typedef SDL_Color color_t;
 typedef SDL_Rect rect_t;
-
+typedef SDL_Event event_t;
+typedef SDL_Surface surf_t;
 
 /*
  * Initialize the SDL-framework and it's submodules.

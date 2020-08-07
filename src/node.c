@@ -1,15 +1,35 @@
 #include "node.h"
 #include "window.h"
 
-const ui_node_flags NULL_FLAGS = {
+const ui_constr_ent UI_POS_CONSTR_NULL = {
+	{UI_CONSTR_LEFT, 0, UI_CONSTR_PX, 0},
+	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
+	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
+
+	{UI_CONSTR_TOP, 0, UI_CONSTR_PX, 0},
+	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
+	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0}
+};
+
+const ui_constr_ent UI_POS_CONSTR_NULL = {
+	{UI_CONSTR_FILL, 0, UI_CONSTR_PX, 0},
+	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
+	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
+
+	{UI_CONSTR_FILL, 0, UI_CONSTR_PX, 0},
+	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
+	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0}
+};
+
+const ui_node_flags UI_NULL_FLAGS = {
 	1, 0, 0, 0
 };
 
-const ui_node_style NULL_STYLE = {
-	1, 0, {0,0,0,0}, 0, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, 0, 0
+const ui_node_style UI_NULL_STYLE = {
+	1, 0, {0,0,0,0}, 0, {0,0,0,0}, {0,0,0,0}
 };
 
-const ui_node_events NULL_EVENTS = {
+const ui_node_events UI_NULL_EVENTS = {
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
@@ -23,51 +43,52 @@ const float STD_UV[12] = {
 	0.0, 1.0, 1.0, 1.0, 1.0, 0.0
 };
 
-static int ui_init_wrapper(struct ui_node *n)
+static int ui_init_wrapper(ui_node *n)
 {
 	n->flags = WRAPPER_FLAGS;
 	n->style = WRAPPER_STYLE;
 	return 0;
 }
 
-static int ui_init_text(struct ui_node *n)
+static int ui_init_text(ui_node *n)
 {
-	n->flags = NULL_FLAGS;
 	n->style = TEXT_STYLE;
 	n->render = &TEXT_RENDER;
 	return 0;
 }
 
-extern ui_node *ui_add(enum ui_tag tag, struct ui_node *par, void *ele,
-		char *id, rect_t rect)
+extern ui_node *ui_add(ui_tag tag, ui_node *par, void *ele, char *id)
 {
 	int i;
 	struct ui_node *node;
 
-	if(!(node = malloc(sizeof(struct ui_node))))
+	/* Allocate memory for the node */
+	if(!(node = malloc(sizeof(ui_node))))
 		return NULL;
 
-	strcpy(node->strid, id);
+	/* Set the tag and the element of the node */
+	node->tag = tag;
+	node->element = ele;
 
+	/* Copy the id to the node */
+	strcpy(node->id, id);
+
+	/* Clear all child-slots */
 	node->child_num = 0;
 	for(i = 0; i < CHILD_NUM; i++)
 		node->children[i] = NULL;
 
-	node->tag = tag;
-	node->element = ele;
+	/* Use default position- and size-constraints */
+	node->pos_constr =  UI_POS_CONSTR_NULL;
+	node->size_constr = UI_SIZE_CONSTR_NULL;
 
-	node->flags = NULL_FLAGS;
-	node->style = NULL_STYLE;
+	/* Use default flags, style and events */
+	node->flags =  NULL_FLAGS;
+	node->style =  NULL_STYLE;
 	node->events = NULL_EVENTS;
 
 	node->render = NULL;
 	node->del = NULL;
-
-	for(i = 0; i < 6; i++)
-		node->pos_constr[i] = NULL;
-
-	for(i = 0; i < 6; i++)
-		node->size_constr[i] = NULL;
 
 	memset(&node->rel,  0, sizeof(rect_t));
 	memset(&node->body, 0, sizeof(rect_t));
@@ -103,22 +124,6 @@ extern ui_node *ui_add(enum ui_tag tag, struct ui_node *par, void *ele,
 		node->parent = NULL;
 		window.root = node;
 		node->style.vis = 0;
-	}
-
-	if(rect != NULL) {
-		ui_set_pos_constr(node, "ver",  CONSTR_SET,
-				CONSTR_HORI, 0, CONSTR_LEFT,
-				rect.x, CONSTR_PX);
-
-		ui_set_pos_constr(node, "hor", CONSTR_SET,
-				CONSTR_VERT, 0, CONSTR_LEFT,
-				rect.y, CONSTR_PX);
-
-		ui_set_size_constr(node, "s_h", CONSTR_SET,
-				CONSTR_HORI, 0, rect.w, CONSTR_PX);
-
-		ui_set_size_constr(node, "s_v", CONSTR_SET,
-				CONSTR_VERT, 0, rect.h, CONSTR_PX);
 	}
 
 	ui_adjust(node);
@@ -189,110 +194,10 @@ extern ui_node *ui_get(char *strid)
 	
 }
 
-extern int ui_set_pos_constr(ui_node *n, char *id, ui_constr_type type,
-		ui_constr_axis axis, uint8_t rel,
-		ui_constr_align align, float val,
-		ui_constr_unit unit)
-{
-	int idx = -1, i;
-	ui_pos_constr *constr;
-
-	if(align){/* Prevent warning for not using parameters */}
-
-	for(i = 0; i < 6; i++) {
-		if(n->pos_constr[i] == NULL) {
-			idx = i;
-			break;
-		}
-	}
-
-	if(idx < 0)
-		return -1;
-
-	if(!(constr = malloc(sizeof(ui_pos_constr))))
-		return -1;
-
-	strcpy(constr->id, id);
-	constr->type = type;
-	constr->axis = axis;
-	constr->rel = rel;
-	constr->type = type;
-	constr->value = val;
-	constr->unit = unit;
-
-	n->pos_constr[idx] = constr;
-
-	ui_adjust(n);
-	return 0;
-}
-
-extern void ui_del_pos_constr(ui_node *n, char *id)
-{
-	int i;
-
-	if(n == NULL || id == NULL)
-		return;
-
-	for(i = 0; i < 6; i++) {
-		if(n->pos_constr[i] != NULL) {
-			free(n->pos_constr[i]);
-			n->pos_constr[i] = NULL;
-		}
-	}
-}
-
-extern int ui_set_size_constr(ui_node *n, char *id, ui_constr_type type,
-		ui_constr_axis axis, uint8_t rel, float val, 
-		ui_constr_unit unit)
-{
-	int idx = -1, i;
-	ui_size_constr *constr;
-
-	for(i = 0; i < 6; i++) {
-		if(n->size_constr[i] == NULL) {
-			idx = i;
-			break;
-		}
-	}
-
-	if(idx < 0) 
-		return -1;
-
-	if(!(constr = malloc(sizeof(ui_size_constr))))
-		return -1;
-
-	strcpy(constr->id, id);
-	constr->type = type;
-	constr->axis = axis;
-	constr->rel = rel;
-	constr->value = val;
-	constr->unit = unit;
-
-	n->size_constr[idx] = constr;
-
-	ui_adjust(n);
-	return 0;
-}
-
-extern void ui_del_size_constr(ui_node *n, char *id)
-{
-	int i;
-
-	if(n == NULL || id == NULL)
-		return;
-
-	for(i = 0; i < 6; i++) {
-		if(n->size_constr[i] != NULL) {
-			free(n->size_constr[i]);
-			n->size_constr[i] = NULL;
-		}
-	}
-}
-
 static void ui_prerender_node(ui_node *n, ui_node *rel, char flg)
 {
 	int i;
-	SDL_Rect rend;
+	rect_t rend;
 	ui_node_style *style;
 
 	if(n == NULL || rel == NULL)
@@ -313,7 +218,7 @@ static void ui_prerender_node(ui_node *n, ui_node *rel, char flg)
 		SDL_UnlockSurface(n->surf);
 	}
 
-	memcpy(&rend, &n->abs, sizeof(SDL_Rect));
+	memcpy(&rend, &n->abs, sizeof(rect));
 	rend.x -= rel->abs.x;
 	rend.y -= rel->abs.y;
 
@@ -368,7 +273,7 @@ static void ui_prerender_node(ui_node *n, ui_node *rel, char flg)
 	}
 }
 
-extern void ui_prerender(ui_node *n)
+extern void ui_update(ui_node *n)
 {
 	ui_node *start = n;
 
@@ -400,8 +305,7 @@ extern void ui_render(ui_node *n)
 	}
 }
 
-extern void ui_run_down(ui_node *n, void (*func)(ui_node *n, void *d),
-		void *data, uint8_t flg)
+extern void ui_down(ui_node *n, ui_fnc fnc, void *data, uint8_t flg)
 {
 	int i;
 
@@ -423,8 +327,7 @@ extern void ui_run_down(ui_node *n, void (*func)(ui_node *n, void *d),
 		func(n, data);
 }
 
-extern void ui_run_up(ui_node *n, void (*func)(ui_node *n, void *d),
-		void *data)
+extern void ui_up(ui_node *n, ui_fnc fnc, void *data)
 {
 	ui_node *ptr = n;
 
@@ -440,25 +343,20 @@ extern void ui_show_node(ui_node *node, void *data)
 
 	if(data){/* Prevent warning for not using parameters */}
 
-	for(i = 0; i < node->layer; i++) {
+	for(i = 0; i < node->layer; i++)
 		printf("  ");
-	}
 
 	printf("%s", node->strid);
 
-	if(node->tex != 0 && node->surf != NULL) {
+	if(node->tex != 0 && node->surf != NULL)
 		printf(" R ");
-	}
-	else {
+	else
 		printf(" ");
-	}
 
-	if(node->flags.active == 1) {
+	if(node->flags.active == 1) 
 		printf("ON");
-	}
-	else {
+	else
 		printf("OFF");
-	}
 
 	printf("\n");
 }
@@ -466,7 +364,7 @@ extern void ui_show_node(ui_node *node, void *data)
 extern void ui_show(ui_node *n)
 {
 	printf("\nNODE-TREE:\n");
-	ui_run_down(n, &ui_show_node, NULL, 0);
+	ui_down(n, &ui_show_node, NULL, 0);
 }
 
 static void ui_adjust_node(ui_node *n, void *data)

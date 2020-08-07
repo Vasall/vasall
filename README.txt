@@ -61,5 +61,4 @@ INSTALLATION
   Now that everything is done, we can finally start the client and start
   playing the game using this command:
     $ ./bin/vasall-client
-  
-  
+ 

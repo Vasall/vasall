@@ -2,21 +2,21 @@
 #include "window.h"
 
 const ui_constr_ent UI_POS_CONSTR_NULL = {
-	{UI_CONSTR_LEFT, 0, UI_CONSTR_PX, 0},
+	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
 	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
 	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
 
-	{UI_CONSTR_TOP, 0, UI_CONSTR_PX, 0},
+	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
 	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
 	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0}
 };
 
 const ui_constr_ent UI_POS_CONSTR_NULL = {
-	{UI_CONSTR_FILL, 0, UI_CONSTR_PX, 0},
+	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
 	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
 	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
 
-	{UI_CONSTR_FILL, 0, UI_CONSTR_PX, 0},
+	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
 	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
 	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0}
 };
@@ -210,6 +210,58 @@ extern ui_node *ui_get(ui_node *n, char *id)
 }
 
 
+extern void ui_down(ui_node *n, ui_fnc fnc, void *data, uint8_t flg)
+{
+	short i;
+
+	/* Show only active branches be processed */
+	if((flg & UI_DOWN_ALL) != UI_DOWN_ALL && n->flags.active == 0)
+		return;
+
+	/* Preorder */
+	if((flg & UI_DOWN_PRE) == UI_DOWN_PRE)
+		func(n, data);
+
+	/* Apply function to all child nodes */
+	for(i = 0; i < n->child_num; i++)
+		ui_down(n->children[i], func, data, flg);
+
+	/* Postorder */
+	if((flg & UI_DOWN_POST) == UI_DOWN_POST)
+		func(n, data);
+}
+
+
+extern void ui_up(ui_node *n, ui_fnc fnc, void *data)
+{
+	ui_node *ptr = n;
+
+	while(ptr) {
+		func(ptr, data);
+		ptr = ptr->parent;
+	}
+}
+
+
+int ui_set_constr(ui_node *n, ui_constr_type type, ui_constr_algn algn,
+		ui_constr_mod mod, ui_constr_mask mask, float val,
+		ui_constr_unit unit, ui_constr_rel rel)
+{
+	ui_constr_ent *constr;
+
+	if(type == UI_CONSTR_POS)
+		constr = &n->pos_constr[algn][mod];
+	else if(type == UI_CONSTR_SIZE)
+		constr = &n->size_constr[algn][mod];
+
+	constr->mask = mask;
+	constr->val = val;
+	constr->unit = unit;
+	constr->rel = rel;
+	return 0;
+}
+
+
 static void ui_prerender_node(ui_node *n, ui_node *rel, char flg)
 {
 	int i;
@@ -315,39 +367,6 @@ extern void ui_render(ui_node *n)
 }
 
 
-extern void ui_down(ui_node *n, ui_fnc fnc, void *data, uint8_t flg)
-{
-	short i;
-
-	/* Show only active branches be processed */
-	if((flg & UI_DOWN_ALL) != UI_DOWN_ALL && n->flags.active == 0)
-		return;
-
-	/* Preorder */
-	if((flg & UI_DOWN_PRE) == UI_DOWN_PRE)
-		func(n, data);
-
-	/* Apply function to all child nodes */
-	for(i = 0; i < n->child_num; i++)
-		ui_down(n->children[i], func, data, flg);
-
-	/* Postorder */
-	if((flg & UI_DOWN_POST) == UI_DOWN_POST)
-		func(n, data);
-}
-
-
-extern void ui_up(ui_node *n, ui_fnc fnc, void *data)
-{
-	ui_node *ptr = n;
-
-	while(ptr) {
-		func(ptr, data);
-		ptr = ptr->parent;
-	}
-}
-
-
 extern void ui_show_node(ui_node *node, void *data)
 {
 	int i;
@@ -379,10 +398,133 @@ extern void ui_show(ui_node *n)
 	ui_down(n, &ui_show_node, NULL, 0);
 }
 
-static void ui_adjust_pos(ui_constr *constr, rect_t *out_abs, rect_t *out_rel,
-		ui_node *rel, ui_node *rend)
+static void ui_adjust_pos(ui_constr *constr, rect_t *out_abs, rect_t *proc_rel,
+		rect_t *rel, rect_t *rend)
 {
-	
+	char i;
+	char j;
+	ui_constr_mask mask;
+	float val;
+	ui_constr_unit unit;
+	ui_constr_rel rel;
+
+	short size_val;
+	short cmp_val;
+	short tmp[2] = {0, 0};
+	short pos;
+
+	proc_rel.x = 0;
+	proc_rel.y = 0;
+	proc_rel.w = 100;
+	proc_rel.h = 100;
+
+	out_abs.x = 0;
+	out_abs.y = 0;
+	out_abs.w = 100;
+	out_abs.h = 100;
+
+	for(i = 0; i < 2; i++) {
+		size_val = (i == 0) ? proc_rel.w : proc_rel.h; 
+
+		for(j = 0; j < 3; j++) {
+			if((mask = constr->ent[i][j].mask) == UI_CONSTR_NONE)
+				continue;
+			
+			val = constr->ent[i][j].val;
+			unit = constr->ent[i][j].unit;
+			rel = constr->ent[i][j].rel;
+
+			/* Get relative position and size for axis */
+			switch(rel) {
+				case UI_CONSTR_REL:
+					if(i == 0) {
+						tmp[0] = rel->x;
+						tmp[1] = rel->w;
+					}
+					else {
+						tmp[0] = rel->y;
+						tmp[1] = rel->h;
+					}
+					break;
+
+				case UI_CONSTR_ABS:
+					if(i == 0) {
+						tmp[0] = rend->x;
+						tmp[1] = rend->w;
+					}
+					else {
+						tmp[0] = rend->y;
+						tmp[1] = rend->h;
+					}
+					break;
+
+				case UI_CONSTR_WIN:
+					if(i == 0) {
+						tmp[0] = 0;
+						tmp[1] = window.win_w;
+					}
+					else {
+						tmp[0] = 0;
+						tmp[1] = window.win_h;
+					}
+					break;
+			}
+
+			/* Convert value depending on unit */
+			switch(unit) {
+				case UI_CONSTR_PX:
+					cmp_val = (short)val;
+					break;
+
+				case UI_CONSTR_PCT:
+					cmp_val = (short)((float)tmp[1] * val);
+					break;
+			}
+
+			/* Calculate position depending on alignment-mask */
+			switch(mask) {
+				case UI_CONSTR_AUTO:
+					cmp_val = (tmp[1] / 2) - (size_val / 2);
+					break;
+
+				case UI_CONSTR_SET:
+				case UI_CONSTR_LEFT:
+				case UI_CONSTR_TOP:
+					cmp_val = cmp_val;
+					break;
+
+				case UI_CONSTR_RIGHT:
+				case UI_CONSTR_BOTTOM:
+					cmp_val = tmp[1] - cmp_val;
+					break;
+			}
+
+			/* Set or limit value */
+			switch(j) {
+				case 0:
+					pos = cmp_val;
+					break;
+				case 1:
+					if(pos > cmp_val)
+						pos = cmp_val;
+					break;
+				case 2:
+					if(pos < cmp_val)
+						pos = cmp_val;
+					break;
+			}
+
+			/* Write position into buffers */
+			if(i == 0) {
+				out_rel.x = pos;
+				out_abs.x = tmp[0] + pos;
+			}
+			else {
+				out_rel.y = pos;
+				out_abs.y = tmp[0] + pos;
+			}
+		}
+	}
 }
 
 static void ui_adjust_node(ui_node *n, void *data)

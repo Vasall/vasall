@@ -22,11 +22,10 @@ typedef enum ui_tag {
 typedef enum ui_constr_mask {
 	UI_CONSTR_NONE   = -1,
 	UI_CONSTR_AUTO   = 0,
-	UI_CONSTR_SET    = 1,
-	UI_CONSTR_LEFT   = 2,
-	UI_CONSTR_RIGHT  = 3,
-	UI_CONSTR_TOP    = 2,
-	UI_CONSTR_BOTTOM = 3
+	UI_CONSTR_LEFT   = 1,
+	UI_CONSTR_RIGHT  = 2,
+	UI_CONSTR_TOP    = 3,
+	UI_CONSTR_BOTTOM = 4
 } ui_constr_mask;
 
 typedef enum ui_constr_unit {
@@ -46,9 +45,15 @@ typedef enum ui_constr_type {
 } ui_constr_type;
 
 typedef enum ui_constr_algn {
-	UI_CONSTR_HORI,
-	UI_CONSTR_VERT
+	UI_CONSTR_HORI = 0,
+	UI_CONSTR_VERT = 1
 } ui_constr_algn;
+
+typedef enum ui_constr_mod {
+	UI_CONSTR_SET  = 0,
+	UI_CONSTR_LLIM = 1,
+	UI_CONSTR_HLIM = 2
+} ui_constr_mod;
 
 /*
  * A single constrain entry.
@@ -68,18 +73,20 @@ typedef struct ui_constr_ent {
 /*
  * This containt unit is used to set and limit the size of a node.
  *
+ * Row 1 is horizontal
+ * Row 2 is vertical
+ *
  * Slot 0 is used to set the values
  * Slot 1 is used to limit lower numbers
  * Slot 2 is used to limit higher numbers
  */
 typedef struct ui_constr {
-	ui_contr_ent hori[3];
-	ui_contr_ent vert[3];
+	ui_constr_ent ent[2][3];
 } ui_constr;
 
 /* Default position- and size-constraints */
-extern const ui_constr_ent   UI_POS_CONSTR_NULL;
-extern const ui_constr_ent   UI_POS_CONSTR_NULL;
+extern const ui_constr   UI_POS_CONSTR_NULL;
+extern const ui_constr   UI_POS_CONSTR_NULL;
 
 typedef struct ui_node_flags {
 	uint8_t active;
@@ -157,8 +164,8 @@ struct ui_node {
 	ui_node_style   style;
 	ui_node_events  events;
 
-	ui_constr   pos_constr;
-	ui_constr   size_constr;
+	ui_constr pos_constr;
+	ui_constr size_constr;
 
 	/* The position and size of the node relative to the window */
 	rect_t body;
@@ -244,7 +251,7 @@ extern void ui_up(ui_node *n, ui_fnc fnc, void *data);
  * @n: Pointer to the node
  * @type: Either UI_CONSTR_POS or UI_CONSTR_SIZE
  * @algn: Either UI_CONSTR_HORI or UI_CONSTR_VERT
- * @slot: 0 to set, 1 to limit min, 2 to limit max 
+ * @mod: Define the kind of constraint
  * @val: If UI_CONSTR_PX pixel-value, if UI_CONSTR_PCT 0.0-1.0
  * @unit: Either UI_CONSTR_PX or UI_CONSTR_PCT
  * @rel: Either UI_CONSTR_REL or UI_CONSTR_ABS
@@ -252,8 +259,8 @@ extern void ui_up(ui_node *n, ui_fnc fnc, void *data);
  * Returns: 0 on success or -1 if an error occurred
  */
 extern int ui_set_constr(ui_node *n, ui_constr_type type, ui_constr_algn algn,
-		short slot, ui_constr_mask mask, short val, ui_constr_unit unit, 
-		ui_constr_rel rel);
+		ui_constr_mod mod, ui_constr_mask mask, float val,
+		ui_constr_unit unit, ui_constr_rel rel);
 
 
 /*

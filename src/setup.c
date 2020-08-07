@@ -47,7 +47,7 @@ static void test1(char *buf, int len)
 	cam_set_dir(dir);
 
 	/* Switch from menuscreen to gamescreen */
-	node = ui_get("mns");
+	node = ui_get(window.root, "mns");
 	ui_mod_flag(node, FLG_ACT, &zero);
 
 	/* Start the game-loop */
@@ -69,11 +69,11 @@ static void login(ui_node *n, SDL_Event *e)
 	struct ui_node *node;
 	struct ui_input *inp;
 
-	node = ui_get("mns_user");
+	node = ui_get(window.root, "mns_user");
 	inp = node->element;
 	strcpy(uname, inp->buffer);
 
-	node = ui_get("mns_pswd");
+	node = ui_get(window.root, "mns_pswd");
 	inp = node->element;
 	strcpy(pswd, inp->buffer);
 
@@ -85,6 +85,7 @@ static void login(ui_node *n, SDL_Event *e)
 
 int load_ui(void)
 {
+#if 0
 	int one = 1;
 	rect_t body0 = {0, 0, 400, 80};
 	rect_t body1 = {40, 96, 320, 24};
@@ -159,6 +160,7 @@ int load_ui(void)
 	ui_mod_style(tmp, STY_BCK_COL, &mns_login_bck_col);
 
 	win_build_pipe();
+#endif
 	return 0;
 }
 

@@ -48,7 +48,7 @@ static void test1(char *buf, int len)
 
 	/* Switch from menuscreen to gamescreen */
 	node = ui_get(window.root, "mns");
-	ui_mod_flag(node, FLG_ACT, &zero);
+	ui_set_flag(node, FLG_ACT, &zero);
 
 	/* Start the game-loop */
 	game_start();

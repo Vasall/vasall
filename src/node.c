@@ -1,25 +1,31 @@
 #include "node.h"
 #include "window.h"
 
-const ui_constr_ent UI_POS_CONSTR_NULL = {
-	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
-	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
-	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
+const ui_constr UI_POS_CONSTR_NULL = {{
+	{
+		{UI_CONSTR_NONE, 0.0, UI_CONSTR_PX, 0},
+		{UI_CONSTR_NONE, 0.0, UI_CONSTR_PX, 0},
+		{UI_CONSTR_NONE, 0.0, UI_CONSTR_PX, 0}
+	},
+	{
+		{UI_CONSTR_NONE, 0.0, UI_CONSTR_PX, 0},
+		{UI_CONSTR_NONE, 0.0, UI_CONSTR_PX, 0},
+		{UI_CONSTR_NONE, 0.0, UI_CONSTR_PX, 0}
+	}
+}};
 
-	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
-	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
-	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0}
-};
-
-const ui_constr_ent UI_POS_CONSTR_NULL = {
-	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
-	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
-	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
-
-	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
-	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0},
-	{UI_CONSTR_NONE, 0, UI_CONSTR_PX, 0}
-};
+const ui_constr UI_SIZE_CONSTR_NULL = {{
+	{
+		{UI_CONSTR_NONE, 0.0, UI_CONSTR_PX, 0},
+		{UI_CONSTR_NONE, 0.0, UI_CONSTR_PX, 0},
+		{UI_CONSTR_NONE, 0.0, UI_CONSTR_PX, 0}
+	},
+	{
+		{UI_CONSTR_NONE, 0.0, UI_CONSTR_PX, 0},
+		{UI_CONSTR_NONE, 0.0, UI_CONSTR_PX, 0},
+		{UI_CONSTR_NONE, 0.0, UI_CONSTR_PX, 0}
+	}
+}};
 
 const ui_node_flags UI_NULL_FLAGS = {
 	1, 0, 0, 0
@@ -91,7 +97,7 @@ extern ui_node *ui_add(ui_tag tag, ui_node *par, void *ele, char *id)
 
 	/* Clear all child-slots */
 	node->child_num = 0;
-	for(i = 0; i < CHILD_NUM; i++)
+	for(i = 0; i < UI_CHILD_NUM; i++)
 		node->children[i] = NULL;
 
 	/* Use default position- and size-constraints */
@@ -99,9 +105,9 @@ extern ui_node *ui_add(ui_tag tag, ui_node *par, void *ele, char *id)
 	node->size_constr = UI_SIZE_CONSTR_NULL;
 
 	/* Use default flags, style and events */
-	node->flags =  NULL_FLAGS;
-	node->style =  NULL_STYLE;
-	node->events = NULL_EVENTS;
+	node->flags =  UI_NULL_FLAGS;
+	node->style =  UI_NULL_STYLE;
+	node->events = UI_NULL_EVENTS;
 
 	node->render = NULL;
 	node->del = NULL;
@@ -131,6 +137,9 @@ extern ui_node *ui_add(ui_tag tag, ui_node *par, void *ele, char *id)
 	/* Call the custom initialization-function for the node-type */
 	switch(tag) {
 		case UI_WRAPPER: ui_init_wrapper(node); break;
+		case UI_TEXT: ui_init_text(node); break;
+		case UI_BUTTON: break;
+		case UI_INPUT: break;
 	}
 
 	/* Adjust the size of the node */
@@ -148,8 +157,6 @@ err_free_node:
 
 static void ui_del_node(ui_node *n, void *data)
 {
-	int i;
-
 	if(data){/* Prevent warning for not using parameters */}
 
 	if(n->del != NULL)
@@ -170,7 +177,6 @@ extern void ui_remv(ui_node *n)
 	uint8_t flg;
 	ui_node *par;
 	short i;
-	short j = 0;
 
 	/* Remove node from child-list of parent node */
 	par = n->parent;
@@ -220,15 +226,15 @@ extern void ui_down(ui_node *n, ui_fnc fnc, void *data, uint8_t flg)
 
 	/* Preorder */
 	if((flg & UI_DOWN_PRE) == UI_DOWN_PRE)
-		func(n, data);
+		fnc(n, data);
 
 	/* Apply function to all child nodes */
 	for(i = 0; i < n->child_num; i++)
-		ui_down(n->children[i], func, data, flg);
+		ui_down(n->children[i], fnc, data, flg);
 
 	/* Postorder */
 	if((flg & UI_DOWN_POST) == UI_DOWN_POST)
-		func(n, data);
+		fnc(n, data);
 }
 
 
@@ -237,7 +243,7 @@ extern void ui_up(ui_node *n, ui_fnc fnc, void *data)
 	ui_node *ptr = n;
 
 	while(ptr) {
-		func(ptr, data);
+		fnc(ptr, data);
 		ptr = ptr->parent;
 	}
 }
@@ -250,12 +256,12 @@ int ui_set_constr(ui_node *n, ui_constr_type type, ui_constr_algn algn,
 	ui_constr_ent *constr;
 
 	if(type == UI_CONSTR_POS)
-		constr = &n->pos_constr[algn][mod];
+		constr = &n->pos_constr.ent[algn][mod];
 	else if(type == UI_CONSTR_SIZE)
-		constr = &n->size_constr[algn][mod];
+		constr = &n->size_constr.ent[algn][mod];
 
 	constr->mask = mask;
-	constr->val = val;
+	constr->value = val;
 	constr->unit = unit;
 	constr->rel = rel;
 	return 0;
@@ -277,7 +283,7 @@ static void ui_prerender_node(ui_node *n, ui_node *rel, char flg)
 	if(flg == 0)
 		flg = 1;
 
-	memcpy(&body, &n->rel_body, sizeof(rect));
+	memcpy(&body, &n->rel_body, sizeof(rect_t));
 
 	style = &n->style;
 
@@ -367,42 +373,11 @@ extern void ui_render(ui_node *n)
 }
 
 
-extern void ui_show_node(ui_node *node, void *data)
+static void ui_adjust_pos(ui_constr *constr, rect_t *out_abs, rect_t *proc_rel,
+		rect_t *par, rect_t *rend)
 {
 	int i;
-
-	if(data){/* Prevent warning for not using parameters */}
-
-	for(i = 0; i < node->layer; i++)
-		printf("  ");
-
-	printf("%s", node->strid);
-
-	if(node->tex != 0 && node->surf != NULL)
-		printf(" R ");
-	else
-		printf(" ");
-
-	if(node->flags.active == 1) 
-		printf("ON");
-	else
-		printf("OFF");
-
-	printf("\n");
-}
-
-
-extern void ui_show(ui_node *n)
-{
-	printf("\nNODE-TREE:\n");
-	ui_down(n, &ui_show_node, NULL, 0);
-}
-
-static void ui_adjust_pos(ui_constr *constr, rect_t *out_abs, rect_t *proc_rel,
-		rect_t *rel, rect_t *rend)
-{
-	char i;
-	char j;
+	int j;
 	ui_constr_mask mask;
 	float val;
 	ui_constr_unit unit;
@@ -413,24 +388,20 @@ static void ui_adjust_pos(ui_constr *constr, rect_t *out_abs, rect_t *proc_rel,
 	short tmp[2] = {0, 0};
 	short pos;
 
-	proc_rel.x = 0;
-	proc_rel.y = 0;
-	proc_rel.w = 100;
-	proc_rel.h = 100;
+	proc_rel->x = 0;
+	proc_rel->y = 0;
 
-	out_abs.x = 0;
-	out_abs.y = 0;
-	out_abs.w = 100;
-	out_abs.h = 100;
+	out_abs->x = 0;
+	out_abs->y = 0;
 
 	for(i = 0; i < 2; i++) {
-		size_val = (i == 0) ? proc_rel.w : proc_rel.h; 
+		size_val = (i == 0) ? proc_rel->w : proc_rel->h; 
 
 		for(j = 0; j < 3; j++) {
 			if((mask = constr->ent[i][j].mask) == UI_CONSTR_NONE)
 				continue;
 			
-			val = constr->ent[i][j].val;
+			val = constr->ent[i][j].value;
 			unit = constr->ent[i][j].unit;
 			rel = constr->ent[i][j].rel;
 
@@ -438,12 +409,12 @@ static void ui_adjust_pos(ui_constr *constr, rect_t *out_abs, rect_t *proc_rel,
 			switch(rel) {
 				case UI_CONSTR_REL:
 					if(i == 0) {
-						tmp[0] = rel->x;
-						tmp[1] = rel->w;
+						tmp[0] = par->x;
+						tmp[1] = par->w;
 					}
 					else {
-						tmp[0] = rel->y;
-						tmp[1] = rel->h;
+						tmp[0] = par->y;
+						tmp[1] = par->h;
 					}
 					break;
 
@@ -487,7 +458,6 @@ static void ui_adjust_pos(ui_constr *constr, rect_t *out_abs, rect_t *proc_rel,
 					cmp_val = (tmp[1] / 2) - (size_val / 2);
 					break;
 
-				case UI_CONSTR_SET:
 				case UI_CONSTR_LEFT:
 				case UI_CONSTR_TOP:
 					cmp_val = cmp_val;
@@ -496,6 +466,10 @@ static void ui_adjust_pos(ui_constr *constr, rect_t *out_abs, rect_t *proc_rel,
 				case UI_CONSTR_RIGHT:
 				case UI_CONSTR_BOTTOM:
 					cmp_val = tmp[1] - cmp_val;
+					break;
+
+				case UI_CONSTR_NONE:
+				default:
 					break;
 			}
 
@@ -516,21 +490,19 @@ static void ui_adjust_pos(ui_constr *constr, rect_t *out_abs, rect_t *proc_rel,
 
 			/* Write position into buffers */
 			if(i == 0) {
-				out_rel.x = pos;
-				out_abs.x = tmp[0] + pos;
+				proc_rel->x = pos;
+				out_abs->x = tmp[0] + pos;
 			}
 			else {
-				out_rel.y = pos;
-				out_abs.y = tmp[0] + pos;
+				proc_rel->y = pos;
+				out_abs->y = tmp[0] + pos;
 			}
 		}
 	}
 }
 
 static void ui_adjust_node(ui_node *n, void *data)
-{
-	int i, value;
-	
+{	
 	ui_node *par;
 	ui_node *rend;
 
@@ -551,7 +523,7 @@ static void ui_adjust_node(ui_node *n, void *data)
 	else memcpy(rel, &par->body, sizeof(rect_t));
 
 	/* Set position */
-	ui_adjust_pos(&n->pos_constr, &n->body, &n->rel_body, rel, &rend->body)
+	ui_adjust_pos(&n->pos_constr, &n->body, &n->rel_body, rel, &rend->body);
 }
 
 extern void ui_adjust(ui_node *n)
@@ -570,7 +542,7 @@ extern void ui_adjust(ui_node *n)
 	if(rel->surf == NULL)
 		rel = NULL;
 
-	ui_run_down(n, &ui_adjust_node, rel, 0);
+	ui_down(n, &ui_adjust_node, rel, 0);
 }
 
 static int ui_init_buffers(ui_node *n)
@@ -620,8 +592,8 @@ static int ui_init_surf(ui_node *n)
 
 static int ui_init_tex(ui_node *n)
 {
-	int w = n->abs.w;
-	int h = n->abs.h;
+	int w = n->body.w;
+	int h = n->body.h;
 
 	/* Create new texture */
 	glGenTextures(1, &n->tex);
@@ -638,22 +610,7 @@ static int ui_init_tex(ui_node *n)
 	return 0;
 }
 
-extern int ui_enable_tex(ui_node *n)
-{
-	if(ui_init_surf(n) < 0)
-		return -1;
-
-	if(ui_init_buffers(n) < 0)
-		return -1;
-
-	if(ui_init_tex(n) < 0)
-		return -1;
-
-	ui_update_tex(n);
-	return 0;
-}
-
-extern void ui_update_tex(ui_node *n)
+static void ui_resize_tex(ui_node *n)
 {
 	float vtx[18];
 	float cw, ch, x, y, w, h;
@@ -694,7 +651,23 @@ extern void ui_update_tex(ui_node *n)
 	glBindVertexArray(0);
 }
 
-extern void ui_mod_flag(ui_node *n, short flg, void *val)
+extern int ui_enable_tex(ui_node *n)
+{
+	if(ui_init_surf(n) < 0)
+		return -1;
+
+	if(ui_init_buffers(n) < 0)
+		return -1;
+
+	if(ui_init_tex(n) < 0)
+		return -1;
+
+	ui_resize_tex(n);
+	return 0;
+}
+
+
+extern void ui_set_flag(ui_node *n, short flg, void *val)
 {
 	ui_node_flags *flags;
 
@@ -707,7 +680,7 @@ extern void ui_mod_flag(ui_node *n, short flg, void *val)
 
 			flags->active = *((uint8_t *)val);
 
-			ui_prerender(n);
+			ui_update(n);
 			win_build_pipe();
 			break;
 
@@ -721,7 +694,7 @@ extern void ui_mod_flag(ui_node *n, short flg, void *val)
 	}
 }
 
-void ui_mod_style(ui_node *n, short opt, void *val)
+void ui_set_style(ui_node *n, short opt, void *val)
 {
 	ui_node_style *style = &n->style;
 
@@ -749,24 +722,55 @@ void ui_mod_style(ui_node *n, short opt, void *val)
 		case(STY_COR_RAD):
 			memcpy(&style->cor_rad, val, 4 * sizeof(short));
 			break;
-
-		case(STY_INS):
-			memcpy(&style->ins, val, 4 * sizeof(short));
-			break;
 	}
 
-	ui_prerender(n);
+	ui_update(n);
 }
 
-void ui_bind_event(ui_node *n, short evt, ui_node_callback ptr)
+void ui_set_event(ui_node *n, short evt, ui_node_fnc fnc)
 {
 	ui_node_events *events = &n->events;
 
 	switch(evt) {
-		case(EVT_MOUSEDOWN): events->mousedown = ptr; break;
-		case(EVT_MOUSEUP): events->mouseup = ptr; break;
-		case(EVT_HOVER): events->hover = ptr; break;
-		case(EVT_KEYDOWN): events->keydown = ptr; break;
-		case(EVT_KEYUP): events->keyup = ptr; break;
+		case(EVT_MOUSEDOWN): events->mousedown = fnc; break;
+		case(EVT_MOUSEUP): events->mouseup = fnc; break;
+		case(EVT_HOVER): events->hover = fnc; break;
+		case(EVT_KEYDOWN): events->keydown = fnc; break;
+		case(EVT_KEYUP): events->keyup = fnc; break;
 	}
+}
+
+
+static void ui_show_node(ui_node *node, void *data)
+{
+	int i;
+
+	if(data){/* Prevent warning for not using parameters */}
+
+	for(i = 0; i < node->layer; i++)
+		printf("  ");
+
+	printf("%s", node->id);
+
+	if(node->tex != 0 && node->surf != NULL)
+		printf(" R ");
+	else
+		printf(" ");
+
+	if(node->flags.active == 1) 
+		printf("ON");
+	else
+		printf("OFF");
+
+	printf("\n");
+}
+
+extern void ui_show(ui_node *n, uint8_t flg)
+{
+	printf("\nNODE-TREE:\n");
+
+	if(flg == UI_SHOW_SINGLE)
+		ui_show_node(n, NULL);
+	else
+		ui_down(n, &ui_show_node, NULL, 0);
 }

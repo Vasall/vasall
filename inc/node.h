@@ -345,6 +345,9 @@ extern void ui_set_style(ui_node *n, short attr, void *val);
 extern void ui_set_event(ui_node *n, short evt, ui_node_fnc fnc);
 
 
+#define UI_SHOW_ALL     0
+#define UI_SHOW_SINGLE  1
+
 /*
  * Display the node-tree starting from a certain node in the console. This
  * function will only be used for debugging.

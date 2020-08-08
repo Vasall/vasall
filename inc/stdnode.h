@@ -10,8 +10,17 @@ extern SDL_Color WHITE;
 extern SDL_Color BLACK;
 extern const char BULLET[3];
 
+
+/* --------------------- WRAPPER ---------------------- */
+
 extern const struct ui_node_flags WRAPPER_FLAGS;
 extern const struct ui_node_style WRAPPER_STYLE;
+
+extern int ui_init_wrapper(ui_node *n);
+
+
+
+/* ----------------------- TEXT ----------------------- */
 
 typedef struct ui_text {
 	char *text;
@@ -24,12 +33,25 @@ extern const struct ui_node_style TEXT_STYLE;
 
 void TEXT_RENDER(ui_node *n, ui_node *rel);
 
+extern void *ui_new_text(char *text, color_t col, uint8_t font, uint8_t opt);
+extern int ui_init_text(ui_node *n);
+
+
+
+/* ---------------------- BUTTON ---------------------- */
+
 typedef struct ui_button {
 	int tmp;
 } ui_button;
 
 extern const struct ui_node_flags BUTTON_FLAGS;
 extern const struct ui_node_style BUTTON_STYLE;
+
+extern int ui_init_button(ui_node *n);
+
+
+
+/* ---------------------- INPUT ----------------------- */
 
 typedef struct ui_input {
 	char buffer[129];
@@ -49,19 +71,14 @@ typedef struct ui_input {
 extern const struct ui_node_flags INPUT_FLAGS;
 extern const struct ui_node_style INPUT_STYLE;
 
-void INPUT_ONFOCUS(ui_node *n, SDL_Event *evt);
-void INPUT_ONUNFOCUS(ui_node *n, SDL_Event *evt);
-void INPUT_ONACTIVE(ui_node *n, SDL_Event *evt);
-void INPUT_ONKEYDOWN(ui_node *n, SDL_Event *evt);
-void INPUT_ONTEXTINPUT(ui_node *n, SDL_Event *evt);
+void INPUT_ONFOCUS(ui_node *n, event_t *evt);
+void INPUT_ONUNFOCUS(ui_node *n, event_t *evt);
+void INPUT_ONACTIVE(ui_node *n, event_t *evt);
+void INPUT_ONKEYDOWN(ui_node *n, event_t *evt);
+void INPUT_ONTEXTINPUT(ui_node *n, event_t *evt);
 void INPUT_RENDER(ui_node *n, ui_node *rel);
 
-
-extern void *ui_new_text(char *text, color_t col, uint8_t font, uint8_t opt);
-
-ui_node *ui_add_button(ui_node *par, char* id, int x, int y,
-		int w, int h, char *label);
-ui_node *ui_add_input(ui_node *par, char* id, int x, int y,
-		int w, int h, char *plhdr);
+extern void *ui_new_input(color_t txt_col);
+extern int ui_init_input(ui_node *n);
 
 #endif

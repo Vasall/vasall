@@ -11,51 +11,100 @@ SDL_Color WHITE = { 0xff, 0xff, 0xff, 0xff };
 SDL_Color BLACK = { 0x00, 0x00, 0x00, 0x00 };
 const char BULLET[3] = {(char)0xE2, (char)0x80, (char)0xA2};
 
+
+
+/* =========================================================== *
+ *                                                             *
+ *                           WRAPPER                           *
+ *                                                             *
+ * =========================================================== */
+
 const struct ui_node_flags WRAPPER_FLAGS = {
 	1, 0, 0, CURSOR_ARROW
 };
 
 const struct ui_node_style WRAPPER_STYLE = {
-	0, 0, {0,0,0,0}, 0, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, 0, 0
+	0, 0, {0,0,0,0}, 0, {0,0,0,0}, {0,0,0,0}
 };
 
+extern int ui_init_wrapper(ui_node *n)
+{
+	n->flags = WRAPPER_FLAGS;
+	n->style = WRAPPER_STYLE;
+	return 0;
+}
+
+
+
+/* =========================================================== *
+ *                                                             *
+ *                             TEXT                            *
+ *                                                             *
+ * =========================================================== */
+
 const struct ui_node_style TEXT_STYLE = {
-	1, 0, {0,0,0,0}, 0, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, 0, 0
+	1, 0, {0,0,0,0}, 0, {0,0,0,0}, {0,0,0,0}
 };
 
 void TEXT_RENDER(ui_node *n, ui_node *rel)
 {
+	rect_t rect;
 	ui_text *ele;
-	SDL_Rect rect;
 
 	ele = (ui_text *)n->element;
 
-	memcpy(&rect, &n->rel, sizeof(SDL_Rect));
-	rect.x -= rel->abs.x;
-	rect.y -= rel->abs.y;
+	rect.x = n->body.x - rel->body.x;
+	rect.y = n->body.y - rel->body.y;
 
-	txt_render(rel->surf, &rect, &ele->col, ele->font,
-			ele->text, ele->opt);
-
+	txt_render(rel->surf, &rect, &ele->col, ele->font, ele->text, ele->opt);
 }
+
+extern int ui_init_text(ui_node *n)
+{
+	n->style = TEXT_STYLE;
+	n->render = &TEXT_RENDER;
+	return 0;
+}
+
+
+/* =========================================================== *
+ *                                                             *
+ *                            BUTTON                           *
+ *                                                             *
+ * =========================================================== */
 
 const struct ui_node_flags BUTTON_FLAGS = {
 	1, 1, 0, CURSOR_HAND
 };
 
 const struct ui_node_style BUTTON_STYLE = {
-	1, 1, {252,252,252,255}, 1, {0,0,0,255}, {0,0,0,0}, {0,0,0,0}, 0, 0
+	1, 1, {252,252,252,255}, 1, {0,0,0,255}, {0,0,0,0}
 };
+
+extern int ui_init_button(ui_node *n)
+{
+	n->flags = BUTTON_FLAGS;
+	n->style = BUTTON_STYLE;
+	return 0;
+}
+
+
+
+/* =========================================================== *
+ *                                                             *
+ *                             INPUT                           *
+ *                                                             *
+ * =========================================================== */
 
 const struct ui_node_flags INPUT_FLAGS = {
 	1, 1, 1, CURSOR_IBEAM
 };
 
 const struct ui_node_style INPUT_STYLE = {
-	1, 1, {255,255,255,255}, 1, {0,0,0,255}, {0,0,0,0}, {5,5,5,5}, 0, 0
+	1, 1, {255,255,255,255}, 1, {0,0,0,255}, {0,0,0,0}
 };
 
-void INPUT_ONFOCUS(ui_node *node, SDL_Event *evt)
+void INPUT_ONFOCUS(ui_node *node, event_t *evt)
 {
 	ui_input *ele = node->element;
 
@@ -65,7 +114,7 @@ void INPUT_ONFOCUS(ui_node *node, SDL_Event *evt)
 	SDL_StartTextInput();
 }
 
-void INPUT_ONUNFOCUS(ui_node *node, SDL_Event *evt)
+void INPUT_ONUNFOCUS(ui_node *node, event_t *evt)
 {
 	ui_input *ele = node->element;
 
@@ -75,7 +124,7 @@ void INPUT_ONUNFOCUS(ui_node *node, SDL_Event *evt)
 	SDL_StopTextInput();
 }
 
-void INPUT_ONACTIVE(ui_node *n, SDL_Event *evt)
+void INPUT_ONACTIVE(ui_node *n, event_t *evt)
 {
 	time_t rawtime;
 	ui_input *ele = n->element;
@@ -86,15 +135,14 @@ void INPUT_ONACTIVE(ui_node *n, SDL_Event *evt)
 	time(&rawtime);
 	ele->cur = ((rawtime % 2) == 0);
 
-	if(bef != ele->cur) {
-		ui_prerender(n);
-	}
+	if(bef != ele->cur)
+		ui_update(n);
 }
 
-void INPUT_ONKEYDOWN(ui_node *node, SDL_Event *evt)
+void INPUT_ONKEYDOWN(ui_node *node, event_t *evt)
 {
 	ui_input *ele;
-	SDL_Rect *rect;
+	rect_t *rect;
 	TTF_Font *font;
 	int txtw, txth, relw, relh, curw, curh, reloff;
 	char subs[512];
@@ -220,15 +268,15 @@ void INPUT_ONKEYDOWN(ui_node *node, SDL_Event *evt)
 			break;
 	}
 
-	ui_prerender(node);
+	ui_update(node);
 }
 
-void INPUT_ONTEXTINPUT(ui_node *node, SDL_Event *evt)
+void INPUT_ONTEXTINPUT(ui_node *node, event_t *evt)
 {
 	int curw, curh, relw, relh, curoff, reloff;
 	char subs[512];
 	ui_input *ele;
-	SDL_Rect *rect;
+	rect_t *rect;
 	TTF_Font *font;
 
 	ele = node->element;
@@ -272,7 +320,7 @@ void INPUT_ONTEXTINPUT(ui_node *node, SDL_Event *evt)
 		ele->rel++;
 	}
 
-	ui_prerender(node);
+	ui_update(node);
 }
 
 void INPUT_RENDER(ui_node *n, ui_node *rel)
@@ -281,12 +329,12 @@ void INPUT_RENDER(ui_node *n, ui_node *rel)
 	char subs[512];
 	ui_input *ele;
 	TTF_Font *font;
-	SDL_Rect rect;
+	rect_t rect;
 
 	ele = n->element;
 	font = texts.fonts[1];
 
-	memcpy(&rect, &n->body, sizeof(SDL_Rect));
+	memcpy(&rect, &n->body, sizeof(rect_t));
 
 	curoff = u8_offset(ele->buffer, ele->pos);
 	memcpy(subs, ele->buffer, curoff);
@@ -340,77 +388,15 @@ void INPUT_RENDER(ui_node *n, ui_node *rel)
 	}
 }
 
-extern void *ui_new_text(char *text, color_t col, uint8_t font, uint8_t opt)
-{
-	struct ui_text *ele = NULL;
-
-	if(!(ele = malloc(sizeof(struct ui_text))))
-		return NULL;
-
-	if(!(ele->text = malloc((strlen(text) + 1))))
-		goto err_free_ele;
-
-	strcpy(ele->text, text);
-	memcpy(&ele->col, &col, sizeof(color_t));
-	ele->font = font;
-	ele->opt = opt;
-	return (void *)ele;
-
-err_free_ele:
-	free(ele);
-	return NULL;
-}
-
-ui_node *ui_add_button(ui_node *par, char* id, int x, int y,
-		int w, int h, char *label)
-{
-	ui_button *ele = NULL;
-	SDL_Rect body;
-	ui_node *node;
-	char label_id[256];
-
-	if(!(ele = malloc(sizeof(ui_button))))
-		return NULL;
-
-	body.x = x;
-	body.y = y;
-	body.w = w;
-	body.h = h;
-
-	if(!(node = ui_add(par, ele, UI_BUTTON, id, &body)))
-		goto err_free_ele;
-
-	node->flags = BUTTON_FLAGS;
-	node->style = BUTTON_STYLE;
-
-	body.x = 0;
-	body.y = 0;
-
-	/* TODO: check if creating text failed */
-	sprintf(label_id, "%s_%s", id, "label");
-	ui_add_text(node, label_id, &body, label, (SDL_Color *)&BLACK, 1, 0);
-	return node;
-
-err_free_ele:
-	free(ele);
-	return NULL;
-}
-
-ui_node *ui_add_input(ui_node *par, char* id, int x, int y,
-		int w, int h, char *plhdr)
+extern void *ui_net_input(color_t txt_col)
 {
 	ui_input *ele;
-	SDL_Color text_color = {0,0,0,255};
-	SDL_Color cursor_color = {0x00, 0x00, 0x00, 0xff};
-	SDL_Rect body;
-	ui_node *node;
-
-	if(plhdr) {/* Prevent warning for not using plhdr */}
+	color_t cursor_color = {0x00, 0x00, 0x00, 0xff};
 
 	if(!(ele = malloc(sizeof(ui_input))))
 		return NULL;
 
-	memcpy(&ele->col, &text_color, sizeof(SDL_Color));
+	memcpy(&ele->col, &txt_col, sizeof(color_t));
 
 	ele->pos = 0;
 	ele->cur = 0;
@@ -425,26 +411,19 @@ ui_node *ui_add_input(ui_node *par, char* id, int x, int y,
 	ele->limit = 128;
 	ele->hide = 0;
 
-	body.x = x;
-	body.y = y;
-	body.w = w;
-	body.h = h;
+	return ele;
+}
 
-	if(!(node = ui_add(par, ele, UI_INPUT, id, &body)))
-		goto err_free_ele;
+extern int ui_init_input(ui_node *n)
+{
+	n->flags = INPUT_FLAGS;
+	n->style = INPUT_STYLE;
 
-	node->flags = INPUT_FLAGS;
-	node->style = INPUT_STYLE;
-
-	node->events.focus = &INPUT_ONFOCUS;
-	node->events.unfocus = &INPUT_ONUNFOCUS;
-	node->events.onactive = &INPUT_ONACTIVE;
-	node->events.keydown = &INPUT_ONKEYDOWN;
-	node->events.textinput = &INPUT_ONTEXTINPUT;
-	node->render = &INPUT_RENDER;
-	return node;
-
-err_free_ele:
-	free(ele);
-	return NULL;
+	n->events.focus = &INPUT_ONFOCUS;
+	n->events.unfocus = &INPUT_ONUNFOCUS;
+	n->events.onactive = &INPUT_ONACTIVE;
+	n->events.keydown = &INPUT_ONKEYDOWN;
+	n->events.textinput = &INPUT_ONTEXTINPUT;
+	n->render = &INPUT_RENDER;
+	return 0;
 }

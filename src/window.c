@@ -111,7 +111,7 @@ extern int win_init(void)
 	window.win_w = WIN_W;
 	window.win_h = WIN_H;
 
-	if(!(root = ui_add(NULL, NULL, UI_WRAPPER, "root", NULL)))
+	if(!(root = ui_add(UI_WRAPPER, NULL, NULL, "root")))
 		goto err_delete_shader;
 		
 	win_build_pipe();
@@ -162,10 +162,10 @@ extern void win_render(void)
 	}
 }
 
-static int win_onmousemotion(SDL_Event *evt)
+static int win_onmousemotion(event_t *evt)
 {
 	int2_t pos;
-	ui_node_callback func;
+	ui_node_fnc fnc;
 
 	if(evt){/*Prevent warning from unused variable <evt>*/}
 
@@ -179,10 +179,8 @@ static int win_onmousemotion(SDL_Event *evt)
 		/* Use flag-cursor */
 		SDL_SetCursor(window.cursors[(int)hovered->flags.cur]);
 
-		func = hovered->events.hover;
-		if(func != NULL) {
-			func(window.hover, NULL);
-		}
+		if((fnc = hovered->events.hover) != NULL)
+			fnc(window.hover, NULL);
 
 		return 1;
 	}
@@ -191,7 +189,7 @@ static int win_onmousemotion(SDL_Event *evt)
 	return -1;
 }
 
-static int win_onmousebuttondown(SDL_Event *evt)
+static int win_onmousebuttondown(event_t *evt)
 {
 	struct ui_node *hovered;
 
@@ -223,19 +221,19 @@ static int win_onmousebuttondown(SDL_Event *evt)
 	return -1;
 }
 
-static int win_oncontrolleradded(SDL_Event *evt)
+static int win_oncontrolleradded(event_t *evt)
 {
 	inp_add_device(evt->cdevice.which);
 	return 1;
 }
 
-static int win_oncontrollerremoved(SDL_Event *evt)
+static int win_oncontrollerremoved(event_t *evt)
 {
 	inp_remv_device(evt->cdevice.which);
 	return 1;
 }
 
-static int win_onwindowresize(SDL_Event *evt)
+static int win_onwindowresize(event_t *evt)
 {
 	if(evt){}
 
@@ -243,11 +241,11 @@ static int win_onwindowresize(SDL_Event *evt)
 	return 1;
 }
 
-extern int win_proc_evt(SDL_Event *evt)
+extern int win_proc_evt(event_t *evt)
 {
 	if(window.active != NULL) {
 		struct ui_node *act;
-		ui_node_callback fnc;
+		ui_node_fnc fnc;
 
 		act = window.active;
 		fnc = NULL;
@@ -310,7 +308,7 @@ extern void win_build_pipe(void)
 	for(i = 0; i < PIPE_LEN; i++)
 		window.pipe[i] = NULL;
 
-	ui_run_down(window.root, &win_collect_nodes, &window.pipe_num, 0);
+	ui_down(window.root, &win_collect_nodes, &window.pipe_num, 0);
 }
 
 extern void win_dump_pipe(void)
@@ -320,7 +318,7 @@ extern void win_dump_pipe(void)
 
 	for(i = 0; i < window.pipe_num; i++) {
 		n = window.pipe[i];
-		printf("%s, vao %d, tex %d, Size(%d/%d)\n", n->strid, n->vao, 
+		printf("%s, vao %d, tex %d, Size(%d/%d)\n", n->id, n->vao, 
 				n->tex, n->surf->w, n->surf->h);
 	}
 }
@@ -328,7 +326,7 @@ extern void win_dump_pipe(void)
 extern struct ui_node *win_check_hover(struct ui_node *n, int2_t pos)
 {
 	int i;
-	SDL_Rect *rend = &n->rel;
+	rect_t *rend = &n->body;
 
 	if(n->flags.active == 0)
 		return NULL;

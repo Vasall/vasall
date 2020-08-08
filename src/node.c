@@ -1,5 +1,6 @@
 #include "node.h"
 #include "window.h"
+#include "stdnode.h"
 
 const ui_constr UI_POS_CONSTR_NULL = {{
 	{
@@ -65,20 +66,6 @@ static int ui_add_child(ui_node *n, ui_node *c)
 	return -1;
 }
 
-static int ui_init_wrapper(ui_node *n)
-{
-	n->flags = WRAPPER_FLAGS;
-	n->style = WRAPPER_STYLE;
-	return 0;
-}
-
-static int ui_init_text(ui_node *n)
-{
-	n->style = TEXT_STYLE;
-	n->render = &TEXT_RENDER;
-	return 0;
-}
-
 extern ui_node *ui_add(ui_tag tag, ui_node *par, void *ele, char *id)
 {
 	int i;
@@ -138,8 +125,8 @@ extern ui_node *ui_add(ui_tag tag, ui_node *par, void *ele, char *id)
 	switch(tag) {
 		case UI_WRAPPER: ui_init_wrapper(node); break;
 		case UI_TEXT: ui_init_text(node); break;
-		case UI_BUTTON: break;
-		case UI_INPUT: break;
+		case UI_BUTTON: ui_init_button(node); break;
+		case UI_INPUT: ui_init_input(node); break;
 	}
 
 	/* Adjust the size of the node */
@@ -219,6 +206,9 @@ extern ui_node *ui_get(ui_node *n, char *id)
 extern void ui_down(ui_node *n, ui_fnc fnc, void *data, uint8_t flg)
 {
 	short i;
+
+	if(n == NULL)
+		return;
 
 	/* Show only active branches be processed */
 	if((flg & UI_DOWN_ALL) != UI_DOWN_ALL && n->flags.active == 0)
@@ -506,7 +496,7 @@ static void ui_adjust_node(ui_node *n, void *data)
 	ui_node *par;
 	ui_node *rend;
 
-	rect_t win, *rel;
+	rect_t win, rel;
 
 	/* Create shortcuts for the parent- and render-node */
 	par = n->parent;
@@ -519,11 +509,11 @@ static void ui_adjust_node(ui_node *n, void *data)
 	win.h = window.win_h;
 
 	/* Calculate the size of the parent-node */
-	if(par == NULL) memcpy(rel, &win, sizeof(rect_t));
-	else memcpy(rel, &par->body, sizeof(rect_t));
+	if(par == NULL) memcpy(&rel, &win, sizeof(rect_t));
+	else memcpy(&rel, &par->body, sizeof(rect_t));
 
 	/* Set position */
-	ui_adjust_pos(&n->pos_constr, &n->body, &n->rel_body, rel, &rend->body);
+	ui_adjust_pos(&n->pos_constr, &n->body, &n->rel_body, &rel, &rend->body);
 }
 
 extern void ui_adjust(ui_node *n)

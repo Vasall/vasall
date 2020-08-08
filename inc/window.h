@@ -47,7 +47,7 @@ extern void win_close(void);
 extern void win_update(void);
 extern void win_render(void);
 
-extern int win_proc_evt(SDL_Event *evt); 
+extern int win_proc_evt(event_t *evt); 
 
 extern void win_build_pipe(void);
 extern void win_dump_pipe(void);

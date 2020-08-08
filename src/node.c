@@ -51,20 +51,6 @@ const float STD_UV[12] = {
 };
 
 
-static int ui_add_child(ui_node *n, ui_node *c)
-{
-	short i;
-
-	for(i = 0; i < UI_CHILD_NUM; i++) {
-		if(n->children[i] == NULL) {
-			n->children[i] = c;
-			n->child_num++;
-			return 0;
-		}
-	}
-
-	return -1;
-}
 
 extern ui_node *ui_add(ui_tag tag, ui_node *par, void *ele, char *id)
 {
@@ -96,11 +82,11 @@ extern ui_node *ui_add(ui_tag tag, ui_node *par, void *ele, char *id)
 	node->style =  UI_NULL_STYLE;
 	node->events = UI_NULL_EVENTS;
 
-	node->render = NULL;
-	node->del = NULL;
-
-	memset(&node->body,  0, sizeof(rect_t));
+	memset(&node->body, 0, sizeof(rect_t));
 	memset(&node->rel_body, 0, sizeof(rect_t));
+
+	node->del = NULL;
+	node->render = NULL;
 
 	node->vao = 0;
 	for(i = 0; i < 2; i++)
@@ -112,9 +98,11 @@ extern ui_node *ui_add(ui_tag tag, ui_node *par, void *ele, char *id)
 		node->layer = par->layer + 1;
 		node->parent = par;
 
-		/* Attach node as child to parent */
-		if(ui_add_child(par, node) < 0)
+		if(par->child_num >= UI_CHILD_NUM)
 			goto err_free_node;
+
+		par->children[par->child_num] = node;
+		par->child_num++;
 	}
 	else {
 		node->layer = 0;
@@ -207,7 +195,7 @@ extern void ui_down(ui_node *n, ui_fnc fnc, void *data, uint8_t flg)
 {
 	short i;
 
-	if(n == NULL)
+	if(!n)
 		return;
 
 	/* Show only active branches be processed */
@@ -215,7 +203,7 @@ extern void ui_down(ui_node *n, ui_fnc fnc, void *data, uint8_t flg)
 		return;
 
 	/* Preorder */
-	if((flg & UI_DOWN_PRE) == UI_DOWN_PRE)
+	if((flg & UI_DOWN_POST) != UI_DOWN_POST)
 		fnc(n, data);
 
 	/* Apply function to all child nodes */
@@ -239,7 +227,7 @@ extern void ui_up(ui_node *n, ui_fnc fnc, void *data)
 }
 
 
-int ui_set_constr(ui_node *n, ui_constr_type type, ui_constr_algn algn,
+extern int ui_set_constr(ui_node *n, ui_constr_type type, ui_constr_algn algn,
 		ui_constr_mod mod, ui_constr_mask mask, float val,
 		ui_constr_unit unit, ui_constr_rel rel)
 {
@@ -264,6 +252,9 @@ static void ui_prerender_node(ui_node *n, ui_node *rel, char flg)
 	rect_t body;
 	ui_node_style *style;
 
+	if(n == NULL || rel == NULL)
+		return;
+
 	if(n->flags.active == 0)
 		return;
 
@@ -274,6 +265,10 @@ static void ui_prerender_node(ui_node *n, ui_node *rel, char flg)
 		flg = 1;
 
 	memcpy(&body, &n->rel_body, sizeof(rect_t));
+	if(n->surf != NULL) {
+		body.x = 0;
+		body.y = 0;
+	}
 
 	style = &n->style;
 
@@ -293,8 +288,9 @@ static void ui_prerender_node(ui_node *n, ui_node *rel, char flg)
 	}
 
 	/* Render background if enabled */
-	if(style->bck > 0) {
+	if(style->bck > 0){
 		short w = style->bor;
+
 		sdl_fill_rounded(rel->surf,
 				body.x + w,
 				body.y + w,
@@ -318,7 +314,7 @@ extern void ui_update(ui_node *n)
 	ui_node *s = n;
 
 	/* Search for a render-node with an attached surface */
-	while(s->parent != NULL) {
+	while(s != NULL) {
 		if(s->surf != NULL)
 			break;
 
@@ -326,7 +322,7 @@ extern void ui_update(ui_node *n)
 	}
 
 	/* If no render-node has been found */
-	if(s->surf == NULL)
+	if(s == NULL || s->surf == NULL)
 		return;
 
 	/* Clear surface */
@@ -491,12 +487,187 @@ static void ui_adjust_pos(ui_constr *constr, rect_t *out_abs, rect_t *proc_rel,
 	}
 }
 
+static void ui_adjust_size(ui_constr *constr, rect_t *out_abs, rect_t *proc_rel,
+		rect_t *par, rect_t *rend)
+{
+	int i;
+	int j;
+	ui_constr_mask mask;
+	float val;
+	ui_constr_unit unit;
+	ui_constr_rel rel;
+
+	short cmp_val;
+	short tmp;
+	short size;
+
+	proc_rel->w = par->w;
+	proc_rel->h = par->h;
+
+	out_abs->w = par->w;
+	out_abs->h = par->h;
+
+	for(i = 0; i < 2; i++) {
+		for(j = 0; j < 3; j++) {
+			if((mask = constr->ent[i][j].mask) == UI_CONSTR_NONE)
+				continue;
+			
+			val = constr->ent[i][j].value;
+			unit = constr->ent[i][j].unit;
+			rel = constr->ent[i][j].rel;
+
+			/* Get relative position and size for axis */
+			switch(rel) {
+				case UI_CONSTR_REL:
+					if(i == 0) tmp = par->w;
+					else tmp = par->h;
+					break;
+
+				case UI_CONSTR_ABS:
+					if(i == 0) tmp = rend->w;
+					else tmp = rend->h;
+					break;
+
+				case UI_CONSTR_WIN:
+					if(i == 0) tmp = window.win_w;
+					else tmp = window.win_h;
+					break;
+			}
+
+			/* Convert value depending on unit */
+			switch(unit) {
+				case UI_CONSTR_PX:
+					cmp_val = (short)val;
+					break;
+
+				case UI_CONSTR_PCT:
+					cmp_val = (short)((float)tmp * val);
+					break;
+			}
+
+			/* Calculate position depending on alignment-mask */
+			switch(mask) {
+				case UI_CONSTR_AUTO:
+					cmp_val = tmp;
+					break;
+
+				case UI_CONSTR_RIGHT:
+				case UI_CONSTR_BOTTOM:
+				case UI_CONSTR_LEFT:
+				case UI_CONSTR_TOP:
+					cmp_val = cmp_val;
+					break;
+
+				case UI_CONSTR_NONE:
+				default:
+					break;
+			}
+
+			/* Set or limit value */
+			switch(j) {
+				case 0:
+					size = cmp_val;
+					break;
+				case 1:
+					if(size > cmp_val)
+						size = cmp_val;
+					break;
+				case 2:
+					if(size < cmp_val)
+						size = cmp_val;
+					break;
+			}
+
+			/* Write position into buffers */
+			if(i == 0) {
+				proc_rel->w = size;
+				out_abs->w = size;
+			}
+			else {
+				proc_rel->h = size;
+				out_abs->h = size;
+			}
+		}
+	}
+}
+
+
+static int ui_resize_surf(ui_node *n)
+{
+	int w, h;
+	w = n->body.w;
+	h = n->body.h;
+
+	SDL_FreeSurface(n->surf);
+
+	/* Create the render-surface */
+	if(!(n->surf = SDL_CreateRGBSurface(0, w, h, 32, SDL_R_MASK, 
+					SDL_G_MASK, SDL_B_MASK, SDL_A_MASK)))
+		return -1;
+
+	return 0;
+}
+
+static void ui_resize_tex(ui_node *n)
+{
+	float vtx[18];
+	float cw, ch, x, y, w, h;
+
+	memset(vtx, 0, sizeof(float) * 18);
+
+	cw = (float)window.win_w / 2.0;
+	ch = (float)window.win_h / 2.0;
+
+	x = (float)n->body.x;
+	y = (float)n->body.y;
+	w = (float)n->body.w;
+	h = (float)n->body.h;
+
+	/*
+	 * Note that we leave the third vertex position untouched as the
+	 * ui-interface is on one plain.
+	 */
+
+	/* Top-Right */
+	vtx[0] = ((x + w) / cw) - 1.0;
+	vtx[1] = 1.0 - (y / ch);
+	/* Top-Left */
+	vtx[3] = (x / cw) - 1.0;
+	vtx[4] = 1.0 - (y / ch);
+	/* Bottom-Left */
+	vtx[6] = (x / cw) - 1.0;
+	vtx[7] = 1.0 - ((y + h) / ch);
+
+	/* Bottom-Left */
+	vtx[9] = (x / cw) - 1.0;
+	vtx[10] = 1.0 - ((y + h) / ch);
+	/* Bottom-Right */
+	vtx[12] = ((x + w) / cw) - 1.0;
+	vtx[13] = 1.0 - ((y + h) / ch);
+	/* Top-Right */
+	vtx[15] = ((x + w) / cw) - 1.0;
+	vtx[16] = 1.0 - (y / ch);
+
+	/* Resize the texture */
+	glBindTexture(GL_TEXTURE_2D, n->tex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, 
+			GL_UNSIGNED_BYTE, n->surf->pixels);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	/* Update buffers */
+	glBindVertexArray(n->vao);
+	glBindBuffer(GL_ARRAY_BUFFER, n->bao[0]);
+	glBufferData(GL_ARRAY_BUFFER, 18 * sizeof(float), vtx, GL_STATIC_DRAW);
+	glBindVertexArray(0);
+}
+
 static void ui_adjust_node(ui_node *n, void *data)
 {	
 	ui_node *par;
 	ui_node *rend;
 
-	rect_t win, rel;
+	rect_t win;
+	rect_t rel;
 
 	/* Create shortcuts for the parent- and render-node */
 	par = n->parent;
@@ -512,8 +683,18 @@ static void ui_adjust_node(ui_node *n, void *data)
 	if(par == NULL) memcpy(&rel, &win, sizeof(rect_t));
 	else memcpy(&rel, &par->body, sizeof(rect_t));
 
+	/* Set size */
+	ui_adjust_size(&n->pos_constr, &n->body, &n->rel_body, &rel,
+			&rend->body);
+
 	/* Set position */
-	ui_adjust_pos(&n->pos_constr, &n->body, &n->rel_body, &rel, &rend->body);
+	ui_adjust_pos(&n->pos_constr, &n->body, &n->rel_body, &rel,
+			&rend->body);
+
+	if(n->surf != NULL) {
+		ui_resize_surf(n);
+		ui_resize_tex(n);
+	}
 }
 
 extern void ui_adjust(ui_node *n)
@@ -600,47 +781,6 @@ static int ui_init_tex(ui_node *n)
 	return 0;
 }
 
-static void ui_resize_tex(ui_node *n)
-{
-	float vtx[18];
-	float cw, ch, x, y, w, h;
-
-	memset(vtx, 0, sizeof(float) * 18);
-
-	cw = (float)window.win_w / 2.0;
-	ch = (float)window.win_h / 2.0;
-
-	x = (float)n->body.x;
-	y = (float)n->body.y;
-	w = (float)n->body.w;
-	h = (float)n->body.h;
-
-	/* Top-Right */
-	vtx[0] = ((x + w) / cw) - 1.0;
-	vtx[1] = 1.0 - (y / ch);
-	/* Top-Left */
-	vtx[3] = (x / cw) - 1.0;
-	vtx[4] = 1.0 - (y / ch);
-	/* Bottom-Left */
-	vtx[6] = (x / cw) - 1.0;
-	vtx[7] = 1.0 - ((y + h) / ch);
-
-	/* Bottom-Left */
-	vtx[9] = (x / cw) - 1.0;
-	vtx[10] = 1.0 - ((y + h) / ch);
-	/* Bottom-Right */
-	vtx[12] = ((x + w) / cw) - 1.0;
-	vtx[13] = 1.0 - ((y + h) / ch);
-	/* Top-Right */
-	vtx[15] = ((x + w) / cw) - 1.0;
-	vtx[16] = 1.0 - (y / ch);
-
-	glBindVertexArray(n->vao);
-	glBindBuffer(GL_ARRAY_BUFFER, n->bao[0]);
-	glBufferData(GL_ARRAY_BUFFER, 18 * sizeof(float), vtx, GL_STATIC_DRAW);
-	glBindVertexArray(0);
-}
-
 extern int ui_enable_tex(ui_node *n)
 {
 	if(ui_init_surf(n) < 0)
@@ -653,6 +793,10 @@ extern int ui_enable_tex(ui_node *n)
 		return -1;
 
 	ui_resize_tex(n);
+
+	if(n->parent != NULL)
+		ui_update(n->parent);
+	ui_update(n);
 	return 0;
 }
 
@@ -689,27 +833,27 @@ void ui_set_style(ui_node *n, short opt, void *val)
 	ui_node_style *style = &n->style;
 
 	switch(opt) {
-		case(STY_VIS):
+		case(UI_STY_VIS):
 			style->vis = *((char *)val);
 			break;
 
-		case(STY_BCK):
+		case(UI_STY_BCK):
 			style->bck = *((char *)val);
 			break;
 
-		case(STY_BCK_COL):
+		case(UI_STY_BCK_COL):
 			style->bck_col = *((SDL_Color *)val);
 			break;
 
-		case(STY_BOR):
+		case(UI_STY_BOR):
 			style->bor = *((short *)val);
 			break;
 
-		case(STY_BOR_COL):
+		case(UI_STY_BOR_COL):
 			style->bor_col = *((SDL_Color *)val);
 			break;
 
-		case(STY_COR_RAD):
+		case(UI_STY_COR_RAD):
 			memcpy(&style->cor_rad, val, 4 * sizeof(short));
 			break;
 	}

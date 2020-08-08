@@ -2,7 +2,7 @@
 
 #include <stdlib.h>
 
-
+/* Redefine global window-wrapper */
 struct window_wrapper window;
 
 const char *vtxShd = "#version 330 core\n \
@@ -17,8 +17,8 @@ const char *frgShd = "#version 330 core\n \
 
 static int win_conf_opengl(void)
 {
-	/* glClearColor(0.06, 0.06, 0.06, 1.0); */
-	glClearColor(0.9, 0.9, 0.9, 1.0);
+	glClearColor(0.06, 0.06, 0.06, 1.0);
+	/* glClearColor(0.9, 0.9, 0.9, 1.0); */
 	glProvokingVertex(GL_FIRST_VERTEX_CONVENTION);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -111,7 +111,7 @@ extern int win_init(void)
 	window.win_w = WIN_W;
 	window.win_h = WIN_H;
 
-	if(!(root = ui_add(UI_WRAPPER, NULL, NULL, "root")))
+	if(!(window.root = ui_add(UI_WRAPPER, NULL, NULL, "root")))
 		goto err_delete_shader;
 		
 	win_build_pipe();
@@ -157,9 +157,8 @@ extern void win_render(void)
 {
 	short i;
 
-	for(i = 0; i < window.pipe_num; i++) {
+	for(i = 0; i < window.pipe_num; i++)
 		ui_render(window.pipe[i]);
-	}
 }
 
 static int win_onmousemotion(event_t *evt)
@@ -235,9 +234,19 @@ static int win_oncontrollerremoved(event_t *evt)
 
 static int win_onwindowresize(event_t *evt)
 {
-	if(evt){}
+	short i;
 
-	/* SDL_GetWindowSize(window.win, &window.win_w, &window.win_h); */
+	if(evt){/* Prevent warning for not using parameter */}
+
+	SDL_GetWindowSize(window.win, &window.win_w, &window.win_h);
+
+	glViewport(0, 0, window.win_w, window.win_h);
+
+	ui_adjust(window.root);
+
+	for(i = 0; i < window.pipe_num; i++)
+		ui_update(window.pipe[i]);
+
 	return 1;
 }
 
@@ -301,13 +310,7 @@ static void win_collect_nodes(ui_node *n, void *d)
 
 extern void win_build_pipe(void)
 {
-	int i;
-
 	window.pipe_num = 0;
-
-	for(i = 0; i < PIPE_LEN; i++)
-		window.pipe[i] = NULL;
-
 	ui_down(window.root, &win_collect_nodes, &window.pipe_num, 0);
 }
 

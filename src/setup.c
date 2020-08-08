@@ -85,6 +85,28 @@ static void login(ui_node *n, SDL_Event *e)
 
 int load_ui(void)
 {
+	ui_node *root = window.root;
+	ui_node *tmp;
+	char one = 1;
+
+	tmp = ui_add(UI_WRAPPER, ui_get(root, "root"), NULL, "mns");
+	ui_set_style(tmp, UI_STY_VIS, &one);
+	ui_set_style(tmp, UI_STY_BCK, &one);
+	ui_set_style(tmp, UI_STY_BCK_COL, sdl_color_s(255, 0, 0, 255));
+	ui_enable_tex(tmp);
+	
+	tmp = ui_add(UI_WRAPPER, ui_get(root, "mns"), NULL, "mns_form");
+	ui_set_constr(tmp, UI_CONSTR_SIZE, UI_CONSTR_HORI, 0, 2, 400, UI_CONSTR_PX, 0);
+	ui_set_constr(tmp, UI_CONSTR_SIZE, UI_CONSTR_VERT, 0, 2, 80, UI_CONSTR_PX, 0);
+	ui_set_constr(tmp, UI_CONSTR_POS, UI_CONSTR_HORI, 0, UI_CONSTR_AUTO, 0, 0, 0);
+	ui_set_constr(tmp, UI_CONSTR_POS, UI_CONSTR_VERT, 0, UI_CONSTR_AUTO, 0, 0, 0);
+	ui_set_style(tmp, UI_STY_VIS, &one);
+	ui_set_style(tmp, UI_STY_BCK, &one);
+	ui_set_style(tmp, UI_STY_BCK_COL, sdl_color_s(255, 255, 255, 255));
+	
+
+	win_build_pipe();
+
 #if 0
 	int one = 1;
 	rect_t body0 = {0, 0, 400, 80};

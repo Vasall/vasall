@@ -136,3 +136,28 @@ extern color_t sdl_color(int r, int g, int b, int a)
 
 	return col;
 }
+
+extern rect_t *sdl_rect_s(int x, int y, int w, int h)
+{
+	static rect_t r;
+
+	r.x = x;
+	r.y = y;
+	r.w = w;
+	r.h = h;
+
+	return &r;
+}
+
+
+extern color_t *sdl_color_s(int r, int g, int b, int a)
+{
+	static color_t col;
+
+	col.r = r;
+	col.g = g;
+	col.b = b;
+	col.a = a;
+
+	return &col;
+}

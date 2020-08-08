@@ -63,4 +63,8 @@ extern rect_t sdl_rect(int x, int y, int w, int h);
 
 extern color_t sdl_color(int r, int g, int b, int a);
 
+extern rect_t *sdl_rect_s(int x, int y, int w, int h);
+
+extern color_t *sdl_color_s(int r, int g, int b, int a);
+
 #endif

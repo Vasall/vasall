@@ -113,12 +113,12 @@ typedef struct ui_node_style {
 
 extern const ui_node_style   UI_NULL_STYLE;
 
-#define STY_VIS		0x00
-#define STY_BCK		0x01
-#define	STY_BCK_COL	0x02
-#define STY_BOR		0x03
-#define STY_BOR_COL	0x04
-#define STY_COR_RAD	0x05
+#define UI_STY_VIS	0x00
+#define UI_STY_BCK	0x01
+#define	UI_STY_BCK_COL	0x02
+#define UI_STY_BOR	0x03
+#define UI_STY_BOR_COL	0x04
+#define UI_STY_COR_RAD	0x05
 
 typedef struct ui_node_events {
 	ui_node_fnc focus;
@@ -219,12 +219,13 @@ extern void ui_remv(ui_node *n);
 extern ui_node *ui_get(ui_node *n, char *id);
 
 
-#define UI_DOWN_PRE  (0<<0)
 #define UI_DOWN_POST (1<<0)
 #define UI_DOWN_ALL  (1<<1)
 
 /*
  * Recursivly go down layer by layer and apply the given function to the nodes.
+ * Note that this function will use preorder to traverse the tree by default.
+ * Use flag UI_DOWN_POST to enable postorder traversal.
  *
  * @n: The node to start from
  * @fnc: The function to apply to the nodes

@@ -96,8 +96,8 @@ int load_ui(void)
 	ui_enable_tex(tmp);
 	
 	tmp = ui_add(UI_WRAPPER, ui_get(root, "mns"), NULL, "mns_form");
-	ui_set_constr(tmp, UI_CONSTR_SIZE, UI_CONSTR_HORI, 0, 2, 400, UI_CONSTR_PX, 0);
-	ui_set_constr(tmp, UI_CONSTR_SIZE, UI_CONSTR_VERT, 0, 2, 80, UI_CONSTR_PX, 0);
+	ui_set_constr(tmp, UI_CONSTR_SIZE, UI_CONSTR_HORI, 0, 1, 400.0, UI_CONSTR_PX, 0);
+	ui_set_constr(tmp, UI_CONSTR_SIZE, UI_CONSTR_VERT, 0, 1, 80.0, UI_CONSTR_PX, 0);
 	ui_set_constr(tmp, UI_CONSTR_POS, UI_CONSTR_HORI, 0, UI_CONSTR_AUTO, 0, 0, 0);
 	ui_set_constr(tmp, UI_CONSTR_POS, UI_CONSTR_VERT, 0, UI_CONSTR_AUTO, 0, 0, 0);
 	ui_set_style(tmp, UI_STY_VIS, &one);

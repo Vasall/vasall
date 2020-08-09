@@ -242,6 +242,9 @@ extern int ui_set_constr(ui_node *n, ui_constr_type type, ui_constr_algn algn,
 	constr->value = val;
 	constr->unit = unit;
 	constr->rel = rel;
+
+	/* Upate the position and size of the node */
+	ui_adjust(n);
 	return 0;
 }
 
@@ -510,8 +513,8 @@ static void ui_adjust_size(ui_constr *constr, rect_t *out_abs, rect_t *proc_rel,
 	for(i = 0; i < 2; i++) {
 		for(j = 0; j < 3; j++) {
 			if((mask = constr->ent[i][j].mask) == UI_CONSTR_NONE)
-				continue;
-			
+				continue;	
+
 			val = constr->ent[i][j].value;
 			unit = constr->ent[i][j].unit;
 			rel = constr->ent[i][j].rel;
@@ -566,7 +569,6 @@ static void ui_adjust_size(ui_constr *constr, rect_t *out_abs, rect_t *proc_rel,
 			/* Set or limit value */
 			switch(j) {
 				case 0:
-					printf("Size: %d\n", cmp_val);
 					size = cmp_val;
 					break;
 				case 1:
@@ -685,7 +687,7 @@ static void ui_adjust_node(ui_node *n, void *data)
 	else memcpy(&rel, &par->body, sizeof(rect_t));
 
 	/* Set size */
-	ui_adjust_size(&n->pos_constr, &n->body, &n->rel_body, &rel,
+	ui_adjust_size(&n->size_constr, &n->body, &n->rel_body, &rel,
 			&rend->body);
 
 	/* Set position */

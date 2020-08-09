@@ -50,9 +50,9 @@ typedef enum ui_constr_algn {
 } ui_constr_algn;
 
 typedef enum ui_constr_mod {
-	UI_CONSTR_SET  = 0,
-	UI_CONSTR_LLIM = 1,
-	UI_CONSTR_HLIM = 2
+	UI_CONSTR_SET  = 0,    /* Set the value of the constraint */
+	UI_CONSTR_LLIM = 1,    /* Use value to limit downwards */
+	UI_CONSTR_HLIM = 2     /* Use value to limit upwards */
 } ui_constr_mod;
 
 /*

@@ -566,6 +566,7 @@ static void ui_adjust_size(ui_constr *constr, rect_t *out_abs, rect_t *proc_rel,
 			/* Set or limit value */
 			switch(j) {
 				case 0:
+					printf("Size: %d\n", cmp_val);
 					size = cmp_val;
 					break;
 				case 1:

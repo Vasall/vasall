@@ -103,7 +103,7 @@ int load_ui(void)
 	ui_set_style(tmp, UI_STY_VIS, &one);
 	ui_set_style(tmp, UI_STY_BCK, &one);
 	ui_set_style(tmp, UI_STY_BCK_COL, sdl_color_s(255, 255, 255, 255));
-	
+	ui_adjust(tmp);
 
 	win_build_pipe();
 

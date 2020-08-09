@@ -19,41 +19,41 @@ typedef enum ui_tag {
 	UI_INPUT       /* Input field for text and numbers */
 } ui_tag;
 
-typedef enum ui_constr_mask {
-	UI_CONSTR_NONE   = -1,
-	UI_CONSTR_AUTO   = 0,
-	UI_CONSTR_LEFT   = 1,
-	UI_CONSTR_RIGHT  = 2,
-	UI_CONSTR_TOP    = 3,
-	UI_CONSTR_BOTTOM = 4
-} ui_constr_mask;
+typedef enum ui_cst_mask {
+	UI_CST_NONE   = -1,
+	UI_CST_AUTO   = 0,
+	UI_CST_LEFT   = 1,
+	UI_CST_RIGHT  = 2,
+	UI_CST_TOP    = 3,
+	UI_CST_BOTTOM = 4
+} ui_cst_mask;
 
-typedef enum ui_constr_unit {
-	UI_CONSTR_PX,
-	UI_CONSTR_PCT
-} ui_constr_unit;
+typedef enum ui_cst_unit {
+	UI_CST_PX,
+	UI_CST_PCT
+} ui_cst_unit;
 
-typedef enum ui_constr_rel {
-	UI_CONSTR_REL = 0,     /* Calculate size relative to parent-node-size */
-	UI_CONSTR_ABS = 1,     /* Calculate size relative to surface-size */
-	UI_CONSTR_WIN = 2      /* Calculate size relative to window-size */
-} ui_constr_rel;
+typedef enum ui_cst_rel {
+	UI_CST_REL = 0,     /* Calculate size relative to parent-node-size */
+	UI_CST_ABS = 1,     /* Calculate size relative to surface-size */
+	UI_CST_WIN = 2      /* Calculate size relative to window-size */
+} ui_cst_rel;
 
-typedef enum ui_constr_type {
-	UI_CONSTR_POS,
-	UI_CONSTR_SIZE
-} ui_constr_type;
+typedef enum ui_cst_type {
+	UI_CST_POS,
+	UI_CST_SIZE
+} ui_cst_type;
 
-typedef enum ui_constr_algn {
-	UI_CONSTR_HORI = 0,
-	UI_CONSTR_VERT = 1
-} ui_constr_algn;
+typedef enum ui_cst_algn {
+	UI_CST_HORI = 0,
+	UI_CST_VERT = 1
+} ui_cst_algn;
 
-typedef enum ui_constr_mod {
-	UI_CONSTR_SET  = 0,    /* Set the value of the constraint */
-	UI_CONSTR_LLIM = 1,    /* Use value to limit downwards */
-	UI_CONSTR_HLIM = 2     /* Use value to limit upwards */
-} ui_constr_mod;
+typedef enum ui_cst_mod {
+	UI_CST_SET  = 0,    /* Set the value of the constraint */
+	UI_CST_LLIM = 1,    /* Use value to limit downwards */
+	UI_CST_HLIM = 2     /* Use value to limit upwards */
+} ui_cst_mod;
 
 /*
  * A single constrain entry.
@@ -63,12 +63,12 @@ typedef enum ui_constr_mod {
  * unit: Indicated how the value should be processed
  * rel: What to calculate the size relative to if percentage
  */
-typedef struct ui_constr_ent {
-	ui_constr_mask  mask; 
+typedef struct ui_cst_ent {
+	ui_cst_mask  mask; 
 	float           value;
-	ui_constr_unit  unit;
-	ui_constr_rel   rel;
-} ui_constr_ent;
+	ui_cst_unit  unit;
+	ui_cst_rel   rel;
+} ui_cst_ent;
 
 /*
  * This containt unit is used to set and limit the size of a node.
@@ -80,13 +80,13 @@ typedef struct ui_constr_ent {
  * Slot 1 is used to limit lower numbers
  * Slot 2 is used to limit higher numbers
  */
-typedef struct ui_constr {
-	ui_constr_ent ent[2][3];
-} ui_constr;
+typedef struct ui_cst_wrp {
+	ui_cst_ent ent[2][3];
+} ui_cst_wrp;
 
 /* Default position- and size-constraints */
-extern const ui_constr   UI_POS_CONSTR_NULL;
-extern const ui_constr   UI_POS_CONSTR_NULL;
+extern const ui_cst_wrp   UI_POS_CST_NULL;
+extern const ui_cst_wrp   UI_POS_CST_NULL;
 
 typedef struct ui_node_flags {
 	uint8_t active;
@@ -115,10 +115,10 @@ extern const ui_node_style   UI_NULL_STYLE;
 
 #define UI_STY_VIS	0x00
 #define UI_STY_BCK	0x01
-#define	UI_STY_BCK_COL	0x02
+#define	UI_STY_BCKCOL	0x02
 #define UI_STY_BOR	0x03
-#define UI_STY_BOR_COL	0x04
-#define UI_STY_COR_RAD	0x05
+#define UI_STY_BORCOL	0x04
+#define UI_STY_CRNRAD	0x05
 
 typedef struct ui_node_events {
 	ui_node_fnc focus;
@@ -164,8 +164,8 @@ struct ui_node {
 	ui_node_style   style;
 	ui_node_events  events;
 
-	ui_constr pos_constr;
-	ui_constr size_constr;
+	ui_cst_wrp pos_constr;
+	ui_cst_wrp size_constr;
 
 	/* The position and size of the node relative to the window */
 	rect_t body;
@@ -250,18 +250,22 @@ extern void ui_up(ui_node *n, ui_fnc fnc, void *data);
  * Add a new constraint to a node.
  *
  * @n: Pointer to the node
- * @type: Either UI_CONSTR_POS or UI_CONSTR_SIZE
- * @algn: Either UI_CONSTR_HORI or UI_CONSTR_VERT
- * @mod: Define the kind of constraint
- * @val: If UI_CONSTR_PX pixel-value, if UI_CONSTR_PCT 0.0-1.0
- * @unit: Either UI_CONSTR_PX or UI_CONSTR_PCT
- * @rel: Either UI_CONSTR_REL or UI_CONSTR_ABS
+ * @type: Indicates if the constraint should be used to set the position or the
+ * 	  size of the node (use either UI_CST_POS or UI_CST_SIZE)
+ * @algn: Indicated if the constraint shoule be used on the horizontal or
+ * 	  vertical axis (use either UI_CST_HORI or UI_CST_VERT)
+ * @mod: Define the kind of constraint and how the calculated value shoule be
+ *       used (0: set value, 1: limit downwards, 2: limit upwards)
+ * @val: If UI_CST_PX use absolute pixel-value, if UI_CST_PCT use range 0.0-1.0
+ * @unit: What unit should the given value be assigned (UI_CST_PX or UI_CST_PCT)
+ * @rel: If the unit is percent, relative to what should the value be when
+ *       calculating
  *
  * Returns: 0 on success or -1 if an error occurred
  */
-extern int ui_set_constr(ui_node *n, ui_constr_type type, ui_constr_algn algn,
-		ui_constr_mod mod, ui_constr_mask mask, float val,
-		ui_constr_unit unit, ui_constr_rel rel);
+extern int ui_constr(ui_node *n, ui_cst_type type, ui_cst_algn algn,
+		ui_cst_mod mod, ui_cst_mask mask, float val,
+		ui_cst_unit unit, ui_cst_rel rel);
 
 
 /*
@@ -333,7 +337,7 @@ extern void ui_set_flag(ui_node *n, short flg, void *val);
  * @attr: The attribute to modify
  * @val: A buffer containing the new value
  */
-extern void ui_set_style(ui_node *n, short attr, void *val);
+extern void ui_style(ui_node *n, short attr, void *val);
 
 
 /*
@@ -343,7 +347,7 @@ extern void ui_set_style(ui_node *n, short attr, void *val);
  * @evt: The event to attach the function to
  * @fnc: The function to attach to the node
  */
-extern void ui_set_event(ui_node *n, short evt, ui_node_fnc fnc);
+extern void ui_event(ui_node *n, short evt, ui_node_fnc fnc);
 
 
 #define UI_SHOW_ALL     0

@@ -55,8 +55,33 @@ void TEXT_RENDER(ui_node *n, ui_node *rel)
 
 	rect.x = n->body.x - rel->body.x;
 	rect.y = n->body.y - rel->body.y;
+	rect.w = n->body.w;
+	rect.h = n->body.h;
 
 	txt_render(rel->surf, &rect, &ele->col, ele->font, ele->text, ele->opt);
+}
+
+extern void *ui_new_text(char *text, color_t col, uint8_t font, uint8_t opt)
+{
+	ui_text *ele;
+
+	if(!(ele = malloc(sizeof(ui_text))))
+		return NULL;
+
+	if(!(ele->text = malloc(strlen(text + 1))))
+		goto err_free_ele;
+
+
+	strcpy(ele->text, text);
+	memcpy(&ele->col, &col, sizeof(color_t));
+	ele->font = font;
+	ele->opt = opt;
+
+	return ele;
+
+err_free_ele:
+	free(ele);
+	return NULL;
 }
 
 extern int ui_init_text(ui_node *n)

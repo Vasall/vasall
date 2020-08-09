@@ -89,20 +89,17 @@ extern int sdl_fill_rounded(SDL_Surface *surf, int xo, int yo, int w, int h,
 				set.b = col.b;
 				set.a = 255;
 			}
-			else if(a > 0.0) {
+			else if(a > 127.5) {
 				cur =  *((SDL_Color *)&pixels[y * surf->w + x]);
 				f = cur.a + a;
 
-				set.r = cur.r * (cur.a / f) +
-					col.r * (a / f);
-				set.g = cur.g * (cur.a / f) +
-					col.g * (a / f);
-				set.b = cur.b * (cur.a / f) +
-					col.b * (a / f);
+				set.r = cur.r * (cur.a / f) + col.r * (a / f);
+				set.g = cur.g * (cur.a / f) + col.g * (a / f);
+				set.b = cur.b * (cur.a / f) + col.b * (a / f);
 				set.a = 255;		
 			}
 
-			if(a > 0.0) {
+			if(a > 127.5) {
 				pixels[(y * surf->w) + x] = *((uint32_t *)&set);
 			}
 		}

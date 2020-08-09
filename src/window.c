@@ -17,8 +17,8 @@ const char *frgShd = "#version 330 core\n \
 
 static int win_conf_opengl(void)
 {
-	glClearColor(0.06, 0.06, 0.06, 1.0);
-	/* glClearColor(0.9, 0.9, 0.9, 1.0); */
+	/* glClearColor(0.196, 0.235, 0.282, 1.0); */
+	glClearColor(0.094, 0.094, 0.094, 1.0);
 	glProvokingVertex(GL_FIRST_VERTEX_CONVENTION);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

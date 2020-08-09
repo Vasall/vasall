@@ -2,29 +2,29 @@
 #include "window.h"
 #include "stdnode.h"
 
-const ui_constr UI_POS_CONSTR_NULL = {{
+const ui_cst_wrp UI_POS_CST_NULL = {{
 	{
-		{UI_CONSTR_NONE, 0.0, UI_CONSTR_PX, 0},
-		{UI_CONSTR_NONE, 0.0, UI_CONSTR_PX, 0},
-		{UI_CONSTR_NONE, 0.0, UI_CONSTR_PX, 0}
+		{UI_CST_NONE, 0.0, UI_CST_PX, 0},
+		{UI_CST_NONE, 0.0, UI_CST_PX, 0},
+		{UI_CST_NONE, 0.0, UI_CST_PX, 0}
 	},
 	{
-		{UI_CONSTR_NONE, 0.0, UI_CONSTR_PX, 0},
-		{UI_CONSTR_NONE, 0.0, UI_CONSTR_PX, 0},
-		{UI_CONSTR_NONE, 0.0, UI_CONSTR_PX, 0}
+		{UI_CST_NONE, 0.0, UI_CST_PX, 0},
+		{UI_CST_NONE, 0.0, UI_CST_PX, 0},
+		{UI_CST_NONE, 0.0, UI_CST_PX, 0}
 	}
 }};
 
-const ui_constr UI_SIZE_CONSTR_NULL = {{
+const ui_cst_wrp UI_SIZE_CST_NULL = {{
 	{
-		{UI_CONSTR_NONE, 0.0, UI_CONSTR_PX, 0},
-		{UI_CONSTR_NONE, 0.0, UI_CONSTR_PX, 0},
-		{UI_CONSTR_NONE, 0.0, UI_CONSTR_PX, 0}
+		{UI_CST_NONE, 0.0, UI_CST_PX, 0},
+		{UI_CST_NONE, 0.0, UI_CST_PX, 0},
+		{UI_CST_NONE, 0.0, UI_CST_PX, 0}
 	},
 	{
-		{UI_CONSTR_NONE, 0.0, UI_CONSTR_PX, 0},
-		{UI_CONSTR_NONE, 0.0, UI_CONSTR_PX, 0},
-		{UI_CONSTR_NONE, 0.0, UI_CONSTR_PX, 0}
+		{UI_CST_NONE, 0.0, UI_CST_PX, 0},
+		{UI_CST_NONE, 0.0, UI_CST_PX, 0},
+		{UI_CST_NONE, 0.0, UI_CST_PX, 0}
 	}
 }};
 
@@ -74,8 +74,8 @@ extern ui_node *ui_add(ui_tag tag, ui_node *par, void *ele, char *id)
 		node->children[i] = NULL;
 
 	/* Use default position- and size-constraints */
-	node->pos_constr =  UI_POS_CONSTR_NULL;
-	node->size_constr = UI_SIZE_CONSTR_NULL;
+	node->pos_constr =  UI_POS_CST_NULL;
+	node->size_constr = UI_SIZE_CST_NULL;
 
 	/* Use default flags, style and events */
 	node->flags =  UI_NULL_FLAGS;
@@ -227,15 +227,15 @@ extern void ui_up(ui_node *n, ui_fnc fnc, void *data)
 }
 
 
-extern int ui_set_constr(ui_node *n, ui_constr_type type, ui_constr_algn algn,
-		ui_constr_mod mod, ui_constr_mask mask, float val,
-		ui_constr_unit unit, ui_constr_rel rel)
+extern int ui_constr(ui_node *n, ui_cst_type type, ui_cst_algn algn,
+		ui_cst_mod mod, ui_cst_mask mask, float val,
+		ui_cst_unit unit, ui_cst_rel rel)
 {
-	ui_constr_ent *constr;
+	ui_cst_ent *constr;
 
-	if(type == UI_CONSTR_POS)
+	if(type == UI_CST_POS)
 		constr = &n->pos_constr.ent[algn][mod];
-	else if(type == UI_CONSTR_SIZE)
+	else if(type == UI_CST_SIZE)
 		constr = &n->size_constr.ent[algn][mod];
 
 	constr->mask = mask;
@@ -362,15 +362,15 @@ extern void ui_render(ui_node *n)
 }
 
 
-static void ui_adjust_pos(ui_constr *constr, rect_t *out_abs, rect_t *proc_rel,
-		rect_t *par, rect_t *rend)
+static void ui_adjust_pos(ui_cst_wrp *constr, rect_t *out_abs,
+		rect_t *proc_rel, rect_t *par, rect_t *rend)
 {
 	int i;
 	int j;
-	ui_constr_mask mask;
+	ui_cst_mask mask;
 	float val;
-	ui_constr_unit unit;
-	ui_constr_rel rel;
+	ui_cst_unit unit;
+	ui_cst_rel rel;
 
 	short size_val;
 	short cmp_val;
@@ -380,14 +380,20 @@ static void ui_adjust_pos(ui_constr *constr, rect_t *out_abs, rect_t *proc_rel,
 	proc_rel->x = 0;
 	proc_rel->y = 0;
 
-	out_abs->x = 0;
-	out_abs->y = 0;
+	if(par == NULL) {
+		out_abs->x = 0;
+		out_abs->y = 0;
+	}
+	else {
+		out_abs->x = par->x;
+		out_abs->y = par->y;
+	}
 
 	for(i = 0; i < 2; i++) {
 		size_val = (i == 0) ? proc_rel->w : proc_rel->h; 
 
 		for(j = 0; j < 3; j++) {
-			if((mask = constr->ent[i][j].mask) == UI_CONSTR_NONE)
+			if((mask = constr->ent[i][j].mask) == UI_CST_NONE)
 				continue;
 			
 			val = constr->ent[i][j].value;
@@ -396,7 +402,7 @@ static void ui_adjust_pos(ui_constr *constr, rect_t *out_abs, rect_t *proc_rel,
 
 			/* Get relative position and size for axis */
 			switch(rel) {
-				case UI_CONSTR_REL:
+				case UI_CST_REL:
 					if(i == 0) {
 						tmp[0] = par->x;
 						tmp[1] = par->w;
@@ -407,7 +413,7 @@ static void ui_adjust_pos(ui_constr *constr, rect_t *out_abs, rect_t *proc_rel,
 					}
 					break;
 
-				case UI_CONSTR_ABS:
+				case UI_CST_ABS:
 					if(i == 0) {
 						tmp[0] = rend->x;
 						tmp[1] = rend->w;
@@ -418,7 +424,7 @@ static void ui_adjust_pos(ui_constr *constr, rect_t *out_abs, rect_t *proc_rel,
 					}
 					break;
 
-				case UI_CONSTR_WIN:
+				case UI_CST_WIN:
 					if(i == 0) {
 						tmp[0] = 0;
 						tmp[1] = window.win_w;
@@ -432,32 +438,32 @@ static void ui_adjust_pos(ui_constr *constr, rect_t *out_abs, rect_t *proc_rel,
 
 			/* Convert value depending on unit */
 			switch(unit) {
-				case UI_CONSTR_PX:
+				case UI_CST_PX:
 					cmp_val = (short)val;
 					break;
 
-				case UI_CONSTR_PCT:
+				case UI_CST_PCT:
 					cmp_val = (short)((float)tmp[1] * val);
 					break;
 			}
 
 			/* Calculate position depending on alignment-mask */
 			switch(mask) {
-				case UI_CONSTR_AUTO:
+				case UI_CST_AUTO:
 					cmp_val = (tmp[1] / 2) - (size_val / 2);
 					break;
 
-				case UI_CONSTR_LEFT:
-				case UI_CONSTR_TOP:
+				case UI_CST_LEFT:
+				case UI_CST_TOP:
 					cmp_val = cmp_val;
 					break;
 
-				case UI_CONSTR_RIGHT:
-				case UI_CONSTR_BOTTOM:
-					cmp_val = tmp[1] - cmp_val;
+				case UI_CST_RIGHT:
+				case UI_CST_BOTTOM:
+					cmp_val = tmp[1] - cmp_val - size_val;
 					break;
 
-				case UI_CONSTR_NONE:
+				case UI_CST_NONE:
 				default:
 					break;
 			}
@@ -490,15 +496,15 @@ static void ui_adjust_pos(ui_constr *constr, rect_t *out_abs, rect_t *proc_rel,
 	}
 }
 
-static void ui_adjust_size(ui_constr *constr, rect_t *out_abs, rect_t *proc_rel,
-		rect_t *par, rect_t *rend)
+static void ui_adjust_size(ui_cst_wrp *constr, rect_t *out_abs,
+		rect_t *proc_rel, rect_t *par, rect_t *rend)
 {
 	int i;
 	int j;
-	ui_constr_mask mask;
+	ui_cst_mask mask;
 	float val;
-	ui_constr_unit unit;
-	ui_constr_rel rel;
+	ui_cst_unit unit;
+	ui_cst_rel rel;
 
 	short cmp_val;
 	short tmp;
@@ -507,12 +513,18 @@ static void ui_adjust_size(ui_constr *constr, rect_t *out_abs, rect_t *proc_rel,
 	proc_rel->w = par->w;
 	proc_rel->h = par->h;
 
-	out_abs->w = par->w;
-	out_abs->h = par->h;
+	if(par == NULL) {
+		out_abs->w = window.win_w;
+		out_abs->h = window.win_h;
+	}
+	else {
+		out_abs->w = par->w;
+		out_abs->h = par->h;
+	}
 
 	for(i = 0; i < 2; i++) {
 		for(j = 0; j < 3; j++) {
-			if((mask = constr->ent[i][j].mask) == UI_CONSTR_NONE)
+			if((mask = constr->ent[i][j].mask) == UI_CST_NONE)
 				continue;	
 
 			val = constr->ent[i][j].value;
@@ -521,17 +533,17 @@ static void ui_adjust_size(ui_constr *constr, rect_t *out_abs, rect_t *proc_rel,
 
 			/* Get relative position and size for axis */
 			switch(rel) {
-				case UI_CONSTR_REL:
+				case UI_CST_REL:
 					if(i == 0) tmp = par->w;
 					else tmp = par->h;
 					break;
 
-				case UI_CONSTR_ABS:
+				case UI_CST_ABS:
 					if(i == 0) tmp = rend->w;
 					else tmp = rend->h;
 					break;
 
-				case UI_CONSTR_WIN:
+				case UI_CST_WIN:
 					if(i == 0) tmp = window.win_w;
 					else tmp = window.win_h;
 					break;
@@ -539,29 +551,29 @@ static void ui_adjust_size(ui_constr *constr, rect_t *out_abs, rect_t *proc_rel,
 
 			/* Convert value depending on unit */
 			switch(unit) {
-				case UI_CONSTR_PX:
+				case UI_CST_PX:
 					cmp_val = (short)val;
 					break;
 
-				case UI_CONSTR_PCT:
+				case UI_CST_PCT:
 					cmp_val = (short)((float)tmp * val);
 					break;
 			}
 
 			/* Calculate position depending on alignment-mask */
 			switch(mask) {
-				case UI_CONSTR_AUTO:
+				case UI_CST_AUTO:
 					cmp_val = tmp;
 					break;
 
-				case UI_CONSTR_RIGHT:
-				case UI_CONSTR_BOTTOM:
-				case UI_CONSTR_LEFT:
-				case UI_CONSTR_TOP:
+				case UI_CST_RIGHT:
+				case UI_CST_BOTTOM:
+				case UI_CST_LEFT:
+				case UI_CST_TOP:
 					cmp_val = cmp_val;
 					break;
 
-				case UI_CONSTR_NONE:
+				case UI_CST_NONE:
 				default:
 					break;
 			}
@@ -581,7 +593,7 @@ static void ui_adjust_size(ui_constr *constr, rect_t *out_abs, rect_t *proc_rel,
 					break;
 			}
 
-			/* Write position into buffers */
+			/* Write size into buffers */
 			if(i == 0) {
 				proc_rel->w = size;
 				out_abs->w = size;
@@ -831,7 +843,7 @@ extern void ui_set_flag(ui_node *n, short flg, void *val)
 	}
 }
 
-void ui_set_style(ui_node *n, short opt, void *val)
+void ui_style(ui_node *n, short opt, void *val)
 {
 	ui_node_style *style = &n->style;
 
@@ -844,19 +856,19 @@ void ui_set_style(ui_node *n, short opt, void *val)
 			style->bck = *((char *)val);
 			break;
 
-		case(UI_STY_BCK_COL):
-			style->bck_col = *((SDL_Color *)val);
+		case(UI_STY_BCKCOL):
+			style->bck_col = *((color_t *)val);
 			break;
 
 		case(UI_STY_BOR):
 			style->bor = *((short *)val);
 			break;
 
-		case(UI_STY_BOR_COL):
-			style->bor_col = *((SDL_Color *)val);
+		case(UI_STY_BORCOL):
+			style->bor_col = *((color_t *)val);
 			break;
 
-		case(UI_STY_COR_RAD):
+		case(UI_STY_CRNRAD):
 			memcpy(&style->cor_rad, val, 4 * sizeof(short));
 			break;
 	}
@@ -864,7 +876,7 @@ void ui_set_style(ui_node *n, short opt, void *val)
 	ui_update(n);
 }
 
-void ui_set_event(ui_node *n, short evt, ui_node_fnc fnc)
+void ui_event(ui_node *n, short evt, ui_node_fnc fnc)
 {
 	ui_node_events *events = &n->events;
 

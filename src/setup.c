@@ -1,4 +1,5 @@
 #include "setup.h"
+#include "stdnode.h"
 
 #include <stdlib.h>
 
@@ -83,27 +84,44 @@ static void login(ui_node *n, SDL_Event *e)
 }
 
 
+static short *short4(short a, short b, short c, short d)
+{
+	static short arr[4] = {0, 0, 0, 0};
+
+	arr[0] = a;
+	arr[1] = b;
+	arr[2] = c;
+	arr[3] = d;
+		
+	return arr;
+}
+
 int load_ui(void)
 {
 	ui_node *root = window.root;
 	ui_node *tmp;
 	char one = 1;
+	short val;
+	void *ele;
 
 	tmp = ui_add(UI_WRAPPER, ui_get(root, "root"), NULL, "mns");
-	ui_set_style(tmp, UI_STY_VIS, &one);
-	ui_set_style(tmp, UI_STY_BCK, &one);
-	ui_set_style(tmp, UI_STY_BCK_COL, sdl_color_s(255, 0, 0, 255));
 	ui_enable_tex(tmp);
-	
+
 	tmp = ui_add(UI_WRAPPER, ui_get(root, "mns"), NULL, "mns_form");
-	ui_set_constr(tmp, UI_CONSTR_SIZE, UI_CONSTR_HORI, 0, 1, 400.0, UI_CONSTR_PX, 0);
-	ui_set_constr(tmp, UI_CONSTR_SIZE, UI_CONSTR_VERT, 0, 1, 80.0, UI_CONSTR_PX, 0);
-	ui_set_constr(tmp, UI_CONSTR_POS, UI_CONSTR_HORI, 0, UI_CONSTR_AUTO, 0, 0, 0);
-	ui_set_constr(tmp, UI_CONSTR_POS, UI_CONSTR_VERT, 0, UI_CONSTR_AUTO, 0, 0, 0);
-	ui_set_style(tmp, UI_STY_VIS, &one);
-	ui_set_style(tmp, UI_STY_BCK, &one);
-	ui_set_style(tmp, UI_STY_BCK_COL, sdl_color_s(255, 255, 255, 255));
-	ui_adjust(tmp);
+	ui_constr(tmp, UI_CST_SIZE, UI_CST_HORI, 0, 1, 480, UI_CST_PX, 0);
+	ui_constr(tmp, UI_CST_SIZE, UI_CST_VERT, 0, 1, 420, UI_CST_PX, 0);
+	ui_constr(tmp, UI_CST_POS, UI_CST_HORI, 0, UI_CST_AUTO, 0, 0, 0);
+	ui_constr(tmp, UI_CST_POS, UI_CST_VERT, 0, UI_CST_AUTO, 0, 0, 0);
+	ui_style(tmp, UI_STY_VIS, &one);
+	ui_style(tmp, UI_STY_BCK, &one);
+	ui_style(tmp, UI_STY_BCKCOL, sdl_color_s(0x24, 0x27, 0x29, 0xff));
+	val = 1;
+	ui_style(tmp, UI_STY_BOR, &val);
+	ui_style(tmp, UI_STY_BORCOL, sdl_color_s(0x09, 0x09, 0x09, 0xff));
+	ui_style(tmp, UI_STY_CRNRAD, short4(8, 8, 8, 8));
+
+	ele = ui_new_text("VASALL\0", sdl_color(255, 255, 255, 255), 3, 0);
+	ui_add(UI_TEXT, ui_get(root, "mns_form"), ele, "mns_title");
 
 	win_build_pipe();
 

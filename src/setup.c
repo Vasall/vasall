@@ -14,7 +14,7 @@ int load_resources(void)
 	if(txt_font_ttf("res/fonts/aller.ttf", 16) < 0)
 		return -1;
 
-	if(txt_font_ttf("res/fonts/editundo.ttf", 48) < 0)
+	if(txt_font_ttf("res/fonts/roboto_bold.ttf", 34) < 0)
 		return -1;
 
 	if(shd_set("col", "res/shaders/color.vert", "res/shaders/color.frag") < 0)
@@ -121,7 +121,8 @@ int load_ui(void)
 	ui_style(tmp, UI_STY_CRNRAD, short4(8, 8, 8, 8));
 
 	ele = ui_new_text("VASALL\0", sdl_color(255, 255, 255, 255), 3, 0);
-	ui_add(UI_TEXT, ui_get(root, "mns_form"), ele, "mns_title");
+	tmp = ui_add(UI_TEXT, ui_get(root, "mns_form"), ele, "mns_title");
+	ui_constr(tmp, UI_CST_SIZE, UI_CST_VERT, 0, 1, 109, UI_CST_PX, 0);
 
 	win_build_pipe();
 

@@ -7,8 +7,8 @@
 #include <time.h>
 
 /* Redefine external variables */
-SDL_Color WHITE = { 0xff, 0xff, 0xff, 0xff };
-SDL_Color BLACK = { 0x00, 0x00, 0x00, 0x00 };
+color_t WHITE = { 0xff, 0xff, 0xff, 0xff };
+color_t BLACK = { 0x00, 0x00, 0x00, 0x00 };
 const char BULLET[3] = {(char)0xE2, (char)0x80, (char)0xA2};
 
 
@@ -61,6 +61,18 @@ void TEXT_RENDER(ui_node *n, ui_node *rel)
 	txt_render(rel->surf, &rect, &ele->col, ele->font, ele->text, ele->opt);
 }
 
+void TEXT_DELETE(ui_node *n, void *data)
+{
+	ui_text *ele;
+
+	if(data){/* Prevent warning for not using paramater */}
+
+	ele = n->element;
+
+	free(ele->text);
+	free(ele);
+}
+
 extern void *ui_new_text(char *text, color_t col, uint8_t font, uint8_t opt)
 {
 	ui_text *ele;
@@ -76,7 +88,6 @@ extern void *ui_new_text(char *text, color_t col, uint8_t font, uint8_t opt)
 	memcpy(&ele->col, &col, sizeof(color_t));
 	ele->font = font;
 	ele->opt = opt;
-
 	return ele;
 
 err_free_ele:
@@ -88,6 +99,7 @@ extern int ui_init_text(ui_node *n)
 {
 	n->style = TEXT_STYLE;
 	n->render = &TEXT_RENDER;
+	n->del = &TEXT_DELETE;
 	return 0;
 }
 
@@ -413,6 +425,16 @@ void INPUT_RENDER(ui_node *n, ui_node *rel)
 	}
 }
 
+void INPUT_DELETE(ui_node *n, void *data)
+{
+	ui_input *ele;
+
+	if(data){/* Prevent warning for not using parameter */}
+
+	ele = n->element;
+	free(ele);
+}
+
 extern void *ui_net_input(color_t txt_col)
 {
 	ui_input *ele;
@@ -425,7 +447,7 @@ extern void *ui_net_input(color_t txt_col)
 
 	ele->pos = 0;
 	ele->cur = 0;
-	memcpy(&ele->cur_col, &cursor_color, sizeof(SDL_Color));
+	memcpy(&ele->cur_col, &cursor_color, sizeof(color_t));
 
 	ele->algn = 0;
 	ele->rel = 0;
@@ -435,7 +457,6 @@ extern void *ui_net_input(color_t txt_col)
 	ele->buffer[0] = 0;
 	ele->limit = 128;
 	ele->hide = 0;
-
 	return ele;
 }
 
@@ -450,5 +471,6 @@ extern int ui_init_input(ui_node *n)
 	n->events.keydown = &INPUT_ONKEYDOWN;
 	n->events.textinput = &INPUT_ONTEXTINPUT;
 	n->render = &INPUT_RENDER;
+	n->del = &INPUT_DELETE;
 	return 0;
 }

@@ -6,8 +6,8 @@
 #include "node.h"
 #include "window.h"
 
-extern SDL_Color WHITE;
-extern SDL_Color BLACK;
+extern color_t WHITE;
+extern color_t BLACK;
 extern const char BULLET[3];
 
 
@@ -24,7 +24,7 @@ extern int ui_init_wrapper(ui_node *n);
 
 typedef struct ui_text {
 	char *text;
-	SDL_Color col;
+	color_t col;
 	uint8_t font;
 	uint8_t opt;
 } ui_text;
@@ -44,6 +44,9 @@ typedef struct ui_button {
 	int tmp;
 } ui_button;
 
+void TEXT_RENDER(ui_node *n, ui_node *rel);
+void TEXT_DELETE(ui_node *n, void *data);
+
 extern const struct ui_node_flags BUTTON_FLAGS;
 extern const struct ui_node_style BUTTON_STYLE;
 
@@ -59,10 +62,10 @@ typedef struct ui_input {
 	uint8_t algn;
 	short rel;
 	short pos;
-	SDL_Color col;
+	color_t col;
 	uint8_t cur;
 	int actime;
-	SDL_Color cur_col;
+	color_t cur_col;
 	short sel_str;			
 	short sel_end;
 	uint8_t hide;
@@ -77,6 +80,7 @@ void INPUT_ONACTIVE(ui_node *n, event_t *evt);
 void INPUT_ONKEYDOWN(ui_node *n, event_t *evt);
 void INPUT_ONTEXTINPUT(ui_node *n, event_t *evt);
 void INPUT_RENDER(ui_node *n, ui_node *rel);
+void INPUT_DELETE(ui_node *n, void *data);
 
 extern void *ui_new_input(color_t txt_col);
 extern int ui_init_input(ui_node *n);

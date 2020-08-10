@@ -245,6 +245,9 @@ extern int ui_constr(ui_node *n, ui_cst_type type, ui_cst_algn algn,
 
 	/* Upate the position and size of the node */
 	ui_adjust(n);
+
+	/* Redraw node */
+	ui_update(n);
 	return 0;
 }
 
@@ -267,11 +270,10 @@ static void ui_prerender_node(ui_node *n, ui_node *rel, char flg)
 	if(flg == 0)
 		flg = 1;
 
-	memcpy(&body, &n->rel_body, sizeof(rect_t));
-	if(n->surf != NULL) {
-		body.x = 0;
-		body.y = 0;
-	}
+	body.x = n->body.x - rel->body.x;
+	body.y = n->body.y - rel->body.y;
+	body.w = n->body.w;
+	body.h = n->body.h;
 
 	style = &n->style;
 

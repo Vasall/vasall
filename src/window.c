@@ -210,7 +210,7 @@ static int win_onmousebuttondown(event_t *evt)
 				}
 			}
 
-			if(hov->events.mousedown != NULL) {
+			if(hov != NULL && hov->events.mousedown != NULL) {
 				hov->events.mousedown(hov, evt);
 			}
 

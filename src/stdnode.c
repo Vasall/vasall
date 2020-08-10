@@ -420,12 +420,14 @@ void INPUT_RENDER(ui_node *n, ui_node *rel)
 	if(ele->cur) {
 		int lh, iy, *pixels = rel->surf->pixels;
 
-		lh = TTF_FontAscent(font);
+		lh = TTF_FontAscent(font) + 4;
 		curh = rect.y + (rect.h - lh) / 2;
 
 		SDL_LockSurface(rel->surf);
 		for(iy = curh; iy <= curh + lh; iy++) {
-			pixels[iy * rel->surf->w + curw] = 0x000000ff;
+			memcpy(pixels + (iy * rel->surf->w + curw),
+					&ele->cur_col,
+					sizeof(color_t));
 		}
 		SDL_UnlockSurface(rel->surf);
 

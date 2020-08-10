@@ -19,9 +19,10 @@ void game_proc_evt(SDL_Event *evt)
 {
 	uint8_t axis;
 	float val;
+	float tmp;
 
 	switch(evt->type) {
-		case(SDL_CONTROLLERAXISMOTION):
+		case SDL_CONTROLLERAXISMOTION:
 			axis = evt->caxis.axis;
 			val = evt->caxis.value;
 
@@ -42,11 +43,11 @@ void game_proc_evt(SDL_Event *evt)
 			}
 			break;
 
-		case(SDL_MOUSEWHEEL):
+		case SDL_MOUSEWHEEL:
 			cam_zoom(evt->wheel.y);
 			break;
 
-		case(SDL_MOUSEMOTION):
+		case SDL_MOUSEMOTION:
 			/* If left mouse button pressed */
 			if(evt->motion.state == SDL_BUTTON_LMASK) {
 				int x = -evt->motion.xrel;
@@ -54,6 +55,13 @@ void game_proc_evt(SDL_Event *evt)
 
 				/* Rotate the camera */
 				cam_rot(x, y);
+			}
+			break;
+
+		case SDL_WINDOWEVENT:
+			if(evt->window.event == SDL_WINDOWEVENT_RESIZED) {
+				tmp = (float)window.win_w / (float)window.win_h;
+				cam_proj_mat(45.0, tmp, 0.1, 1000.0);
 			}
 			break;
 	}

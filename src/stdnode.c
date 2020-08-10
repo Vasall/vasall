@@ -141,24 +141,28 @@ const struct ui_node_style INPUT_STYLE = {
 	1, 1, {255,255,255,255}, 1, {0,0,0,255}, {0,0,0,0}
 };
 
-void INPUT_ONFOCUS(ui_node *node, event_t *evt)
+void INPUT_ONFOCUS(ui_node *n, event_t *evt)
 {
-	ui_input *ele = node->element;
+	ui_input *ele = n->element;
 
 	if(evt){/* Prevent warnings for not using parameters */}
 
 	ele->cur = 1;
 	SDL_StartTextInput();
+
+	ui_update(n);
 }
 
-void INPUT_ONUNFOCUS(ui_node *node, event_t *evt)
+void INPUT_ONUNFOCUS(ui_node *n, event_t *evt)
 {
-	ui_input *ele = node->element;
+	ui_input *ele = n->element;
 
 	if(evt){/* Prevent warnings for not using parameters */}
 
 	ele->cur = 0;
 	SDL_StopTextInput();
+
+	ui_update(n);
 }
 
 void INPUT_ONACTIVE(ui_node *n, event_t *evt)
@@ -371,7 +375,10 @@ void INPUT_RENDER(ui_node *n, ui_node *rel)
 	ele = n->element;
 	font = texts.fonts[1];
 
-	memcpy(&rect, &n->body, sizeof(rect_t));
+	rect.x = (n->body.x - rel->body.x) + ele->ins[3];
+	rect.y = (n->body.y - rel->body.y) + ele->ins[0];
+	rect.w = n->body.w - (ele->ins[1] + ele->ins[3]);
+	rect.h = n->body.h - (ele->ins[0] + ele->ins[2]);
 
 	curoff = u8_offset(ele->buffer, ele->pos);
 	memcpy(subs, ele->buffer, curoff);
@@ -418,7 +425,7 @@ void INPUT_RENDER(ui_node *n, ui_node *rel)
 
 		SDL_LockSurface(rel->surf);
 		for(iy = curh; iy <= curh + lh; iy++) {
-			pixels[iy * rel->surf->w + curw] = 0xffffffff;
+			pixels[iy * rel->surf->w + curw] = 0x000000ff;
 		}
 		SDL_UnlockSurface(rel->surf);
 
@@ -435,7 +442,7 @@ void INPUT_DELETE(ui_node *n, void *data)
 	free(ele);
 }
 
-extern void *ui_new_input(color_t txt_col)
+extern void *ui_new_input(color_t txt_col, short *ins)
 {
 	ui_input *ele;
 	color_t cursor_color = {0x00, 0x00, 0x00, 0xff};
@@ -457,6 +464,7 @@ extern void *ui_new_input(color_t txt_col)
 	ele->buffer[0] = 0;
 	ele->limit = 128;
 	ele->hide = 0;
+	memcpy(ele->ins, ins, 4 * sizeof(short));
 	return ele;
 }
 

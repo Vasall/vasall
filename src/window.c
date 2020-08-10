@@ -190,25 +190,28 @@ static int win_onmousemotion(event_t *evt)
 
 static int win_onmousebuttondown(event_t *evt)
 {
-	struct ui_node *hovered;
+	ui_node *hov = window.hover;
+	ui_node *act = window.active;
 
-	if(window.hover == NULL) {
-		if(window.active != NULL) {
-			win_unfocus_node();
-		}
-		return  -1;
-	}
-
-	hovered = window.hover;
 
 	switch(evt->button.button) {
 		case(1):
-			if(hovered->flags.enfoc == 1) {
-				win_focus_node(hovered);
+			if(hov == NULL && act != NULL) {
+				win_unfocus_node();
+				return 1;
+			}
+			else if(hov != NULL && hov->flags.enfoc == 1) {
+				if(act == NULL) {
+					win_focus_node(hov);
+				}
+				else if(strcmp(act->id, hov->id) != 0) {
+					win_unfocus_node();
+					win_focus_node(hov);
+				}
 			}
 
-			if(hovered->events.mousedown != NULL) {
-				hovered->events.mousedown(hovered, evt);
+			if(hov->events.mousedown != NULL) {
+				hov->events.mousedown(hov, evt);
 			}
 
 			return 1;
@@ -354,10 +357,20 @@ extern struct ui_node *win_check_hover(struct ui_node *n, int2_t pos)
 
 extern void win_focus_node(struct ui_node *n)
 {
+	ui_node *a = n;
+
 	window.active = n;
+
+	if(a != NULL && a->events.focus != NULL)
+		a->events.focus(a, NULL);
 }
 
 extern void win_unfocus_node(void)
 {
+	ui_node *n = window.active;
+
+	if(n != NULL && n->events.unfocus != NULL)
+		n->events.unfocus(n, NULL);
+
 	window.active = NULL;
 }

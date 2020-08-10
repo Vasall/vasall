@@ -640,30 +640,33 @@ static void ui_resize_tex(ui_node *n)
 	w = (float)n->body.w;
 	h = (float)n->body.h;
 
-	/*
-	 * Note that we leave the third vertex position untouched as the
-	 * ui-interface is on one plain.
-	 */
+	float z = -((float)n->layer / 100.0);
 
 	/* Top-Right */
 	vtx[0] = ((x + w) / cw) - 1.0;
 	vtx[1] = 1.0 - (y / ch);
+	vtx[2] = z;
 	/* Top-Left */
 	vtx[3] = (x / cw) - 1.0;
 	vtx[4] = 1.0 - (y / ch);
+	vtx[5] = z;
 	/* Bottom-Left */
 	vtx[6] = (x / cw) - 1.0;
 	vtx[7] = 1.0 - ((y + h) / ch);
+	vtx[8] = z;
 
 	/* Bottom-Left */
 	vtx[9] = (x / cw) - 1.0;
 	vtx[10] = 1.0 - ((y + h) / ch);
+	vtx[11] = z;
 	/* Bottom-Right */
 	vtx[12] = ((x + w) / cw) - 1.0;
 	vtx[13] = 1.0 - ((y + h) / ch);
+	vtx[14] = z;
 	/* Top-Right */
 	vtx[15] = ((x + w) / cw) - 1.0;
 	vtx[16] = 1.0 - (y / ch);
+	vtx[17] = z;
 
 	/* Resize the texture */
 	glBindTexture(GL_TEXTURE_2D, n->tex);
@@ -813,6 +816,7 @@ extern int ui_enable_tex(ui_node *n)
 
 	if(n->parent != NULL)
 		ui_update(n->parent);
+
 	ui_update(n);
 	return 0;
 }

@@ -126,12 +126,16 @@ extern void txt_render(SDL_Surface *surf, SDL_Rect *rect, SDL_Color *col,
 	if(text == NULL || strlen(text) <= 0)
 		return;
 
-	f_ptr = texts.fonts[font];
+	text[strlen(text)] = 0;
+
+	if(!(f_ptr = texts.fonts[font]))
+		return;
 
 	TTF_SetFontKerning(f_ptr, 0);
 	TTF_SetFontHinting(f_ptr, TTF_HINTING_NORMAL);
 
-	rend = TTF_RenderUTF8_Blended(f_ptr, text, *col);
+	if(!(rend = TTF_RenderUTF8_Blended(f_ptr, text, *col)))
+		return;
 
 	delx = rect->w - rend->w;
 	dely = rect->h - rend->h;

@@ -69,6 +69,7 @@ typedef struct ui_input {
 	short sel_str;			
 	short sel_end;
 	uint8_t hide;
+	short ins[4];
 } ui_input;
 
 extern const struct ui_node_flags INPUT_FLAGS;
@@ -82,7 +83,7 @@ void INPUT_ONTEXTINPUT(ui_node *n, event_t *evt);
 void INPUT_RENDER(ui_node *n, ui_node *rel);
 void INPUT_DELETE(ui_node *n, void *data);
 
-extern void *ui_new_input(color_t txt_col);
+extern void *ui_new_input(color_t txt_col, short *ins);
 extern int ui_init_input(ui_node *n);
 
 #endif

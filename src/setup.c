@@ -124,7 +124,23 @@ int load_ui(void)
 	tmp = ui_add(UI_TEXT, ui_get(root, "mns_form"), ele, "mns_title");
 	ui_constr(tmp, UI_CST_SIZE, UI_CST_VERT, 0, 1, 109, UI_CST_PX, 0);
 
+	ele = ui_new_input(sdl_color(255, 0, 0, 255));
+	tmp = ui_add(UI_INPUT, ui_get(root, "mns_form"), ele, "mns_user");
+	ui_constr(tmp, UI_CST_SIZE, UI_CST_HORI, 0, 1, 380, UI_CST_PX, 0);
+	ui_constr(tmp, UI_CST_SIZE, UI_CST_VERT, 0, 1, 48, UI_CST_PX, 0);
+	ui_constr(tmp, UI_CST_POS, UI_CST_HORI, 0, UI_CST_AUTO, 0, 0, 0);
+	ui_constr(tmp, UI_CST_POS, UI_CST_VERT, 0, UI_CST_TOP, 120, UI_CST_PX, 0);
+
+	ele = ui_new_input(sdl_color(255, 0, 0, 255));
+	tmp = ui_add(UI_INPUT, ui_get(root, "mns_form"), ele, "mns_pswd");
+	ui_constr(tmp, UI_CST_SIZE, UI_CST_HORI, 0, 1, 380, UI_CST_PX, 0);
+	ui_constr(tmp, UI_CST_SIZE, UI_CST_VERT, 0, 1, 48, UI_CST_PX, 0);
+	ui_constr(tmp, UI_CST_POS, UI_CST_HORI, 0, UI_CST_AUTO, 0, 0, 0);
+	ui_constr(tmp, UI_CST_POS, UI_CST_VERT, 0, UI_CST_TOP, 178, UI_CST_PX, 0);
+
 	win_build_pipe();
+
+	win_dump_pipe();
 
 #if 0
 	int one = 1;

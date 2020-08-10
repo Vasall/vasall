@@ -435,7 +435,7 @@ void INPUT_DELETE(ui_node *n, void *data)
 	free(ele);
 }
 
-extern void *ui_net_input(color_t txt_col)
+extern void *ui_new_input(color_t txt_col)
 {
 	ui_input *ele;
 	color_t cursor_color = {0x00, 0x00, 0x00, 0xff};

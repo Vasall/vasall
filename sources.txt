@@ -1,4 +1,4 @@
 FONTS:
-roboto_reg:      https://www.fontspace.com/roboto-slab-font-f40174
-inthedark_reg:   https://www.fontspace.com/inthedark-font-f34692
-delta_reg:       https://www.fontspace.com/a-delta-font-f25546
+roboto:      https://www.fontspace.com/roboto-slab-font-f40174
+inthedark:   https://www.fontspace.com/inthedark-font-f34692
+delta:       https://www.fontspace.com/a-delta-font-f25546

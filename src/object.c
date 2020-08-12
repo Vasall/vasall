@@ -412,7 +412,7 @@ extern void obj_sys_input(void)
 {
 	short i;
 
-	float t_speed = 12.0;
+	float t_speed = 4.0;
 
 	short inp_i;
 	short inp_num;
@@ -523,7 +523,7 @@ extern void obj_sys_update(void)
 
 	vec3_t prev;
 
-	float t_speed = 12.0;
+	float t_speed = 4.0;
 	float tmp = TICK_TIME_S * t_speed;
 
 	ts = SDL_GetTicks();

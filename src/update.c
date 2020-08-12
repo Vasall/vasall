@@ -43,6 +43,37 @@ void game_proc_evt(SDL_Event *evt)
 			}
 			break;
 
+		case SDL_KEYDOWN:
+			switch((int)evt->key.keysym.scancode) {
+				case 4:  /* Pressed A */
+					input.mov[0] = -1.0;
+					break;
+				case 7:  /* Pressed D */
+					input.mov[0] = 1.0;
+					break;
+				case 22: /* Pressed S */
+					input.mov[1] = 1.0;
+					break;
+				case 26: /* Pressed W */
+					input.mov[1] = -1.0;
+					break;
+			}
+			break;
+
+		case SDL_KEYUP:
+			switch((int)evt->key.keysym.scancode) {
+				case 4:  /* Released A or D*/
+				case 7:
+					input.mov[0] = 0.0;
+					break;
+				case 22: /* Released W or S */
+				case 26:
+					input.mov[1] = 0.0;
+					break;
+			}
+			break;
+
+
 		case SDL_MOUSEWHEEL:
 			cam_zoom(evt->wheel.y);
 			break;

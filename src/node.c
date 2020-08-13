@@ -628,7 +628,13 @@ static int ui_resize_surf(ui_node *n)
 static void ui_resize_tex(ui_node *n)
 {
 	float vtx[18];
-	float cw, ch, x, y, w, h;
+	float cw;
+	float ch;
+	float x;
+	float y;
+	float w;
+	float h;
+	float z;
 
 	memset(vtx, 0, sizeof(float) * 18);
 
@@ -640,7 +646,7 @@ static void ui_resize_tex(ui_node *n)
 	w = (float)n->body.w;
 	h = (float)n->body.h;
 
-	float z = -((float)n->layer / 100.0);
+	z = -((float)n->layer / 100.0);
 
 	/* Top-Right */
 	vtx[0] = ((x + w) / cw) - 1.0;

@@ -204,7 +204,7 @@ extern int hdr_get(char *in, uint8_t *op, uint32_t *dst_id,
 
 extern int hdr_cpy(void *in, void *out)
 {
-	uint8_t flg = *(uint8_t *)(in + 1);
+	uint8_t flg = *(uint8_t *)((char *)in + 1);
 	int len = (flg & HDR_F_KEY) ? HDR_SIZEW : HDR_SIZE;
 
 	memcpy(out, in, len);

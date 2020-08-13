@@ -337,18 +337,18 @@ extern int obj_add_inputs(uint32_t ts, void *in)
 	vec2_t mov;
 	uint16_t act = 0;
 
-	char *ptr;
+	char *ptr = in;
 
 	/* Extract general information */
-	memcpy(&id,   in,  4);
-	memcpy(&num,  in + 4,  2);
+	memcpy(&id,   ptr,  4);
+	memcpy(&num,  ptr + 4,  2);
 
 	/* Get the slot of the object */
 	if((slot = obj_sel_id(id)) < 0)
 		return -1;
 
-	/* Set pointer */
-	ptr = in + 6;
+	/* Update pointer-position */
+	ptr += 6;
 
 	for(i = 0; i < num; i++) {
 		memcpy(&mask, ptr, 4);

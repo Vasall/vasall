@@ -52,40 +52,40 @@ struct req_hdr {
 	uint32_t src_key;
 } __attribute__((__packed__));
 
-/* The size of the header in bytes without the peer-key */
-#define REQ_HDR_SIZE     12
 
-/* The size of the header in bytes with the peer-key */
-#define REQ_HDR_SIZEW    20
+/* The size of the header with or without the key attached */
+#define HDR_SIZE            12
+#define HDR_SIZEW           (HDR_SIZE+8)
 
-/* Request-flags */
-#define REQ_F_KEY    0x01
+/* flags */
+#define HDR_F_KEY           0x01
 
-/* Define the op-codes */
-#define REQ_OP_SUCCESS      0x01  /* Return success                           */
-#define REQ_OP_FAILED       0x02  /* Return failed                            */
-#define REQ_OP_INSERT       0x04  /* Insert a new peer into the peer-table    */
-#define REQ_OP_REMOVE       0x05  /* Remove peer from the peer-table          */
-#define REQ_OP_KEEPALIVE    0x06  /* Prolong peer-timeout                     */
-#define REQ_OP_VALIDATE     0x07  /* Validate a peer-id and -key              */
-#define REQ_OP_LIST         0x08  /* Request a list of peers                  */
-#define REQ_OP_CONVEY       0x09  /* Try to contact peer via middle-man       */
-#define REQ_OP_REGISTER     0x0a  /* Register new user                        */
-#define REQ_OP_DELETE       0x0b  /* Delete user from database                */
+/* 
+ * op-codes
+ */
 
+#define HDR_OP_OK           0x01  /* Return success                           */
+#define HDR_OP_ERR          0x02  /* Return error or failed                   */
 
-#define REQ_OP_SYNC         0x11  /* Syncronize the object list of two peers  */
-#define REQ_OP_REQUEST      0x12  /* Request data about certain objects       */
-#define REQ_OP_SUBMIT       0x13  /* Submit a list of objects to a peer       */
-#define REQ_OP_UPDATE       0x14  /* Send a packet containing object-updates  */
+#define HDR_OP_INS          0x04  /* Insert a new peer into the peer-table    */
+#define HDR_OP_RMV          0x05  /* Remove peer from the peer-table          */
+#define HDR_OP_VAL          0x07  /* Validate a peer-id and -key              */
+#define HDR_OP_LST          0x08  /* Request a list of peers                  */
+#define HDR_OP_CVY          0x09  /* Try to contact peer via middle-man       */
+#define HDR_OP_REG          0x0a  /* Register new user                        */
+#define HDR_OP_DEL          0x0b  /* Delete user from database                */
+
+#define HDR_OP_EXC          0x11  /* Exchange object list between two peers   */
+#define HDR_OP_GET          0x12  /* Request data about certain objects       */
+#define HDR_OP_SBM          0x13  /* Submit a list of objects to a peer       */
+#define HDR_OP_UPD          0x14  /* Send a packet containing object-updates  */
 
 /*
  * Write a header to the given buffer, which has to be allocated already to fit
  * the header. If mod is greater than 0 and a key-buffer is specified, then this
- * function will hash the keybuffer with the modulator and create a 4-bytes
+ * function will hash the keybuffer with a modulator and create a 4-bytes
  * hash-value which will then be attached behind the header. If mod is 0, then
- * no key will be written. Note that both the length and the modulator are
- * 12-bits in size and the given values must ot be bigger than 4096!
+ * no key will be written.
  *
  * @out: Pointer to write the header to
  * @op: The op-code for this packet
@@ -118,6 +118,16 @@ extern int hdr_get(char *in, uint8_t *op, uint32_t *dst_id,
 		uint32_t *src_id, uint32_t *mod, uint32_t *key);
 
 
+/*
+ * Either extract a header from a buffer or copy one header-struct into another.
+ *
+ * @in: The source
+ * @out: The destination
+ *
+ * Returns: The number of bytes written or -1 if an error occurred
+ */
+extern int hdr_cpy(void *in, void *out);
+
 #ifdef DEF_HEADER
 
 static uint32_t _hash(uint8_t *buf, int l)
@@ -137,9 +147,9 @@ extern int hdr_set(char *out, uint8_t op, uint32_t dst_id,
 {
 	uint8_t key_buf[20];
 	struct req_hdr hdr;
-	int written = REQ_HDR_SIZE;
+	int written = HDR_SIZE;
 
-	memset(&hdr, 0, REQ_HDR_SIZE);
+	memset(&hdr, 0, HDR_SIZE);
 	hdr.op = op;
 	hdr.flg = 0;
 	hdr.dst_id = dst_id;
@@ -153,11 +163,11 @@ extern int hdr_set(char *out, uint8_t op, uint32_t dst_id,
 		memcpy(key_buf + 16, &ti_mod, 4);
 		key_hash = _hash(key_buf, 20);
 
-		hdr.flg = hdr.flg | REQ_F_KEY;
+		hdr.flg = hdr.flg | HDR_F_KEY;
 		hdr.ti_mod = ti_mod;
 		hdr.src_key = key_hash;
 
-		written = REQ_HDR_SIZEW;
+		written = HDR_SIZEW;
 	}
 
 	memcpy(out, &hdr, written);
@@ -169,26 +179,36 @@ extern int hdr_get(char *in, uint8_t *op, uint32_t *dst_id,
 		uint32_t *src_id, uint32_t *mod, uint32_t *key)
 {
 	struct req_hdr *hdr = (struct req_hdr *)in;
-	int read = REQ_HDR_SIZE;
+	int read = HDR_SIZE;
 
 	if(op) *op = hdr->op;
 	if(dst_id) *dst_id = hdr->dst_id;
 	if(src_id) *src_id = hdr->src_id;
 
 	/* If request contains key */
-	if((hdr->flg & REQ_F_KEY) == REQ_F_KEY) {
+	if((hdr->flg & HDR_F_KEY) == HDR_F_KEY) {
 		if(hdr->ti_mod > 0) {
 			if(mod)
 				*mod = hdr->ti_mod;
 
 			if(key != NULL)
-				memcpy(key, in + REQ_HDR_SIZE, 4);
+				memcpy(key, in + HDR_SIZE, 4);
 		
-			read = REQ_HDR_SIZEW;
+			read = HDR_SIZEW;
 		}
 	}
 
 	return read;
+}
+
+
+extern int hdr_cpy(void *in, void *out)
+{
+	uint8_t flg = *(uint8_t *)(in + 1);
+	int len = (flg & HDR_F_KEY) ? HDR_SIZEW : HDR_SIZE;
+
+	memcpy(out, in, len);
+	return len;
 }
 
 #endif

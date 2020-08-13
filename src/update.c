@@ -176,9 +176,6 @@ void game_update(void)
 		/* Update the objects in the object-table */
 		obj_sys_update();
 
-		/* Update the camera-position */
-		cam_update();
-
 		/* Send update packet */
 		if(c % 3 == 0 && c != 0) {
 			char pck[512];
@@ -202,6 +199,10 @@ void game_render(void)
 {
 	uint32_t now = SDL_GetTicks();
 	float interp = MIN(1.0, (float)((now - core.last_render) / TICK_TIME));
+
+
+	/* Update the camera-position */
+	cam_update();
 
 	/* Render the world */
 	wld_render(interp);

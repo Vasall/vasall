@@ -103,7 +103,8 @@ struct network_wrapper {
 	uint32_t id;
 	uint8_t key[16];
 
-	struct cache_entry *cache;
+	/* A buffer uninitialized objects of different peers */
+	struct cache_entry *obj_lst;
 
 	/* Time difference to the universal server-timer */
 	uint32_t time_del;

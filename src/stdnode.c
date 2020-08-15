@@ -118,10 +118,32 @@ const struct ui_node_style BUTTON_STYLE = {
 	1, 1, {252,252,252,255}, 1, {0,0,0,255}, {0,0,0,0}
 };
 
+void BUTTON_ONKEYDOWN(ui_node *n, event_t *evt)
+{
+	SDL_Keycode key = evt->key.keysym.sym;
+	ui_button *btn = n->element;
+
+	if((key == 13 || key  == 32) && btn->fnc != NULL)
+		btn->fnc(n, evt);
+}
+
+
+extern void *ui_new_button(ui_node_fnc fnc)
+{
+	ui_button *btn;
+
+	if(!(btn = malloc(sizeof(ui_button))))
+		return NULL;
+
+	btn->fnc = fnc;
+	return btn;
+}
+
 extern int ui_init_button(ui_node *n)
 {
 	n->flags = BUTTON_FLAGS;
 	n->style = BUTTON_STYLE;
+	n->events.keydown = &BUTTON_ONKEYDOWN;
 	return 0;
 }
 
@@ -180,7 +202,7 @@ void INPUT_ONACTIVE(ui_node *n, event_t *evt)
 		ui_update(n);
 }
 
-void INPUT_ONKEYDOWN(ui_node *node, event_t *evt)
+void INPUT_ONKEYDOWN(ui_node *n, event_t *evt)
 {
 	ui_input *ele;
 	rect_t *rect;
@@ -188,8 +210,8 @@ void INPUT_ONKEYDOWN(ui_node *node, event_t *evt)
 	int txtw, txth, relw, relh, curw, curh, reloff;
 	char subs[512];
 
-	ele = node->element;
-	rect = &node->body;
+	ele = n->element;
+	rect = &n->body;
 	font = texts.fonts[1];
 
 	switch(evt->button.button) {
@@ -309,10 +331,10 @@ void INPUT_ONKEYDOWN(ui_node *node, event_t *evt)
 			break;
 	}
 
-	ui_update(node);
+	ui_update(n);
 }
 
-void INPUT_ONTEXTINPUT(ui_node *node, event_t *evt)
+void INPUT_ONTEXTINPUT(ui_node *n, event_t *evt)
 {
 	int curw, curh, relw, relh, curoff, reloff;
 	char subs[512];
@@ -320,8 +342,8 @@ void INPUT_ONTEXTINPUT(ui_node *node, event_t *evt)
 	rect_t *rect;
 	TTF_Font *font;
 
-	ele = node->element;
-	rect = &node->body;
+	ele = n->element;
+	rect = &n->body;
 	font = texts.fonts[1];
 
 	/* Ignore copy and paste */
@@ -361,7 +383,7 @@ void INPUT_ONTEXTINPUT(ui_node *node, event_t *evt)
 		ele->rel++;
 	}
 
-	ui_update(node);
+	ui_update(n);
 }
 
 void INPUT_RENDER(ui_node *n, ui_node *rel)

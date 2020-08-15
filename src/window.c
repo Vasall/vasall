@@ -262,6 +262,13 @@ extern int win_proc_evt(event_t *evt)
 		act = window.active;
 		fnc = NULL;
 
+		if(evt->type == SDL_KEYDOWN && evt->key.keysym.sym == 9) {
+			if(act->next != NULL) {
+					win_unfocus_node();
+					win_focus_node(act->next);
+			}
+		}
+
 		switch(evt->type) {
 			case(SDL_KEYDOWN): fnc = act->events.keydown; break;
 			case(SDL_KEYUP): fnc = act->events.keyup; break;

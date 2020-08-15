@@ -186,7 +186,8 @@ int load_ui(void)
 	ui_enable_tex(tmp);
 
 
-	tmp = ui_add(UI_BUTTON, ui_get(root, "mns_form"), NULL, "mns_login_btn");
+	ele = ui_new_button(&login);
+	tmp = ui_add(UI_BUTTON, ui_get(root, "mns_form"), ele, "mns_login_btn");
 	ui_constr(tmp, UI_CST_SIZE, UI_CST_HORI, 0, 1,           200, UI_CST_PX, 0);
 	ui_constr(tmp, UI_CST_SIZE, UI_CST_VERT, 0, 1,           42,  UI_CST_PX, 0);
 	ui_constr(tmp, UI_CST_POS,  UI_CST_HORI, 0, UI_CST_AUTO, 0,   0,         0);
@@ -194,10 +195,11 @@ int load_ui(void)
 	ui_style(tmp, UI_STY_BCK, &one);
 	ui_style(tmp, UI_STY_BCKCOL, sdl_color_s(0x0c, 0xaa, 0xdc, 0xff));
 	ui_style(tmp, UI_STY_CRNRAD, short4(2, 2, 2, 2));
-	ui_event(tmp, EVT_MOUSEDOWN, &login);
 
 	ele = ui_new_text("Login\0", sdl_color(255, 255, 255, 255), 2, 0);
 	tmp = ui_add(UI_TEXT, ui_get(root, "mns_login_btn"), ele, "mns_login_lbl");
+
+	ui_chain(3, "mns_user", "mns_pswd", "mns_login_btn");
 
 	win_build_pipe();
 	return 0;

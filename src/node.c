@@ -73,6 +73,9 @@ extern ui_node *ui_add(ui_tag tag, ui_node *par, void *ele, char *id)
 	for(i = 0; i < UI_CHILD_NUM; i++)
 		node->children[i] = NULL;
 
+	/* No next element by default */
+	node->next = NULL;
+
 	/* Use default position- and size-constraints */
 	node->pos_constr =  UI_POS_CST_NULL;
 	node->size_constr = UI_SIZE_CST_NULL;
@@ -900,6 +903,37 @@ void ui_event(ui_node *n, short evt, ui_node_fnc fnc)
 		case(EVT_KEYDOWN): events->keydown = fnc; break;
 		case(EVT_KEYUP): events->keyup = fnc; break;
 	}
+}
+
+extern int ui_chain(int num, ...)
+{
+	va_list args;
+	int i;
+	ui_node *n;
+	ui_node *prev;
+
+	static char tmp[12];
+
+	if(num < 2)
+		return -1;
+
+	va_start(args, num);
+	strcpy(tmp, va_arg(args, char *));
+	prev = ui_get(window.root, tmp);
+
+	for(i = 1; i < num; i++) {
+		n = ui_get(window.root, va_arg(args, char *));
+
+		prev->next = n;
+		prev = n;
+
+	}
+
+	n = ui_get(window.root, tmp);
+	prev->next = n;
+
+	va_end(args);
+	return 0;
 }
 
 

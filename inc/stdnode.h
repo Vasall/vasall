@@ -32,6 +32,7 @@ typedef struct ui_text {
 extern const struct ui_node_style TEXT_STYLE;
 
 void TEXT_RENDER(ui_node *n, ui_node *rel);
+void TEXT_DELETE(ui_node *n, void *data);
 
 extern void *ui_new_text(char *text, color_t col, uint8_t font, uint8_t opt);
 extern int ui_init_text(ui_node *n);
@@ -41,15 +42,15 @@ extern int ui_init_text(ui_node *n);
 /* ---------------------- BUTTON ---------------------- */
 
 typedef struct ui_button {
-	int tmp;
+	ui_node_fnc fnc;
 } ui_button;
 
-void TEXT_RENDER(ui_node *n, ui_node *rel);
-void TEXT_DELETE(ui_node *n, void *data);
+void BUTTON_ONKEYDOWN(ui_node *n, event_t *evt);
 
 extern const struct ui_node_flags BUTTON_FLAGS;
 extern const struct ui_node_style BUTTON_STYLE;
 
+extern void *ui_new_button(ui_node_fnc fnc);
 extern int ui_init_button(ui_node *n);
 
 

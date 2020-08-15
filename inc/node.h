@@ -3,6 +3,8 @@
 
 #include "sdl.h"
 
+#include <stdarg.h>
+
 typedef struct ui_node ui_node;
 
 typedef void (*ui_fnc)(ui_node *n, void *d);
@@ -156,6 +158,8 @@ struct ui_node {
 	ui_node  *children[UI_CHILD_NUM];
 
 	void *element;
+
+	ui_node *next;
 
 	ui_render_fnc  render;
 	ui_fnc         del;
@@ -348,6 +352,14 @@ extern void ui_style(ui_node *n, short attr, void *val);
  * @fnc: The function to attach to the node
  */
 extern void ui_event(ui_node *n, short evt, ui_node_fnc fnc);
+
+/*
+ * Link mutliple nodes together, so tab can be used to switch between elements.
+ *
+ * @num: The number of nodes to chain up
+ * @...: The id of the nodes
+ */
+extern int ui_chain(int num, ...);
 
 
 #define UI_SHOW_ALL     0

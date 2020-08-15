@@ -89,9 +89,19 @@ static void login(ui_node *n, SDL_Event *e)
 	inp = node->element;
 	strcpy(uname, inp->buffer);
 
+	if(strlen(uname) < 5) {
+		printf("Please insert an username!\n");
+		return;
+	}
+
 	node = ui_get(window.root, "mns_pswd");
 	inp = node->element;
 	strcpy(pswd, inp->buffer);
+
+	if(strlen(pswd) == 0) {
+		printf("Please insert your password!\n");
+		return;
+	}
 
 	if(n || e){/* Prevent warnings for not using parameters */}
 

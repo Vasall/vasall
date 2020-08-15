@@ -99,16 +99,16 @@ struct network_wrapper {
 	net_cfnc on_success;
 	net_cfnc on_failed;
 	time_t tout;
-		
-	uint32_t id;
-	uint8_t key[16];
+	
+	/* The id an key of this client */
+	uint32_t  id;
+	uint8_t   key[16];
 
 	/* A buffer uninitialized objects of different peers */
 	struct cache_entry *obj_lst;
 
 	/* Time difference to the universal server-timer */
 	uint32_t time_del;
-
 
 	/* Varaibles used for debugging and prototyping */
 	int count;
@@ -231,8 +231,7 @@ extern short net_peer_sel_id(uint32_t *id);
 
 
 /*
- * Try to connect to peers from the peer-table and establish reliable
- * connections. 
+ * Try to connect to peers from the peer-table and establish connections.
  *
  * Returns: 0 on success or -1 if an error occurred
  */

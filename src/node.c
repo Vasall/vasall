@@ -646,6 +646,7 @@ static void ui_resize_tex(ui_node *n)
 	w = (float)n->body.w;
 	h = (float)n->body.h;
 
+	/* Update the layer of the texture */
 	z = -((float)n->layer / 100.0);
 
 	/* Top-Right */

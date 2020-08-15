@@ -594,6 +594,8 @@ extern int peer_handle(struct lcp_evt *evt)
 		case HDR_OP_GET: r = peer_hdl_get(&hdr, evt, ptr, len); break;
 		case HDR_OP_SBM: r = peer_hdl_sbm(&hdr, evt, ptr, len); break;
 		case HDR_OP_UPD: r = peer_hdl_upd(&hdr, evt, ptr, len); break;
+		case HDR_OP_CMP: break;
+		case HDR_OP_SYN: break;
 	}
 
 	return r;

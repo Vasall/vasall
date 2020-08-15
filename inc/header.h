@@ -47,7 +47,7 @@ struct req_hdr {
 	 * Optional peer-key which is practiacally the hashed valued of the
 	 * peer-key-buffer combined with the mod-attribute(time % 4086) using 
 	 * djb2 by Dan Bernstein. This attribute should only be used if mod 
-	 * is bigger than 0.
+	 * is bigger than 0 and the according bit is set in flg.
 	 */
 	uint32_t src_key;
 } __attribute__((__packed__));
@@ -79,6 +79,8 @@ struct req_hdr {
 #define HDR_OP_GET          0x12  /* Request data about certain objects       */
 #define HDR_OP_SBM          0x13  /* Submit a list of objects to a peer       */
 #define HDR_OP_UPD          0x14  /* Send a packet containing object-updates  */
+#define HDR_OP_CMP          0x15  /*  */
+#define HDR_OP_SYN          0x16  /*  */
 
 /*
  * Write a header to the given buffer, which has to be allocated already to fit

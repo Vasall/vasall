@@ -86,14 +86,10 @@ extern float wld_get_height(float x, float z)
 			map_idx[1] < 0 || map_idx[1] >= world.size[1])
 		return 0;
 
-	heights[0] = world.heights[twodim(map_idx[0], 
-			map_idx[1], world.size[0])];
-	heights[1] = world.heights[twodim(map_idx[0] + 1, 
-			map_idx[1], world.size[0])];
-	heights[2] = world.heights[twodim(map_idx[0], 
-			map_idx[1] + 1, world.size[0])];
-	heights[3] = world.heights[twodim(map_idx[0] + 1, 
-			map_idx[1] + 1, world.size[0])];
+	heights[0] = world.heights[twodim(map_idx[0], map_idx[1], world.size[0])];
+	heights[1] = world.heights[twodim(map_idx[0] + 1, map_idx[1], world.size[0])];
+	heights[2] = world.heights[twodim(map_idx[0], map_idx[1] + 1, world.size[0])];
+	heights[3] = world.heights[twodim(map_idx[0] + 1, map_idx[1] + 1, world.size[0])];
 
 	coord[0] = rel_pos[0] - floor(rel_pos[0]);
 	coord[1] = rel_pos[1] - floor(rel_pos[1]);
@@ -142,24 +138,11 @@ extern int wld_gen_terrain(void)
 {
 	int vtx_num, x, z, w, count, i, j, idx_num, *idx = NULL;
 	float *heights = NULL, xpos, zpos;
-	vec3_t *vtx = NULL, *last_row = NULL, *nrm = NULL, *col = NULL;
+	vec3_t *vtx = NULL, *last_row = NULL, *col = NULL;
+	vec2_t *uv = NULL;
 	int foo = 1;
 
 	w = world.size[0];
-
-	/* Calculate the amount of vertices */
-	vtx_num = calcVertexNum(w) + 1;
-
-	/* Initialize the vertex-array */
-	if(!(vtx = calloc(vtx_num, VEC3_SIZE)))
-		return -1;
-
-	/* Create an array for all vertice-colors */
-	if(!(col = calloc(vtx_num, VEC3_SIZE)))
-		goto err_free;
-
-	if(!(nrm = calloc(vtx_num, VEC3_SIZE)))
-		goto err_free;
 
 	world.size[0] = CHUNK_SIZE;
 	world.size[1] = CHUNK_SIZE;
@@ -172,122 +155,10 @@ extern int wld_gen_terrain(void)
 		}
 	}
 
-	if(!(last_row = malloc(((int)world.size[0] - 1) * VEC3_SIZE * 2)))
-		goto err_free;
-
-	/* Iterate over all points in the heightmap */
-	count = 0;
-	for(z = 0; z < world.size[1] - 1; z++) {
-		for(x = 0; x < world.size[0] - 1; x++) {
-			vec3_t ctl, ctr, cbl, cbr;
-
-			xpos = x;
-			zpos = z;
-
-			ctl[0] = xpos;
-			ctl[1] = heights[twodim(x, z, world.size[0])];
-			ctl[2] = zpos;
-
-			ctr[0] = xpos + 1.0;
-			ctr[1] = heights[twodim(x + 1, z, world.size[0])];
-			ctr[2] = zpos;
-
-			cbl[0] = xpos;
-			cbl[1] = heights[twodim(x, z + 1, world.size[0])];
-			cbl[2] = zpos + 1.0;
-
-			cbr[0] = xpos + 1.0;
-			cbr[1] = heights[twodim(x + 1, z + 1, world.size[0])];
-			cbr[2] = zpos + 1.0;
-
-			vec3_cpy(vtx[count], ctl);
-			count++;
-
-			if(z != world.size[1] - 2 || x == world.size[0] - 2) {
-				vec3_cpy(vtx[count], ctr);
-				count++;
-			}
-
-			if(z == world.size[1] - 2) {
-				vec3_cpy(last_row[x * 2], cbl);
-				vec3_cpy(last_row[x * 2 + 1], cbr);
-			}
-		}
-	}
-
-	for(j = 0; j < world.size[0] - 1; j++) {
-		vec3_t left, right;
-		vec3_cpy(left, last_row[j * 2]);
-		vec3_cpy(right, last_row[j * 2 + 1]);
-
-		if(left[0] == 0 || right[0] == 1) {
-			vec3_cpy(vtx[count], left);
-			count++;
-		}
-
-		vec3_cpy(vtx[count], right);
-		count++;
-	}
-
-	if(!(idx = (int *)genIndexBuf(world.size[0], &idx_num)))
-		goto err_free;
-
-	/* Calculate the colors for the vertices */
-	for(j = 0; j < idx_num - 2; j += 3) {
-		vec3_t col_tmp;
-
-		foo++;
-		if(foo % 2 == 0) {
-			col_tmp[0] = 0.11;
-			col_tmp[1] = 0.11;
-			col_tmp[2] = 0.11;
-		}
-		else {
-			col_tmp[0] = 0.98;
-			col_tmp[1] = 0.98;
-			col_tmp[2] = 0.98;
-		}
-
-		memcpy(col[idx[j]], col_tmp, VEC3_SIZE);
-	}
-
-	/* Calculate the normal-vectors */
-	for(i = 0; i < idx_num - 2; i += 3) {
-		vec3_t v1, v2, v3, del1, del2, nrm_tmp;
-
-		vec3_cpy(v1, vtx[idx[i]]);
-		vec3_cpy(v2, vtx[idx[i + 1]]);
-		vec3_cpy(v3, vtx[idx[i + 2]]);
-
-		vec3_sub(v2, v1, del1);
-		vec3_sub(v2, v3, del2);
-
-		vec3_cross(del1, del2, nrm_tmp);
-		vec3_nrm(nrm_tmp, nrm_tmp);
-		vec3_scl(nrm_tmp, -1, nrm_tmp);
-
-		memcpy(nrm[idx[i]], nrm_tmp, VEC3_SIZE);
-	}
 
 	/* Allocate memory for the model-struct */
-	if((world.terrain = mdl_set("wld_")) < 0)
-		goto err_free;
+	if((world.terrain = mdl_get("wld")) < 0)
+		return -1;
 
-	mdl_set_shader(world.terrain, shd_get("col"));
-	mdl_set_mesh(world.terrain, idx_num, idx, vtx_num, vtx, nrm, col, 0);
-
-	if(vtx) free(vtx);
-	if(col) free(col);
-	if(nrm) free(nrm);
-	if(last_row) free(last_row);
-	if(idx) free(idx);
 	return 0;
-
-err_free:
-	if(vtx) free(vtx);
-	if(col) free(col);
-	if(nrm) free(nrm);
-	if(last_row) free(last_row);
-	if(idx) free(idx);
-	return -1;
 }

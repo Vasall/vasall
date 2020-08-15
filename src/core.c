@@ -22,6 +22,7 @@ extern int core_init(void)
 
 	core.last_update = 0;
 	core.last_render = 0;
+	core.last_sync = 0;
 
 	return 0;
 }

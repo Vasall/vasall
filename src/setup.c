@@ -5,6 +5,7 @@
 
 int load_resources(void)
 {
+	/* fonts */
 	if(txt_font_ttf("res/fonts/mecha.ttf", 24) < 0)
 		return -1;
 
@@ -17,14 +18,22 @@ int load_resources(void)
 	if(txt_font_ttf("res/fonts/roboto_bold.ttf", 28) < 0)
 		return -1;
 
-
+	/* shaders */
 	if(shd_set("col", "res/shaders/color.vert", "res/shaders/color.frag") < 0)
 		return -1;
 
 	if(shd_set("uv", "res/shaders/uv.vert", "res/shaders/uv.frag") < 0)
 		return -1;
 
+	/* textures */
 	if(tex_load_png("plr", "res/textures/base.png") < 0)
+		return -1;
+
+	if(tex_load_png("flr", "res/textures/floor.png") < 0)
+		return -1;
+
+	/* models */
+	if(mdl_load("wld", "res/models/floor.obj", tex_get("flr"), shd_get("uv")) < 0)
 		return -1;
 
 	if(mdl_load("plr", "res/models/base.obj", tex_get("plr"), shd_get("uv")) < 0)
@@ -65,7 +74,7 @@ static void test1(char *buf, int len)
 static void test2(char *buf, int len)
 {
 	if(buf || len) {/* Prevent warning for not using parameters */}
-	printf("Failed\n");
+	printf("Login failed! Check username and password.\n");
 }
 
 /* Login into the server and insert peer into cluster */

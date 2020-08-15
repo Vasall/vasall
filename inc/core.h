@@ -32,6 +32,7 @@ struct core_wrapper {
 
 	uint32_t last_update;
 	uint32_t last_render;
+	uint32_t last_sync;
 
 	short obj;
 };

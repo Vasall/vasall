@@ -87,7 +87,7 @@ static int win_load_cursors(void)
 
 extern int win_init(void)
 {
-	int win_flgs = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
+	int win_flgs = SDL_WINDOW_OPENGL;
 	struct ui_node *root = NULL;
 
 	if(!(window.win = SDL_CreateWindow("Vasall",

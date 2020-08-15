@@ -141,7 +141,7 @@ extern short shd_set(char *name, char *vs, char *fs)
 	/* Bind the vertex-attributes */
 	glBindAttribLocation(assets.shd.prog[slot], 0, "vtxPos");
 	glBindAttribLocation(assets.shd.prog[slot], 1, "vtxNrm");
-	glBindAttribLocation(assets.shd.prog[slot], 2, "vtxCol");
+	glBindAttribLocation(assets.shd.prog[slot], 2, "vtxVal");
 
 	/* Link the shader-program */
 	glLinkProgram(assets.shd.prog[slot]);

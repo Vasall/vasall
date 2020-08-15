@@ -78,12 +78,12 @@ static void test2(char *buf, int len)
 }
 
 /* Login into the server and insert peer into cluster */
-static void login(ui_node *n, SDL_Event *e)
+static void login(ui_node *n, event_t *e)
 {
 	char uname[17];
 	char pswd[65];
-	struct ui_node *node;
-	struct ui_input *inp;
+	ui_node *node;
+	ui_input *inp;
 
 	node = ui_get(window.root, "mns_user");
 	inp = node->element;
@@ -209,9 +209,13 @@ int load_ui(void)
 	ele = ui_new_text("Login\0", sdl_color(255, 255, 255, 255), 2, 0);
 	tmp = ui_add(UI_TEXT, ui_get(root, "mns_login_btn"), ele, "mns_login_lbl");
 
+	/* Chain elements so tab can be used to iterate throught elements */
 	ui_chain(3, "mns_user", "mns_pswd", "mns_login_btn");
 
 	win_build_pipe();
+
+	/* Auto-focus the username-input */
+	win_focus_node(ui_get(root, "mns_user"));
 	return 0;
 }
 

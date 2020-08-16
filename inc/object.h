@@ -186,6 +186,9 @@ extern int obj_collect(void *in, short in_num, void **out, short *out_num);
  * Submit a single object into the object-list.
  *
  * @in: The object-buffer
+ * @ts: The timestamp of the current state of the object
+ *
+ * Returns: 0 on success or -1 if an error occurred
  */
 extern int obj_submit(void *in, int64_t ts);
 

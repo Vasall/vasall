@@ -368,6 +368,7 @@ extern int obj_add_inputs(uint32_t ts, void *in)
 		/* Update timestamp */
 		ts += off;
 	}
+
 	return 0;
 }
 
@@ -476,7 +477,7 @@ extern void obj_sys_input(void)
 
 				cur_ti += TICK_TIME;
 			}
-	
+
 			vec3_cpy(objects.pos[i], pos);
 			vec3_cpy(objects.vel[i], vel);
 			vec2_cpy(objects.mov[i], mov);
@@ -530,7 +531,6 @@ extern void obj_sys_update(void)
 
 	for(i = 0; i < OBJ_SLOTS; i++) {
 		if((objects.mask[i] & OBJ_M_MOVE) == OBJ_M_MOVE) {
-			vec3_cpy(pos, objects.pos[i]);
 			vec3_cpy(vel, objects.vel[i]);
 			vec3_cpy_v2(acl, objects.mov[i]);
 

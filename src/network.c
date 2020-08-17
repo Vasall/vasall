@@ -519,7 +519,7 @@ static int peer_hdl_get(struct req_hdr *hdr, struct lcp_evt *evt,
 
 	memcpy(&num, ptr, 2);
 
-	written = obj_collect(ptr + 2, num, &obj_lst, NULL);
+	written = obj_collect(OBJ_A_ALL, ptr + 2, num, &obj_lst, NULL);
 
 	/* Set response-header */
 	tmp = hdr_set(pck, HDR_OP_SBM, hdr->src_id, network.id, network.key);
@@ -618,8 +618,8 @@ static int hashSHA256(void* input, unsigned long length, unsigned char *md)
 }
 
 
-extern int net_insert(char *uname, char *pswd, net_cfnc on_success, 
-		net_cfnc on_failed)
+extern int net_insert(char *uname, char *pswd, net_fnc on_success, 
+		net_fnc on_failed)
 {
 	int tmp;
 	uint8_t pswd_enc[32];
@@ -657,7 +657,7 @@ extern int net_insert(char *uname, char *pswd, net_cfnc on_success,
 }
 
 
-extern int net_list(net_cfnc on_success, net_cfnc on_failed)
+extern int net_list(net_fnc on_success, net_fnc on_failed)
 {
 	char pck[512];
 

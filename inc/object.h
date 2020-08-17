@@ -23,13 +23,15 @@
 #define OBJ_M_PLAYER (OBJ_M_ENTITY|OBJ_M_PEER)
 
 enum object_attr {
-	OBJ_ATTR_ID =     0x00,
-	OBJ_ATTR_MASK =   0x01,
-	OBJ_ATTR_POS =    0x02,
-	OBJ_ATTR_VEL =    0x03,
-	OBJ_ATTR_ACL =    0x04,
-	OBJ_ATTR_BUF =    0x05
+	OBJ_A_ID =     0x00,
+	OBJ_A_MASK =   0x01,
+	OBJ_A_POS =    0x02,
+	OBJ_A_VEL =    0x03,
+	OBJ_A_MOV =    0x04,
+	OBJ_A_BUF =    0x05
 };
+
+#define OBJ_A_ALL (OBJ_A_ID|OBJ_A_MASK|OBJ_A_POS|OBJ_A_VEL|OBJ_A_MOV|OBJ_A_BUF)
 
 #define OBJ_INPUT_SLOTS   6
 
@@ -176,10 +178,12 @@ extern int obj_list(void *ptr, short *num, short max);
  * @in: The list of ids to collect the data for
  * @in_num: The number of ids
  * @out: A ponter to attach the data to
+ * @
  *
  * Returns: The number of bytes written to out or -1 if an error occurred
  */
-extern int obj_collect(void *in, short in_num, void **out, short *out_num);
+extern int obj_collect(uint16_t flg, void *in, short in_num, void **out,
+		short *out_num);
 
 
 /*
@@ -193,7 +197,15 @@ extern int obj_collect(void *in, short in_num, void **out, short *out_num);
 extern int obj_submit(void *in, int64_t ts);
 
 
+/*
+ * Extract inputs from a received packet-buffer and add them to the dedicated
+ * objects.
+ *
+ * @ts: The timestamp converted to local time
+ * @in: The buffer containing the inputs
+ */
 extern int obj_add_inputs(uint32_t ts, void *in);
+
 
 /*
  * Attach a new input to an object.
@@ -217,7 +229,11 @@ extern int obj_add_input(short slot, uint32_t mask, uint32_t ts, vec2_t mov, uin
 extern void obj_print(short slot);
 
 
+/*
+ * 
+ */
 extern void obj_sys_input(void);
+
 
 /*
  * A system-function to update all objects in the object-table.

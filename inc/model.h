@@ -21,17 +21,21 @@ enum mdl_status {
 };
 
 struct model {
-	char name[9];
-	uint32_t vao;
-	uint32_t idx_bao;
-	int idx_num;
-	int *idx_buf;
-	uint32_t vtx_bao;
-	int vtx_num;
-	float *vtx_buf;
-	short tex;
-	short shd;
-	uint8_t status;
+	char      name[9];
+	uint32_t  vao;
+	
+	uint32_t  idx_bao;
+	int       idx_num;
+	int       *idx_buf;
+	
+	uint32_t  vtx_bao;
+	int       vtx_num;
+	float     *vtx_buf;
+
+	short     tex;
+	short     shd;
+	
+	uint8_t   status;
 };
 
 
@@ -134,6 +138,6 @@ extern short mdl_load(char *name, char *amo, short tex, short shd);
  * @slot: The slot of the model to render
  * @mat: The model-matrix
  */
-extern void mdl_render(short slot, mat4_t mat);
+extern void mdl_render(short slot, mat4_t mdl_mat);
 
 #endif

@@ -75,8 +75,8 @@ extern float wld_get_height(float x, float z)
 	int2_t map_idx;
 	float heights[4];
 
-	rel_pos[0] = _abs(world.min_pos[0] - x);
-	rel_pos[1] = _abs(world.min_pos[1] - z);
+	rel_pos[0] = ABS(world.min_pos[0] - x);
+	rel_pos[1] = ABS(world.min_pos[1] - z);
 
 	map_idx[0] = floor(rel_pos[0]);
 	map_idx[1] = floor(rel_pos[1]);
@@ -127,7 +127,6 @@ extern float wld_get_height(float x, float z)
 		v3[2] = 1.0;
 
 		ret = vec3_barry_centric(v1, v2, v3, coord);
-
 	}
 
 	return ret;
@@ -136,13 +135,10 @@ extern float wld_get_height(float x, float z)
 
 extern int wld_gen_terrain(void)
 {
-	int vtx_num, x, z, w, count, i, j, idx_num, *idx = NULL;
-	float *heights = NULL, xpos, zpos;
-	vec3_t *vtx = NULL, *last_row = NULL, *col = NULL;
-	vec2_t *uv = NULL;
-	int foo = 1;
-
-	w = world.size[0];
+	int x;
+	int z;
+	int i;
+	float *heights = NULL;
 
 	world.size[0] = CHUNK_SIZE;
 	world.size[1] = CHUNK_SIZE;
@@ -154,7 +150,6 @@ extern int wld_gen_terrain(void)
 			heights[i] = 0;
 		}
 	}
-
 
 	/* Allocate memory for the model-struct */
 	if((world.terrain = mdl_get("wld")) < 0)

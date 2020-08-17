@@ -23,6 +23,9 @@
 #define SHARE_HERZ       30
 #define SHARE_TIME       (1000.0/SHARE_HERZ)
 
+/* The sync-time */
+#define SYNC_TIME        2000
+
 struct core_wrapper {
 	char running;
 
@@ -32,6 +35,7 @@ struct core_wrapper {
 
 	uint32_t last_update;
 	uint32_t last_render;
+	uint32_t last_share;
 	uint32_t last_sync;
 
 	short obj;

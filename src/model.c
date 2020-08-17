@@ -513,10 +513,10 @@ err_del_mdl:
 }
 
 
-extern void mdl_render(short slot, mat4_t mat)
+extern void mdl_render(short slot, mat4_t mdl_mat)
 {
 	int loc[3];
-	mat4_t mod, vie, pro;
+	mat4_t model, view, proj;
 	struct model *mdl;
 
 	if(mdl_check_slot(slot))
@@ -526,17 +526,17 @@ extern void mdl_render(short slot, mat4_t mat)
 	if(!mdl || mdl->status != MDL_OK)
 		return;
 
-	mat4_cpy(mod, mat);
-	cam_get_view(vie);
-	cam_get_proj(pro);
+	mat4_cpy(model, mdl_mat);
+	cam_get_view(view);
+	cam_get_proj(proj);
 
 	glBindVertexArray(mdl->vao);
 	shd_use(mdl->shd, loc);
 	tex_use(mdl->tex);
 
-	glUniformMatrix4fv(loc[0], 1, GL_FALSE, mod);
-	glUniformMatrix4fv(loc[1], 1, GL_FALSE, vie);
-	glUniformMatrix4fv(loc[2], 1, GL_FALSE, pro);
+	glUniformMatrix4fv(loc[0], 1, GL_FALSE, model);
+	glUniformMatrix4fv(loc[1], 1, GL_FALSE, view);
+	glUniformMatrix4fv(loc[2], 1, GL_FALSE, proj);
 
 	glDrawElements(GL_TRIANGLES, mdl->idx_num, GL_UNSIGNED_INT, 0);
 

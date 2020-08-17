@@ -11,11 +11,6 @@ extern float clamp(float v)
 	return v;
 }
 
-extern float _abs(float v)
-{
-	return v < 0 ? -v : v;
-}
-
 extern float dist(float x, float y, float xp, float yp)
 {
 	return (sqrt((x - xp) * (x - xp) + (y - yp) * (y - yp)));

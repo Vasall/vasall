@@ -4,14 +4,19 @@
 
 void game_start(void)
 {
+	uint32_t ts;
+
 	/* Update core functions */
 	core.proc_evt = &game_proc_evt;
 	core.update = &game_update;
 	core.render = &game_render;
 
 	/* Setup timers */
-	core.last_update = SDL_GetTicks();
-	core.last_render = SDL_GetTicks();
+	ts = SDL_GetTicks();
+	core.last_update = ts;
+	core.last_render = ts;
+	core.last_share = ts + SHARE_TIME;
+	core.last_sync = ts + SYNC_TIME;
 }
 
 
@@ -160,11 +165,29 @@ static void game_proc_input(void)
 
 void game_update(void)
 {
-	static int c = 0;
-
 	/* Get the current time */
 	uint32_t now = SDL_GetTicks();
 	int count = 0;
+
+	if(now >= core.last_share) {
+		/* Only send if something has changed */
+		if(input.share.num > 0) {
+			char pck[512];
+			int tmp;
+
+			/* Send packet to all connected peers */
+			tmp = inp_col_share(pck);
+			net_broadcast(pck, tmp);
+		}
+
+		core.last_share = now + SHARE_TIME;
+	}
+
+	if(now >= core.last_sync) {
+		
+
+		core.last_sync = now + SYNC_TIME;
+	}
 
 	while(now - core.last_update > TICK_TIME && count < MAX_UPDATE_NUM) {	
 		/* Process the game-input and update objects */
@@ -175,20 +198,6 @@ void game_update(void)
 
 		/* Update the objects in the object-table */
 		obj_sys_update();
-
-		/* Send update packet */
-		if(c % 3 == 0 && c != 0) {
-			char pck[512];
-			int tmp;
-				
-			/* Only send if something has changed */
-			if(input.share.num > 0) {
-				/* Send packet to all connected peers */
-				tmp = inp_col_share(pck);
-				net_broadcast(pck, tmp);
-			}
-		}
-		c++;
 
 		core.last_update += TICK_TIME;
 		count++;

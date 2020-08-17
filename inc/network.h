@@ -81,7 +81,7 @@ struct cache_entry {
 #define PROXY_PORT     4244 
 
 /* Callback-function for network-events */
-typedef void (*net_cfnc)(char *buf, int len);
+typedef void (*net_fnc)(char *buf, int len);
 
 struct network_wrapper {
 	struct lcp_ctx *ctx;
@@ -96,8 +96,8 @@ struct network_wrapper {
 	struct net_evt_ele *evt;
 
 	char status;
-	net_cfnc on_success;
-	net_cfnc on_failed;
+	net_fnc on_success;
+	net_fnc on_failed;
 	time_t tout;
 	
 	/* The id an key of this client */
@@ -167,8 +167,8 @@ extern int peer_handle(struct lcp_evt *evt);
  *
  * Returns: 1 on success, 0 if data are invalid and -1 if an error occurred
  */
-extern int net_insert(char *uname, char *pswd, net_cfnc on_success, 
-		net_cfnc on_failed);
+extern int net_insert(char *uname, char *pswd, net_fnc on_success, 
+		net_fnc on_failed);
 
 
 /*
@@ -179,7 +179,7 @@ extern int net_insert(char *uname, char *pswd, net_cfnc on_success,
  *
  * Returns: 0 on success or -1 if an error occurred
  */
-extern int net_list(net_cfnc on_success, net_cfnc on_failed);
+extern int net_list(net_fnc on_success, net_fnc on_failed);
 
 
 /*

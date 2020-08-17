@@ -109,7 +109,7 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 	objects.last_upd_ts[slot] = ts;
 
 	/* Set last acknowledged positio */
-	vec3_cpy(objects.last_pos[slot], pos);
+	vec3_cpy(objects.last_pos[slot], objects.pos[slot]);
 
 	/* Initialize the object-matrix */
 	obj_update_matrix(slot);
@@ -136,19 +136,19 @@ extern int obj_mod(short slot, short attr, void *data, int len)
 		return -1;
 
 	switch(attr) {
-		case(OBJ_ATTR_MASK):
+		case(OBJ_A_MASK):
 			objects.mask[slot] = *(uint32_t *)data;
 			break;
 
-		case(OBJ_ATTR_POS):
+		case(OBJ_A_POS):
 			vec3_cpy(objects.pos[slot], data);
 			break;
 
-		case(OBJ_ATTR_VEL):
+		case(OBJ_A_VEL):
 			vec3_cpy(objects.vel[slot], data);
 			break;
 
-		case(OBJ_ATTR_BUF):
+		case(OBJ_A_BUF):
 			objects.len[slot] = len;
 			memcpy(objects.buf[slot], data, len);
 			break;
@@ -230,7 +230,8 @@ extern int obj_list(void *ptr, short *num, short max)
 }
 
 
-extern int obj_collect(void *in, short in_num, void **out, short *out_num)
+extern int obj_collect(uint16_t flg, void *in, short in_num, void **out,
+		short *out_num)
 {
 	int i;
 	uint32_t *id_ptr = (uint32_t *)in;
@@ -252,30 +253,42 @@ extern int obj_collect(void *in, short in_num, void **out, short *out_num)
 	for(i = 0; i < in_num; i++) {
 		if((slot = obj_sel_id(*id_ptr)) >= 0) {
 			/* Copy object-id */
-			memcpy(ptr, id_ptr, 4);
-			ptr += 4;
+			if(flg & OBJ_A_ID) {
+				memcpy(ptr, id_ptr, 4);
+				ptr += 4;
+				written += 4;
+			}
 
 			/* Copy object-mask */
-			memcpy(ptr, &objects.mask[slot], 4);
-			ptr += 4;
+			if(flg & OBJ_A_MASK) {
+				memcpy(ptr, &objects.mask[slot], 4);
+				ptr += 4;
+				written += 4;
+			}
 
 			/* Copy the position */
-			memcpy(ptr, objects.pos[slot], 12);
-			ptr += 12;
+			if(flg & OBJ_A_POS) {
+				memcpy(ptr, objects.pos[slot], 12);
+				ptr += 12;
+				written += 12;
+			}
 
 			/* Copy the velocity of the object */
-			memcpy(ptr, objects.vel[slot], 12);
-			ptr += 12;
+			if(flg & OBJ_A_VEL) {
+				memcpy(ptr, objects.vel[slot], 12);
+				ptr += 12;
+				written += 12;
+			}
 
 			/* Copy the mov-force of the object */
-			vec2_cpy((float *)ptr, objects.mov[slot]);
-			ptr += VEC2_SIZE;
+			if(flg & OBJ_A_MOV) {
+				vec2_cpy((float *)ptr, objects.mov[slot]);
+				ptr += VEC2_SIZE;
+				written += VEC2_SIZE;
+			}
 
 			/* Increment the number of objects */
 			num++;
-
-			/* Update number of bytes written */
-			written += 44;
 		}
 
 		/* Go to the next id */
@@ -368,7 +381,6 @@ extern int obj_add_inputs(uint32_t ts, void *in)
 		/* Update timestamp */
 		ts += off;
 	}
-
 	return 0;
 }
 
@@ -408,6 +420,10 @@ extern void obj_print(short slot)
 	printf("Dir: "); vec3_print(objects.dir[slot]); printf("\n");
 	printf("Mov: "); vec2_print(objects.mov[slot]); printf("\n");
 }
+
+/*
+ * object-systems
+ */
 
 extern void obj_sys_input(void)
 {
@@ -469,7 +485,15 @@ extern void obj_sys_input(void)
 				vec3_cpy(prev, pos);
 				vec3_add(pos, del, pos);
 
-				pos[1] = wld_get_height(pos[0], pos[2]) + 5.6;
+				if(ABS(pos[0]) > 32.0) {
+					pos[0] = 32.0 * SIGN(pos[0]);
+					vel[0] = 0;
+				}
+
+				if(ABS(pos[2]) > 32.0) {
+					pos[2] = 32.0 * SIGN(pos[2]);
+					vel[2] = 0;
+				}
 
 
 				if(ABS(vel[0] + vel[1]) >= 0.0004)
@@ -531,6 +555,7 @@ extern void obj_sys_update(void)
 
 	for(i = 0; i < OBJ_SLOTS; i++) {
 		if((objects.mask[i] & OBJ_M_MOVE) == OBJ_M_MOVE) {
+			vec3_cpy(pos, objects.pos[i]);
 			vec3_cpy(vel, objects.vel[i]);
 			vec3_cpy_v2(acl, objects.mov[i]);
 
@@ -549,8 +574,15 @@ extern void obj_sys_update(void)
 			vec3_cpy(prev, pos);
 			vec3_add(pos, del, pos);
 
-			/* Get height at new position */
-			pos[1] = wld_get_height(pos[0], pos[2]) + 5.6;
+			if(ABS(pos[0]) > 32.0) {
+				pos[0] = 32.0 * SIGN(pos[0]);
+				vel[0] = 0;
+			}
+
+			if(ABS(pos[2]) > 32.0) {
+				pos[2] = 32.0 * SIGN(pos[2]);
+				vel[2] = 0;
+			}
 
 			vec3_cpy(objects.pos[i], pos);
 			vec3_cpy(objects.vel[i], vel);

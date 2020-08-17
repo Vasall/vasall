@@ -4,16 +4,17 @@
 #include "asset.h"
 #include "model.h"
 
-#define CHUNK_SIZE 128
+#define CHUNK_SIZE 32
 
 
 struct world_wrapper {
-	int2_t size;
-	int ptnum;
-	vec2_t min_pos, max_pos;
-	float *heights;
-	vec3_t rot;
-	short terrain;
+	int2_t   size;
+	int      ptnum;
+	vec2_t   min_pos;
+	vec2_t   max_pos;
+	float    *heights;
+	vec3_t   rot;
+	short    terrain;
 };
 
 

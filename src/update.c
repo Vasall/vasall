@@ -1,4 +1,5 @@
 #include "update.h"
+#include "network.h"
 
 #include <stdlib.h>
 
@@ -168,24 +169,39 @@ void game_update(void)
 	/* Get the current time */
 	uint32_t now = SDL_GetTicks();
 	int count = 0;
+	char pck[512];
+	int tmp;
 
 	if(now >= core.last_share) {
 		/* Only send if something has changed */
 		if(input.share.num > 0) {
-			char pck[512];
-			int tmp;
-
-			/* Send packet to all connected peers */
+			/* Collect all recent inputs */
 			tmp = inp_col_share(pck);
-			net_broadcast(pck, tmp);
+
+			/* Send packet */
+			net_broadcast(HDR_OP_UPD, pck, tmp);
 		}
 
+		/* Updae timer */
 		core.last_share = now + SHARE_TIME;
 	}
 
 	if(now >= core.last_sync) {
-		
+		uint16_t flg = OBJ_A_ID | OBJ_A_POS | OBJ_A_VEL;
+		uint32_t ts;
 
+		/* Collect current data of the objects */
+		tmp = obj_collect(flg, &objects.id[core.obj], 1, pck + 4, NULL);
+
+		/* Add timestamp */
+		ts = now - network.time_del; 
+		memcpy(pck, &ts, 4);
+		tmp += 4;
+
+		/* Send the packet */
+		net_broadcast(HDR_OP_SYN, pck, tmp);
+
+		/* Update timer */
 		core.last_sync = now + SYNC_TIME;
 	}
 
@@ -199,7 +215,10 @@ void game_update(void)
 		/* Update the objects in the object-table */
 		obj_sys_update();
 
+		/* Update timer */
 		core.last_update += TICK_TIME;
+
+		/* Increment counter */
 		count++;
 	}
 }

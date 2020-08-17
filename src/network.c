@@ -1,7 +1,5 @@
 #include "network.h"
 #include "error.h"
-#define DEF_HEADER
-#include "header.h"
 
 #include "core.h"
 
@@ -238,7 +236,7 @@ extern int net_update(void)
 }
 
 
-extern int net_broadcast(char *buf, int len)
+extern int net_broadcast(uint16_t op, char *buf, int len)
 {
 	char pck[532];
 	int tmp;
@@ -255,8 +253,7 @@ extern int net_broadcast(char *buf, int len)
 
 		/* Set header of packet */
 		slot = network.con[i];
-		tmp = hdr_set(pck, HDR_OP_UPD, tbl->id[slot], 
-				network.id, network.key);
+		tmp = hdr_set(pck, op, tbl->id[slot], network.id, network.key);
 
 		/* Send packet */
 		/* TODO: Handle failed */
@@ -569,6 +566,14 @@ static int peer_hdl_upd(struct req_hdr *hdr, struct lcp_evt *evt,
 	return obj_add_inputs(ts, ptr + 4);
 }
 
+static int peer_hdl_syn(struct req_hdr *hdr, struct lcp_evt *evt,
+		char *ptr, int len)
+{
+		
+
+	return 0;
+}
+
 extern int peer_handle(struct lcp_evt *evt)
 {
 	char *ptr;
@@ -595,7 +600,7 @@ extern int peer_handle(struct lcp_evt *evt)
 		case HDR_OP_SBM: r = peer_hdl_sbm(&hdr, evt, ptr, len); break;
 		case HDR_OP_UPD: r = peer_hdl_upd(&hdr, evt, ptr, len); break;
 		case HDR_OP_CMP: break;
-		case HDR_OP_SYN: break;
+		case HDR_OP_SYN: r = peer_hdl_syn(&hdr, evt, ptr, len); break;
 	}
 
 	return r;

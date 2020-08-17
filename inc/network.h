@@ -8,6 +8,11 @@
 
 #include "lcp/inc/lcp.h"
 
+#ifndef DEF_HEADER
+#define DEF_HEADER
+#endif
+#include "header.h"
+
 #define PEER_SLOTS         18
 #define PEER_CON_NUM       6
 
@@ -259,7 +264,7 @@ extern void net_con_remv(short slot);
 /* 
  *
  */
-extern int net_broadcast(char *buf, int len);
+extern int net_broadcast(uint16_t op, char *buf, int len);
 
 /*
  * Insert a list of object-id into the object-cache and then get the list of

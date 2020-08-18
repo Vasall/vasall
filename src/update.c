@@ -1,5 +1,5 @@
 #include "update.h"
-#include "network.h"
+#include "header.h"
 
 #include <stdlib.h>
 
@@ -187,11 +187,14 @@ void game_update(void)
 	}
 
 	if(now >= core.last_sync) {
-		uint16_t flg = OBJ_A_ID | OBJ_A_POS | OBJ_A_VEL;
+		uint16_t flg = OBJ_A_ID | OBJ_A_POS | OBJ_A_VEL | OBJ_A_MOV;
 		uint32_t ts;
+		void *ptr;
 
 		/* Collect current data of the objects */
-		tmp = obj_collect(flg, &objects.id[core.obj], 1, pck + 4, NULL);
+		tmp = obj_collect(flg, &objects.id[core.obj], 1, &ptr, NULL);
+		memcpy(pck + 4, ptr, tmp);
+		free(ptr);
 
 		/* Add timestamp */
 		ts = now - network.time_del; 

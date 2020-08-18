@@ -2,6 +2,8 @@
 #include "error.h"
 
 #include "core.h"
+#define DEF_HEADER
+#include "header.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -549,7 +551,12 @@ static int peer_hdl_sbm(struct req_hdr *hdr, struct lcp_evt *evt,
 	memcpy(&num, ptr + 4, 2);
 
 	/* Submit list of objects */
-	return net_obj_submit(ptr + 6, ts, num, hdr->src_id);
+	net_obj_submit(ptr + 6, ts, num, hdr->src_id);
+
+	obj_print(0);
+	obj_print(1);
+
+	return 0;
 }
 
 static int peer_hdl_upd(struct req_hdr *hdr, struct lcp_evt *evt,
@@ -569,9 +576,14 @@ static int peer_hdl_upd(struct req_hdr *hdr, struct lcp_evt *evt,
 static int peer_hdl_syn(struct req_hdr *hdr, struct lcp_evt *evt,
 		char *ptr, int len)
 {
-		
+	uint32_t ts;
 
-	return 0;
+	if(hdr||evt||len){/* Prevent warning for not using parameters */}
+
+	ts = *(uint32_t *)ptr;
+	ts -= network.time_del;	
+
+	return obj_sync(ts, ptr + 4);
 }
 
 extern int peer_handle(struct lcp_evt *evt)

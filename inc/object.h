@@ -22,16 +22,14 @@
 #define OBJ_M_ENTITY (OBJ_M_MOVE|OBJ_M_MODEL)
 #define OBJ_M_PLAYER (OBJ_M_ENTITY|OBJ_M_PEER)
 
-enum object_attr {
-	OBJ_A_ID =     0x00,
-	OBJ_A_MASK =   0x01,
-	OBJ_A_POS =    0x02,
-	OBJ_A_VEL =    0x03,
-	OBJ_A_MOV =    0x04,
-	OBJ_A_BUF =    0x05
-};
+#define OBJ_A_ID       (1<<0)
+#define OBJ_A_MASK     (1<<1)
+#define OBJ_A_POS      (1<<2)
+#define OBJ_A_VEL      (1<<3)
+#define OBJ_A_MOV      (1<<4)
+#define OBJ_A_BUF      (1<<5)
 
-#define OBJ_A_ALL (OBJ_A_ID|OBJ_A_MASK|OBJ_A_POS|OBJ_A_VEL|OBJ_A_MOV|OBJ_A_BUF)
+#define OBJ_A_ALL (OBJ_A_ID|OBJ_A_MASK|OBJ_A_POS|OBJ_A_VEL|OBJ_A_MOV)
 
 #define OBJ_INPUT_SLOTS   6
 
@@ -219,6 +217,12 @@ extern int obj_add_inputs(uint32_t ts, void *in);
  * Returns: 0 on success or -1 if an error occurred
  */
 extern int obj_add_input(short slot, uint32_t mask, uint32_t ts, vec2_t mov, uint16_t act);
+
+
+/*
+ * 
+ */
+extern int obj_sync(uint32_t ts, void *in);
 
 
 /*

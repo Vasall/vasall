@@ -8,11 +8,6 @@
 
 #include "lcp/inc/lcp.h"
 
-#ifndef DEF_HEADER
-#define DEF_HEADER
-#endif
-#include "header.h"
-
 #define PEER_SLOTS         18
 #define PEER_CON_NUM       6
 

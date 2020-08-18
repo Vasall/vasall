@@ -287,6 +287,18 @@ extern int obj_collect(uint16_t flg, void *in, short in_num, void **out,
 				written += VEC2_SIZE;
 			}
 
+			if(flg & OBJ_A_BUF) {
+				int tmp = objects.len[slot];
+
+				memcpy(ptr, &tmp, 4);
+				ptr += 4;
+				written += 4;
+
+				memcpy(ptr, objects.buf[slot], tmp);
+				ptr += tmp;
+				written += tmp;
+			}
+
 			/* Increment the number of objects */
 			num++;
 		}
@@ -332,7 +344,6 @@ extern int obj_submit(void *in, int64_t ts)
 	objects.last_upd_ts[slot] = ts;
 
 	vec3_cpy(objects.last_vel[slot], (float *)(ptr + 20));
-
 	return 0;
 }
 
@@ -405,6 +416,106 @@ extern int obj_add_input(short slot, uint32_t mask, uint32_t ts, vec2_t mov, uin
 
 	/* Increment input-counter */
 	objects.inp[slot].num++;
+	return 0;
+}
+
+
+extern int obj_sync(uint32_t ts, void *in)
+{
+	short i;
+	short num;
+	char *ptr = in;
+	uint32_t id;
+	short slot;
+
+	uint32_t ts_cur;
+	uint32_t ts_run;
+
+	float t_speed = 4.0;
+
+	vec3_t pos;
+	vec3_t vel;
+	vec2_t mov;
+
+	vec3_t acl;
+	vec3_t del;
+	vec3_t dir;
+
+	ts_cur = SDL_GetTicks();
+
+	/* Get the number of objects included in the packet */	
+	memcpy(&num, ptr, 2);
+	ptr += 2;
+
+
+	for(i = 0; i < num; i++) {
+		/* Get the id of the object */
+		memcpy(&id, ptr, 4);
+		ptr += 4;
+
+		/* Get the slot of the object */
+		if((slot = obj_sel_id(id)) < 0)
+			return -1;
+
+
+		vec3_cpy(pos, (float *)ptr);
+		ptr += VEC3_SIZE;
+
+		vec3_cpy(vel, (float *)ptr);
+		ptr += VEC3_SIZE;
+
+		vec2_cpy(mov, (float *)ptr);
+		ptr += VEC2_SIZE;
+
+		/* Save status as most recent checkpoint */
+		vec3_cpy(objects.last_pos[slot], pos);
+		vec3_cpy(objects.last_vel[slot], vel);
+		objects.last_ack_ts[slot] = ts;
+
+		ts_run = ts;
+
+		while(ts_run < ts_cur) {
+			/* Friction */
+			vec3_scl(vel, (1.0 - TICK_TIME_S * t_speed), vel);
+
+			/* Acceleration */
+			vec3_set(acl, mov[0], 0, mov[1]);
+			vec3_scl(acl, 6, acl);
+			vec3_scl(acl, (TICK_TIME_S * t_speed), acl);
+
+			/* Update velocity of the player-object */
+			vec3_add(vel, acl, vel);
+
+			vec3_scl(vel, TICK_TIME_S, del);
+
+			vec3_add(pos, del, pos);
+
+			if(ABS(pos[0]) > 32.0) {
+				pos[0] = 32.0 * SIGN(pos[0]);
+				vel[0] = 0;
+			}
+
+			if(ABS(pos[2]) > 32.0) {
+				pos[2] = 32.0 * SIGN(pos[2]);
+				vel[2] = 0;
+			}
+
+
+			if(ABS(vel[0] + vel[1]) >= 0.0004)
+				vec3_nrm(vel, dir);
+
+			ts_run += TICK_TIME;
+		}
+
+
+		vec3_cpy(objects.pos[slot], pos);
+		vec3_cpy(objects.vel[slot], vel);
+		vec2_cpy(objects.mov[slot], mov);
+		vec3_cpy(objects.dir[slot], dir);
+		objects.last_upd_ts[slot] = ts_run;
+
+	}
+
 	return 0;
 }
 

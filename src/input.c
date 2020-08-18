@@ -28,7 +28,7 @@ extern int inp_init(void)
 	input.share.obj = 0;
 
 	/* Clear the share-buffer */
-	for(i = 0; i < SHARE_SLOTS; i++)
+	for(i = 0; i < INPUT_SLOTS; i++)
 		input.share.mask[i] = 0;
 
 	/* Clear the input-buffers */
@@ -132,7 +132,7 @@ extern void inp_remv_device(int id)
 extern int inp_col_share(char *buf)
 {
 	short i;
-	short num = input.share.num;
+	short num;
 	char *ptr;
 	uint32_t mask;
 	int written = 0;
@@ -140,7 +140,7 @@ extern int inp_col_share(char *buf)
 	uint8_t tmp;
 	int32_t ts;
 
-	if(num  < 1)
+	if((num = input.share.num) < 1)
 		return 0;
 
 	ts = input.share.timer + network.time_del;
@@ -166,7 +166,7 @@ extern int inp_col_share(char *buf)
 		ptr += 1;
 		written += 1;
 
-		if((mask & SHARE_M_MOV) == SHARE_M_MOV) {
+		if(mask & INP_M_MOV) {
 			vec2_cpy((float *)ptr, input.share.mov[i]);
 			ptr += VEC2_SIZE;
 			written += VEC2_SIZE;

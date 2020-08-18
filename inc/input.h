@@ -4,25 +4,25 @@
 #include "sdl.h"
 #include "vec.h"
 
-#define SHARE_SLOTS    16
+#define INPUT_SLOTS    16
 
-#define SHARE_M_MOV    0x01
+#define INP_M_MOV      (1<<0)
+#define INP_M_ACT      (1<<1)
 
+struct input_buffer {
+	short       num;
+	uint32_t    timer;
+	uint32_t    obj;
 
-struct share_buffer {
-	short     num;
-	uint32_t  timer;
-	uint32_t  obj;
+	uint32_t    mask[INPUT_SLOTS];
+	uint8_t     off[INPUT_SLOTS];
 
-	uint32_t    mask[SHARE_SLOTS];
-	uint8_t     off[SHARE_SLOTS];
-
-	vec2_t      mov[SHARE_SLOTS];
-	uint32_t    act[SHARE_SLOTS];
+	vec2_t      mov[INPUT_SLOTS];
+	uint32_t    act[INPUT_SLOTS];
 };
 
 
-#define DEVICE_NUM 4
+#define DEVICE_NUM     4
 
 struct input_wrapper {
 	/* The device-table */
@@ -37,7 +37,7 @@ struct input_wrapper {
 	vec2_t cam;
 
 	/* The share-buffer to share with peers */
-	struct share_buffer share;
+	struct input_buffer share;
 
 	vec2_t mov_old;
 };

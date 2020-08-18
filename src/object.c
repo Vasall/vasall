@@ -381,7 +381,7 @@ extern int obj_add_inputs(uint32_t ts, void *in)
 		memcpy(&off, ptr, 1);
 		ptr += 1;
 
-		if((mask & SHARE_M_MOV) == SHARE_M_MOV) {
+		if(mask & INP_M_MOV) {
 			vec2_cpy(mov, (float *)ptr);
 			ptr += VEC2_SIZE;
 		}
@@ -400,8 +400,6 @@ extern int obj_add_input(short slot, uint32_t mask, uint32_t ts, vec2_t mov, uin
 {		
 	short inp_slot;
 
-	if(act) {/* Prevent warning for not using parameter */}
-
 	if(obj_check_slot(slot))
 		return -1;
 
@@ -411,8 +409,11 @@ extern int obj_add_input(short slot, uint32_t mask, uint32_t ts, vec2_t mov, uin
 	objects.inp[slot].mask[inp_slot] = mask;
 	objects.inp[slot].ts[inp_slot] = ts;
 
-	if(mask & SHARE_M_MOV)
+	if(mask & INP_M_MOV)
 		vec2_cpy(objects.inp[slot].mov[inp_slot], mov);
+
+	if(mask & INP_M_ACT)
+		memcpy(&objects.inp[slot].act[inp_slot], &act, 2);
 
 	/* Increment input-counter */
 	objects.inp[slot].num++;
@@ -441,7 +442,7 @@ extern int obj_sync(uint32_t ts, void *in)
 	vec3_t del;
 	vec3_t dir;
 
-	ts_cur = SDL_GetTicks();
+	ts_cur = core.last_upd_ts;
 
 	/* Get the number of objects included in the packet */	
 	memcpy(&num, ptr, 2);
@@ -634,7 +635,7 @@ extern void obj_sys_input(void)
 
 			mask = objects.inp[i].mask[inp_i];
 
-			if((mask & SHARE_M_MOV) == SHARE_M_MOV)
+			if(mask & INP_M_MOV)
 				vec2_cpy(mov, objects.inp[i].mov[inp_i]);
 
 

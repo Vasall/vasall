@@ -14,10 +14,10 @@ void game_start(void)
 
 	/* Setup timers */
 	ts = SDL_GetTicks();
-	core.last_update = ts;
-	core.last_render = ts;
-	core.last_share = ts + SHARE_TIME;
-	core.last_sync = ts + SYNC_TIME;
+	core.last_upd_ts = ts;
+	core.last_ren_ts = ts;
+	core.last_shr_ts = ts + SHARE_TIME;
+	core.last_syn_ts = ts + SYNC_TIME;
 }
 
 
@@ -107,7 +107,9 @@ void game_proc_evt(SDL_Event *evt)
 
 static void game_proc_input(void)
 {
-	vec2_t forw, right, mov;
+	vec2_t forw;
+	vec2_t right;
+	vec2_t mov;
 	short obj = core.obj;
 
 	/*
@@ -138,28 +140,30 @@ static void game_proc_input(void)
 		uint32_t ti = SDL_GetTicks();
 		uint8_t off = 0;
 
-		if(input.share.timer == 0)
-			input.share.timer = ti;
-		else
-			off = ti - input.share.timer;
+		if(num < INPUT_SLOTS) {
+			if(input.share.timer == 0)
+				input.share.timer = ti;
+			else
+				off = ti - input.share.timer;
 
-		if(input.share.obj == 0)
-			input.share.obj = objects.id[obj];
+			if(input.share.obj == 0)
+				input.share.obj = objects.id[obj];
 
-		/* Push new entry in share-buffer */	
-		input.share.mask[num] = SHARE_M_MOV;
-		if(input.share.off[num] == 0)
-			input.share.off[num] = off;
-		vec2_cpy(input.share.mov[num], mov);
+			/* Push new entry in share-buffer */	
+			input.share.mask[num] = INP_M_MOV;
+			if(input.share.off[num] == 0)
+				input.share.off[num] = off;
+			vec2_cpy(input.share.mov[num], mov);
 
-		/* Increment share-buffer-number */
-		input.share.num++;
+			/* Increment share-buffer-number */
+			input.share.num++;
 
-		/* Remeber current state to check for changes */
-		vec2_cpy(input.mov_old, mov);
+			/* Remeber current state to check for changes */
+			vec2_cpy(input.mov_old, mov);
 
-		/* Add input to object input-buffer */
-		obj_add_input(obj, 1, ti, mov, 0);
+			/* Add input to object input-buffer */
+			obj_add_input(obj, 1, ti, mov, 0);
+		}
 	}
 }
 
@@ -172,7 +176,8 @@ void game_update(void)
 	char pck[512];
 	int tmp;
 
-	if(now >= core.last_share) {
+	/* Send recent inputs on a regular basis */
+	if(now >= core.last_shr_ts) {
 		/* Only send if something has changed */
 		if(input.share.num > 0) {
 			/* Collect all recent inputs */
@@ -182,11 +187,12 @@ void game_update(void)
 			net_broadcast(HDR_OP_UPD, pck, tmp);
 		}
 
-		/* Updae timer */
-		core.last_share = now + SHARE_TIME;
+		/* Update timer */
+		core.last_shr_ts = now + SHARE_TIME;
 	}
 
-	if(now >= core.last_sync) {
+	/* Synchronize the local objects on a regular basis */
+	if(now >= core.last_syn_ts) {
 		uint16_t flg = OBJ_A_ID | OBJ_A_POS | OBJ_A_VEL | OBJ_A_MOV;
 		uint32_t ts;
 		void *ptr;
@@ -205,10 +211,10 @@ void game_update(void)
 		net_broadcast(HDR_OP_SYN, pck, tmp);
 
 		/* Update timer */
-		core.last_sync = now + SYNC_TIME;
+		core.last_syn_ts = now + SYNC_TIME;
 	}
 
-	while(now - core.last_update > TICK_TIME && count < MAX_UPDATE_NUM) {	
+	while(now - core.last_upd_ts > TICK_TIME && count < MAX_UPDATE_NUM) {	
 		/* Process the game-input and update objects */
 		game_proc_input();
 
@@ -219,7 +225,7 @@ void game_update(void)
 		obj_sys_update();
 
 		/* Update timer */
-		core.last_update += TICK_TIME;
+		core.last_upd_ts += TICK_TIME;
 
 		/* Increment counter */
 		count++;
@@ -229,7 +235,7 @@ void game_update(void)
 void game_render(void)
 {
 	uint32_t now = SDL_GetTicks();
-	float interp = MIN(1.0, (float)((now - core.last_render) / TICK_TIME));
+	float interp = MIN(1.0, (float)((now - core.last_ren_ts) / TICK_TIME));
 
 
 	/* Update the camera-position */
@@ -241,5 +247,6 @@ void game_render(void)
 	/* Render the objects */
 	obj_sys_render(interp);
 
-	core.last_render = now;
+	/* Update timer */
+	core.last_ren_ts = now;
 }

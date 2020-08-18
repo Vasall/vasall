@@ -33,10 +33,10 @@ struct core_wrapper {
 	void (*update)(void);
 	void (*render)(void);
 
-	uint32_t last_update;
-	uint32_t last_render;
-	uint32_t last_share;
-	uint32_t last_sync;
+	uint32_t last_upd_ts;
+	uint32_t last_ren_ts;
+	uint32_t last_shr_ts;
+	uint32_t last_syn_ts;
 
 	short obj;
 };

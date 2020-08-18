@@ -20,9 +20,10 @@ extern int core_init(void)
 
 	core.obj = -1;
 
-	core.last_update = 0;
-	core.last_render = 0;
-	core.last_sync = 0;
+	core.last_upd_ts = 0;
+	core.last_ren_ts = 0;
+	core.last_shr_ts = 0;
+	core.last_syn_ts = 0;
 
 	return 0;
 }
@@ -55,16 +56,6 @@ extern void core_proc_evt(void)
 
 		if(core.proc_evt)
 			core.proc_evt(&evt);
-
-#if 0
-		if(evt.type == SDL_WINDOWEVENT) {
-			switch(evt.window.event) {
-				case(XSDL_WINDOWEVENT_RESIZED):
-					handle_resize(&evt);
-					break;
-			}
-		}
-#endif
 	}
 }
 

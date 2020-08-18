@@ -513,12 +513,13 @@ static int peer_hdl_get(struct req_hdr *hdr, struct lcp_evt *evt,
 	uint32_t ts;
 	int tmp;
 	char pck[512];
+	uint16_t flg = (OBJ_A_ID|OBJ_A_MASK|OBJ_A_POS|OBJ_A_VEL|OBJ_A_MOV);
 
 	if(len){/* Prevent warning for not using parameters */}
 
 	memcpy(&num, ptr, 2);
 
-	written = obj_collect(OBJ_A_ALL, ptr + 2, num, &obj_lst, NULL);
+	written = obj_collect(flg, ptr + 2, num, &obj_lst, NULL);
 
 	/* Set response-header */
 	tmp = hdr_set(pck, HDR_OP_SBM, hdr->src_id, network.id, network.key);
@@ -551,12 +552,7 @@ static int peer_hdl_sbm(struct req_hdr *hdr, struct lcp_evt *evt,
 	memcpy(&num, ptr + 4, 2);
 
 	/* Submit list of objects */
-	net_obj_submit(ptr + 6, ts, num, hdr->src_id);
-
-	obj_print(0);
-	obj_print(1);
-
-	return 0;
+	return net_obj_submit(ptr + 6, ts, num, hdr->src_id);
 }
 
 static int peer_hdl_upd(struct req_hdr *hdr, struct lcp_evt *evt,

@@ -24,6 +24,7 @@ extern int obj_init(void)
 }
 
 
+/* TODO */
 extern void obj_close(void)
 {
 	return;
@@ -429,7 +430,6 @@ extern int obj_sync(uint32_t ts, void *in)
 	uint32_t id;
 	short slot;
 
-	uint32_t ts_cur;
 	uint32_t ts_run;
 
 	float t_speed = 4.0;
@@ -441,8 +441,6 @@ extern int obj_sync(uint32_t ts, void *in)
 	vec3_t acl;
 	vec3_t del;
 	vec3_t dir;
-
-	ts_cur = core.last_upd_ts;
 
 	/* Get the number of objects included in the packet */	
 	memcpy(&num, ptr, 2);
@@ -475,7 +473,7 @@ extern int obj_sync(uint32_t ts, void *in)
 
 		ts_run = ts;
 
-		while(ts_run < ts_cur) {
+		while(ts_run < core.last_upd_ts) {
 			/* Friction */
 			vec3_scl(vel, (1.0 - TICK_TIME_S * t_speed), vel);
 
@@ -548,9 +546,9 @@ extern void obj_sys_input(void)
 
 	uint32_t mask;
 
+	uint32_t ti;
 	uint32_t lim_ti;
 	uint32_t cur_ti;
-	uint32_t ti;
 	vec3_t pos;
 	vec3_t vel;
 	vec2_t mov;
@@ -642,9 +640,11 @@ extern void obj_sys_input(void)
 			if(inp_i + 1 < inp_num)
 				lim_ti = objects.inp[i].ts[inp_i + 1];
 			else
-				lim_ti = ti;
+				lim_ti = core.last_upd_ts;
 		}
 	}
+
+	printf("Input took milliseconds: %u\n", SDL_GetTicks() - ti);
 }
 
 extern void obj_sys_update(void)

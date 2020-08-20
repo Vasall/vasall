@@ -192,7 +192,7 @@ void game_update(void)
 	}
 
 	/* Synchronize the local objects on a regular basis */
-	if(now >= core.last_syn_ts) {
+	if(now >= core.last_syn_ts && 0) {
 		uint16_t flg = OBJ_A_ID | OBJ_A_POS | OBJ_A_VEL | OBJ_A_MOV;
 		uint32_t ts;
 		void *ptr;

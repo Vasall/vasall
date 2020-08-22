@@ -182,15 +182,37 @@ void game_update(void)
 
 		/* Only send if something has changed */
 		if(input.share.num > 0) {
+			/* Set content-flag */
 			cont_flg |= (1<<0);
 
 			/* Collect all recent inputs */
 			tmp = inp_col_share(pck + 1);
 		}
 
-
+		/* Attach object-position and velocity */
 		if(now >= core.last_syn_ts && 0) {
+			uint16_t flg = OBJ_A_ID | OBJ_A_POS | OBJ_A_VEL | OBJ_A_MOV;
+			uint32_t ts;
+			void *ptr;
+
+			/* Set content-flag */
 			cont_flg |= (1<<1);
+
+			/* Collect current data of the objects */
+			tmp = obj_collect(flg, &objects.id[core.obj], 1, &ptr, NULL);
+			memcpy(pck + 4, ptr, tmp);
+			free(ptr);
+
+			/* Add timestamp */
+			ts = now - network.time_del; 
+			memcpy(pck, &ts, 4);
+			tmp += 4;
+
+			/* Send the packet */
+			net_broadcast(HDR_OP_SYN, pck, tmp);
+
+			/* Update timer */
+			core.last_syn_ts = now + SYNC_TIME;
 		}
 
 		/* Send packet */
@@ -199,32 +221,6 @@ void game_update(void)
 		/* Update timer */
 		core.last_shr_ts = now + SHARE_TIME;
 	}
-#if 0
-
-	/* Synchronize the local objects on a regular basis */
-	 {
-		uint16_t flg = OBJ_A_ID | OBJ_A_POS | OBJ_A_VEL | OBJ_A_MOV;
-		uint32_t ts;
-		void *ptr;
-
-		/* Collect current data of the objects */
-		tmp = obj_collect(flg, &objects.id[core.obj], 1, &ptr, NULL);
-		memcpy(pck + 4, ptr, tmp);
-		free(ptr);
-
-		/* Add timestamp */
-		ts = now - network.time_del; 
-		memcpy(pck, &ts, 4);
-		tmp += 4;
-
-		/* Send the packet */
-		net_broadcast(HDR_OP_SYN, pck, tmp);
-
-		/* Update timer */
-		core.last_syn_ts = now + SYNC_TIME;
-	}
-
-#endif
 
 	while(now - core.last_upd_ts > TICK_TIME && count < MAX_UPDATE_NUM) {	
 		/* Process the game-input and update objects */

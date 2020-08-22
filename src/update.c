@@ -178,21 +178,28 @@ void game_update(void)
 
 	/* Send recent inputs on a regular basis */
 	if(now >= core.last_shr_ts) {
+		uint32_t flg = 0;
+
 		/* Only send if something has changed */
 		if(input.share.num > 0) {
 			/* Collect all recent inputs */
-			tmp = inp_col_share(pck);
-
-			/* Send packet */
-			net_broadcast(HDR_OP_UPD, pck, tmp);
+			tmp = inp_col_share(pck + 1);
 		}
+
+		if(now >= core.last_syn_ts && 0) {
+
+		}
+
+		/* Send packet */
+		net_broadcast(HDR_OP_UPD, pck, tmp);
 
 		/* Update timer */
 		core.last_shr_ts = now + SHARE_TIME;
 	}
+#if 0
 
 	/* Synchronize the local objects on a regular basis */
-	if(now >= core.last_syn_ts && 0) {
+	 {
 		uint16_t flg = OBJ_A_ID | OBJ_A_POS | OBJ_A_VEL | OBJ_A_MOV;
 		uint32_t ts;
 		void *ptr;
@@ -213,6 +220,8 @@ void game_update(void)
 		/* Update timer */
 		core.last_syn_ts = now + SYNC_TIME;
 	}
+
+#endif
 
 	while(now - core.last_upd_ts > TICK_TIME && count < MAX_UPDATE_NUM) {	
 		/* Process the game-input and update objects */

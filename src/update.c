@@ -178,18 +178,20 @@ void game_update(void)
 
 	/* Send recent inputs on a regular basis */
 	if(now >= core.last_shr_ts) {
-		uint32_t flg = 0;
+		uint32_t cont_flg = 0;
 
 		/* Only send if something has changed */
 		if(input.share.num > 0) {
+			cont_flg |= (1<<0);
+
 			/* Collect all recent inputs */
 			tmp = inp_col_share(pck + 1);
 		}
-#if 0
-		if(now >= core.last_syn_ts && 0) {
 
+
+		if(now >= core.last_syn_ts && 0) {
+			cont_flg |= (1<<1);
 		}
-#endif
 
 		/* Send packet */
 		net_broadcast(HDR_OP_UPD, pck, tmp);

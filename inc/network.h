@@ -316,4 +316,12 @@ extern int net_obj_submit(void *ptr, uint32_t ts, short num, uint32_t src);
  */
 extern int net_obj_update(void);
 
+
+/*
+ * Get the server-time.
+ *
+ * Returns: The time relative to the server in milliseconds
+ */
+extern uint32_t net_gettime(void);
+
 #endif

@@ -13,7 +13,7 @@ void game_start(void)
 	core.render = &game_render;
 
 	/* Setup timers */
-	ts = SDL_GetTicks();
+	ts = net_gettime();
 	core.last_upd_ts = ts;
 	core.last_ren_ts = ts;
 	core.last_shr_ts = ts + SHARE_TIME;
@@ -137,7 +137,7 @@ static void game_proc_input(void)
 	/* If the movement direction has changed */
 	if(vec2_cmp(mov, input.mov_old) == 0) {
 		short num = input.share.num;
-		uint32_t ti = SDL_GetTicks();
+		uint32_t ti = net_gettime();
 		uint8_t off = 0;
 
 		if(num < INPUT_SLOTS) {
@@ -171,7 +171,7 @@ static void game_proc_input(void)
 void game_update(void)
 {
 	/* Get the current time */
-	uint32_t now = SDL_GetTicks();
+	uint32_t now = net_gettime();
 	int count = 0;
 	char pck[512];
 	int tmp;
@@ -234,7 +234,7 @@ void game_update(void)
 
 void game_render(void)
 {
-	uint32_t now = SDL_GetTicks();
+	uint32_t now = net_gettime();
 	float interp = MIN(1.0, (float)((now - core.last_ren_ts) / TICK_TIME));
 
 

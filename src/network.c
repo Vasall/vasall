@@ -306,8 +306,9 @@ static int peer_hdl_ins(struct req_hdr *hdr, struct lcp_evt *evt,
 		gettimeofday(&loc_ti, NULL);
 		tdel = (loc_ti.tv_sec - serv_ti.tv_sec) * 1000;
 		tdel += (loc_ti.tv_usec - serv_ti.tv_usec) / 1000;
-		tdel -= SDL_GetTicks();
-		network.time_del = tdel;
+		tdel -= net_gettime();
+
+		network.time_del = floor(tdel / TICK_TIME) * TICK_TIME;
 
 		/* Insert object into object-table */
 		id = network.id;
@@ -525,7 +526,7 @@ static int peer_hdl_get(struct req_hdr *hdr, struct lcp_evt *evt,
 	tmp = hdr_set(pck, HDR_OP_SBM, hdr->src_id, network.id, network.key);
 
 	/* Attach timestamp */
-	ts = SDL_GetTicks() + network.time_del;
+	ts = net_gettime();
 	memcpy(pck + tmp, &ts, 4);
 
 	/* Attach payload to packet */
@@ -572,14 +573,8 @@ static int peer_hdl_upd(struct req_hdr *hdr, struct lcp_evt *evt,
 static int peer_hdl_syn(struct req_hdr *hdr, struct lcp_evt *evt,
 		char *ptr, int len)
 {
-	uint32_t ts;
-
-	if(hdr||evt||len){/* Prevent warning for not using parameters */}
-
-	ts = *(uint32_t *)ptr;
-	ts -= network.time_del;	
-
-	return obj_sync(ts, ptr + 4);
+	if(hdr||evt||ptr||len){/* Prevent warning for not using parameters */}
+	return 0;
 }
 
 extern int peer_handle(struct lcp_evt *evt)
@@ -1014,4 +1009,10 @@ extern int net_obj_submit(void *ptr, uint32_t ts, short num, uint32_t src)
 	}
 
 	return 0;
+}
+
+
+extern uint32_t net_gettime(void)
+{
+	return SDL_GetTicks() + network.time_del; 
 }

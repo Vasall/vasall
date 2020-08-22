@@ -14,13 +14,13 @@
 
 
 /* The updates-per-second */
-#define GAME_HERTZ       60
+#define GAME_HERTZ       50
 #define TICK_TIME        (1000.0/GAME_HERTZ)
 #define TICK_TIME_S      (TICK_TIME/1000.0)
 #define MAX_UPDATE_NUM   5
 
 /* The shares-per-second */
-#define SHARE_HERZ       30
+#define SHARE_HERZ       25
 #define SHARE_TIME       (1000.0/SHARE_HERZ)
 
 /* The sync-time */

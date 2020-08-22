@@ -185,10 +185,11 @@ void game_update(void)
 			/* Collect all recent inputs */
 			tmp = inp_col_share(pck + 1);
 		}
-
+#if 0
 		if(now >= core.last_syn_ts && 0) {
 
 		}
+#endif
 
 		/* Send packet */
 		net_broadcast(HDR_OP_UPD, pck, tmp);

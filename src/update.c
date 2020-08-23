@@ -13,7 +13,9 @@ void game_start(void)
 	core.render = &game_render;
 
 	/* Setup timers */
-	ts = net_gettime();
+	/* TODO: Consider if using last or next step is better */
+	/* ts = ((net_gettime() / TICK_TIME) + 1) * TICK_TIME; */
+	ts = (net_gettime() / TICK_TIME) * TICK_TIME;
 	core.last_upd_ts = ts;
 	core.last_ren_ts = ts;
 	core.last_shr_ts = ts + SHARE_TIME;
@@ -170,57 +172,17 @@ static void game_proc_input(void)
 
 void game_update(void)
 {
+	static int c = 0;
+
 	/* Get the current time */
 	uint32_t now = net_gettime();
 	int count = 0;
 	char pck[512];
+	int len = 1;
 	int tmp;
 
-	/* Send recent inputs on a regular basis */
-	if(now >= core.last_shr_ts) {
-		uint32_t cont_flg = 0;
-
-		/* Only send if something has changed */
-		if(input.share.num > 0) {
-			/* Set content-flag */
-			cont_flg |= (1<<0);
-
-			/* Collect all recent inputs */
-			tmp = inp_col_share(pck + 1);
-		}
-
-		/* Attach object-position and velocity */
-		if(now >= core.last_syn_ts && 0) {
-			uint16_t flg = OBJ_A_ID | OBJ_A_POS | OBJ_A_VEL | OBJ_A_MOV;
-			uint32_t ts;
-			void *ptr;
-
-			/* Set content-flag */
-			cont_flg |= (1<<1);
-
-			/* Collect current data of the objects */
-			tmp = obj_collect(flg, &objects.id[core.obj], 1, &ptr, NULL);
-			memcpy(pck + 4, ptr, tmp);
-			free(ptr);
-
-			/* Add timestamp */
-			ts = now - network.time_del; 
-			memcpy(pck, &ts, 4);
-			tmp += 4;
-
-			/* Send the packet */
-			net_broadcast(HDR_OP_SYN, pck, tmp);
-
-			/* Update timer */
-			core.last_syn_ts = now + SYNC_TIME;
-		}
-
-		/* Send packet */
-		net_broadcast(HDR_OP_UPD, pck, tmp);
-
-		/* Update timer */
-		core.last_shr_ts = now + SHARE_TIME;
-	}
+	printf("%d: %u\n", c, now);
+	c++;
 
 	while(now - core.last_upd_ts > TICK_TIME && count < MAX_UPDATE_NUM) {	
 		/* Process the game-input and update objects */
@@ -237,6 +199,54 @@ void game_update(void)
 
 		/* Increment counter */
 		count++;
+	}
+
+	/* Send recent inputs on a regular basis */
+	if(now >= core.last_shr_ts) {
+		uint32_t cont_flg = 0;
+
+		/* Only send if something has changed */
+		if(input.share.num > 0) {
+			/* Set content-flag */
+			cont_flg |= (1<<0);
+
+			/* Collect all recent inputs */
+			len += inp_col_share(pck + len);
+		}
+
+		/* Attach object-position and velocity */
+		if(now >= core.last_syn_ts && 0) {
+			uint16_t flg = OBJ_A_ID | OBJ_A_POS | OBJ_A_VEL | OBJ_A_MOV;
+			uint32_t ts;
+			void *ptr;
+
+			/* Set content-flag */
+			cont_flg |= (1<<1);
+
+			/* Collect current data of the objects */
+			tmp = obj_collect(flg, &objects.id[core.obj], 1, &ptr, NULL);
+			memcpy(pck + len + 4, ptr, tmp);
+			free(ptr);
+
+			/* Add timestamp */
+			ts = now - network.time_del; 
+			memcpy(pck, &ts, 4);
+
+			/* Update packet-length */
+			len += tmp + 4;
+
+			/* Update timer */
+			core.last_syn_ts = now + SYNC_TIME;
+		}
+
+		/* Insert the content-flags */
+		pck[0] = cont_flg;
+
+		/* Send packet */
+		net_broadcast(HDR_OP_UPD, pck, len);
+
+		/* Update timer */
+		core.last_shr_ts = now + SHARE_TIME;
 	}
 }
 

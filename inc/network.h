@@ -295,7 +295,7 @@ extern struct cache_entry *net_obj_find(uint32_t id);
 
 /*
  * This function will remove the objects from the object-cache and push them
- * into the object-table with the given dataset. Note that to prevent hacking,
+ * into the object-table with the given dataset. Note that to prevent spoffing,
  * the source-peer-id has to be equal to the peer-id from where the original
  * object-id came from.
  *
@@ -305,7 +305,7 @@ extern struct cache_entry *net_obj_find(uint32_t id);
  *
  * Returns: 0 on success or -1 if an error occurred
  */
-extern int net_obj_submit(void *ptr, uint32_t ts, short num, uint32_t src);
+extern int net_obj_submit(void *ptr, uint32_t src);
 
 
 /*

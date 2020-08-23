@@ -320,7 +320,7 @@ extern int obj_collect(uint16_t flg, void *in, short in_num, void **out,
 }
 
 
-extern int obj_submit(void *in, int64_t ts)
+extern int obj_submit(void *in)
 {
 	uint32_t id;
 	uint32_t mask;
@@ -328,10 +328,13 @@ extern int obj_submit(void *in, int64_t ts)
 	short slot;
 	short mdl;
 	char *ptr = in;
+	uint32_t ts;
 
-	memcpy(&id,   ptr,       4);
-	memcpy(&mask, ptr +  4,  4);
-	memcpy(pos,   ptr +  8, 12);
+	/* Extract data from the packet */
+	memcpy(&ts,    ptr,        4);
+	memcpy(&id,    ptr +   4,  4);
+	memcpy(&mask,  ptr +   8,  4);
+	memcpy(pos,    ptr +  12, 12);
 
 	mdl = mdl_get("plr");
 
@@ -349,7 +352,7 @@ extern int obj_submit(void *in, int64_t ts)
 }
 
 
-extern int obj_add_inputs(uint32_t ts, void *in)
+extern int obj_add_inputs(void *in)
 {
 	uint32_t id;
 
@@ -361,19 +364,23 @@ extern int obj_add_inputs(uint32_t ts, void *in)
 	uint8_t off;
 	vec2_t mov;
 	uint16_t act = 0;
+	uint32_t ts;
 
 	char *ptr = in;
 
+	/* Extract timestamp */
+	memcpy(&ts, ptr, 4);
+
 	/* Extract general information */
-	memcpy(&id,   ptr,  4);
-	memcpy(&num,  ptr + 4,  2);
+	memcpy(&id,   ptr + 4,  4);
+	memcpy(&num,  ptr + 8,  2);
 
 	/* Get the slot of the object */
 	if((slot = obj_sel_id(id)) < 0)
 		return -1;
 
 	/* Update pointer-position */
-	ptr += 6;
+	ptr += 10;
 
 	for(i = 0; i < num; i++) {
 		memcpy(&mask, ptr, 4);
@@ -397,7 +404,8 @@ extern int obj_add_inputs(uint32_t ts, void *in)
 }
 
 
-extern int obj_add_input(short slot, uint32_t mask, uint32_t ts, vec2_t mov, uint16_t act)
+extern int obj_add_input(short slot, uint32_t mask, uint32_t ts, vec2_t mov,
+		uint16_t act)
 {		
 	short inp_slot;
 
@@ -419,6 +427,12 @@ extern int obj_add_input(short slot, uint32_t mask, uint32_t ts, vec2_t mov, uin
 	/* Increment input-counter */
 	objects.inp[slot].num++;
 	return 0;
+}
+
+
+extern int obj_update(void *in)
+{
+	
 }
 
 

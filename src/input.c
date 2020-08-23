@@ -138,7 +138,7 @@ extern int inp_col_share(char *buf)
 	int written = 0;
 	uint8_t off = 0;
 	uint8_t tmp;
-	int32_t ts;
+	uint32_t ts;
 
 	if((num = input.share.num) < 1)
 		return 0;

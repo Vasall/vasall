@@ -278,6 +278,7 @@ static int peer_hdl_ins(struct req_hdr *hdr, struct lcp_evt *evt,
 
 	struct timeval serv_ti;
 	struct timeval loc_ti;
+	uint32_t titmp;
 	uint32_t tdel;
 
 	if(hdr||evt||len){/* Prevent warning for not using parameters */}
@@ -304,11 +305,12 @@ static int peer_hdl_ins(struct req_hdr *hdr, struct lcp_evt *evt,
 		memcpy(&serv_ti.tv_usec, ptr + 29, 8);
 
 		gettimeofday(&loc_ti, NULL);
+		titmp = SDL_GetTicks();
+
+		/* Calculate difference to server-time */
 		tdel = (loc_ti.tv_sec - serv_ti.tv_sec) * 1000;
 		tdel += (loc_ti.tv_usec - serv_ti.tv_usec) / 1000;
-		tdel -= net_gettime();
-
-		network.time_del = floor(tdel / TICK_TIME) * TICK_TIME;
+		network.time_del = titmp - tdel;
 
 		/* Insert object into object-table */
 		id = network.id;
@@ -542,32 +544,19 @@ static int peer_hdl_get(struct req_hdr *hdr, struct lcp_evt *evt,
 static int peer_hdl_sbm(struct req_hdr *hdr, struct lcp_evt *evt,
 		char *ptr, int len)
 {
-	short num;
-	uint32_t ts;
-
 	if(evt||len){/* Prevent warning for not using parameters */}
 
-	memcpy(&ts, ptr, 4);
-	ts -= network.time_del;
-
-	memcpy(&num, ptr + 4, 2);
-
 	/* Submit list of objects */
-	return net_obj_submit(ptr + 6, ts, num, hdr->src_id);
+	return net_obj_submit(ptr, hdr->src_id);
 }
 
 static int peer_hdl_upd(struct req_hdr *hdr, struct lcp_evt *evt,
 		char *ptr, int len)
 {
-	uint32_t ts;
-
 	if(hdr||evt||len){/* Prevent warning for not using parameters */}
-
-	ts = *(uint32_t *)ptr;
-	ts -= network.time_del;
-
+		
 	/* Update the object */
-	return obj_add_inputs(ts, ptr + 4);
+	return obj_add_inputs(ptr);
 }
 
 static int peer_hdl_syn(struct req_hdr *hdr, struct lcp_evt *evt,
@@ -966,14 +955,23 @@ extern struct cache_entry *net_obj_find(uint32_t id)
 }
 
 
-extern int net_obj_submit(void *ptr, uint32_t ts, short num, uint32_t src)
+extern int net_obj_submit(void *ptr, uint32_t src)
 {
 	short i;
+	uint32_t ts;
+	short num;
 	uint32_t obj_id;
 	struct cache_entry *ent;
 	struct cache_entry *prev;
 	char *buf_ptr;
 	short src_slot;
+
+	/* Extract data from the packet */
+	memcpy(&ts, (char *)ptr, 4);
+	memcpy(&num, (char *)ptr + 4, 2);
+
+	/* Update the pointer */
+	ptr = (char *)ptr + 6;
 
 	/* Get the slot of the peer */
 	if((src_slot = net_peer_sel_id(&src)) < 0)
@@ -992,7 +990,7 @@ extern int net_obj_submit(void *ptr, uint32_t ts, short num, uint32_t src)
 				continue;
 
 			/* Push the objects into the object-table */
-			obj_submit(buf_ptr, ts);
+			obj_submit(buf_ptr);
 
 			/* Remove the object from the object-cache */
 			if((prev = ent->prev) == NULL)

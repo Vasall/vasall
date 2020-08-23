@@ -43,40 +43,50 @@ struct object_inputs {
 	uint16_t     act[OBJ_INPUT_SLOTS];
 };
 
+struct comp_marker {
+	uint32_t     ts;
+	vec3_t       pos;
+	vec3_t       vel;
+};
+
 struct object_table {
 	short num;
 	
-	uint32_t   mask[OBJ_SLOTS];
-	uint32_t   id[OBJ_SLOTS];
+	uint32_t              mask[OBJ_SLOTS];
+	uint32_t              id[OBJ_SLOTS];
 	
-	vec3_t     pos[OBJ_SLOTS];
-	vec3_t     vel[OBJ_SLOTS];
+	vec3_t                pos[OBJ_SLOTS];
+	vec3_t                vel[OBJ_SLOTS];
 
-	vec3_t     dir[OBJ_SLOTS];
-	short      model[OBJ_SLOTS];
-	short      anim[OBJ_SLOTS];
-	float      prog[OBJ_SLOTS];
-	mat4_t     mat[OBJ_SLOTS];
+	vec3_t                dir[OBJ_SLOTS];
+	short                 model[OBJ_SLOTS];
+	short                 anim[OBJ_SLOTS];
+	float                 prog[OBJ_SLOTS];
+	mat4_t                mat[OBJ_SLOTS];
 
-	int        len[OBJ_SLOTS];
-	char       buf[OBJ_SLOTS][OBJ_DATA_MAX];
+	/* Object/Player-Data like Health and Mana */
+	int                   len[OBJ_SLOTS];
+	char                  buf[OBJ_SLOTS][OBJ_DATA_MAX];
 
 	/* Vars used for interpolation */
-	vec3_t     prev_pos[OBJ_SLOTS];
-	vec3_t     prev_dir[OBJ_SLOTS];
+	vec3_t                prev_pos[OBJ_SLOTS];
+	vec3_t                prev_dir[OBJ_SLOTS];
 
 	/* Vars used to store most recent input */
-	vec2_t     mov[OBJ_SLOTS];
-	uint16_t   act[OBJ_SLOTS];
+	vec2_t                mov[OBJ_SLOTS];
+	uint16_t              act[OBJ_SLOTS];
 
 	/* Buffer containing all recent inputs */
 	struct object_inputs  inp[OBJ_SLOTS];
 
-	uint32_t   last_ack_ts[OBJ_SLOTS];
-	uint32_t   last_upd_ts[OBJ_SLOTS];
+	/* Next comparison-marker used for maintain synchronicity */
+	struct comp_marker    mark[OBJ_SLOTS];
 
-	vec3_t     last_pos[OBJ_SLOTS];
-	vec3_t     last_vel[OBJ_SLOTS];
+	uint32_t              last_ack_ts[OBJ_SLOTS];
+	uint32_t              last_upd_ts[OBJ_SLOTS];
+
+	vec3_t                last_pos[OBJ_SLOTS];
+	vec3_t                last_vel[OBJ_SLOTS];
 };
 
 
@@ -175,8 +185,8 @@ extern int obj_list(void *ptr, short *num, short max);
  *
  * @in: The list of ids to collect the data for
  * @in_num: The number of ids
- * @out: A ponter to attach the data to
- * @
+ * @out: A pointer to attach the object-data to
+ * @out_num: A pointer to write the number of returned objects to
  *
  * Returns: The number of bytes written to out or -1 if an error occurred
  */
@@ -192,17 +202,18 @@ extern int obj_collect(uint16_t flg, void *in, short in_num, void **out,
  *
  * Returns: 0 on success or -1 if an error occurred
  */
-extern int obj_submit(void *in, int64_t ts);
+extern int obj_submit(void *in);
 
 
 /*
  * Extract inputs from a received packet-buffer and add them to the dedicated
  * objects.
  *
- * @ts: The timestamp converted to local time
  * @in: The buffer containing the inputs
+ *
+ * Returns: 0 on success or -1 if an error ocurred
  */
-extern int obj_add_inputs(uint32_t ts, void *in);
+extern int obj_add_inputs(void *in);
 
 
 /*
@@ -210,19 +221,19 @@ extern int obj_add_inputs(uint32_t ts, void *in);
  *
  * @slot: The slot the objects is on in the object-table
  * @mask: The input-mask
- * @ts: The timestamp of the input
  * @mov: The move-vector if enabled in the mask, use NULL otherwise
  * @act: The action-mask if enabled in the mask, use NULL otherwise
  *
  * Returns: 0 on success or -1 if an error occurred
  */
-extern int obj_add_input(short slot, uint32_t mask, uint32_t ts, vec2_t mov, uint16_t act);
+extern int obj_add_input(short slot, uint32_t mask, uint32_t ts, vec2_t mov,
+		uint16_t act);
 
 
 /*
  * 
  */
-extern int obj_sync(uint32_t ts, void *in);
+extern int obj_update(void *in);
 
 
 /*

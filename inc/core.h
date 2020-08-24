@@ -15,8 +15,8 @@
 
 /* The updates-per-second */
 #define GAME_HERTZ       50
-#define TICK_TIME        (1000.0/GAME_HERTZ)
-#define TICK_TIME_S      (TICK_TIME/1000.0)
+#define TICK_TIME        (1000/GAME_HERTZ)
+#define TICK_TIME_S      ((double)TICK_TIME/1000.0)
 #define MAX_UPDATE_NUM   5
 
 /* The shares-per-second */
@@ -40,7 +40,7 @@ struct core_wrapper {
 
 	short obj;
 
-	uint32_t ts_now;
+	uint32_t now_ts;
 };
 
 

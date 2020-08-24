@@ -62,7 +62,7 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 	uint32_t ts;
 
 	/* Get current timestamp */
-	ts = net_gettime();
+	ts = core.now_ts;
 
 	/* Get slot to place object on */
 	if((slot = obj_get_slot()) < 0)
@@ -477,7 +477,7 @@ extern void obj_sys_input(void)
 	vec3_t acl;
 	vec3_t del;
 
-	ti = net_gettime();
+	ti = core.now_ts;
 
 	for(i = 0; i < OBJ_SLOTS; i++) {
 		if(objects.inp[i].num < 1)
@@ -560,8 +560,6 @@ extern void obj_sys_input(void)
 				lim_ti = core.last_upd_ts;
 		}
 	}
-
-	printf("Input took milliseconds: %u\n", net_gettime() - ti);
 }
 
 extern void obj_sys_update(void)
@@ -580,7 +578,7 @@ extern void obj_sys_update(void)
 	float t_speed = 4.0;
 	float tmp = TICK_TIME_S * t_speed;
 
-	ts = net_gettime();
+	ts = core.now_ts;
 
 	for(i = 0; i < OBJ_SLOTS; i++) {
 		if((objects.mask[i] & OBJ_M_MOVE) == OBJ_M_MOVE) {

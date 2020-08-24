@@ -528,7 +528,7 @@ static int peer_hdl_get(struct req_hdr *hdr, struct lcp_evt *evt,
 	tmp = hdr_set(pck, HDR_OP_SBM, hdr->src_id, network.id, network.key);
 
 	/* Attach timestamp */
-	ts = net_gettime();
+	ts = core.now_ts;
 	memcpy(pck + tmp, &ts, 4);
 
 	/* Attach payload to packet */

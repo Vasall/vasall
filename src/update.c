@@ -139,7 +139,7 @@ static void game_proc_input(void)
 	/* If the movement direction has changed */
 	if(vec2_cmp(mov, input.mov_old) == 0) {
 		short num = input.share.num;
-		uint32_t ti = net_gettime();
+		uint32_t ti = core.now_ts;
 		uint8_t off = 0;
 
 		if(num < INPUT_SLOTS) {
@@ -181,10 +181,11 @@ void game_update(void)
 	int len = 1;
 	int tmp;
 
-	printf("%d: %u\n", c, now);
-	c++;
+	while((now - core.last_upd_ts) > TICK_TIME && count < MAX_UPDATE_NUM) {
+		/* Update timer */
+		core.now_ts = core.last_upd_ts;
+		core.last_upd_ts += TICK_TIME;
 
-	while(now - core.last_upd_ts > TICK_TIME && count < MAX_UPDATE_NUM) {	
 		/* Process the game-input and update objects */
 		game_proc_input();
 
@@ -194,59 +195,8 @@ void game_update(void)
 		/* Update the objects in the object-table */
 		obj_sys_update();
 
-		/* Update timer */
-		core.last_upd_ts += TICK_TIME;
-
 		/* Increment counter */
 		count++;
-	}
-
-	/* Send recent inputs on a regular basis */
-	if(now >= core.last_shr_ts) {
-		uint32_t cont_flg = 0;
-
-		/* Only send if something has changed */
-		if(input.share.num > 0) {
-			/* Set content-flag */
-			cont_flg |= (1<<0);
-
-			/* Collect all recent inputs */
-			len += inp_col_share(pck + len);
-		}
-
-		/* Attach object-position and velocity */
-		if(now >= core.last_syn_ts && 0) {
-			uint16_t flg = OBJ_A_ID | OBJ_A_POS | OBJ_A_VEL | OBJ_A_MOV;
-			uint32_t ts;
-			void *ptr;
-
-			/* Set content-flag */
-			cont_flg |= (1<<1);
-
-			/* Collect current data of the objects */
-			tmp = obj_collect(flg, &objects.id[core.obj], 1, &ptr, NULL);
-			memcpy(pck + len + 4, ptr, tmp);
-			free(ptr);
-
-			/* Add timestamp */
-			ts = now - network.time_del; 
-			memcpy(pck, &ts, 4);
-
-			/* Update packet-length */
-			len += tmp + 4;
-
-			/* Update timer */
-			core.last_syn_ts = now + SYNC_TIME;
-		}
-
-		/* Insert the content-flags */
-		pck[0] = cont_flg;
-
-		/* Send packet */
-		net_broadcast(HDR_OP_UPD, pck, len);
-
-		/* Update timer */
-		core.last_shr_ts = now + SHARE_TIME;
 	}
 }
 
@@ -254,7 +204,6 @@ void game_render(void)
 {
 	uint32_t now = net_gettime();
 	float interp = MIN(1.0, (float)((now - core.last_ren_ts) / TICK_TIME));
-
 
 	/* Update the camera-position */
 	cam_update();

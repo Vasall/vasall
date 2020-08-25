@@ -54,15 +54,11 @@ static int obj_check_slot(short slot)
 
 
 extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
-		char *data, int len)
+		char *data, int len, uint32_t ts)
 {
 	short slot;
 	float x;
 	float z;
-	uint32_t ts;
-
-	/* Get current timestamp */
-	ts = core.now_ts;
 
 	/* Get slot to place object on */
 	if((slot = obj_get_slot()) < 0)
@@ -106,7 +102,7 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 	objects.act[slot] = 0;
 
 	/* Set last update-time */
-	objects.last_ack_ts[slot] = 0;
+	objects.last_ack_ts[slot] = ts;
 	objects.last_upd_ts[slot] = ts;
 
 	/* Set last acknowledged positio */
@@ -338,14 +334,11 @@ extern int obj_submit(void *in)
 
 	mdl = mdl_get("plr");
 
-	if((slot = obj_set(id, mask, pos, mdl, NULL, 0)) < 0)
+	if((slot = obj_set(id, mask, pos, mdl, NULL, 0, ts)) < 0)
 		return -1;
 
 	vec3_cpy(objects.vel[slot], (float *)(ptr + 20));
 	vec2_cpy(objects.mov[slot], (float *)(ptr + 32));
-
-	objects.last_ack_ts[slot] = ts;
-	objects.last_upd_ts[slot] = ts;
 
 	vec3_cpy(objects.last_vel[slot], (float *)(ptr + 20));
 	return 0;
@@ -432,7 +425,122 @@ extern int obj_add_input(short slot, uint32_t mask, uint32_t ts, vec2_t mov,
 
 extern int obj_update(void *in)
 {
-	
+
+}
+
+
+extern void obj_move(short slot)
+{
+	uint32_t mask;
+	vec3_t pos;
+	vec3_t vel;
+	vec3_t acl;
+	vec3_t del;
+	vec3_t prev;
+	vec2_t mov;
+	vec3_t dir;
+	float t_speed = 4.0;
+
+	uint32_t lim_ts;
+	uint32_t run_ts;
+
+	short inp_i;
+	short inp_num;
+
+
+	/* Get object-data to current state */	
+	if(objects.inp[slot].num > 0) {
+		vec3_cpy(pos, objects.last_pos[slot]);
+		vec3_cpy(vel, objects.last_vel[slot]);
+
+		lim_ts = objects.inp[slot].ts[0];
+		run_ts = objects.last_ack_ts[slot];
+	}
+	else {
+		vec3_cpy(pos, objects.pos[slot]);
+		vec3_cpy(vel, objects.vel[slot]);
+
+		lim_ts = core.now_ts;
+		run_ts = objects.last_upd_ts[slot];
+	}
+
+	vec2_cpy(mov, objects.mov[slot]);
+
+
+	inp_i = -1;
+	inp_num = objects.inp[slot].num;
+
+	while(1) {
+		while(run_ts < lim_ts) {
+			/* Friction */
+			vec3_scl(vel, (1.0 - TICK_TIME_S * t_speed), vel);
+
+			/* Acceleration */
+			vec3_set(acl, mov[0], 0, mov[1]);
+			vec3_scl(acl, 6, acl);
+			vec3_scl(acl, (TICK_TIME_S * t_speed), acl);
+
+			/* Update velocity of the player-object */
+			vec3_add(vel, acl, vel);
+				
+			vec3_scl(vel, TICK_TIME_S, del);
+
+			vec3_cpy(prev, pos);
+			vec3_add(pos, del, pos);
+
+			/* Limit space */
+			if(ABS(pos[0]) > 32.0) {
+				pos[0] = 32.0 * SIGN(pos[0]);
+				vel[0] = 0;
+			}
+
+			if(ABS(pos[2]) > 32.0) {
+				pos[2] = 32.0 * SIGN(pos[2]);
+				vel[2] = 0;
+			}
+
+			if(ABS(vel[0] + vel[1]) >= 0.0004)
+				vec3_nrm(vel, dir);
+
+			run_ts += TICK_TIME;
+		}
+
+		inp_i++;
+		if(inp_i >= inp_num) {	
+			objects.inp[slot].num = 0;
+
+			/* Save last position */
+			vec3_cpy(objects.prev_pos[slot], objects.pos[slot]);
+			vec3_cpy(objects.prev_dir[slot], objects.dir[slot]);
+
+			vec3_cpy(objects.pos[slot], pos);
+			vec3_cpy(objects.vel[slot], vel);
+			vec2_cpy(objects.mov[slot], mov);
+			vec3_cpy(objects.dir[slot], dir);
+
+			if(inp_num > 0) {
+				vec3_cpy(objects.prev_pos[slot], prev);
+
+				vec3_cpy(objects.last_pos[slot], pos);
+				vec3_cpy(objects.last_vel[slot], vel);
+				objects.last_ack_ts[slot] = run_ts;
+			}
+
+			return;
+		}
+
+		mask = objects.inp[slot].mask[inp_i];
+
+		if(mask & INP_M_MOV) {
+			vec2_cpy(mov, objects.inp[slot].mov[inp_i]);
+		}
+
+
+		if(inp_i + 1 < inp_num)
+			lim_ts = objects.inp[slot].ts[inp_i + 1];
+		else
+			lim_ts = core.now_ts;
+	}
 }
 
 
@@ -452,199 +560,50 @@ extern void obj_print(short slot)
  * object-systems
  */
 
-extern void obj_sys_input(void)
-{
-	short i;
-
-	float t_speed = 4.0;
-
-	short inp_i;
-	short inp_num;
-
-	uint32_t mask;
-
-	uint32_t ti;
-	uint32_t lim_ti;
-	uint32_t cur_ti;
-	vec3_t pos;
-	vec3_t vel;
-	vec2_t mov;
-
-	vec3_t dir;
-
-	vec3_t prev;
-
-	vec3_t acl;
-	vec3_t del;
-
-	ti = core.now_ts;
-
-	for(i = 0; i < OBJ_SLOTS; i++) {
-		if(objects.inp[i].num < 1)
-			continue;
-
-		/* Get object-data to current state */	
-		vec3_cpy(pos, objects.last_pos[i]);
-		vec3_cpy(vel, objects.last_vel[i]);
-		vec2_cpy(mov, objects.mov[i]);
-
-		lim_ti = objects.inp[i].ts[0];
-		cur_ti = objects.last_ack_ts[i];
-
-		inp_i = -1;
-		inp_num = objects.inp[i].num;
-
-		while(1) {
-			while(cur_ti < lim_ti) {
-				/* Friction */
-				vec3_scl(vel, (1.0 - TICK_TIME_S * t_speed), vel);
-
-				/* Acceleration */
-				vec3_set(acl, mov[0], 0, mov[1]);
-				vec3_scl(acl, 6, acl);
-				vec3_scl(acl, (TICK_TIME_S * t_speed), acl);
-
-				/* Update velocity of the player-object */
-				vec3_add(vel, acl, vel);
-
-				vec3_scl(vel, TICK_TIME_S, del);
-
-				vec3_cpy(prev, pos);
-				vec3_add(pos, del, pos);
-
-				if(ABS(pos[0]) > 32.0) {
-					pos[0] = 32.0 * SIGN(pos[0]);
-					vel[0] = 0;
-				}
-
-				if(ABS(pos[2]) > 32.0) {
-					pos[2] = 32.0 * SIGN(pos[2]);
-					vel[2] = 0;
-				}
-
-
-				if(ABS(vel[0] + vel[1]) >= 0.0004)
-					vec3_nrm(vel, dir);
-
-				cur_ti += TICK_TIME;
-			}
-
-			vec3_cpy(objects.pos[i], pos);
-			vec3_cpy(objects.vel[i], vel);
-			vec2_cpy(objects.mov[i], mov);
-			vec3_cpy(objects.dir[i], dir);
-			/* TODO Check if this is better
-			 * vec3_cpy(objects.prev_pos[i], prev);*/
-
-			inp_i++;
-			if(inp_i >= inp_num) {	
-				objects.inp[i].num = 0;
-
-				vec3_cpy(objects.last_pos[i], pos);
-				vec3_cpy(objects.last_vel[i], vel);
-
-				objects.last_ack_ts[i] = cur_ti;
-				objects.last_upd_ts[i] = cur_ti;
-				break;
-			}
-
-			mask = objects.inp[i].mask[inp_i];
-
-			if(mask & INP_M_MOV)
-				vec2_cpy(mov, objects.inp[i].mov[inp_i]);
-
-
-			if(inp_i + 1 < inp_num)
-				lim_ti = objects.inp[i].ts[inp_i + 1];
-			else
-				lim_ti = core.last_upd_ts;
-		}
-	}
-}
-
 extern void obj_sys_update(void)
 {
 	int i;
-	uint32_t ts;
-
-	vec3_t pos;
-	vec3_t vel;
-
-	vec3_t acl;
-	vec3_t del;
-
-	vec3_t prev;
-
-	float t_speed = 4.0;
-	float tmp = TICK_TIME_S * t_speed;
-
-	ts = core.now_ts;
+	uint32_t ts = core.now_ts;
 
 	for(i = 0; i < OBJ_SLOTS; i++) {
-		if((objects.mask[i] & OBJ_M_MOVE) == OBJ_M_MOVE) {
-			vec3_cpy(pos, objects.pos[i]);
-			vec3_cpy(vel, objects.vel[i]);
-			vec3_cpy_v2(acl, objects.mov[i]);
-
-			/* Calculate friction */
-			vec3_scl(vel, (1.0 - tmp), vel);
-
-			/* Calculate acceleration */
-			vec3_scl(acl, 6.0, acl);
-			vec3_scl(acl, tmp, acl);
-
-			/* Update velocity of the player-object */
-			vec3_add(vel, acl, vel);
-
-			/* Get position-delta and move object */
-			vec3_scl(vel, TICK_TIME_S, del);
-			vec3_cpy(prev, pos);
-			vec3_add(pos, del, pos);
-
-			if(ABS(pos[0]) > 32.0) {
-				pos[0] = 32.0 * SIGN(pos[0]);
-				vel[0] = 0;
-			}
-
-			if(ABS(pos[2]) > 32.0) {
-				pos[2] = 32.0 * SIGN(pos[2]);
-				vel[2] = 0;
-			}
-
-			vec3_cpy(objects.pos[i], pos);
-			vec3_cpy(objects.vel[i], vel);
-			vec3_cpy(objects.prev_pos[i], prev);
-
-			if(ABS(vel[0] + vel[1]) >= 0.0004) {
-				vec3_cpy(objects.prev_dir[i], objects.dir[i]);
-				vec3_nrm(vel, objects.dir[i]);
-			}
-		}
+		if((objects.mask[i] & OBJ_M_MOVE) == OBJ_M_MOVE)
+			obj_move(i);
 
 		objects.last_upd_ts[i] = ts;
 	}
 }
 
 
-extern void obj_sys_render(float interp)
+extern void obj_sys_prerender(float interp)
 {
 	int i;
 	vec3_t del;
-	vec3_t pos;
-	vec3_t dir;
-	float rot;
-
-	if(interp) {/* Prevent warning for not using parameters */}
 
 	for(i = 0; i < OBJ_SLOTS; i++) {
 		if((objects.mask[i] & OBJ_M_MODEL) == OBJ_M_MODEL) {
 			vec3_sub(objects.pos[i], objects.prev_pos[i], del);
 			vec3_scl(del, interp, del);
-			vec3_add(objects.pos[i], del, pos);
+			vec3_add(objects.prev_pos[i], del, objects.ren_pos[i]);
 
 			vec3_sub(objects.dir[i], objects.prev_dir[i], del);
 			vec3_scl(del, interp, del);
-			vec3_add(objects.dir[i], del, dir);
+			vec3_add(objects.prev_dir[i], del, objects.ren_dir[i]);
+		}
+	}
+}
+
+
+extern void obj_sys_render(void)
+{
+	int i;
+	vec3_t pos;
+	vec3_t dir;
+	float rot;
+
+	for(i = 0; i < OBJ_SLOTS; i++) {
+		if((objects.mask[i] & OBJ_M_MODEL) == OBJ_M_MODEL) {
+			vec3_cpy(pos, objects.ren_pos[i]);
+			vec3_cpy(dir, objects.ren_dir[i]);
 
 			/* Set the position of the model */
 			objects.mat[i][0xc] = pos[0];

@@ -275,6 +275,7 @@ static int peer_hdl_ins(struct req_hdr *hdr, struct lcp_evt *evt,
 	int mdl;
 	short slot;
 	short peer_num;
+	uint32_t ts;
 
 	struct timeval serv_ti;
 	struct timeval loc_ti;
@@ -318,7 +319,8 @@ static int peer_hdl_ins(struct req_hdr *hdr, struct lcp_evt *evt,
 		mask = OBJ_M_PLAYER;
 		mdl = mdl_get("plr");
 
-		if((slot = obj_set(id, mask, pos, mdl, NULL, 0)) < 0) {
+		ts = net_getstep();
+		if((slot = obj_set(id, mask, pos, mdl, NULL, 0, ts)) < 0) {
 			/* Run callback-function */
 			if(network.on_failed != NULL)
 				network.on_failed(NULL, 0);
@@ -1013,4 +1015,10 @@ extern int net_obj_submit(void *ptr, uint32_t src)
 extern uint32_t net_gettime(void)
 {
 	return SDL_GetTicks() + network.time_del; 
+}
+
+
+extern uint32_t net_getstep(void)
+{
+	return (net_gettime() / TICK_TIME) * TICK_TIME;
 }

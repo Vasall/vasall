@@ -58,7 +58,9 @@ struct object_table {
 	vec3_t                pos[OBJ_SLOTS];
 	vec3_t                vel[OBJ_SLOTS];
 
+	vec3_t                ren_pos[OBJ_SLOTS];
 	vec3_t                dir[OBJ_SLOTS];
+	vec3_t                ren_dir[OBJ_SLOTS];
 	short                 model[OBJ_SLOTS];
 	short                 anim[OBJ_SLOTS];
 	float                 prog[OBJ_SLOTS];
@@ -117,11 +119,12 @@ extern void obj_close(void);
  * @model: The slot of the model in the model-table
  * @data: A buffer containing additional data
  * @len: The length of the data-buffer in bytes
+ * @ts: The timestamp of the objects creation
  *
  * Returns: The index of the object in the object-table
  */
 extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
-		char *data, int len);
+		char *data, int len, uint32_t ts);
 
 
 /*
@@ -237,17 +240,17 @@ extern int obj_update(void *in);
 
 
 /*
+ * 
+ */
+extern void obj_move(short slot);
+
+
+/*
  * Print data about an object in the terminal.
  *
  * @slot: The slot of the object
  */
 extern void obj_print(short slot);
-
-
-/*
- * 
- */
-extern void obj_sys_input(void);
 
 
 /*
@@ -257,10 +260,15 @@ extern void obj_sys_update(void);
 
 
 /*
- * Render all objects in the object-table.
+ * Calculate the render-position of all objects.
  *
  * @interp: The interpolation-factor
  */
-extern void obj_sys_render(float interp);
+extern void obj_sys_prerender(float interp);
+
+/*
+ * Render the models attached to the objects on the screen.
+ */
+extern void obj_sys_render(void);
 
 #endif

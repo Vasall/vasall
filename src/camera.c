@@ -247,7 +247,7 @@ extern void cam_update(void)
 		vec3_t pos;
 		vec3_t tmp;
 
-		vec3_cpy(pos, objects.pos[camera.trg_obj]);
+		vec3_cpy(pos, objects.ren_pos[camera.trg_obj]);
 		vec3_scl(camera.forward, camera.dist, tmp);
 		vec3_add(pos, tmp, camera.pos);
 	}

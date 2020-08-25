@@ -324,4 +324,12 @@ extern int net_obj_update(void);
  */
 extern uint32_t net_gettime(void);
 
+
+/*
+ * Get the time rounded to a full step of the ticktime.
+ *
+ * Returns: The rounded time
+ */
+extern uint32_t net_getstep(void);
+
 #endif

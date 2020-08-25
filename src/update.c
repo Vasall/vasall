@@ -172,14 +172,11 @@ static void game_proc_input(void)
 
 void game_update(void)
 {
-	static int c = 0;
-
 	/* Get the current time */
 	uint32_t now = net_gettime();
 	int count = 0;
 	char pck[512];
-	int len = 1;
-	int tmp;
+	int len;
 
 	while((now - core.last_upd_ts) > TICK_TIME && count < MAX_UPDATE_NUM) {
 		/* Update timer */
@@ -189,21 +186,40 @@ void game_update(void)
 		/* Process the game-input and update objects */
 		game_proc_input();
 
-		/* Process object-inputs */
-		obj_sys_input();
-
 		/* Update the objects in the object-table */
 		obj_sys_update();
 
 		/* Increment counter */
 		count++;
 	}
+
+	if(now >= core.last_shr_ts) {
+		/* Only send if something has changed */
+		if(input.share.num > 0) {
+			/* Collect all recent inputs */
+			len = inp_col_share(pck);
+
+			/* Send packet */
+#if 0
+			net_broadcast(HDR_OP_UPD, pck, tmp);
+#endif
+		}
+
+		/* Update timer */
+		core.last_shr_ts = now + SHARE_TIME;
+	}
 }
 
 void game_render(void)
 {
 	uint32_t now = net_gettime();
-	float interp = MIN(1.0, (float)((now - core.last_ren_ts) / TICK_TIME));
+	float interp = (float)(now - core.last_ren_ts) / (float)TICK_TIME;
+
+	/* Update timer */
+	core.last_ren_ts = now;
+
+	/* Interpolate the positions of the objects */
+	obj_sys_prerender(interp);
 
 	/* Update the camera-position */
 	cam_update();
@@ -212,8 +228,5 @@ void game_render(void)
 	wld_render(interp);
 
 	/* Render the objects */
-	obj_sys_render(interp);
-
-	/* Update timer */
-	core.last_ren_ts = now;
+	obj_sys_render();
 }

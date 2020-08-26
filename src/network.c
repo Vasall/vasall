@@ -311,7 +311,9 @@ static int peer_hdl_ins(struct req_hdr *hdr, struct lcp_evt *evt,
 		/* Calculate difference to server-time */
 		tdel = (loc_ti.tv_sec - serv_ti.tv_sec) * 1000;
 		tdel += (loc_ti.tv_usec - serv_ti.tv_usec) / 1000;
-		network.time_del = titmp - tdel;
+		network.time_del = tdel - titmp;
+
+		printf("Timedelta: %u\n", tdel);
 
 		/* Insert object into object-table */
 		id = network.id;

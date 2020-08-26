@@ -143,7 +143,7 @@ extern int inp_col_share(char *buf)
 	if((num = input.share.num) < 1)
 		return 0;
 
-	ts = input.share.timer + network.time_del;
+	ts = input.share.timer;
 	
 	memcpy(buf, &ts, 4);
 	memcpy(buf + 4, &input.share.obj, 4);

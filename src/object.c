@@ -354,6 +354,8 @@ extern int obj_add_input(short slot, uint32_t mask, uint32_t ts, vec2_t mov,
 	if(obj_check_slot(slot))
 		return -1;
 
+	printf("Timestamp: %u\n", ts);
+
 	/* Get index to place input on */
 	inp_slot = objects.inp[slot].num;
 
@@ -591,6 +593,13 @@ extern void obj_move(short slot)
 			vec2_cpy(mov, objects.inp[slot].mov[inp_i]);
 		}
 
+#if 0
+		printf("%u: pos(", run_ts);
+		vec3_print(pos);
+		printf("), mov(");
+		vec2_print(mov);
+		printf(")\n");
+#endif
 
 		if(inp_i + 1 < inp_num)
 			lim_ts = objects.inp[slot].ts[inp_i + 1];

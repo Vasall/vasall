@@ -47,6 +47,7 @@ struct comp_marker {
 	uint32_t     ts;
 	vec3_t       pos;
 	vec3_t       vel;
+	vec2_t       mov;
 };
 
 struct object_table {
@@ -82,6 +83,7 @@ struct object_table {
 	struct object_inputs  inp[OBJ_SLOTS];
 
 	/* Next comparison-marker used for maintain synchronicity */
+	char                  mark_flg[OBJ_SLOTS];
 	struct comp_marker    mark[OBJ_SLOTS];
 
 	uint32_t              last_ack_ts[OBJ_SLOTS];
@@ -205,18 +207,7 @@ extern int obj_collect(uint16_t flg, void *in, short in_num, void **out,
  *
  * Returns: 0 on success or -1 if an error occurred
  */
-extern int obj_submit(void *in);
-
-
-/*
- * Extract inputs from a received packet-buffer and add them to the dedicated
- * objects.
- *
- * @in: The buffer containing the inputs
- *
- * Returns: 0 on success or -1 if an error ocurred
- */
-extern int obj_add_inputs(void *in);
+extern int obj_submit(void *in, uint32_t ts);
 
 
 /*

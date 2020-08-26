@@ -64,6 +64,8 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 	if((slot = obj_get_slot()) < 0)
 		return -1;
 
+	printf("Set mask %d\n", mask);
+
 	/* Copy the valued and initialize the attributes */
 	objects.mask[slot] = mask;
 	objects.id[slot] = id;
@@ -265,16 +267,16 @@ extern int obj_collect(uint16_t flg, void *in, short in_num, void **out,
 
 			/* Copy the position */
 			if(flg & OBJ_A_POS) {
-				memcpy(ptr, objects.pos[slot], 12);
-				ptr += 12;
-				written += 12;
+				vec3_cpy((float *)ptr, objects.pos[slot]);
+				ptr += VEC3_SIZE;
+				written += VEC3_SIZE;
 			}
 
 			/* Copy the velocity of the object */
 			if(flg & OBJ_A_VEL) {
-				memcpy(ptr, objects.vel[slot], 12);
-				ptr += 12;
-				written += 12;
+				vec3_cpy((float *)ptr, objects.vel[slot]);
+				ptr += VEC3_SIZE;
+				written += VEC3_SIZE;
 			}
 
 			/* Copy the mov-force of the object */
@@ -316,7 +318,7 @@ extern int obj_collect(uint16_t flg, void *in, short in_num, void **out,
 }
 
 
-extern int obj_submit(void *in)
+extern int obj_submit(void *in, uint32_t ts)
 {
 	uint32_t id;
 	uint32_t mask;
@@ -324,13 +326,11 @@ extern int obj_submit(void *in)
 	short slot;
 	short mdl;
 	char *ptr = in;
-	uint32_t ts;
 
 	/* Extract data from the packet */
-	memcpy(&ts,    ptr,        4);
-	memcpy(&id,    ptr +   4,  4);
-	memcpy(&mask,  ptr +   8,  4);
-	memcpy(pos,    ptr +  12, 12);
+	memcpy(&id,    ptr,       4);
+	memcpy(&mask,  ptr +  4,  4);
+	vec3_cpy(pos, (float *)(ptr +  8));
 
 	mdl = mdl_get("plr");
 
@@ -340,59 +340,8 @@ extern int obj_submit(void *in)
 	vec3_cpy(objects.vel[slot], (float *)(ptr + 20));
 	vec2_cpy(objects.mov[slot], (float *)(ptr + 32));
 
+	vec3_cpy(objects.last_pos[slot], (float *)(ptr + 8));
 	vec3_cpy(objects.last_vel[slot], (float *)(ptr + 20));
-	return 0;
-}
-
-
-extern int obj_add_inputs(void *in)
-{
-	uint32_t id;
-
-	short slot;
-	short i;
-	short num;
-
-	uint32_t mask;
-	uint8_t off;
-	vec2_t mov;
-	uint16_t act = 0;
-	uint32_t ts;
-
-	char *ptr = in;
-
-	/* Extract timestamp */
-	memcpy(&ts, ptr, 4);
-
-	/* Extract general information */
-	memcpy(&id,   ptr + 4,  4);
-	memcpy(&num,  ptr + 8,  2);
-
-	/* Get the slot of the object */
-	if((slot = obj_sel_id(id)) < 0)
-		return -1;
-
-	/* Update pointer-position */
-	ptr += 10;
-
-	for(i = 0; i < num; i++) {
-		memcpy(&mask, ptr, 4);
-		ptr += 4;
-
-		memcpy(&off, ptr, 1);
-		ptr += 1;
-
-		if(mask & INP_M_MOV) {
-			vec2_cpy(mov, (float *)ptr);
-			ptr += VEC2_SIZE;
-		}
-
-		/* Add a new input to the object */
-		obj_add_input(slot, mask, ts, mov, act);
-
-		/* Update timestamp */
-		ts += off;
-	}
 	return 0;
 }
 
@@ -423,9 +372,118 @@ extern int obj_add_input(short slot, uint32_t mask, uint32_t ts, vec2_t mov,
 }
 
 
+static int obj_add_inputs(void *in)
+{
+	uint32_t id;
+
+	short slot;
+	short i;
+	short num;
+
+	uint32_t mask;
+	uint8_t off;
+	vec2_t mov;
+	uint16_t act = 0;
+	uint32_t ts;
+
+	char *ptr = in;
+	int read = 0;
+
+	/* Extract timestamp */
+	memcpy(&ts, ptr, 4);
+
+	/* Extract general information */
+	memcpy(&id,   ptr + 4,  4);
+	memcpy(&num,  ptr + 8,  2);
+
+	/* Get the slot of the object */
+	if((slot = obj_sel_id(id)) < 0)
+		return 0;
+
+	/* Update pointer-position */
+	ptr += 10;
+	read += 10;
+
+	for(i = 0; i < num; i++) {
+		memcpy(&mask, ptr, 4);
+		ptr += 4;
+
+		memcpy(&off, ptr, 1);
+		ptr += 1;
+
+		if(mask & INP_M_MOV) {
+			vec2_cpy(mov, (float *)ptr);
+			ptr += VEC2_SIZE;
+		}
+
+		/* Add a new input to the object */
+		obj_add_input(slot, mask, ts, mov, act);
+
+		/* Update timestamp */
+		ts += off;
+
+		read += 13;
+	}
+
+	return read;
+}
+
+static int obj_set_marker(void *in)
+{
+	uint32_t ts;
+	uint32_t id;
+	short slot;
+	char *ptr = in;
+
+	memcpy(&ts, ptr, 4);
+	ptr += 4;
+
+	memcpy(&id, ptr, 4);
+	ptr += 4;
+
+	if((slot = obj_sel_id(id)) < 0)
+		return -1;
+
+	objects.mark_flg[slot] = 1;
+
+	memcpy(&objects.mark[slot].ts, &ts, 4);
+
+	vec3_cpy(objects.mark[slot].pos, (float *)ptr);
+	ptr += 12;
+
+	vec3_cpy(objects.mark[slot].vel, (float *)ptr);
+	ptr += 12;
+
+	vec2_cpy(objects.mark[slot].mov, (float *)ptr);
+	ptr += 8;
+
+	return 0;
+}
+
 extern int obj_update(void *in)
 {
+	char *ptr = in;
+	uint8_t flg;
+	int tmp;
 
+	memcpy(&flg, ptr, 1);
+	ptr += 1;
+
+	/* Add inputs */
+	if(flg & (1<<0)) {
+		if((tmp = obj_add_inputs(ptr)) < 1)
+			return -1;
+
+		ptr += tmp;
+	}
+
+	/* Set marker */
+	if(flg & (1<<1)) {
+		if((obj_set_marker(ptr)) < 0)
+			return -1;
+	}
+
+	return 0;
 }
 
 
@@ -519,8 +577,6 @@ extern void obj_move(short slot)
 			vec3_cpy(objects.dir[slot], dir);
 
 			if(inp_num > 0) {
-				vec3_cpy(objects.prev_pos[slot], prev);
-
 				vec3_cpy(objects.last_pos[slot], pos);
 				vec3_cpy(objects.last_vel[slot], vel);
 				objects.last_ack_ts[slot] = run_ts;
@@ -580,7 +636,7 @@ extern void obj_sys_prerender(float interp)
 	vec3_t del;
 
 	for(i = 0; i < OBJ_SLOTS; i++) {
-		if((objects.mask[i] & OBJ_M_MODEL) == OBJ_M_MODEL) {
+		if(objects.mask[i] & OBJ_M_MODEL) {
 			vec3_sub(objects.pos[i], objects.prev_pos[i], del);
 			vec3_scl(del, interp, del);
 			vec3_add(objects.prev_pos[i], del, objects.ren_pos[i]);
@@ -601,7 +657,7 @@ extern void obj_sys_render(void)
 	float rot;
 
 	for(i = 0; i < OBJ_SLOTS; i++) {
-		if((objects.mask[i] & OBJ_M_MODEL) == OBJ_M_MODEL) {
+		if(objects.mask[i] & OBJ_M_MODEL) {
 			vec3_cpy(pos, objects.ren_pos[i]);
 			vec3_cpy(dir, objects.ren_dir[i]);
 

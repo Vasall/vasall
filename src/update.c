@@ -175,8 +175,6 @@ void game_update(void)
 	/* Get the current time */
 	uint32_t now = net_gettime();
 	int count = 0;
-	char pck[512];
-	int len;
 
 	while((now - core.last_upd_ts) > TICK_TIME && count < MAX_UPDATE_NUM) {
 		/* Update timer */
@@ -194,19 +192,54 @@ void game_update(void)
 	}
 
 	if(now >= core.last_shr_ts) {
+		uint8_t con_flg = 0;
+		char pck[512];
+		int len = 1;
+		uint16_t col = OBJ_A_ID | OBJ_A_POS | OBJ_A_VEL | OBJ_A_MOV;
+
+		/* Update timestamp */
+		core.last_shr_ts = now + SHARE_TIME;
+
 		/* Only send if something has changed */
 		if(input.share.num > 0) {
-			/* Collect all recent inputs */
-			len = inp_col_share(pck);
+			/* Update content-flag */
+			con_flg |= (1<<0);
 
-			/* Send packet */
-#if 0
-			net_broadcast(HDR_OP_UPD, pck, tmp);
-#endif
+			/* Collect all recent inputs */
+			len += inp_col_share(pck + len);
 		}
 
-		/* Update timer */
-		core.last_shr_ts = now + SHARE_TIME;
+		if(now >= core.last_syn_ts) {
+			int tmp;
+			void *ptr;
+
+			/* Update content-flag */
+			con_flg |= (1<<1);
+
+			/* Add timestamp */
+			memcpy(pck + len, &core.now_ts, 4);
+			len += 4;
+
+			/* Collect object data */
+			tmp = obj_collect(col, &core.obj, 1, &ptr, NULL);	
+
+			/* Copy and then free object-data */
+			memcpy(pck + len, ptr, tmp);
+			free(ptr);
+
+			len += tmp;
+
+			/* Update timestamp */
+			core.last_syn_ts = now + SYNC_TIME; 
+		}
+
+		if(con_flg != 0) {
+			/* Copy content-flag */
+			memcpy(pck, &con_flg, 1);
+
+			/* Send packet */
+			net_broadcast(HDR_OP_UPD, pck, len);
+		}
 	}
 }
 

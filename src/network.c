@@ -538,7 +538,7 @@ static int peer_hdl_get(struct req_hdr *hdr, struct lcp_evt *evt,
 	free(obj_lst);
 
 	/* Send the packet */
-	lcp_send(network.ctx, &evt->addr, pck, tmp + written);
+	lcp_send(network.ctx, &evt->addr, pck, tmp + written + 4);
 
 	return 0;
 }
@@ -558,7 +558,7 @@ static int peer_hdl_upd(struct req_hdr *hdr, struct lcp_evt *evt,
 	if(hdr||evt||len){/* Prevent warning for not using parameters */}
 		
 	/* Update the object */
-	return obj_add_inputs(ptr);
+	return obj_update(ptr);
 }
 
 static int peer_hdl_syn(struct req_hdr *hdr, struct lcp_evt *evt,
@@ -992,7 +992,7 @@ extern int net_obj_submit(void *ptr, uint32_t src)
 				continue;
 
 			/* Push the objects into the object-table */
-			obj_submit(buf_ptr);
+			obj_submit(buf_ptr, ts);
 
 			/* Remove the object from the object-cache */
 			if((prev = ent->prev) == NULL)

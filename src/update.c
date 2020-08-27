@@ -13,8 +13,6 @@ void game_start(void)
 	core.render = &game_render;
 
 	/* Setup timers */
-	/* TODO: Consider if using last or next step is better */
-	/* ts = ((net_gettime() / TICK_TIME) + 1) * TICK_TIME; */
 	ts = (net_gettime() / TICK_TIME) * TICK_TIME;
 	core.last_upd_ts = ts;
 	core.last_ren_ts = ts;
@@ -153,8 +151,7 @@ static void game_proc_input(void)
 
 			/* Push new entry in share-buffer */	
 			input.share.mask[num] = INP_M_MOV;
-			if(input.share.off[num] == 0)
-				input.share.off[num] = off;
+			input.share.off[num] = off;
 			vec2_cpy(input.share.mov[num], mov);
 
 			/* Increment share-buffer-number */

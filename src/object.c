@@ -354,7 +354,7 @@ extern int obj_add_input(short slot, uint32_t mask, uint32_t ts, vec2_t mov,
 	if(obj_check_slot(slot))
 		return -1;
 
-	printf("Timestamp: %u\n", ts);
+	printf("Add event at %u\n", ts);
 
 	/* Get index to place input on */
 	inp_slot = objects.inp[slot].num;

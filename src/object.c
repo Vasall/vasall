@@ -418,11 +418,11 @@ static int obj_add_inputs(void *in)
 			ptr += VEC2_SIZE;
 		}
 
-		/* Add a new input to the object */
-		obj_add_input(slot, mask, ts, mov, act);
-
 		/* Update timestamp */
 		ts += off;
+
+		/* Add a new input to the object */
+		obj_add_input(slot, mask, ts, mov, act);
 
 		read += 13;
 	}
@@ -515,6 +515,9 @@ extern void obj_move(short slot)
 
 		lim_ts = objects.inp[slot].ts[0];
 		run_ts = objects.last_ack_ts[slot];
+
+		if(run_ts > lim_ts)
+			printf("FUCK!!!!!!\n");
 	}
 	else {
 		vec3_cpy(pos, objects.pos[slot]);
@@ -577,13 +580,6 @@ extern void obj_move(short slot)
 			vec3_cpy(objects.vel[slot], vel);
 			vec2_cpy(objects.mov[slot], mov);
 			vec3_cpy(objects.dir[slot], dir);
-
-			if(inp_num > 0) {
-				vec3_cpy(objects.last_pos[slot], pos);
-				vec3_cpy(objects.last_vel[slot], vel);
-				objects.last_ack_ts[slot] = run_ts;
-			}
-
 			return;
 		}
 
@@ -593,18 +589,22 @@ extern void obj_move(short slot)
 			vec2_cpy(mov, objects.inp[slot].mov[inp_i]);
 		}
 
-#if 0
-		printf("%u: pos(", run_ts);
+		printf("%u/%u: pos(", run_ts, lim_ts);
 		vec3_print(pos);
 		printf("), mov(");
 		vec2_print(mov);
 		printf(")\n");
-#endif
 
-		if(inp_i + 1 < inp_num)
+		if(inp_i + 1 < inp_num) {
 			lim_ts = objects.inp[slot].ts[inp_i + 1];
-		else
+		}
+		else {
+			vec3_cpy(objects.last_pos[slot], pos);
+			vec3_cpy(objects.last_vel[slot], vel);
+			objects.last_ack_ts[slot] = objects.inp[slot].ts[inp_i];
+
 			lim_ts = core.now_ts;
+		}
 	}
 }
 

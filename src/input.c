@@ -24,7 +24,6 @@ extern int inp_init(void)
 
 	/* Initialize the share-buffer */
 	input.share.num = 0;
-	input.share.timer = 0;
 	input.share.obj = 0;
 
 	/* Clear the share-buffer */
@@ -136,16 +135,16 @@ extern int inp_col_share(char *buf)
 	char *ptr;
 	uint32_t mask;
 	int written = 0;
-	uint8_t off = 0;
-	uint8_t tmp;
-	uint32_t ts;
+	uint32_t base_ts = 0;
+	uint8_t del_ts;
+	uint32_t tmp_ts;
 
 	if((num = input.share.num) < 1)
 		return 0;
 
-	ts = input.share.timer;
-	
-	memcpy(buf, &ts, 4);
+	tmp_ts = base_ts = input.share.ts[0];
+
+	memcpy(buf, &base_ts, 4);
 	memcpy(buf + 4, &input.share.obj, 4);
 	memcpy(buf + 8, &num, 2);
 
@@ -158,11 +157,10 @@ extern int inp_col_share(char *buf)
 		ptr += 4;
 		written += 4;
 
-		tmp = input.share.off[i];
-		input.share.off[i] -= off;
-		off = tmp;
+		del_ts = ((input.share.ts[i] - base_ts) - (tmp_ts - base_ts));
+		tmp_ts = input.share.ts[i];
 
-		memcpy(ptr, &input.share.off[i], 1);
+		memcpy(ptr, &del_ts, 1);
 		ptr += 1;
 		written += 1;
 
@@ -173,12 +171,10 @@ extern int inp_col_share(char *buf)
 		}
 
 		input.share.mask[i] = 0;
-		input.share.off[i] = 0;
 		memset(input.share.mov[i], 0, VEC2_SIZE);
 	}
 
 	input.share.num = 0;
-	input.share.timer = 0;
 	input.share.obj = 0;
 	return written;
 }

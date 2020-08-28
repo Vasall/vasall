@@ -141,17 +141,11 @@ static void game_proc_input(void)
 		uint8_t off = 0;
 
 		if(num < INPUT_SLOTS) {
-			if(input.share.timer == 0)
-				input.share.timer = ti;
-			else
-				off = ti - input.share.timer;
-
-			if(input.share.obj == 0)
-				input.share.obj = objects.id[obj];
+			input.share.obj = objects.id[obj];
 
 			/* Push new entry in share-buffer */	
 			input.share.mask[num] = INP_M_MOV;
-			input.share.off[num] = off;
+			input.share.ts[num] = ti;
 			vec2_cpy(input.share.mov[num], mov);
 
 			/* Increment share-buffer-number */

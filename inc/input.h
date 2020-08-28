@@ -11,11 +11,10 @@
 
 struct input_buffer {
 	short       num;
-	uint32_t    timer;
 	uint32_t    obj;
 
 	uint32_t    mask[INPUT_SLOTS];
-	uint8_t     off[INPUT_SLOTS];
+	uint32_t    ts[INPUT_SLOTS];
 
 	vec2_t      mov[INPUT_SLOTS];
 	uint32_t    act[INPUT_SLOTS];

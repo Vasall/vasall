@@ -354,8 +354,6 @@ extern int obj_add_input(short slot, uint32_t mask, uint32_t ts, vec2_t mov,
 	if(obj_check_slot(slot))
 		return -1;
 
-	printf("Add event at %u\n", ts);
-
 	/* Get index to place input on */
 	inp_slot = objects.inp[slot].num;
 
@@ -516,8 +514,9 @@ extern void obj_move(short slot)
 		lim_ts = objects.inp[slot].ts[0];
 		run_ts = objects.last_ack_ts[slot];
 
+		/* Drop old inputs */
 		if(run_ts > lim_ts)
-			printf("FUCK!!!!!!\n");
+			return;
 	}
 	else {
 		vec3_cpy(pos, objects.pos[slot]);
@@ -528,6 +527,7 @@ extern void obj_move(short slot)
 	}
 
 	vec2_cpy(mov, objects.mov[slot]);
+	vec3_cpy(dir, objects.dir[slot]);
 
 
 	inp_i = -1;
@@ -565,16 +565,13 @@ extern void obj_move(short slot)
 			if(ABS(vel[0] + vel[1]) >= 0.0004)
 				vec3_nrm(vel, dir);
 
+			/* Update run-timer */
 			run_ts += TICK_TIME;
 		}
 
 		inp_i++;
 		if(inp_i >= inp_num) {	
 			objects.inp[slot].num = 0;
-
-			/* Save last position */
-			vec3_cpy(objects.prev_pos[slot], objects.pos[slot]);
-			vec3_cpy(objects.prev_dir[slot], objects.dir[slot]);
 
 			vec3_cpy(objects.pos[slot], pos);
 			vec3_cpy(objects.vel[slot], vel);
@@ -589,16 +586,11 @@ extern void obj_move(short slot)
 			vec2_cpy(mov, objects.inp[slot].mov[inp_i]);
 		}
 
-		printf("%u/%u: pos(", run_ts, lim_ts);
-		vec3_print(pos);
-		printf("), mov(");
-		vec2_print(mov);
-		printf(")\n");
-
 		if(inp_i + 1 < inp_num) {
 			lim_ts = objects.inp[slot].ts[inp_i + 1];
 		}
 		else {
+			/* Save current status as last acknowledged status */
 			vec3_cpy(objects.last_pos[slot], pos);
 			vec3_cpy(objects.last_vel[slot], vel);
 			objects.last_ack_ts[slot] = objects.inp[slot].ts[inp_i];
@@ -646,13 +638,21 @@ extern void obj_sys_prerender(float interp)
 
 	for(i = 0; i < OBJ_SLOTS; i++) {
 		if(objects.mask[i] & OBJ_M_MODEL) {
+			/* Update render-position of the object */
 			vec3_sub(objects.pos[i], objects.prev_pos[i], del);
 			vec3_scl(del, interp, del);
 			vec3_add(objects.prev_pos[i], del, objects.ren_pos[i]);
 
+			/* Store last position */
+			vec3_cpy(objects.prev_pos[i], objects.pos[i]);
+
+			/* Update the direction of the object */
 			vec3_sub(objects.dir[i], objects.prev_dir[i], del);
 			vec3_scl(del, interp, del);
 			vec3_add(objects.prev_dir[i], del, objects.ren_dir[i]);
+
+			/* Store last direction */
+			vec3_cpy(objects.prev_dir[i], objects.dir[i]);
 		}
 	}
 }

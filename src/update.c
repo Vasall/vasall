@@ -138,7 +138,6 @@ static void game_proc_input(void)
 	if(vec2_cmp(mov, input.mov_old) == 0) {
 		short num = input.share.num;
 		uint32_t ti = core.now_ts;
-		uint8_t off = 0;
 
 		if(num < INPUT_SLOTS) {
 			input.share.obj = objects.id[obj];

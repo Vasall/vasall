@@ -202,6 +202,7 @@ void game_update(void)
 		if(now >= core.last_syn_ts) {
 			int tmp;
 			void *ptr;
+			uint32_t id = objects.id[core.obj];
 
 			/* Update content-flag */
 			con_flg |= (1<<1);
@@ -211,7 +212,7 @@ void game_update(void)
 			len += 4;
 
 			/* Collect object data */
-			tmp = obj_collect(col, &core.obj, 1, &ptr, NULL);	
+			tmp = obj_collect(col, &id, 1, &ptr, NULL);	
 
 			/* Copy and then free object-data */
 			memcpy(pck + len, ptr, tmp);

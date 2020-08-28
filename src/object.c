@@ -64,8 +64,6 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 	if((slot = obj_get_slot()) < 0)
 		return -1;
 
-	printf("Set mask %d\n", mask);
-
 	/* Copy the valued and initialize the attributes */
 	objects.mask[slot] = mask;
 	objects.id[slot] = id;
@@ -438,11 +436,18 @@ static int obj_set_marker(void *in)
 	memcpy(&ts, ptr, 4);
 	ptr += 4;
 
+	/* Skip object number */
+	ptr += 2;
+
 	memcpy(&id, ptr, 4);
 	ptr += 4;
 
+	printf("id: %u\n", id);
+
 	if((slot = obj_sel_id(id)) < 0)
 		return -1;
+
+	printf("Set marker\n");
 
 	objects.mark_flg[slot] = 1;
 
@@ -567,6 +572,8 @@ extern void obj_move(short slot)
 
 			if(objects.mark_flg[slot]) {	
 				if(run_ts == objects.mark[slot].ts) {
+					printf("Use marker\n");
+
 					vec3_cpy(pos, objects.mark[slot].pos);
 					vec3_cpy(vel, objects.mark[slot].vel);
 					vec2_cpy(mov, objects.mark[slot].mov);

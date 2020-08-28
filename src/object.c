@@ -565,6 +565,15 @@ extern void obj_move(short slot)
 			if(ABS(vel[0] + vel[1]) >= 0.0004)
 				vec3_nrm(vel, dir);
 
+			if(objects.mark_flg[slot]) {	
+				if(run_ts == objects.mark[slot].ts) {
+					vec3_cpy(pos, objects.mark[slot].pos);
+					vec3_cpy(vel, objects.mark[slot].vel);
+					vec2_cpy(mov, objects.mark[slot].mov);
+					objects.mark_flg[slot] = 0;
+				}
+			}
+
 			/* Update run-timer */
 			run_ts += TICK_TIME;
 		}

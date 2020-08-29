@@ -17,6 +17,8 @@ TECHNICAL DESCRIPTION
   Currently the game will most likely only run on Linux as the core system 
   hasn't been ported to Windows and macOS yet. A port will come in the near
   future.
+  
+NOTICE
 
 INSTALLATION
 

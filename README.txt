@@ -22,6 +22,8 @@ NOTICE
 
   This is only the client-application which requires a server to run. For 
   several reasons the server-application will stay private.
+  Furthermore the project is still in developement and service may not always
+  available.
 
 INSTALLATION
 

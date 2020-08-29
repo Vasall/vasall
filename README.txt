@@ -22,7 +22,7 @@ NOTICE
 
   This is only the client-application which requires a server to run. For 
   several reasons the server-application will stay private.
-  Furthermore the project is still in developement and the server may not be available
+  Furthermore the project is still in developement and the server may be down
   at some occasions.
 
 INSTALLATION

@@ -17,6 +17,13 @@ TECHNICAL DESCRIPTION
   Currently the game will most likely only run on Linux as the core system 
   hasn't been ported to Windows and macOS yet. A port will come in the near
   future.
+  
+NOTICE
+
+  This is only the client-application which requires a server to run. For 
+  several reasons the server-application will stay private.
+  Furthermore the project is still in developement and the server may be down
+  at some occasions.
 
 INSTALLATION
 

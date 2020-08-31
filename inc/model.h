@@ -6,6 +6,7 @@
 #include "sdl.h"
 #include "asset.h"
 #include "camera.h"
+#include "amoloader/amoloader.h"
 
 #define MDL_NAME_MAX            8
 #define MDL_SLOTS             256
@@ -21,21 +22,21 @@ enum mdl_status {
 };
 
 struct model {
-	char      name[9];
-	uint32_t  vao;
+	char          name[9];
+	unsigned int  vao;
 	
-	uint32_t  idx_bao;
-	int       idx_num;
-	int       *idx_buf;
+	unsigned int  idx_bao;
+	int           idx_num;
+	unsigned int  *idx_buf;
 	
-	uint32_t  vtx_bao;
-	int       vtx_num;
-	float     *vtx_buf;
+	unsigned int  vtx_bao;
+	int           vtx_num;
+	float         *vtx_buf;
 
-	short     tex;
-	short     shd;
+	short         tex;
+	short         shd;
 	
-	uint8_t   status;
+	uint8_t       status;
 };
 
 
@@ -89,16 +90,16 @@ extern void mdl_del(short slot);
  * Attach a mesh to a model.
  *
  * @slot: The slot of the model
- * @idxnum: The number of indices
- * @idx: The buffer containing all indices
  * @vtxnum: the number of vertices
  * @vtx: The buffer containing all vertices
  * @nrm: A buffer containing all normal-vectors
  * @col: A buffer containing either the colors or UV-positions
  * @col_flg: The flag indication to either use colors or UV-positions
+ * @idxnum: The number of indices
+ * @idx: The buffer containing all indices
  */
-extern void mdl_set_mesh(short slot, int idxnum, int *idx, int vtxnum, 
-		vec3_t *vtx, vec3_t *nrm, void *col, uint8_t col_flg);
+extern void mdl_set_mesh(short slot, int vtxnum, float *vtx, float *nrm, 
+		void *col, uint8_t col_flg, int idxnum, unsigned int *idx);
 
 
 /*
@@ -129,8 +130,10 @@ extern void mdl_set_shader(short slot, short shd);
  *
  * Returns: Either the slot of the created model or -1 if an error occurred
  */
-extern short mdl_load(char *name, char *amo, short tex, short shd);
+extern short mdl_load_obj(char *name, char *amo, short tex, short shd);
 
+
+extern short mdl_load_amo(char *name, char *amo, short tex, short shd);
 
 /*
  * Render a model with a model-matrix.

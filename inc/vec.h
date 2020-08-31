@@ -12,13 +12,13 @@ typedef float vec2_t[2];
 #define VEC3_SIZE (sizeof(float)*3)
 typedef float vec3_t[3];
 
-#define INT2 (sizeof(int)*2)
+#define INT2_SIZE (sizeof(int)*2)
 typedef int int2_t[2];
 
-#define INT3 (sizeof(int)*3)
+#define INT3_SIZE (sizeof(int)*3)
 typedef int int3_t[3];
 
-#define SHORT2 (sizeof(short)*2)
+#define SHORT2_SIZE (sizeof(short)*2)
 typedef short short2_t[2];
 
 

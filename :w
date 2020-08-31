@@ -1,0 +1,276 @@
+#include "amoloader.h"
+
+struct amo_model *amo_load(const char *pth, int *count)
+{
+	FILE *fd;
+	
+	struct amo_model *data;
+	int data_c = 0;
+	struct amo_mode *mdl;
+
+	char cmd_buf[256];
+	int vtx_c = 0;
+	int nrm_c = 0;
+	int uv_c = 0;
+	int jnt_c = 0;
+	int wgt_c = 0;
+	int i;
+	int j;
+	int tmp;
+
+	/* Check if file is a .amo file */
+	if(strcmp(strrchr(pth, '.'), ".amo") != 0)
+		return NULL;
+
+	/* Try to open the file */
+	if(!(fd = fopen(path, "r")))
+		return NULL;
+
+	/* Allocate memory for the mdl-struct */
+	if(!(data = calloc(sizeof(struct amo_model), 1)))
+		goto err_close_file;
+
+	/* Set variables */
+	data_c = 0;
+	mdl = NULL;
+
+	/* 
+	 * Go through every line and read the first word. If it's a valid amo
+	 * keyword read the arguments and put them into the right position in
+	 * the mdl struct.
+	 */
+	while(fscanf(fd, "%s", cmd_buf) != EOF) {
+		/* o <name>  - or -  ao <name> */
+		if(strcmp(cmd_buf, "o") == 0 || strcmp(cmd_buf, "ao") == 0) {
+			/* Increment the number of models */
+			data_c += 1;
+
+			printf("%d\n", mdl_i);
+			if(mdl_c > 1) {
+				tmp = sizeof(struct amo_model) * data_c;
+				data = realloc(data, tmp);
+			}
+
+			/* Get the name of the current model */
+			fscanf(file, "%s", mdl[mdl_i].name);
+
+			/* Set pointer to the current model */
+			mdl = &data[data_c];
+		}
+		/* v <x> <y> <z> */
+		else if(strcmp(cmd_buf, "v") == 0) {
+			/* Allocate memory for the new vertex */
+			tmp = sizeof(float) * 3 * (vtx_c + 1);
+			mdl[mdl_i].vtx_buf = realloc(mdl[mdl_i].vtx_buf, tmp);
+
+			/* Read the data of the new vertex */
+			fscanf(file, "%f %f %f",
+					&mdl[mdl_i].vtx_buf[vtx_c * 3],
+					&mdl[mdl_i].vtx_buf[vtx_c * 3 + 1],
+					&mdl[mdl_i].vtx_buf[vtx_c * 3 + 2]);
+
+			/* Increment the number of vertices */
+			vtx_c++;
+		}
+		/* vn <x> <y> <z> */
+		else if(strcmp(cmd_buf, "vn") == 0) {
+			/* Allocate memory for the new normal-vector */
+			tmp = sizeof(float) * 3 * (nrm_c + 1);
+			mdl[mdl_i].nrm_buf = realloc(mdl[mdl_i].nrm_buf, tmp);
+
+			/* Read the data of the new normal-vector */
+			fscanf(file, "%f %f %f",
+					&mdl[mdl_i].nrm_buf[nrm_c * 3],
+					&mdl[mdl_i].nrm_buf[nrm_c * 3 + 1],
+					&mdl[mdl_i].nrm_buf[nrm_c * 3 + 2]);
+
+			/* Incerement the number of normal-vectors */
+			nrm_c++;
+		}
+		/* vt <x> <y> */
+		else if(strcmp(cmd_buf, "vt") == 0) {
+			/* Allocate memory for the new uv-coordinate */
+			tmp = sizeof(float) * 2 * (uv_c + 1);
+			mdl[mdl_i].uv_buf = realloc(mdl[mdl_i].uv_buf, tmp);
+
+			/* Read the data of the new uv-coordinate */
+			fscanf(file, "%f %f",
+					&mdl[mdl_i].uv_buf[uv_c * 2],
+					&mdl[mdl_i].uv_buf[uv_c * 2 + 1]);
+
+			/* Increment the number of uv-coordinates */
+			uv_c++;
+		}
+		/* vj <joint_1> <joint_2> <joint_3> <joint_4> */
+		else if(strcmp(cmd_buf, "vj") == 0) {
+			/* Allocate memory for the new joint */
+			tmp = sizeof(float) * 4 * (jnt_c + 1);
+			mdl[mdl_i].jnt_buf = realloc(mdl[mdl_i].jnt_buf, tmp);
+
+			/* Read the data of the joint */
+			fscanf(file, "%d %d %d %d",
+					&mdl[mdl_i].jnt_buf[jnt_c * 4],
+					&mdl[mdl_i].jnt_buf[jnt_c * 4 + 1],
+					&mdl[mdl_i].jnt_buf[jnt_c * 4 + 2],
+					&mdl[mdl_i].jnt_buf[jnt_c * 4 + 3]);
+
+			/* Increment the number of joints */
+			jnt_c++;
+		}
+		/* vw <weight_1> <weight_2> <weight_3> <weight_4> */
+		else if(strcmp(cmd_buf, "vw") == 0) {
+			/* Allocate memory for the new weight */
+			tmp = sizeof(float) * 4 * (wgt_c + 1);
+			mdl[mdl_i].wgt_buf = realloc(mdl[mdl_i].wgt_buf, tmp);
+
+			/* Read the data of the new weight */
+			fscanf(file, "%f %f %f %f",
+					&mdl[mdl_i].wgt_buf[wgt_c * 4],
+					&mdl[mdl_i].wgt_buf[wgt_c * 4 + 1],
+					&mdl[mdl_i].wgt_buf[wgt_c * 4 + 2],
+					&mdl[mdl_i].wgt_buf[wgt_c * 4 + 3]);
+
+			/* Increment the number of joints */
+			wgt_c++;
+		}
+		/* 
+		 * f <pos>/<normal>/<uv>/<joint>/<weight>
+		 *   <pos>/<normal>/<uv>/<joint>/<weight>
+		 *   <pos>/<normal>/<uv>/<joint>/<weight> 
+		 * Currently, the library expects <pos>/<normal>/<uv>/<joint>/<weight>
+		 * to be the same value, since editamo exports it like that.
+		 * Definetly needs to be improved
+		 */
+		else if(strcmp(cmd_buf, "f") == 0) {
+			/* Allocate memory for the new indices */
+			tmp = sizeof(unsigned int) * 3 * (mdl[mdl_i].idx_c + 1);
+			mdl[mdl_i].idx_buf = realloc(mdl[mdl_i].idx_buf, tmp);
+
+			/* Read the indices in blocks of 3 */
+			for(j = 0; j < 3; j++) {
+				tmp = mdl[mdl_i].idx_c * 3 + j;
+				fscanf(file, "%u/%u/%u/%u/%u",
+					&mdl[mdl_i].idx_buf[tmp],
+					&mdl[mdl_i].idx_buf[tmp],
+					&mdl[mdl_i].idx_buf[tmp],
+					&mdl[mdl_i].idx_buf[tmp],
+					&mdl[mdl_i].idx_buf[tmp]);
+			}
+			
+			/* Obj starts counting at 1 */
+			mdl[mdl_i].idx_buf[mdl[mdl_i].idx_c * 3] -= 1;
+			mdl[mdl_i].idx_buf[mdl[mdl_i].idx_c * 3 + 1] -= 1;
+			mdl[mdl_i].idx_buf[mdl[mdl_i].idx_c * 3 + 2] -= 1;
+
+			/* Increment the number of vertices */
+			mdl[mdl_i].idx_c++;
+			
+		}
+		/* j <name> <parent> */
+		else if(strcmp(cmd_buf, "j") == 0) {
+			int joint;
+			int parent_joint;
+			
+			mdl[mdl_i].jnt_c++;
+			mdl[mdl_i].jnt_lst = realloc(mdl[mdl_i].jnt_lst,
+					sizeof(struct amoloader_joint)*mdl[mdl_i].jnt_c);
+			fscanf(file, "%s %d", mdl[mdl_i].jnt_lst[mdl[mdl_i].jnt_c-1].name,
+					&parent_joint);
+			/* Special treatment for root joint */
+			joint = mdl[mdl_i].jnt_c-1;
+			if(parent_joint == -1) {
+				mdl[mdl_i].jnt_lst[joint].parent = NULL;
+			} else {
+				mdl[mdl_i].jnt_lst[joint].parent = &mdl[mdl_i].jnt_lst[parent_joint-1];
+			}
+		}
+		/* a <name> */
+		else if(strcmp(cmd_buf, "a") == 0) {
+			mdl[mdl_i].ani_c++;
+			mdl[mdl_i].ani_lst = realloc(mdl[mdl_i].ani_lst,
+					sizeof(struct amoloader_animation)*mdl[mdl_i].ani_c);
+			fscanf(file, "%s", mdl[mdl_i].ani_lst[mdl[mdl_i].ani_c-1].name);
+			
+		}
+		/* ap <timestamp> <joint> <x> <y> <z> */
+		else if(strcmp(cmd_buf, "ap") == 0) {
+			struct amoloader_keyframe_pos *keyframe;
+			int joint;
+			struct amoloader_animation *animation;
+
+			animation = &mdl[mdl_i].ani_lst[mdl[mdl_i].ani_c-1];
+			animation->keyframes_pos_num++;
+			animation->keyframes_pos = realloc(animation->keyframes_pos,
+					sizeof(struct amoloader_keyframe_pos)*animation->keyframes_pos_num);
+			keyframe =&animation->keyframes_pos[animation->keyframes_pos_num-1];
+			fscanf(file, "%f %d %f %f %f", &keyframe->timestamp, &joint,
+					&keyframe->pos[0],
+					&keyframe->pos[1],
+					&keyframe->pos[2]);
+			keyframe->joint = &mdl[mdl_i].jnt_lst[joint-1];
+		}
+		/* ar <timestamp> <joint> <x> <y> <z> <w> */
+		else if(strcmp(cmd_buf, "ar") == 0) {
+			struct amoloader_keyframe_rot *keyframe;
+			int joint;
+			struct amoloader_animation *animation;
+
+			animation = &mdl[mdl_i].ani_lst[mdl[mdl_i].ani_c-1];
+			animation->keyframes_rot_num++;
+			animation->keyframes_rot = realloc(animation->keyframes_rot,
+					sizeof(struct amoloader_keyframe_rot)*animation->keyframes_rot_num);
+			keyframe =&animation->keyframes_rot[animation->keyframes_rot_num-1];
+			fscanf(file, "%f %d %f %f %f %f", &keyframe->timestamp, &joint,
+					&keyframe->rot[0],
+					&keyframe->rot[1],
+					&keyframe->rot[2],
+					&keyframe->rot[3]);
+			keyframe->joint = &mdl[mdl_i].jnt_lst[joint-1];
+		}
+	}
+	/* 
+	 * This is the part, where the logic to order the buffer based on f
+	 * should come in. 
+	 * Needs to be implemented
+	 */
+	for(i = 0; i < c; i++)
+		mdl[i].vtx_c = vtx_c;
+
+	/* Close the file */
+	fclose(file);
+
+	*count = c;
+	return mdl;
+
+err_close_file:
+	fclose(fd);
+	return NULL;
+}
+
+int amo_destroy(struct amo_model *mdl, int count)
+{
+	int i;
+	int j;
+
+	/* If mdl is NULL, just skip destroying */
+	if(!mdl)
+		return -1;
+
+	for(i = 0; i < count; i++) {
+		free(mdl[i].vtx_buf);
+		free(mdl[i].nrm_buf);
+		free(mdl[i].uv_buf);
+		if(mdl[i].jnt_c != 0) {
+			free(mdl[i].jnt_buf);
+			free(mdl[i].wgt_buf);
+			free(mdl[i].jnt_lst);
+			for(j = 0; j < mdl[i].ani_c; j++) {
+				free(mdl[i].ani_lst[j].keyframes_pos);
+				free(mdl[i].ani_lst[j].keyframes_rot);
+			}
+			free(mdl[i].ani_lst);
+		}
+	}
+	free(mdl);
+	return 0;
+}

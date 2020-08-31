@@ -121,5 +121,7 @@ err_close_sdl:
 
 err_close_net:
 	net_close();
+
+	printf("End.\n");
 	return -1;
 }

@@ -177,8 +177,8 @@ extern void mdl_del(short slot)
 }
 
 
-extern void mdl_set_mesh(short slot, int idxnum, int *idx, int vtxnum,
-		vec3_t *vtx, vec3_t *nrm, void *col, uint8_t col_flg)
+extern void mdl_set_mesh(short slot, int vtxnum, float *vtx, float *nrm,
+		void *col, uint8_t col_flg, int idxnum, unsigned int *idx)
 {
 	int i;
 	float *ptr;
@@ -197,7 +197,7 @@ extern void mdl_set_mesh(short slot, int idxnum, int *idx, int vtxnum,
 
 	/* Allocate memory for the indices */
 	mdl->idx_num = idxnum;
-	if(!(mdl->idx_buf = malloc(idxnum * sizeof(int))))
+	if(!(mdl->idx_buf = malloc(idxnum * sizeof(unsigned int))))
 		goto err_set_failed;
 
 	/* Allocate memory for the vertex-data */
@@ -211,8 +211,8 @@ extern void mdl_set_mesh(short slot, int idxnum, int *idx, int vtxnum,
 	/* Create the vertex array and fill in the vertex-data */
 	for(i = 0; i < vtxnum; i++) {
 		ptr = mdl->vtx_buf + (i * vtx_sizeb);
-		memcpy(ptr + 0, vtx[i], VEC3_SIZE);
-		memcpy(ptr + 3, nrm[i], VEC3_SIZE);
+		memcpy(ptr + 0, vtx + (i * 3), VEC3_SIZE);
+		memcpy(ptr + 3, nrm + (i * 3), VEC3_SIZE);
 		memcpy(ptr + 6, ((float *)col + i * col_sizeb), col_size);
 	}
 
@@ -288,7 +288,7 @@ err_set_failed:
 }
 
 
-static int mdl_load_obj(char *pth, int *idxnum, int **idx, int *vtxnum,
+static int load_obj(char *pth, int *idxnum, unsigned int **idx, int *vtxnum,
 		vec3_t **vtx, vec3_t **nrm, vec2_t **uv)
 {
 	int ret = 0, i, j, tmp;
@@ -315,8 +315,8 @@ static int mdl_load_obj(char *pth, int *idxnum, int **idx, int *vtxnum,
 	if(!(tex_out = stcCreate(VEC2_SIZE))) goto err_set_ret;
 
 	/* Create buffers to store the indices */
-	if(!(idx_in = stcCreate(INT3))) goto err_set_ret;
-	if(!(idx_conv = stcCreate(INT3))) goto err_set_ret;
+	if(!(idx_in = stcCreate(INT3_SIZE))) goto err_set_ret;
+	if(!(idx_conv = stcCreate(INT3_SIZE))) goto err_set_ret;
 	if(!(idx_out = stcCreate(sizeof(int)))) goto err_set_ret;
 
 	/* Read the data from the obj-file */
@@ -481,11 +481,10 @@ cleanup:
 	return (ret);
 }
 
-
-extern short mdl_load(char *name, char *amo, short tex, short shd)
+extern short mdl_load_obj(char *name, char *pth, short tex, short shd)
 {
 	int slot;
-	int *idx;
+	unsigned int *idx;
 	int idxnum;
 	int vtxnum;
 	vec3_t *vtx;
@@ -496,15 +495,50 @@ extern short mdl_load(char *name, char *amo, short tex, short shd)
 	if((slot = mdl_set(name)) < 0)
 		return -1;
 
-	if(mdl_load_obj(amo, &idxnum, &idx, &vtxnum, &vtx, &nrm, &uv) < 0)
+	if(load_obj(pth, &idxnum, &idx, &vtxnum, &vtx, &nrm, &uv) < 0)
 		goto err_del_mdl;
 
 	mdl_set_texture(slot, tex);
 	mdl_set_shader(slot, shd);
 
-	mdl_set_mesh(slot, idxnum, idx, vtxnum, vtx, nrm, uv, 1);
+	mdl_set_mesh(slot, vtxnum, (float *)vtx, (float *)nrm, uv, 1, idxnum, idx);
 
 	mdl_set_status(slot, MDL_OK);
+	return slot;
+
+err_del_mdl:
+	mdl_del(slot);
+	return -1;
+}
+
+
+extern short mdl_load_amo(char *name, char *pth, short tex, short shd)
+{
+	struct amo_model *data;
+	int count;
+	short slot;
+
+	/* Allocate memory for the model-struct */
+	if((slot = mdl_set(name)) < 0)
+		return -1;
+
+	printf("aa %s\n", pth);
+
+	if(!(data = amo_load(pth, &count)))
+		goto err_del_mdl;
+
+	printf("bb\n");
+
+	mdl_set_texture(slot, tex);
+	mdl_set_shader(slot, shd);
+
+	mdl_set_mesh(slot, data->vtx_c, data->vtx_buf,
+			data->nrm_buf, data->uv_buf, 1,
+			data->idx_c, data->idx_buf);
+
+	mdl_set_status(slot, MDL_OK);
+
+	amo_destroy(data, count);
 	return slot;
 
 err_del_mdl:

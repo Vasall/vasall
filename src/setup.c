@@ -36,14 +36,14 @@ int load_resources(void)
 	if(mdl_load_obj("wld", "res/models/floor.obj", tex_get("flr"), shd_get("uv")) < 0)
 		return -1;
 
-	if(mdl_load_amo("plr", "res/models/base.obj", tex_get("plr"), shd_get("uv")) < 0)
+	if(mdl_load_amo("plr", "res/models/cube.obj", tex_get("plr"), shd_get("uv")) < 0)
 		return -1;
 
 	return 0;
 }
 
 /* If login was successfull */
-static void test1(char *buf, int len)
+extern void test1(char *buf, int len)
 {
 	ui_node *node;
 	char zero = 0;
@@ -52,6 +52,8 @@ static void test1(char *buf, int len)
 	vec3_t dir = {-1.0, 1.0, -1.0};
 
 	if(buf || len) {/* Prevent warning for not using parameters */}
+
+	printf("success!!!\n");
 
 	/* Setup camera */
 	cam_trg_obj(core.obj);
@@ -71,14 +73,14 @@ static void test1(char *buf, int len)
 }
 
 /* If login failed */
-static void test2(char *buf, int len)
+extern void test2(char *buf, int len)
 {
 	if(buf || len) {/* Prevent warning for not using parameters */}
 	printf("Login failed! Check username and password.\n");
 }
 
 /* Login into the server and insert peer into cluster */
-static void login(ui_node *n, event_t *e)
+extern void login(ui_node *n, event_t *e)
 {
 	char uname[17];
 	char pswd[65];
@@ -105,6 +107,7 @@ static void login(ui_node *n, event_t *e)
 
 	if(n || e){/* Prevent warnings for not using parameters */}
 
+	printf("Send to server\n");
 	net_insert(uname, pswd, &test1, &test2);
 }
 

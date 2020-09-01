@@ -46,6 +46,7 @@ typedef struct ui_button {
 } ui_button;
 
 void BUTTON_ONKEYDOWN(ui_node *n, event_t *evt);
+void BUTTON_ONMOUSEDOWN(ui_node *n, event_t *evt);
 
 extern const struct ui_node_flags BUTTON_FLAGS;
 extern const struct ui_node_style BUTTON_STYLE;

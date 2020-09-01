@@ -67,13 +67,13 @@ struct req_hdr {
 #define HDR_OP_OK           0x01  /* Return success                           */
 #define HDR_OP_ERR          0x02  /* Return error or failed                   */
 
-#define HDR_OP_INS          0x04  /* Insert a new peer into the peer-table    */
-#define HDR_OP_RMV          0x05  /* Remove peer from the peer-table          */
-#define HDR_OP_VAL          0x07  /* Validate a peer-id and -key              */
-#define HDR_OP_LST          0x08  /* Request a list of peers                  */
-#define HDR_OP_CVY          0x09  /* Try to contact peer via middle-man       */
-#define HDR_OP_REG          0x0a  /* Register new user                        */
-#define HDR_OP_DEL          0x0b  /* Delete user from database                */
+#define HDR_OP_INS          0x06  /* Insert a new peer into the peer-table    */
+#define HDR_OP_RMV          0x07  /* Remove peer from the peer-table          */
+#define HDR_OP_VAL          0x08  /* Validate a peer-id and -key              */
+#define HDR_OP_LST          0x09  /* Request a list of peers                  */
+#define HDR_OP_CVY          0x0a  /* Try to contact peer via middle-man       */
+#define HDR_OP_REG          0x0b  /* Register new user                        */
+#define HDR_OP_DEL          0x0c  /* Delete user from database                */
 
 #define HDR_OP_EXC          0x11  /* Exchange object list between two peers   */
 #define HDR_OP_GET          0x12  /* Request data about certain objects       */

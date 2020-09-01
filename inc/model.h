@@ -6,7 +6,7 @@
 #include "sdl.h"
 #include "asset.h"
 #include "camera.h"
-#include "amoloader/amoloader.h"
+#include "amoloader/inc/amoloader.h"
 
 #define MDL_NAME_MAX            8
 #define MDL_SLOTS             256
@@ -90,16 +90,17 @@ extern void mdl_del(short slot);
  * Attach a mesh to a model.
  *
  * @slot: The slot of the model
- * @vtxnum: the number of vertices
+ * @vtxnum: The number of vertices
  * @vtx: The buffer containing all vertices
+ * @nrmnum: The number of normal-vector
  * @nrm: A buffer containing all normal-vectors
- * @col: A buffer containing either the colors or UV-positions
- * @col_flg: The flag indication to either use colors or UV-positions
+ * @uvnum: The number of colors or UV-positions
+ * @uv: A buffer containing either the colors or UV-positions
  * @idxnum: The number of indices
  * @idx: The buffer containing all indices
  */
-extern void mdl_set_mesh(short slot, int vtxnum, float *vtx, float *nrm, 
-		void *col, uint8_t col_flg, int idxnum, unsigned int *idx);
+extern void mdl_set_mesh(short slot, int vtxnum, float *vtx, float *nrm,
+		float *uv, int idxnum, unsigned int *idx);
 
 
 /*

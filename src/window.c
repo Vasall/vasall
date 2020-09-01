@@ -193,7 +193,6 @@ static int win_onmousebuttondown(event_t *evt)
 	ui_node *hov = window.hover;
 	ui_node *act = window.active;
 
-
 	switch(evt->button.button) {
 		case(1):
 			if(hov == NULL && act != NULL) {

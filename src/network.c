@@ -284,6 +284,8 @@ static int peer_hdl_ins(struct req_hdr *hdr, struct lcp_evt *evt,
 
 	if(hdr||evt||len){/* Prevent warning for not using parameters */}
 
+	printf("Received packet!!!\n");
+
 	if(network.status == 1) {
 		/* If the request got rejected */
 		if(ptr[0] != 1) {
@@ -651,6 +653,8 @@ extern int net_insert(char *uname, char *pswd, net_fnc on_success,
 	strcpy(pck + tmp, uname);
 	memcpy(pck + tmp + strlen(uname) + 1, pswd_enc, 32);
 	pck[tmp + strlen(uname) + 33] = network.ctx->con_flg; 
+
+	printf("Send request\n");
 
 	/* Send request */
 	tmp = tmp + strlen(uname) + 34;

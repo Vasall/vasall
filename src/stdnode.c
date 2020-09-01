@@ -127,6 +127,14 @@ void BUTTON_ONKEYDOWN(ui_node *n, event_t *evt)
 		btn->fnc(n, evt);
 }
 
+void BUTTON_ONMOUSEDOWN(ui_node *n, event_t *evt)
+{
+	ui_button *btn = n->element;
+
+	if(evt->button.button == 1 && btn->fnc != NULL)
+		btn->fnc(n, evt);
+}
+
 
 extern void *ui_new_button(ui_node_fnc fnc)
 {
@@ -144,6 +152,7 @@ extern int ui_init_button(ui_node *n)
 	n->flags = BUTTON_FLAGS;
 	n->style = BUTTON_STYLE;
 	n->events.keydown = &BUTTON_ONKEYDOWN;
+	n->events.mousedown = &BUTTON_ONMOUSEDOWN;
 	return 0;
 }
 

@@ -177,15 +177,16 @@ extern void mdl_del(short slot)
 }
 
 
-extern void mdl_set_mesh(short slot, int vtxnum, float *vtx, float *nrm,
-		float *uv, int idxnum, unsigned int *idx)
+extern void mdl_set_mesh(short slot, int vtxnum, float *vtx, float *uv,
+		float *nrm, int idxnum, unsigned int *idx)
 {
 	int i;
-	int tmp;
 	float *ptr;
+	int col_sizeb = 2;
+	int col_size = col_sizeb * sizeof(float);
+	int vtx_sizeb = ((3 * 2) + col_sizeb);
+	int vtx_size = vtx_sizeb * sizeof(float);
 	struct model *mdl;
-	int vtxsize = VEC3_SIZE + VEC2_SIZE + VEC3_SIZE;
-	void *p;
 
 	if(mdl_check_slot(slot))
 		return;
@@ -201,48 +202,44 @@ extern void mdl_set_mesh(short slot, int vtxnum, float *vtx, float *nrm,
 
 	/* Allocate memory for the vertex-data */
 	mdl->vtx_num = vtxnum;
-	if(!(mdl->vtx_buf = malloc(mdl->vtx_num * vtxsize)))
+	if(!(mdl->vtx_buf = malloc(vtxnum * vtx_size)))
 		goto err_set_failed;
 
 	/* Copy the indices into the allocated index-buffer */
-	memcpy(mdl->idx_buf, idx, idxnum * sizeof(unsigned int));
+	memcpy(mdl->idx_buf, idx, idxnum * sizeof(int));
 
 	/* Create the vertex array and fill in the vertex-data */
 	for(i = 0; i < vtxnum; i++) {
 		ptr = mdl->vtx_buf + (i * vtx_sizeb);
-		memcpy(ptr + 0, vtx + (i * VEC3_SIZE), VEC3_SIZE);
-		memcpy(ptr + 3, uv +  (i * VEC2_SIZE), VEC2_SIZE);
-		memcpy(ptr + 5, nrm + (i * VEC3_SIZE), VEC3_SIZE);
+		memcpy(ptr + 0, vtx + (i * 3), VEC3_SIZE);
+		memcpy(ptr + 3, nrm + (i * 3), VEC3_SIZE);
+		memcpy(ptr + 6, uv + i * col_sizeb, col_size);
 	}
 
 	/* Bind vertex-array-object */
 	glBindVertexArray(mdl->vao);
 
 	/* Register the vertex-positions */
-	tmp = vtxnum * vtxsize;
 	glGenBuffers(1, &mdl->vtx_bao);
 	glBindBuffer(GL_ARRAY_BUFFER, mdl->vtx_bao);
-	glBufferData(GL_ARRAY_BUFFER, tmp, mdl->vtx_buf, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vtxnum * vtx_size, mdl->vtx_buf, 
+			GL_STATIC_DRAW);
 
-	/* 
-	 * Bind the data to the indices
-	 */
-
+	/* Bind the data to the indices */
 	/* Vertex-Position */
-	p = NULL;
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, vtxsize, p);
-	/* UV-Coordinate */
-	p = (void *)(3 * sizeof(float));
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, vtxsize, p);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, vtx_size, NULL);
 	/* Normal-Vector */
-	p = (void *)(5 * sizeof(float));
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, vtxsize, p);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, vtx_size, 
+			(void *)(3 * sizeof(float)));
+	/* UV-Coordinate */
+	glVertexAttribPointer(2, col_sizeb, GL_FLOAT, GL_FALSE, vtx_size, 
+			(void *)(6 * sizeof(float)));
 
 	/* Register the indices */
-	tmp = dxnum * sizeof(int);
 	glGenBuffers(1, &mdl->idx_bao);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mdl->idx_bao);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, i, tmp, mdl->idx_buf, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, idxnum * sizeof(int), 
+			mdl->idx_buf, GL_STATIC_DRAW);
 
 	/* Unbind the vertex-array-object */
 	glBindVertexArray(0);
@@ -504,7 +501,7 @@ extern short mdl_load_obj(char *name, char *pth, short tex, short shd)
 	mdl_set_texture(slot, tex);
 	mdl_set_shader(slot, shd);
 
-	mdl_set_mesh(slot, vtxnum, (float *)vtx, (float *)nrm, uv, 1, idxnum, idx);
+	mdl_set_mesh(slot, vtxnum, (float *)vtx, (float *)uv, (float *)nrm, idxnum, idx);
 
 	mdl_set_status(slot, MDL_OK);
 	return slot;
@@ -522,6 +519,13 @@ extern short mdl_load_amo(char *name, char *pth, short tex, short shd)
 	short slot;
 	int i;
 
+	int vtxnum;
+	float *vtx;
+	float *uv;
+	float *nrm;
+	int idxnum;
+	unsigned int *idx;
+
 	/* Allocate memory for the model-struct */
 	if((slot = mdl_set(name)) < 0)
 		return -1;
@@ -529,24 +533,19 @@ extern short mdl_load_amo(char *name, char *pth, short tex, short shd)
 	if(!(data = amo_load(pth, &count)))
 		goto err_del_mdl;
 
-	printf("Loaded %d models\n", count);
-	printf("Vertex-Count: %d\n", data->vtx_c);
-	printf("Index-Count: %d\n", data->idx_c);
-
-	for(i = 0; i < data->vtx_c; i++) {
-		printf("%d: ", i);
-		vec3_print(data->vtx_buf + (i * 3));
-		printf("\n");
-	}
+	printf("%d, %d\n", data[0].vtx_c, data[0].idx_c);
 
 	mdl_set_texture(slot, tex);
 	mdl_set_shader(slot, shd);
 
-	mdl_set_mesh(slot, 
-			data->vtx_c, data->vtx_buf,
-			data->nrm_c, data->nrm_buf,
-			data->uv_c, data->uv_buf, 1,
-			data->idx_c, data->idx_buf);
+	amo_getmesh(data, count, &vtxnum, (void **)&vtx, (void **)&uv, (void **)&nrm, &idxnum, &idx);
+
+	mdl_set_mesh(slot, vtxnum, vtx, uv, nrm, idxnum, idx);
+
+	free(vtx);
+	free(uv);
+	free(nrm);
+	free(idx);
 
 	mdl_set_status(slot, MDL_OK);
 

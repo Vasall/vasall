@@ -33,10 +33,10 @@ int load_resources(void)
 		return -1;
 
 	/* models */
-	if(mdl_load_obj("wld", "res/models/floor.obj", tex_get("flr"), shd_get("uv")) < 0)
+	if(mdl_load_amo("wld", "res/models/base.obj", tex_get("flr"), shd_get("uv")) < 0)
 		return -1;
 
-	if(mdl_load_amo("plr", "res/models/cube.obj", tex_get("plr"), shd_get("uv")) < 0)
+	if(mdl_load_amo("plr", "res/models/base.amo", tex_get("plr"), shd_get("uv")) < 0)
 		return -1;
 
 	return 0;

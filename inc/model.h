@@ -92,15 +92,13 @@ extern void mdl_del(short slot);
  * @slot: The slot of the model
  * @vtxnum: The number of vertices
  * @vtx: The buffer containing all vertices
- * @nrmnum: The number of normal-vector
- * @nrm: A buffer containing all normal-vectors
- * @uvnum: The number of colors or UV-positions
  * @uv: A buffer containing either the colors or UV-positions
+ * @nrm: A buffer containing all normal-vectors
  * @idxnum: The number of indices
  * @idx: The buffer containing all indices
  */
-extern void mdl_set_mesh(short slot, int vtxnum, float *vtx, float *nrm,
-		float *uv, int idxnum, unsigned int *idx);
+extern void mdl_set_mesh(short slot, int vtxnum, float *vtx, float *uv,
+		float *nrm, int idxnum, unsigned int *idx);
 
 
 /*

@@ -542,6 +542,11 @@ extern short mdl_load_amo(char *name, char *pth, short tex, short shd)
 	
 	printf("AMO: idx: %d, vtx: %d\n", idxnum, vtxnum);
 
+	for(i = 0; i < idxnum; i++) {
+		printf("%d\n", idx[i]);
+		printf("%.4f %.4f %.4f\n", vtx[idx[i] * 3], vtx[idx[i] * 3 + 1], vtx[idx[i] * 3 + 2]);
+	}
+
 	mdl_set_mesh(slot, vtxnum, vtx, uv, nrm, idxnum, idx);
 
 	free(vtx);
@@ -551,9 +556,7 @@ extern short mdl_load_amo(char *name, char *pth, short tex, short shd)
 
 	mdl_set_status(slot, MDL_OK);
 
-	printf("Destroy amo\n");
 	amo_destroy(data);
-	printf("End\n");
 	return slot;
 
 err_del_mdl:

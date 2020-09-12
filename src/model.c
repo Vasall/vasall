@@ -498,6 +498,8 @@ extern short mdl_load_obj(char *name, char *pth, short tex, short shd)
 	if(load_obj(pth, &idxnum, &idx, &vtxnum, &vtx, &nrm, &uv) < 0)
 		goto err_del_mdl;
 
+	printf("OBJ: idx: %d, vtx: %d\n", idxnum, vtxnum);
+
 	mdl_set_texture(slot, tex);
 	mdl_set_shader(slot, shd);
 
@@ -530,15 +532,15 @@ extern short mdl_load_amo(char *name, char *pth, short tex, short shd)
 	if((slot = mdl_set(name)) < 0)
 		return -1;
 
-	if(!(data = amo_load(pth, &count)))
+	if(!(data = amo_load(pth)))
 		goto err_del_mdl;
-
-	printf("%d, %d\n", data[0].vtx_c, data[0].idx_c);
 
 	mdl_set_texture(slot, tex);
 	mdl_set_shader(slot, shd);
 
-	amo_getmesh(data, count, &vtxnum, (void **)&vtx, (void **)&uv, (void **)&nrm, &idxnum, &idx);
+	amo_getmesh(data, &vtxnum, (void **)&vtx, (void **)&uv, (void **)&nrm, &idxnum, &idx);
+	
+	printf("AMO: idx: %d, vtx: %d\n", idxnum, vtxnum);
 
 	mdl_set_mesh(slot, vtxnum, vtx, uv, nrm, idxnum, idx);
 
@@ -549,7 +551,9 @@ extern short mdl_load_amo(char *name, char *pth, short tex, short shd)
 
 	mdl_set_status(slot, MDL_OK);
 
-	amo_destroy(data, count);
+	printf("Destroy amo\n");
+	amo_destroy(data);
+	printf("End\n");
 	return slot;
 
 err_del_mdl:

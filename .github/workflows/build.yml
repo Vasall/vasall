@@ -3,16 +3,32 @@ on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - name: Install Dependencies
-        run: sudo apt update && sudo apt install libsdl2-dev libsdl2-ttf-dev 
-             libsdl2-image-dev freeglut3-dev
+        run: |
+          sudo apt update
+          sudo apt install libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev freeglut3-dev
       - name: Install lcp
-        run: mkdir lib && cd lib && git clone https://github.com/Vasall/lcp && 
-             cd lcp && 
-             svn checkout https://github.com/miniupnp/miniupnp/trunk/miniupnpc 
-             && cd miniupnpc && make && cd .. && mkdir obj && make
+        run: |
+          mkdir lib
+          cd lib
+          git clone https://github.com/Vasall/lcp
+          cd lcp
+          svn checkout https://github.com/miniupnp/miniupnp/trunk/miniupnpc 
+          cd miniupnpc
+          make
+          cd ..
+          mkdir obj
+          make
+      - name: Install amoloader
+        run: |
+          cd lib
+          git clone https://github.com/Vasall/amoloader
+          cd amoloader
+          make
+          mkdir inc
+          cp amoloader.h inc
       - name: make
         run: mkdir obj bin && make

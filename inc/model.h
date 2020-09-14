@@ -21,6 +21,38 @@ enum mdl_status {
 	MDL_ERR_FINISHING =     6
 };
 
+struct mdl_anim_joint;
+struct mdl_anim_joint {
+	char name[100];
+	int index;
+	struct mdl_anim_joint *par;
+};
+
+struct mdl_anim_keyfr {
+	float ts;
+
+	float *loc;
+	float *rot;
+};
+
+struct mdl_anim {
+	char name[256];
+
+	float dur;
+
+	int                    keyfr_num;
+	struct mdl_anim_keyfr  *keyfr;
+};
+
+struct mdl_anim_wrapper {
+	int                    joint_num;
+	struct mdl_anim_joint  *joint_lst;
+	float                  *joint_mat;
+
+	int              num;
+	struct mdl_anim  *lst;
+};
+
 struct model {
 	char          name[9];
 	unsigned int  vao;
@@ -35,7 +67,9 @@ struct model {
 
 	short         tex;
 	short         shd;
-	
+
+	struct mdl_anim_wrapper  *anim;
+
 	uint8_t       status;
 };
 
@@ -120,19 +154,9 @@ extern void mdl_set_shader(short slot, short shd);
 
 
 /*
- * Load a model from a OBJ-file and add it to the model-table.
- *
- * @name: The name of the model
- * @amo: The relative path to the model-file
- * @slot: The slot of the texture in the texture-table
- * @shd: The slot of the shader in the shader-table
- *
- * Returns: Either the slot of the created model or -1 if an error occurred
+ * 
  */
-extern short mdl_load_obj(char *name, char *amo, short tex, short shd);
-
-
-extern short mdl_load_amo(char *name, char *amo, short tex, short shd);
+extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot);
 
 /*
  * Render a model with a model-matrix.

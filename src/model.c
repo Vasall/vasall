@@ -486,6 +486,7 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 	/* Return the returned data-struct */
 	amo_destroy(data);
 
+	/* Return the slot the model is on */
 	return slot;
 
 err_free_data:

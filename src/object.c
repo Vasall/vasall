@@ -82,7 +82,8 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 	objects.model[slot] = model;
 	objects.anim[slot] = 0;
 	objects.prog[slot] = 0.0;
-	mat4_idt(objects.mat[slot]);
+	mat4_idt(objects.mat_pos[slot]);
+	mat4_idt(objects.mat_rot[slot]);
 
 	/* Setup object-data-buffer */
 	objects.len[slot] = 0;
@@ -181,20 +182,21 @@ extern void obj_update_matrix(short slot)
 	if(obj_check_slot(slot))
 		return;
 
-	/* Reset the model-matrix to an identity-matrix */
-	mat4_idt(objects.mat[slot]);
+	/* Reset the model-matrices to identity-matrices */
+	mat4_idt(objects.mat_pos[slot]);
+	mat4_idt(objects.mat_rot[slot]);
+
+	/* Set the position of the model */
+	objects.mat_pos[slot][0xc] = objects.pos[slot][0];
+	objects.mat_pos[slot][0xd] = objects.pos[slot][1];
+	objects.mat_pos[slot][0xe] = objects.pos[slot][2];
 
 	/* Set the rotation of the model */
 	rot = atan2(-objects.dir[slot][2], objects.dir[slot][0]);
-	objects.mat[slot][0x0] =  cos(rot);
-	objects.mat[slot][0x2] = -sin(rot);
-	objects.mat[slot][0x8] =  sin(rot);
-	objects.mat[slot][0xa] =  cos(rot);
-
-	/* Set the position of the model */
-	objects.mat[slot][0xc] = objects.pos[slot][0];
-	objects.mat[slot][0xd] = objects.pos[slot][1];
-	objects.mat[slot][0xe] = objects.pos[slot][2];
+	objects.mat_rot[slot][0x0] =  cos(rot);
+	objects.mat_rot[slot][0x2] = -sin(rot);
+	objects.mat_rot[slot][0x8] =  sin(rot);
+	objects.mat_rot[slot][0xa] =  cos(rot);
 }
 
 
@@ -687,18 +689,19 @@ extern void obj_sys_render(void)
 			vec3_cpy(dir, objects.ren_dir[i]);
 
 			/* Set the position of the model */
-			objects.mat[i][0xc] = pos[0];
-			objects.mat[i][0xd] = pos[1];
-			objects.mat[i][0xe] = pos[2];
+			objects.mat_pos[i][0xc] = pos[0];
+			objects.mat_pos[i][0xd] = pos[1];
+			objects.mat_pos[i][0xe] = pos[2];
 
 			/* Set the rotation of the model */
 			rot = atan2(-dir[2], dir[0]);
-			objects.mat[i][0x0] =  cos(rot);
-			objects.mat[i][0x2] = -sin(rot);
-			objects.mat[i][0x8] =  sin(rot);
-			objects.mat[i][0xa] =  cos(rot);
+			objects.mat_rot[i][0x0] =  cos(rot);
+			objects.mat_rot[i][0x2] = -sin(rot);
+			objects.mat_rot[i][0x8] =  sin(rot);
+			objects.mat_rot[i][0xa] =  cos(rot);
 
-			mdl_render(objects.model[i], objects.mat[i]);
+			mdl_render(objects.model[i], objects.mat_pos[i],
+					objects.mat_rot[i]);
 		}
 	}
 }

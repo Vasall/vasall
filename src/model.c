@@ -121,8 +121,12 @@ extern short mdl_set(char *name)
 	mdl->tex = -1;
 	mdl->shd = -1;
 
+	/* Initialize joint-arrays */
+	mdl->jnt_buf = NULL;
+	mdl->jnt_mat = NULL;
+		
 	/* Initialize animation-attributes */
-	mdl->anim = NULL;
+	mdl->anim_buf = NULL;
 
 	mdl->status = MDL_OK;
 
@@ -150,10 +154,11 @@ extern short mdl_get(char *name)
 	return -1;
 }
 
-
 extern void mdl_del(short slot)
 {
 	struct model *mdl;
+	int i;
+	int j;
 
 	if(mdl_check_slot(slot))
 		return;
@@ -175,6 +180,28 @@ extern void mdl_del(short slot)
 
 	if(mdl->vtx_buf)
 		free(mdl->vtx_buf);
+
+	/* Free the joint-buffer */
+	if(mdl->jnt_buf)
+		free(mdl->jnt_buf);
+
+	/* Free the joint-matrices */
+	if(mdl->jnt_mat)
+		free(mdl->jnt_mat);
+
+	/* Free the animation-buffer and keyframes */
+	if(mdl->anim_buf) {
+		for(i = 0; i < mdl->anim_num; i++) {
+			for(j = 0; j < mdl->anim_buf[i].keyfr_num; j++) {
+				free(mdl->anim_buf[i].keyfr_buf[j].pos);
+				free(mdl->anim_buf[i].keyfr_buf[j].rot);
+			}
+
+			free(mdl->anim_buf[i].keyfr_buf);
+		}
+
+		free(mdl->anim_buf);
+	}
 
 	free(mdl);
 	models[slot] = NULL;
@@ -294,11 +321,8 @@ err_set_failed:
 
 extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 {
-	int i;
-	int tmp;
-	void *p;
-
 	struct amo_model *data;
+	struct model *mdl;
 	short slot;
 
 	int vtxnum;
@@ -308,9 +332,22 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 	int idxnum;
 	unsigned int *idx;
 
+	int i;
+	int j;
+
+	/* Helper-variables */
+	int tmp;
+	struct mdl_anim *anim;
+	struct mdl_keyfr *keyfr;
+	struct amo_keyfr *amo_keyfr;
+
+
 	/* Allocate memory for the model-struct */
 	if((slot = mdl_set(name)) < 0)
 		return -1;
+
+	/* Get pointer to model */
+	mdl = models[slot]; 
 
 	/* Load a model from a file and write it to the data-struct */
 	if(!(data = amo_load(pth)))
@@ -341,78 +378,105 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 	free(nrm);
 	free(idx);
 
-	/* Load joints and animations */
-	if(data->format == AMO_FORMAT_AMO) {
-		/* Allocate memory for the animation-wrapper */
-		if(!(mdl->anim = malloc(sizeof(struct mdl_anim_wrapper))))
-			goto err_del_data;
+	/* Copy joints */
+	if(data->jnt_c > 0) {
+		/* Copy number of joints */
+		mdl->jnt_num = data->jnt_c;
 
-		/* Set the buffers to NULL */
-		mdl->anim->joint_lst = NULL;
-		mdl->anim->joint_mat = NULL;
-		mdl->anim->lst = NULL;
-
-		/* Get number of joints for the model */
-		mdl->anim->joint_num = data->jnt_c;
+		printf("Load %d bones\n", mdl->jnt_num);
 
 		/* Allocate memory for joints */
-		tmp = mdl->anim->joint_num * sizeof(struct mdl_anim_joint);
-		if(!(mdl->anim->joint_lst = malloc(tmp)))
-			goto err_del_data;
+		tmp = mdl->jnt_num * sizeof(struct mdl_joint);
+		if(!(mdl->jnt_buf = malloc(tmp)))
+			goto err_free_data;
 
-		/* Fill in data for joints */
-		for(i = 0; i < mdl->anim->joint_num; i++) {
-			/* Copy name of the joint */
-			strcpy(mdl->anim->joint_lst[i].name,
-					data->jnt_lst[i].name);
+		/* Copy joint-data */
+		for(i = 0; i < mdl->jnt_num; i++) {
+			/* Copy joint-name */
+			strcpy(mdl->jnt_buf[i].name, data->jnt_lst[i].name);
 
-			/* Get index of parent-node */
-			tmp = data->jnt_lst[i].par->index;
-
-			/* Get pointer to the parent-joint */
-			if(tmp < 0) {
-				mdl->anim->joint_lst[i].par = NULL;
-			}
-			else {
-				p = &mdl->anim->joint_lst[tmp]
-				mdl->anim->joint_lst[i].par = p;
-			}
-		}	
-
-		/* Allocate memory for active joint-matrices */
-		tmp = mdl->anim->joint_num;
-		if(!(mdl->anim_joint_mat = calloc(tmp, sizeof(float) * 16)))
-			goto err_del_data;
-
-		/* Get number of animations */
-		mdl->anim->num = data->ani_c;
-
-		/* Allocate memory for animations */
-		tmp = mdl->anim->num * sizeof(struct mdl_anim);
-		if(!(mdl->anim->lst = malloc(tmp)))
-			goto err_del_data;
-
-		/* Set keyframe-buffers to NULL */
-		for(i = 0; i < mdl->anim->num; i++)
-			mdl->anim->lst[i].keyfr_lst = NULL;
-
-		/* Set animation data and allocate memory for keyframes */
-		for(i = 0; i < mdl->anim->num; i++) {
-			/* Copy name of animation */
-			strcpy(mdl->anim->lst[i].name, data->ani_lst[i].name);
-
-			tmp = 
-			if(!(mdl->anim->lst[i].keyfr_lst = malloc()
+			/* Set parent-joint-index */
+			if(data->jnt_lst[i].par)
+				tmp = data->jnt_lst[i].par->index;
+			else 
+				tmp = -1;
+			mdl->jnt_buf[i].par = tmp;			
 		}
 
-		/* Fill in data for animations */
-		for(i = 0; i < mdl->ani_c; i++) {
-			/* Copy name of animation */
-			strcpy(mdl->anim->anim_lst[i].name,
-					data->ani_lst[i].name);
+		/* Allocate memory for joint-matrices */
+		tmp = mdl->jnt_num * sizeof(float) * 16;
+		if(!(mdl->jnt_mat = malloc(tmp)))
+			goto err_free_data;
+	}
+
+	/* Copy animations */
+	if(data->ani_c > 0) {
+		/* Copy number of animations */
+		mdl->anim_num = data->ani_c;
+
+		/* Allocate memory for animations */
+		tmp = mdl->anim_num * sizeof(struct mdl_anim);
+		if(!(mdl->anim_buf = malloc(tmp)))
+			goto err_free_data;
+
+		/* Initialize keyframe-buffers */
+		for(i = 0; i < mdl->anim_num; i++) {
+			/* Get shortcut-pointer */
+			anim = &mdl->anim_buf[i];
+
+			anim->keyfr_num = 0;
+			anim->keyfr_buf = NULL;
+		}
+
+		/* Copy animation-keyframes */
+		for(i = 0; i < mdl->anim_num; i++) {
+			/* Get shortcut-pointer */
+			anim = &mdl->anim_buf[i];
 
 			/* Copy number of keyframes */
+			anim->keyfr_num = data->ani_lst[i].keyfr_c;
 
+			/* Allocate memory for keyframes */
+			tmp = anim->keyfr_num * sizeof(struct mdl_keyfr);
+			if(!(anim->keyfr_buf = malloc(tmp)))
+				goto err_free_data;
+
+			/* Initialize keyframe-joint-buffers */
+			for(j = 0; j < anim->keyfr_num; j++) {
+				/* Get shortcut-pointer */
+				keyfr = &anim->keyfr_buf[j];
+
+				keyfr->pos = NULL;
+				keyfr->rot = NULL;
+			}
+
+			/* Copy keyframes */
+			for(j = 0; j < anim->keyfr_num; j++) {
+				/* Get shortcut-pointers */
+				keyfr = &anim->keyfr_buf[j];
+				amo_keyfr = &data->ani_lst[i].keyfr_lst[j];
+
+				/* Allocate memory for location-data */
+				tmp = mdl->jnt_num * sizeof(float) * 3;
+				if(!(keyfr->pos = malloc(tmp)))
+					goto err_free_data;
+
+				/* Allocate memory for rotation-data */
+				tmp = mdl->jnt_num * sizeof(float) * 4;
+				if(!(keyfr->rot = malloc(tmp)))
+					goto err_free_data;
+
+				/* Copy timestamp */
+				keyfr->ts = data->ani_lst[i].keyfr_lst[j].ts;
+
+				/* Copy location-data */
+				tmp = mdl->jnt_num * sizeof(float) * 3;
+				memcpy(keyfr->pos, amo_keyfr->pos, tmp);
+
+				/* Copy rotation-data */
+				tmp = mdl->jnt_num * sizeof(float) * 4;
+				memcpy(keyfr->rot, amo_keyfr->rot, tmp);
+			}
 		}
 	}
 
@@ -424,7 +488,7 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 
 	return slot;
 
-err_del_data:
+err_free_data:
 	amo_destroy(data);
 
 err_del_mdl:
@@ -433,10 +497,10 @@ err_del_mdl:
 }
 
 
-extern void mdl_render(short slot, mat4_t mdl_mat)
+extern void mdl_render(short slot, mat4_t mat_pos, mat4_t mat_rot)
 {
-	int loc[3];
-	mat4_t model, view, proj;
+	int loc[4];
+	mat4_t pos, rot, view, proj;
 	struct model *mdl;
 
 	if(mdl_check_slot(slot))
@@ -446,7 +510,8 @@ extern void mdl_render(short slot, mat4_t mdl_mat)
 	if(!mdl || mdl->status != MDL_OK)
 		return;
 
-	mat4_cpy(model, mdl_mat);
+	mat4_cpy(pos, mat_pos);
+	mat4_cpy(rot, mat_rot);
 	cam_get_view(view);
 	cam_get_proj(proj);
 
@@ -454,9 +519,10 @@ extern void mdl_render(short slot, mat4_t mdl_mat)
 	shd_use(mdl->shd, loc);
 	tex_use(mdl->tex);
 
-	glUniformMatrix4fv(loc[0], 1, GL_FALSE, model);
-	glUniformMatrix4fv(loc[1], 1, GL_FALSE, view);
-	glUniformMatrix4fv(loc[2], 1, GL_FALSE, proj);
+	glUniformMatrix4fv(loc[0], 1, GL_FALSE, pos);
+	glUniformMatrix4fv(loc[1], 1, GL_FALSE, rot);
+	glUniformMatrix4fv(loc[2], 1, GL_FALSE, view);
+	glUniformMatrix4fv(loc[3], 1, GL_FALSE, proj);
 
 	glDrawElements(GL_TRIANGLES, mdl->idx_num, GL_UNSIGNED_INT, 0);
 

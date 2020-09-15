@@ -21,17 +21,16 @@ enum mdl_status {
 	MDL_ERR_FINISHING =     6
 };
 
-struct mdl_anim_joint;
-struct mdl_anim_joint {
+struct mdl_joint;
+struct mdl_joint {
 	char name[100];
-	int index;
-	struct mdl_anim_joint *par;
+	int par;
 };
 
-struct mdl_anim_keyfr {
+struct mdl_keyfr {
 	float ts;
 
-	float *loc;
+	float *pos;
 	float *rot;
 };
 
@@ -40,8 +39,8 @@ struct mdl_anim {
 
 	float dur;
 
-	int                    keyfr_num;
-	struct mdl_anim_keyfr  *keyfr;
+	int               keyfr_num;
+	struct mdl_keyfr  *keyfr_buf;
 };
 
 struct mdl_anim_wrapper {
@@ -68,7 +67,12 @@ struct model {
 	short         tex;
 	short         shd;
 
-	struct mdl_anim_wrapper  *anim;
+	int              jnt_num;
+	struct mdl_joint *jnt_buf;
+	float            *jnt_mat;
+
+	int              anim_num;
+	struct mdl_anim  *anim_buf;
 
 	uint8_t       status;
 };
@@ -162,8 +166,9 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot);
  * Render a model with a model-matrix.
  *
  * @slot: The slot of the model to render
- * @mat: The model-matrix
+ * @mat_pos: The position-matrix
+ * @mat_rot: The rotation-matrix
  */
-extern void mdl_render(short slot, mat4_t mdl_mat);
+extern void mdl_render(short slot, mat4_t mat_pos, mat4_t mat_rot);
 
 #endif

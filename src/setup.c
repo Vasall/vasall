@@ -36,7 +36,7 @@ int load_resources(void)
 	if(mdl_load("wld", "res/models/floor.obj", tex_get("flr"), shd_get("uv")) < 0)
 		return -1;
 
-	if(mdl_load("plr", "res/models/test.amo", tex_get("plr"), shd_get("uv")) < 0)
+	if(mdl_load("plr", "res/models/base.amo", tex_get("plr"), shd_get("uv")) < 0)
 		return -1;
 
 	return 0;

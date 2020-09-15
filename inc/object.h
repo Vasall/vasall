@@ -65,7 +65,8 @@ struct object_table {
 	short                 model[OBJ_SLOTS];
 	short                 anim[OBJ_SLOTS];
 	float                 prog[OBJ_SLOTS];
-	mat4_t                mat[OBJ_SLOTS];
+	mat4_t                mat_pos[OBJ_SLOTS];
+	mat4_t                mat_rot[OBJ_SLOTS];
 
 	/* Object/Player-Data like Health and Mana */
 	int                   len[OBJ_SLOTS];

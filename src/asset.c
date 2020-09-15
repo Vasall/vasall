@@ -220,9 +220,10 @@ extern void shd_use(short slot, int *loc)
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
 
-	loc[0] = glGetUniformLocation(assets.shd.prog[slot], "model");
-	loc[1] = glGetUniformLocation(assets.shd.prog[slot], "view");
-	loc[2] = glGetUniformLocation(assets.shd.prog[slot], "proj");
+	loc[0] = glGetUniformLocation(assets.shd.prog[slot], "mpos");
+	loc[1] = glGetUniformLocation(assets.shd.prog[slot], "mrot");
+	loc[2] = glGetUniformLocation(assets.shd.prog[slot], "view");
+	loc[3] = glGetUniformLocation(assets.shd.prog[slot], "proj");
 }
 
 

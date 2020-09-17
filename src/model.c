@@ -501,7 +501,7 @@ err_del_mdl:
 extern void mdl_render(short slot, mat4_t mat_pos, mat4_t mat_rot)
 {
 	int loc[4];
-	mat4_t pos, rot, view, proj;
+	mat4_t mpos, mrot, view, proj;
 	struct model *mdl;
 
 	if(mdl_check_slot(slot))
@@ -511,8 +511,8 @@ extern void mdl_render(short slot, mat4_t mat_pos, mat4_t mat_rot)
 	if(!mdl || mdl->status != MDL_OK)
 		return;
 
-	mat4_cpy(pos, mat_pos);
-	mat4_cpy(rot, mat_rot);
+	mat4_cpy(mpos, mat_pos);
+	mat4_cpy(mrot, mat_rot);
 	cam_get_view(view);
 	cam_get_proj(proj);
 
@@ -520,8 +520,8 @@ extern void mdl_render(short slot, mat4_t mat_pos, mat4_t mat_rot)
 	shd_use(mdl->shd, loc);
 	tex_use(mdl->tex);
 
-	glUniformMatrix4fv(loc[0], 1, GL_FALSE, pos);
-	glUniformMatrix4fv(loc[1], 1, GL_FALSE, rot);
+	glUniformMatrix4fv(loc[0], 1, GL_FALSE, mpos);
+	glUniformMatrix4fv(loc[1], 1, GL_FALSE, mrot);
 	glUniformMatrix4fv(loc[2], 1, GL_FALSE, view);
 	glUniformMatrix4fv(loc[3], 1, GL_FALSE, proj);
 

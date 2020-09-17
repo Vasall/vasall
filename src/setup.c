@@ -26,10 +26,10 @@ int load_resources(void)
 		return -1;
 
 	/* textures */
-	if(tex_load_png("plr", "res/textures/base.png") < 0)
+	if(tex_load_png("flr", "res/textures/floor.png") < 0)
 		return -1;
 
-	if(tex_load_png("flr", "res/textures/floor.png") < 0)
+	if(tex_load_png("plr", "res/textures/base.png") < 0)
 		return -1;
 
 	/* models */

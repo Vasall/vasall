@@ -6,7 +6,7 @@
 #include "sdl.h"
 #include "asset.h"
 #include "camera.h"
-#include "amoloader/inc/amoloader.h"
+#include "amoloader/amoloader.h"
 
 #define MDL_NAME_MAX            8
 #define MDL_SLOTS             256

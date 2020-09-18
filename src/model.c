@@ -109,6 +109,9 @@ extern short mdl_set(char *name)
 	/* Copy the key for this model */
 	strcpy(mdl->name, name);
 
+	/* Set type of the model */
+	mdl->type = MDL_BARE;
+
 	/* Initialize model-attributes */
 	mdl->vao = 0;
 	mdl->idx_bao = 0;
@@ -146,9 +149,8 @@ extern short mdl_get(char *name)
 		if(!models[i])
 			continue;
 
-		if(!strcmp(models[i]->name, name)) {
+		if(!strcmp(models[i]->name, name))
 			return i;
-		}
 	}
 
 	return -1;
@@ -208,14 +210,13 @@ extern void mdl_del(short slot)
 }
 
 
-extern void mdl_set_mesh(short slot, int vtxnum, float *vtx, float *uv,
-		float *nrm, int idxnum, unsigned int *idx)
+extern void mdl_set_data(short slot, int vtxnum, float *vtx, float *tex,
+		float *nrm, unsigned int *jnt, float *wgt, int idxnum,
+		unsigned int *idx)
 {
 	int i;
 	float *ptr;
-	int col_sizeb = 2;
-	int col_size = col_sizeb * sizeof(float);
-	int vtx_sizeb = ((3 * 2) + col_sizeb);
+	int vtx_sizeb = (3 + 2 + 3);
 	int vtx_size = vtx_sizeb * sizeof(float);
 	struct model *mdl;
 
@@ -243,8 +244,8 @@ extern void mdl_set_mesh(short slot, int vtxnum, float *vtx, float *uv,
 	for(i = 0; i < vtxnum; i++) {
 		ptr = mdl->vtx_buf + (i * vtx_sizeb);
 		memcpy(ptr + 0, vtx + (i * 3), VEC3_SIZE);
-		memcpy(ptr + 3, nrm + (i * 3), VEC3_SIZE);
-		memcpy(ptr + 6, uv + i * col_sizeb, col_size);
+		memcpy(ptr + 3, tex + (i * 2), VEC2_SIZE);
+		memcpy(ptr + 5, nrm + (i * 3), VEC3_SIZE);
 	}
 
 	/* Bind vertex-array-object */
@@ -259,12 +260,12 @@ extern void mdl_set_mesh(short slot, int vtxnum, float *vtx, float *uv,
 	/* Bind the data to the indices */
 	/* Vertex-Position */
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, vtx_size, NULL);
-	/* Normal-Vector */
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, vtx_size, 
+	/* Tex-Coordinate */
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, vtx_size, 
 			(void *)(3 * sizeof(float)));
-	/* UV-Coordinate */
-	glVertexAttribPointer(2, col_sizeb, GL_FLOAT, GL_FALSE, vtx_size, 
-			(void *)(6 * sizeof(float)));
+	/* Normal-Vector */
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, vtx_size, 
+			(void *)(5 * sizeof(float)));
 
 	/* Register the indices */
 	glGenBuffers(1, &mdl->idx_bao);
@@ -369,8 +370,8 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 	 */
 	amo_getmesh(data, &vtxnum, (void **)&vtx, (void **)&tex, (void **)&nrm, &idxnum, &idx);
 
-	/* Attach a mesh to the model */
-	mdl_set_mesh(slot, vtxnum, vtx, tex, nrm, idxnum, idx);
+	/* Attach data to the model */
+	mdl_set_data(slot, vtxnum, vtx, tex, nrm, 0, NULL, idxnum, idx);
 
 	/* Free the conversion-buffers */
 	free(vtx);
@@ -500,6 +501,7 @@ err_del_mdl:
 
 extern void mdl_render(short slot, mat4_t mat_pos, mat4_t mat_rot)
 {
+	char *vars[4] = {"mpos", "mrot", "view", "proj"};
 	int loc[4];
 	mat4_t mpos, mrot, view, proj;
 	struct model *mdl;
@@ -517,7 +519,7 @@ extern void mdl_render(short slot, mat4_t mat_pos, mat4_t mat_rot)
 	cam_get_proj(proj);
 
 	glBindVertexArray(mdl->vao);
-	shd_use(mdl->shd, loc);
+	shd_use(mdl->shd, 4, vars, loc);
 	tex_use(mdl->tex);
 
 	glUniformMatrix4fv(loc[0], 1, GL_FALSE, mpos);

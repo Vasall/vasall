@@ -131,10 +131,9 @@ void join_paths(char *dst, char *pth1, char *pth2)
 	free(dst_buf);
 }
 
-extern SDL_Surface *crop_surf(SDL_Surface* in, SDL_Rect *in_rect, 
-		SDL_Rect *out_rect)
+extern surf_t *crop_surf(surf_t* in, rect_t *in_rect, SDL_Rect *out_rect)
 {
-	SDL_Surface* out = SDL_CreateRGBSurface(in->flags,
+	surf_t *out = SDL_CreateRGBSurface(in->flags,
 			out_rect->w, out_rect->h,
 			in->format->BitsPerPixel,
 			in->format->Rmask,

@@ -39,13 +39,13 @@ extern void sdl_close(void)
 }
 
 
-extern int sdl_fill_rounded(SDL_Surface *surf, int xo, int yo, int w, int h, 
-		SDL_Color col, short *cor)
+extern int sdl_fill_rounded(surf_t *surf, int xo, int yo, int w, int h,
+		color_t col, short *cor)
 {
 	uint32_t *pixels;
 	float a, d, f;
 	int i, j, x, y;
-	SDL_Color cur, set;
+	color_t cur, set;
 
 	xo = (xo < 0) ? (0) : (xo);
 	yo = (yo < 0) ? (0) : (yo);
@@ -90,7 +90,7 @@ extern int sdl_fill_rounded(SDL_Surface *surf, int xo, int yo, int w, int h,
 				set.a = 255;
 			}
 			else if(a > 127.5) {
-				cur =  *((SDL_Color *)&pixels[y * surf->w + x]);
+				cur =  *((color_t *)&pixels[y * surf->w + x]);
 				f = cur.a + a;
 
 				set.r = cur.r * (cur.a / f) + col.r * (a / f);

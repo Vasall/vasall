@@ -3,7 +3,6 @@
 
 #include "sdl.h"
 #include "filesystem.h"
-#include "text.h"
 
 #include <stdint.h>
 
@@ -28,9 +27,38 @@ struct texture_wrapper {
 };
 
 
+#define TXT_NAME_MAX            8
+#define TXT_FONT_SLOTS          8
+
+/*
+ *  128  64  32  16   8   4   2   1
+ *    7   6   5   4   3   2   1   0
+ *
+ * 0: Align text left
+ * 1: Align text right
+ * 2: UNDEFINED
+ * 3: UNDEFINED
+ * 4: Bold
+ * 5: Italic
+ * 6: Underline
+ */
+
+#define TXT_LEFT              0x01
+#define TXT_RIGHT             0x02
+#define TXT_BOLD              0x10
+#define TXT_ITALIC            0x20
+#define TXT_UNDERLINE         0x40
+
+struct text_wrapper {
+	short font_num;
+	TTF_Font *fonts[TXT_FONT_SLOTS];
+};
+
+
 struct asset_wrapper {
 	struct shader_wrapper shd;
 	struct texture_wrapper tex;
+	struct text_wrapper txt;
 };
 
 
@@ -65,10 +93,13 @@ extern void ast_close(void);
  * @name: The name of the shader
  * @vs: A null-terminated buffer containing the vertex-shader
  * @fs: A null-terminated buffer containing the fragment-shader
+ * @num: The number of variables
+ * @vars: An array of variable-names which will be bound to the corresponding
+ *        position in the array
  *
  * Returns: The slot of the shader in the table or -1 if an error occurred
  */
-extern short shd_set(char *name, char *vs, char *fs);
+extern short shd_set(char *name, char *vs, char *fs, int num, char **vars);
 
 
 /*
@@ -93,9 +124,11 @@ extern short shd_get(char *name);
  * Tell OpenGL to use a shader.
  *
  * @slot: The slot the shader is on
- * @loc: A buffer to write the indices of the uniform-vars to
+ * @num: The number of variable-names
+ * @vars: The variable-names for the uniform-variables
+ * @loc: An array to write the uniform-locations to, has to be: |loc| >= num
  */
-extern void shd_use(short slot, int *loc);
+extern void shd_use(short slot, int num, char **vars, int *loc);
 
 
 /* 
@@ -165,6 +198,52 @@ extern void tex_unuse(void);
  * Returns: Either the slot the texture is on or -1 if an error occurred
  */
 extern short tex_load_png(char *name, char *pth);
+
+
+/* ----------------------------------------------- */
+/*                                                 */
+/*                     TEXT                        */
+/*                                                 */
+/* ------------------------------------------------*/
+
+/*
+ * Load a TTF-font and add it to the font-table.
+ *
+ * @pth: The relative path to the font
+ * @size: The size to load the font at
+ * 
+ * Returns: Either the slot of the font in the table or -1 if an error occurred
+ */
+extern short txt_load_ttf(char *pth, int size);
+
+
+/*
+ * Render a text on a SDL-surface.
+ *
+ * @surf: The SDL-surface to render on
+ * @rect: The rectangle to render the text in
+ * @col: The color to render the text with
+ * @font: The slot of the font in the table
+ * @text: A null-terminated text-buffer
+ * @rel: The relative offset to render the text with
+ * @algn: The alignment of the text
+ */
+extern void txt_render_rel(surf_t *surf, rect_t *rect, color_t *col,
+		short font, char *text, short rel, uint8_t algn);
+
+
+/*
+ * Render a text on a surface.
+ *
+ * @surf: The SDL-surface to render on
+ * @rect: The rectangle to render the text in
+ * @col: The color to render the text with
+ * @font: The slot of the font in the table
+ * @text: A null-terminated text-buffer
+ * @opt: Additional options
+ */
+extern void txt_render(surf_t *surf, rect_t *rect, color_t *col,
+		short font, char *text, uint8_t opt);
 
 
 #endif

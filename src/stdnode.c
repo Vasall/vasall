@@ -221,7 +221,7 @@ void INPUT_ONKEYDOWN(ui_node *n, event_t *evt)
 
 	ele = n->element;
 	rect = &n->body;
-	font = texts.fonts[1];
+	font = assets.txt.fonts[1];
 
 	switch(evt->button.button) {
 		case(25):	/* V in combination with CTRL */
@@ -353,7 +353,7 @@ void INPUT_ONTEXTINPUT(ui_node *n, event_t *evt)
 
 	ele = n->element;
 	rect = &n->body;
-	font = texts.fonts[1];
+	font = assets.txt.fonts[1];
 
 	/* Ignore copy and paste */
 	if((SDL_GetModState() & KMOD_CTRL &&
@@ -404,7 +404,7 @@ void INPUT_RENDER(ui_node *n, ui_node *rel)
 	rect_t rect;
 
 	ele = n->element;
-	font = texts.fonts[1];
+	font = assets.txt.fonts[1];
 
 	rect.x = (n->body.x - rel->body.x) + ele->ins[3];
 	rect.y = (n->body.y - rel->body.y) + ele->ins[0];

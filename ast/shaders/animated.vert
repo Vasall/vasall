@@ -3,6 +3,7 @@
 in vec3 vtxPos;
 in vec3 vtxNrm;
 in vec2 vtxVal;
+in ivec3 
 
 uniform mat4 mpos;
 uniform mat4 mrot;

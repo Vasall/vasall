@@ -59,6 +59,7 @@ $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c dirs
 	@$(CC) $(CFLAGS) $(ERRFLAGS) -c $< -o $@
 	@echo "Compiled "$<" successfully!"
 
+# Create the directories to store the object-files and the final binary
 .PHONY: dirs
 dirs:
 	if [ -d "./obj" ]; then make obj; fi

@@ -5,38 +5,37 @@
 
 int load_resources(void)
 {
+	char *vars1[3] = {"vtxPos\0", "vtxTex\0", "vtxNrm\0"};
+
 	/* fonts */
-	if(txt_font_ttf("res/fonts/mecha.ttf", 24) < 0)
+	if(txt_load_ttf("ast/fonts/mecha.ttf", 24) < 0)
 		return -1;
 
-	if(txt_font_ttf("res/fonts/roboto_reg.ttf", 16) < 0)
+	if(txt_load_ttf("ast/fonts/roboto_reg.ttf", 16) < 0)
 		return -1;
 
-	if(txt_font_ttf("res/fonts/aller.ttf", 16) < 0)
+	if(txt_load_ttf("ast/fonts/aller.ttf", 16) < 0)
 		return -1;
 
-	if(txt_font_ttf("res/fonts/roboto_bold.ttf", 28) < 0)
+	if(txt_load_ttf("ast/fonts/roboto_bold.ttf", 28) < 0)
 		return -1;
 
 	/* shaders */
-	if(shd_set("col", "res/shaders/color.vert", "res/shaders/color.frag") < 0)
+	if(shd_set("mdl", "ast/shaders/model.vert", "ast/shaders/model.frag", 3, vars1) < 0)
 		return -1;
 
-	if(shd_set("uv", "res/shaders/uv.vert", "res/shaders/uv.frag") < 0)
+	/* textuast */
+	if(tex_load_png("flr", "ast/textures/floor.png") < 0)
 		return -1;
 
-	/* textures */
-	if(tex_load_png("flr", "res/textures/floor.png") < 0)
-		return -1;
-
-	if(tex_load_png("plr", "res/textures/base.png") < 0)
+	if(tex_load_png("plr", "ast/textures/base.png") < 0)
 		return -1;
 
 	/* models */
-	if(mdl_load("wld", "res/models/floor.obj", tex_get("flr"), shd_get("uv")) < 0)
+	if(mdl_load("wld", "ast/models/floor.obj", tex_get("flr"), shd_get("mdl")) < 0)
 		return -1;
 
-	if(mdl_load("plr", "res/models/base.amo", tex_get("plr"), shd_get("uv")) < 0)
+	if(mdl_load("plr", "ast/models/test.amo", tex_get("plr"), shd_get("mdl")) < 0)
 		return -1;
 
 	return 0;
@@ -153,7 +152,7 @@ int load_ui(void)
 	ui_constr(tmp, UI_CST_SIZE, UI_CST_VERT, 0, 1, 89, UI_CST_PX, 0);
 
 
-	ele = ui_new_text("USERNAME\0", sdl_color(255, 255, 255, 255), 2, TEXT_LEFT);
+	ele = ui_new_text("USERNAME\0", sdl_color(255, 255, 255, 255), 2, TXT_LEFT);
 	tmp = ui_add(UI_TEXT, ui_get(root, "mns_form"), ele, "mns_user_lbl");
 	ui_constr(tmp, UI_CST_SIZE, UI_CST_HORI, 0, 1,           350, UI_CST_PX, 0);
 	ui_constr(tmp, UI_CST_SIZE, UI_CST_VERT, 0, 1,           22,  UI_CST_PX, 0);
@@ -176,7 +175,7 @@ int load_ui(void)
 	ui_enable_tex(tmp);
 
 
-	ele = ui_new_text("PASSWORD\0", sdl_color(255, 255, 255, 255), 2, TEXT_LEFT);
+	ele = ui_new_text("PASSWORD\0", sdl_color(255, 255, 255, 255), 2, TXT_LEFT);
 	tmp = ui_add(UI_TEXT, ui_get(root, "mns_form"), ele, "mns_user_lbl");
 	ui_constr(tmp, UI_CST_SIZE, UI_CST_HORI, 0, 1,           350, UI_CST_PX, 0);
 	ui_constr(tmp, UI_CST_SIZE, UI_CST_VERT, 0, 1,           22,  UI_CST_PX, 0);

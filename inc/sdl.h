@@ -28,6 +28,8 @@ typedef SDL_Rect rect_t;
 typedef SDL_Event event_t;
 typedef SDL_Surface surf_t;
 
+typedef TTF_Font font_t;
+
 /*
  * Initialize the SDL-framework and it's submodules.
  *
@@ -55,8 +57,8 @@ extern void sdl_close(void);
  *
  * Returns: 0 on success or -1 if an error occurred
  */
-extern int sdl_fill_rounded(SDL_Surface *surf, int xo, int yo, int w, int h, 
-	SDL_Color col, short *cor);
+extern int sdl_fill_rounded(surf_t *surf, int xo, int yo, int w, int h,
+		color_t col, short *cor);
 
 
 extern rect_t sdl_rect(int x, int y, int w, int h);

@@ -2,7 +2,7 @@
 #define _STDNODE_H
 
 #include "sdl.h"
-#include "text.h"
+#include "asset.h"
 #include "node.h"
 #include "window.h"
 

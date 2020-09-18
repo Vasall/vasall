@@ -52,8 +52,14 @@ struct mdl_anim_wrapper {
 	struct mdl_anim  *lst;
 };
 
+enum mdl_type {
+	MDL_BARE,
+	MDL_ANIM
+};
+
 struct model {
 	char          name[9];
+	enum mdl_type type;
 	unsigned int  vao;
 	
 	unsigned int  idx_bao;
@@ -125,18 +131,11 @@ extern void mdl_del(short slot);
 
 
 /*
- * Attach a mesh to a model.
- *
- * @slot: The slot of the model
- * @vtxnum: The number of vertices
- * @vtx: The buffer containing all vertices
- * @uv: A buffer containing either the colors or UV-positions
- * @nrm: A buffer containing all normal-vectors
- * @idxnum: The number of indices
- * @idx: The buffer containing all indices
+ * Attach data to a model.
  */
-extern void mdl_set_mesh(short slot, int vtxnum, float *vtx, float *uv,
-		float *nrm, int idxnum, unsigned int *idx);
+extern void mdl_set_data(short slot, int vtxnum, float *vtx, float *tex,
+		float *nrm, unsigned int *jnt, float *wgt, int idxnum,
+		unsigned int *idx);
 
 
 /*

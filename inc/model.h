@@ -53,11 +53,13 @@ struct mdl_anim_wrapper {
 };
 
 enum mdl_type {
-	MDL_BARE,
-	MDL_ANIM
+	MDL_BARE = 1,
+	MDL_RIG  = 2,
+	MDL_ANIM = 3
 };
 
 struct model {
+	short         slot;
 	char          name[9];
 	enum mdl_type type;
 	unsigned int  vao;
@@ -68,7 +70,7 @@ struct model {
 	
 	unsigned int  vtx_bao;
 	int           vtx_num;
-	float         *vtx_buf;
+	char          *vtx_buf;
 
 	short         tex;
 	short         shd;
@@ -134,7 +136,7 @@ extern void mdl_del(short slot);
  * Attach data to a model.
  */
 extern void mdl_set_data(short slot, int vtxnum, float *vtx, float *tex,
-		float *nrm, unsigned int *jnt, float *wgt, int idxnum,
+		float *nrm, int *jnt, float *wgt, int idxnum,
 		unsigned int *idx);
 
 
@@ -169,5 +171,14 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot);
  * @mat_rot: The rotation-matrix
  */
 extern void mdl_render(short slot, mat4_t mat_pos, mat4_t mat_rot);
+
+
+/* 
+ * Clear the joint-matrices of a model.
+ *
+ * @short: The slot of the model
+ */
+extern void mdl_anim_clear(short slot);
+
 
 #endif

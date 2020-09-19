@@ -10,7 +10,7 @@ uniform mat4 view;
 uniform mat4 proj;
 
 out vec2 uv;
-flat out vec3 nrm;
+out vec3 nrm;
 
 void main()
 {

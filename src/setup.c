@@ -6,6 +6,7 @@
 int load_resources(void)
 {
 	char *vars1[3] = {"vtxPos\0", "vtxTex\0", "vtxNrm\0"};
+	char *vars2[5] = {"vtxPos\0", "vtxTex\0", "vtxNrm\0", "vtxJnt\0", "vtxWgt\0"};
 
 	/* fonts */
 	if(txt_load_ttf("ast/fonts/mecha.ttf", 24) < 0)
@@ -24,6 +25,9 @@ int load_resources(void)
 	if(shd_set("mdl", "ast/shaders/model.vert", "ast/shaders/model.frag", 3, vars1) < 0)
 		return -1;
 
+	if(shd_set("ani", "ast/shaders/animated.vert", "ast/shaders/animated.frag", 5, vars2) < 0)
+		return -1;
+
 	/* textuast */
 	if(tex_load_png("flr", "ast/textures/floor.png") < 0)
 		return -1;
@@ -35,7 +39,7 @@ int load_resources(void)
 	if(mdl_load("wld", "ast/models/floor.obj", tex_get("flr"), shd_get("mdl")) < 0)
 		return -1;
 
-	if(mdl_load("plr", "ast/models/test.amo", tex_get("plr"), shd_get("mdl")) < 0)
+	if(mdl_load("plr", "ast/models/test.amo", tex_get("plr"), shd_get("ani")) < 0)
 		return -1;
 
 	return 0;

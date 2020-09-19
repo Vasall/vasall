@@ -106,6 +106,9 @@ extern short mdl_set(char *name)
 	if(!(mdl = malloc(sizeof(struct model))))
 		return -1;
 
+	/* Copy the array-slot for the model */
+	mdl->slot = slot;
+
 	/* Copy the key for this model */
 	strcpy(mdl->name, name);
 
@@ -211,14 +214,15 @@ extern void mdl_del(short slot)
 
 
 extern void mdl_set_data(short slot, int vtxnum, float *vtx, float *tex,
-		float *nrm, unsigned int *jnt, float *wgt, int idxnum,
+		float *nrm, int *jnt, float *wgt, int idxnum,
 		unsigned int *idx)
 {
 	int i;
-	float *ptr;
-	int vtx_sizeb = (3 + 2 + 3);
-	int vtx_size = vtx_sizeb * sizeof(float);
+	char *ptr;
+	int vtx_size;
 	struct model *mdl;
+	void *p;
+	GLenum err;
 
 	if(mdl_check_slot(slot))
 		return;
@@ -226,6 +230,22 @@ extern void mdl_set_data(short slot, int vtxnum, float *vtx, float *tex,
 	mdl = models[slot];
 	if(!mdl || mdl->status != MDL_OK)
 		goto err_set_failed;
+
+
+	/* Calculate the size of a single vertex in bytes */
+	if(jnt && wgt) {
+		printf("Rigged!\n");
+
+		/* With joints and weights */
+		vtx_size = 12 * sizeof(float) + 4 * sizeof(int);
+
+		/* Set the model-type */
+		mdl->type = MDL_RIG; 
+	}
+	else {
+		/* Just the bare mesh(vtx-positions, uv-coord, nrm-vec) */
+		vtx_size = 8 * sizeof(float);
+	}
 
 	/* Allocate memory for the indices */
 	mdl->idx_num = idxnum;
@@ -241,11 +261,25 @@ extern void mdl_set_data(short slot, int vtxnum, float *vtx, float *tex,
 	memcpy(mdl->idx_buf, idx, idxnum * sizeof(int));
 
 	/* Create the vertex array and fill in the vertex-data */
+	ptr = mdl->vtx_buf;
 	for(i = 0; i < vtxnum; i++) {
-		ptr = mdl->vtx_buf + (i * vtx_sizeb);
-		memcpy(ptr + 0, vtx + (i * 3), VEC3_SIZE);
-		memcpy(ptr + 3, tex + (i * 2), VEC2_SIZE);
-		memcpy(ptr + 5, nrm + (i * 3), VEC3_SIZE);
+		memcpy(ptr, vtx + (i * 3), VEC3_SIZE);
+		ptr += VEC3_SIZE;
+
+		memcpy(ptr, tex + (i * 2), VEC2_SIZE);
+		ptr += VEC2_SIZE;
+
+		memcpy(ptr, nrm + (i * 3), VEC3_SIZE);
+		ptr += VEC3_SIZE;
+
+		if(mdl->type >= MDL_RIG) {
+			memcpy(ptr, jnt + (i * 4), INT4_SIZE);
+			ptr += INT4_SIZE;
+
+			memcpy(ptr, wgt + (i * 4), VEC4_SIZE);
+			ptr += VEC4_SIZE;
+		}
+
 	}
 
 	/* Bind vertex-array-object */
@@ -257,15 +291,28 @@ extern void mdl_set_data(short slot, int vtxnum, float *vtx, float *tex,
 	glBufferData(GL_ARRAY_BUFFER, vtxnum * vtx_size, mdl->vtx_buf, 
 			GL_STATIC_DRAW);
 
-	/* Bind the data to the indices */
+	/* Bind the data to the vertices */
 	/* Vertex-Position */
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, vtx_size, NULL);
+	p = NULL;
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, vtx_size, p);
+
 	/* Tex-Coordinate */
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, vtx_size, 
-			(void *)(3 * sizeof(float)));
+	p = (void *)(3 * sizeof(float));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, vtx_size, p);
+	
 	/* Normal-Vector */
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, vtx_size, 
-			(void *)(5 * sizeof(float)));
+	p = (void *)(5 * sizeof(float));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, vtx_size, p);
+
+	if(mdl->type >= MDL_RIG) {
+		/* Joint-Index */
+		p = (void *)(8 * sizeof(float));
+		glVertexAttribIPointer(3, 4, GL_INT, vtx_size, p);
+
+		/* Joint-Weights */
+		p = (void *)(8 * sizeof(float) + 4 * sizeof(int));
+		glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, vtx_size, p);
+	}
 
 	/* Register the indices */
 	glGenBuffers(1, &mdl->idx_bao);
@@ -275,6 +322,11 @@ extern void mdl_set_data(short slot, int vtxnum, float *vtx, float *tex,
 
 	/* Unbind the vertex-array-object */
 	glBindVertexArray(0);
+
+	if((err = glGetError()) != GL_NO_ERROR) {
+		ERR_LOG(("Failed to set model-data"));
+	}
+
 	return;
 
 err_set_failed:
@@ -330,6 +382,8 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 	float *vtx;
 	float *tex;
 	float *nrm;
+	int *jnt;
+	float *wgt;
 	int idxnum;
 	unsigned int *idx;
 
@@ -368,23 +422,24 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 	 * index-list which can then be used by OpenGL. Note: vtx, tex, nrm all
 	 * have the same number of entries.
 	 */
-	amo_getmesh(data, &vtxnum, (void **)&vtx, (void **)&tex, (void **)&nrm, &idxnum, &idx);
+	amo_getdata(data, &vtxnum, (void **)&vtx, (void **)&tex, (void **)&nrm,
+			(void **)&jnt, (void **)&wgt, &idxnum, &idx);
 
 	/* Attach data to the model */
-	mdl_set_data(slot, vtxnum, vtx, tex, nrm, 0, NULL, idxnum, idx);
+	mdl_set_data(slot, vtxnum, vtx, tex, nrm, jnt, wgt, idxnum, idx);
 
 	/* Free the conversion-buffers */
 	free(vtx);
 	free(tex);
 	free(nrm);
+	free(jnt);
+	free(wgt);
 	free(idx);
 
 	/* Copy joints */
 	if(data->jnt_c > 0) {
 		/* Copy number of joints */
 		mdl->jnt_num = data->jnt_c;
-
-		printf("Load %d bones\n", mdl->jnt_num);
 
 		/* Allocate memory for joints */
 		tmp = mdl->jnt_num * sizeof(struct mdl_joint);
@@ -408,6 +463,9 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 		tmp = mdl->jnt_num * sizeof(float) * 16;
 		if(!(mdl->jnt_mat = malloc(tmp)))
 			goto err_free_data;
+
+		/* Initialize the vertex-matrices with identity-matrices */
+		mdl_anim_clear(slot);
 	}
 
 	/* Copy animations */
@@ -501,9 +559,53 @@ err_del_mdl:
 
 extern void mdl_render(short slot, mat4_t mat_pos, mat4_t mat_rot)
 {
-	char *vars[4] = {"mpos", "mrot", "view", "proj"};
-	int loc[4];
+	char *vars[5] = {"mpos", "mrot", "view", "proj", "jnts"};
+	int loc[5];
 	mat4_t mpos, mrot, view, proj;
+	struct model *mdl;
+	int attr;
+	int vari;
+
+
+	if(mdl_check_slot(slot))
+		return;
+
+	mdl = models[slot];
+	if(!mdl || mdl->status != MDL_OK)
+		return;
+
+	attr = (mdl->type >= MDL_RIG) ? (5) : (3);
+	vari = (mdl->type >= MDL_RIG) ? (5) : (4);
+
+	mat4_cpy(mpos, mat_pos);
+	mat4_cpy(mrot, mat_rot);
+	cam_get_view(view);
+	cam_get_proj(proj);
+
+	glBindVertexArray(mdl->vao);
+	
+	shd_use(mdl->shd, attr, vari, vars, loc);
+	tex_use(mdl->tex);
+
+	glUniformMatrix4fv(loc[0], 1, GL_FALSE, mpos);
+	glUniformMatrix4fv(loc[1], 1, GL_FALSE, mrot);
+	glUniformMatrix4fv(loc[2], 1, GL_FALSE, view);
+	glUniformMatrix4fv(loc[3], 1, GL_FALSE, proj);
+	if(mdl->type >= MDL_RIG)
+		glUniformMatrix4fv(loc[4], 1, GL_FALSE, mdl->jnt_mat);
+
+	glDrawElements(GL_TRIANGLES, mdl->idx_num, GL_UNSIGNED_INT, 0);
+
+	tex_unuse();
+	shd_unuse();
+	glBindVertexArray(0);
+}
+
+
+
+extern void mdl_anim_clear(short slot)
+{
+	int i;
 	struct model *mdl;
 
 	if(mdl_check_slot(slot))
@@ -513,24 +615,9 @@ extern void mdl_render(short slot, mat4_t mat_pos, mat4_t mat_rot)
 	if(!mdl || mdl->status != MDL_OK)
 		return;
 
-	mat4_cpy(mpos, mat_pos);
-	mat4_cpy(mrot, mat_rot);
-	cam_get_view(view);
-	cam_get_proj(proj);
+	if(mdl->type < MDL_RIG)
+		return;
 
-	glBindVertexArray(mdl->vao);
-	shd_use(mdl->shd, 4, vars, loc);
-	tex_use(mdl->tex);
-
-	glUniformMatrix4fv(loc[0], 1, GL_FALSE, mpos);
-	glUniformMatrix4fv(loc[1], 1, GL_FALSE, mrot);
-	glUniformMatrix4fv(loc[2], 1, GL_FALSE, view);
-	glUniformMatrix4fv(loc[3], 1, GL_FALSE, proj);
-
-	glDrawElements(GL_TRIANGLES, mdl->idx_num, GL_UNSIGNED_INT, 0);
-
-	tex_unuse();
-	shd_unuse();
-	glBindVertexArray(0);
+	for(i = 0; i < mdl->jnt_num; i++)
+		mat4_idt(mdl->jnt_mat + (i * 16));
 }
-

@@ -1,26 +1,40 @@
 #version 330 core
 
 in vec3 vtxPos;
+in vec2 vtxTex;
 in vec3 vtxNrm;
-in vec2 vtxVal;
-in ivec3 
+in ivec4 vtxJnt;
+in vec4 vtxWgt;
 
 uniform mat4 mpos;
 uniform mat4 mrot;
 uniform mat4 view;
 uniform mat4 proj;
+uniform mat4 jnts[100];
 
 out vec2 uv;
-flat out vec3 nrm;
+out vec3 nrm;
 
 void main()
 {
 	vec4 rotnrm;
+	vec4 totalLocPos = vec4(0.0);
+	vec4 totalNrm = vec4(0.0);
 
-	gl_Position = proj * view * mpos * mrot * vec4(vtxPos, 1.0);
+	for(int i = 0; i < 4; i++) {
+		if(vtxJnt[i] < 0)
+			continue;
 
-	uv = vtxVal;
-	
-	rotnrm = mrot * vec4(vtxNrm, 1.0);
-	nrm = rotnrm.xyz;
+		mat4 jntTrans = jnts[vtxJnt[i]];
+		vec4 posePos = jntTrans * vec4(vtxPos, 1.0);
+		totalLocPos += posePos * vtxWgt[i];
+
+		vec4 wldNrm = jntTrans * vec4(vtxNrm, 0.0);
+		totalNrm += wldNrm * vtxWgt[i];
+	}
+
+	gl_Position = proj * view * mpos * mrot * totalLocPos;
+
+	uv = vtxTex;
+	nrm = totalNrm.xyz;
 }

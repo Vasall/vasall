@@ -1,7 +1,7 @@
 #version 330 core
 
 in vec2 uv;
-flat in vec3 nrm;
+in vec3 nrm;
 
 vec3 LIGHT_VEC = -vec3(0.259, -0.864, 0.432);
 vec3 LIGHT_COL = vec3(1.0, 1.0, 1.0);

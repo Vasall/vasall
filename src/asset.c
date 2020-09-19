@@ -90,6 +90,7 @@ extern short shd_set(char *name, char *vs, char *fs, int num, char **vars)
 	uint32_t vshd = 0;
 	char *vtx_src = NULL;
 	char *frg_src = NULL;
+	GLint isLinked = 0;
 
 	if((slot = shd_get_slot()) < 0) {
 		ERR_LOG(("Shader-table already full"));
@@ -147,11 +148,25 @@ extern short shd_set(char *name, char *vs, char *fs, int num, char **vars)
 	glAttachShader(assets.shd.prog[slot], fshd);
 
 	/* Bind the vertex-attributes */
-	for(i = 0; i < num; i++)
+	for(i = 0; i < num; i++) {
+		printf("Link %s to %d\n", vars[i], i);
 		glBindAttribLocation(assets.shd.prog[slot], i, vars[i]);
+	}
+
+	if(glGetError() != GL_NO_ERROR) {
+		ERR_LOG(("Failed to enable attr"));
+	}
 
 	/* Link the shader-program */
 	glLinkProgram(assets.shd.prog[slot]);
+
+	glGetProgramiv(assets.shd.prog[slot], GL_LINK_STATUS, (int *)&isLinked);
+	if(isLinked == GL_FALSE) {
+		GLchar infoLog[512];
+        	GLint size;
+        	glGetProgramInfoLog(assets.shd.prog[slot], 512, &size, infoLog);
+		ERR_LOG(("Failed to link shader: %s", infoLog));
+	}
 
 	/* Detach and destroy assets.shd */
 	glDetachShader(assets.shd.prog[slot], vshd);
@@ -216,22 +231,33 @@ extern short shd_get(char *name)
 }
 
 
-extern void shd_use(short slot, int num, char **vars, int *loc)
+extern void shd_use(short slot, int attr, int num, char **vars, int *loc)
 {
 	int i;
 
 	if(shd_check_slot(slot))
 		return;
 
+	/* Use the attached shader program */
 	glUseProgram(assets.shd.prog[slot]);
 
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glEnableVertexAttribArray(2);
+	/* Enable the vertices up to attr */
+	for(i = 0; i < attr; i++)
+		glEnableVertexAttribArray(i);
+
+	if(glGetError() != GL_NO_ERROR) {
+		ERR_LOG(("Failed to enable attr"));
+		return;
+	}
 
 	/* Get the uniform-locations for the given variables */
 	for(i = 0; i < num; i++)
 		loc[i] = glGetUniformLocation(assets.shd.prog[slot], vars[i]);
+
+	if(glGetError() != GL_NO_ERROR) {
+		ERR_LOG(("Failed to get locations"));
+		return;
+	}
 }
 
 

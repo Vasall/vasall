@@ -574,19 +574,30 @@ extern void mdl_render(short slot, mat4_t mat_pos, mat4_t mat_rot)
 	if(!mdl || mdl->status != MDL_OK)
 		return;
 
+	/* Get the range of vertex-attributes (0-n) */
 	attr = (mdl->type >= MDL_RIG) ? (5) : (3);
+
+	/* Get the number of uniform-variables */
 	vari = (mdl->type >= MDL_RIG) ? (5) : (4);
 
+	/* Get the position- and rotation-matrix for the model */
 	mat4_cpy(mpos, mat_pos);
 	mat4_cpy(mrot, mat_rot);
+
+	/* Get the view- and projection-matrix of the camera */
 	cam_get_view(view);
 	cam_get_proj(proj);
 
+	/* Bind the VAO of the model */
 	glBindVertexArray(mdl->vao);
-	
+
+	/* Use shader, enable vertex attributes and get uniform locations */
 	shd_use(mdl->shd, attr, vari, vars, loc);
+
+	/* Use texture */
 	tex_use(mdl->tex);
 
+	/* Set the uniform-variables */
 	glUniformMatrix4fv(loc[0], 1, GL_FALSE, mpos);
 	glUniformMatrix4fv(loc[1], 1, GL_FALSE, mrot);
 	glUniformMatrix4fv(loc[2], 1, GL_FALSE, view);
@@ -594,8 +605,10 @@ extern void mdl_render(short slot, mat4_t mat_pos, mat4_t mat_rot)
 	if(mdl->type >= MDL_RIG)
 		glUniformMatrix4fv(loc[4], 1, GL_FALSE, mdl->jnt_mat);
 
+	/* Draw the vertices */
 	glDrawElements(GL_TRIANGLES, mdl->idx_num, GL_UNSIGNED_INT, 0);
 
+	/* Unuse the texture, shader and VAO */
 	tex_unuse();
 	shd_unuse();
 	glBindVertexArray(0);

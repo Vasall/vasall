@@ -116,6 +116,7 @@ extern short shd_set(char *name, char *vs, char *fs, int num, char **vars)
 	glShaderSource(vshd, 1, (const GLchar **)&vtx_src, NULL);
 	glCompileShader(vshd);
 
+	/* Check if vertex-shader compiled successfully */
 	glGetShaderiv(vshd, GL_COMPILE_STATUS, &success);
 	if(!success) {
 		glGetShaderInfoLog(vshd, 512, NULL, infoLog);
@@ -137,6 +138,7 @@ extern short shd_set(char *name, char *vs, char *fs, int num, char **vars)
 	glShaderSource(fshd, 1, (const GLchar **)&frg_src, NULL);
 	glCompileShader(fshd);
 
+	/* Check if fragment-shader compiled successfully */
 	glGetShaderiv(fshd, GL_COMPILE_STATUS, &success);
 	if(!success) {
 		glGetShaderInfoLog(fshd, 512, NULL, infoLog);
@@ -149,7 +151,6 @@ extern short shd_set(char *name, char *vs, char *fs, int num, char **vars)
 
 	/* Bind the vertex-attributes */
 	for(i = 0; i < num; i++) {
-		printf("Link %s to %d\n", vars[i], i);
 		glBindAttribLocation(assets.shd.prog[slot], i, vars[i]);
 	}
 
@@ -160,6 +161,7 @@ extern short shd_set(char *name, char *vs, char *fs, int num, char **vars)
 	/* Link the shader-program */
 	glLinkProgram(assets.shd.prog[slot]);
 
+	/* Check if shader-program has been linked successfully */
 	glGetProgramiv(assets.shd.prog[slot], GL_LINK_STATUS, (int *)&isLinked);
 	if(isLinked == GL_FALSE) {
 		GLchar infoLog[512];

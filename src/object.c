@@ -80,8 +80,12 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 	/* Setup model-data */
 	vec3_set(objects.dir[slot], 1, 0, 1);
 	objects.model[slot] = model;
-	objects.anim[slot] = 0;
-	objects.prog[slot] = 0.0;
+
+	if(models[model]->type >= MDL_RIG) {
+		if(!(objects.rig[slot] = rig_derive(model)))
+			goto err_reset_slot;
+	}
+
 	mat4_idt(objects.mat_pos[slot]);
 	mat4_idt(objects.mat_rot[slot]);
 
@@ -115,6 +119,10 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 	/* Increment number of objects in the object-table */
 	objects.num++;
 	return slot;
+
+err_reset_slot:
+	objects.mask[slot] = OBJ_M_NONE;
+	return -1;
 }
 
 
@@ -125,6 +133,24 @@ extern void obj_del(short slot)
 
 	objects.mask[slot] = OBJ_M_NONE;
 	objects.num--;
+}
+
+
+extern int obj_attach_rig(short slot, short mdlslot)
+{
+	struct model_rig *rig;
+	
+	if(obj_check_slot(slot))
+		return -1;
+
+	if(mdl_check_slot(mdlslot))
+		return -1;
+
+	if(!(rig = rig_derive(mdlslot)))
+		return -1;
+
+	objects.rig[slot] = rig;	
+	return 0;
 }
 
 
@@ -701,7 +727,7 @@ extern void obj_sys_render(void)
 			objects.mat_rot[i][0xa] =  cos(rot);
 
 			mdl_render(objects.model[i], objects.mat_pos[i],
-					objects.mat_rot[i]);
+					objects.mat_rot[i], objects.rig[i]);
 		}
 	}
 }

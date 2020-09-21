@@ -7,6 +7,7 @@
 #include "sdl.h"
 #include "asset.h"
 #include "model.h"
+#include "rig.h"
 #include "input.h"
 #include "core.h"
 
@@ -59,12 +60,12 @@ struct object_table {
 	vec3_t                pos[OBJ_SLOTS];
 	vec3_t                vel[OBJ_SLOTS];
 
+	/* Variables used for rendering and animation */
 	vec3_t                ren_pos[OBJ_SLOTS];
 	vec3_t                dir[OBJ_SLOTS];
 	vec3_t                ren_dir[OBJ_SLOTS];
 	short                 model[OBJ_SLOTS];
-	short                 anim[OBJ_SLOTS];
-	float                 prog[OBJ_SLOTS];
+	struct model_rig      *rig[OBJ_SLOTS];
 	mat4_t                mat_pos[OBJ_SLOTS];
 	mat4_t                mat_rot[OBJ_SLOTS];
 
@@ -83,7 +84,7 @@ struct object_table {
 	/* Buffer containing all recent inputs */
 	struct object_inputs  inp[OBJ_SLOTS];
 
-	/* Next comparison-marker used for maintain synchronicity */
+	/* Next comparison-marker used for maintaing synchronicity */
 	char                  mark_flg[OBJ_SLOTS];
 	struct comp_marker    mark[OBJ_SLOTS];
 
@@ -136,6 +137,17 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
  * @slot: The slot of the object
  */
 extern void obj_del(short slot);
+
+
+/*
+ * Derive a rig from a model and attach it to the object.
+ *
+ * @slot: The slot of the object
+ * @mdlslot: The slot of the model
+ *
+ * Returns: 0 on success or -1 if an error occurred
+ */
+extern int obj_attach_rig(short slot, short mdlslot);
 
 
 /*

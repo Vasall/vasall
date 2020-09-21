@@ -22,16 +22,6 @@ static short mdl_get_slot(void)
 	return -1;
 }
 
-
-static int mdl_check_slot(short slot)
-{
-	if(slot < 0 || slot >= MDL_SLOTS)
-		return 1;
-
-	return 0;
-}
-
-
 static void mdl_set_status(short slot, uint8_t status)
 {
 	struct model *mdl;
@@ -44,7 +34,6 @@ static void mdl_set_status(short slot, uint8_t status)
 
 	mdl->status = status;
 }
-
 
 extern int mdl_init(void)
 {
@@ -89,6 +78,15 @@ extern void mdl_close(void)
 }
 
 
+extern int mdl_check_slot(short slot)
+{
+	if(slot < 0 || slot >= MDL_SLOTS)
+		return 1;
+
+	return 0;
+}
+
+
 extern short mdl_set(char *name)
 {
 	short slot;
@@ -123,13 +121,16 @@ extern short mdl_set(char *name)
 	mdl->vtx_bao = 0;
 	mdl->vtx_buf = NULL;
 	mdl->vtx_num = 0;
-	
+
+	/* Clear both texture and shader */
 	mdl->tex = -1;
 	mdl->shd = -1;
 
-	/* Initialize joint-arrays */
+	/* Initialize joint-attributes */
+	mdl->jnt_num = 0;
 	mdl->jnt_buf = NULL;
 	mdl->jnt_mat = NULL;
+	mdl->jnt_root = -1;
 		
 	/* Initialize animation-attributes */
 	mdl->anim_buf = NULL;
@@ -234,8 +235,6 @@ extern void mdl_set_data(short slot, int vtxnum, float *vtx, float *tex,
 
 	/* Calculate the size of a single vertex in bytes */
 	if(jnt && wgt) {
-		printf("Rigged!\n");
-
 		/* With joints and weights */
 		vtx_size = 12 * sizeof(float) + 4 * sizeof(int);
 
@@ -311,7 +310,7 @@ extern void mdl_set_data(short slot, int vtxnum, float *vtx, float *tex,
 
 		/* Joint-Weights */
 		p = (void *)(8 * sizeof(float) + 4 * sizeof(int));
-		glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, vtx_size, p);
+		glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, vtx_size, p);
 	}
 
 	/* Register the indices */
@@ -371,6 +370,42 @@ err_set_failed:
 	mdl_set_status(slot, MDL_ERR_SHADER);
 }
 
+
+static void mdl_order_joints(short slot)
+{
+	int i;
+	int j;
+	struct model *mdl;
+
+	if(mdl_check_slot(slot))
+		return;
+
+	mdl = models[slot];
+	if(!mdl || mdl->status != MDL_OK)
+		return;
+
+	/* Clear the child-renferences */
+	for(i = 0; i < mdl->jnt_num; i++) {
+		mdl->jnt_buf[i].child_num = 0;
+
+		for(j = 0; j < 10; j++)
+			mdl->jnt_buf[i].child_buf[j] = -1;
+	}
+
+
+	for(i = 0; i < mdl->jnt_num; i++) {
+		int par = mdl->jnt_buf[i].par;
+		if(par < 0) {
+			/* Set the root-joint */
+			mdl->jnt_root = i;
+			continue;
+		}
+
+		/* Add joint-index to the child-buffer of the parent-joint */
+		mdl->jnt_buf[par].child_buf[mdl->jnt_buf[par].child_num] = i;
+		mdl->jnt_buf[par].child_num++;
+	}
+}
 
 extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 {
@@ -464,12 +499,15 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 		if(!(mdl->jnt_mat = malloc(tmp)))
 			goto err_free_data;
 
-		/* Initialize the vertex-matrices with identity-matrices */
-		mdl_anim_clear(slot);
+		/* Link the children to the parent-joints */
+		mdl_order_joints(slot);
 	}
 
 	/* Copy animations */
 	if(data->ani_c > 0) {
+		/* Set type of the model */
+		mdl->type = MDL_ANIM;
+
 		/* Copy number of animations */
 		mdl->anim_num = data->ani_c;
 
@@ -492,6 +530,12 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 			/* Get shortcut-pointer */
 			anim = &mdl->anim_buf[i];
 
+			/* Copy the name of the animation */
+			strcpy(anim->name, data->ani_lst[i].name);
+
+			/* Get duration of the animation */
+			anim->dur = data->ani_lst[i].dur;
+			
 			/* Copy number of keyframes */
 			anim->keyfr_num = data->ani_lst[i].keyfr_c;
 
@@ -526,7 +570,7 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 					goto err_free_data;
 
 				/* Copy timestamp */
-				keyfr->ts = data->ani_lst[i].keyfr_lst[j].ts;
+				keyfr->prog = data->ani_lst[i].keyfr_lst[j].prog;
 
 				/* Copy location-data */
 				tmp = mdl->jnt_num * sizeof(float) * 3;
@@ -557,15 +601,15 @@ err_del_mdl:
 }
 
 
-extern void mdl_render(short slot, mat4_t mat_pos, mat4_t mat_rot)
+extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
+		struct model_rig *rig)
 {
 	char *vars[5] = {"mpos", "mrot", "view", "proj", "jnts"};
 	int loc[5];
-	mat4_t mpos, mrot, view, proj;
+	mat4_t view, proj;
 	struct model *mdl;
 	int attr;
 	int vari;
-
 
 	if(mdl_check_slot(slot))
 		return;
@@ -575,14 +619,10 @@ extern void mdl_render(short slot, mat4_t mat_pos, mat4_t mat_rot)
 		return;
 
 	/* Get the range of vertex-attributes (0-n) */
-	attr = (mdl->type >= MDL_RIG) ? (5) : (3);
+	attr = (rig != NULL) ? (5) : (3);
 
 	/* Get the number of uniform-variables */
-	vari = (mdl->type >= MDL_RIG) ? (5) : (4);
-
-	/* Get the position- and rotation-matrix for the model */
-	mat4_cpy(mpos, mat_pos);
-	mat4_cpy(mrot, mat_rot);
+	vari = (rig != NULL) ? (5) : (4);
 
 	/* Get the view- and projection-matrix of the camera */
 	cam_get_view(view);
@@ -598,12 +638,12 @@ extern void mdl_render(short slot, mat4_t mat_pos, mat4_t mat_rot)
 	tex_use(mdl->tex);
 
 	/* Set the uniform-variables */
-	glUniformMatrix4fv(loc[0], 1, GL_FALSE, mpos);
-	glUniformMatrix4fv(loc[1], 1, GL_FALSE, mrot);
+	glUniformMatrix4fv(loc[0], 1, GL_FALSE, pos_mat);
+	glUniformMatrix4fv(loc[1], 1, GL_FALSE, rot_mat);
 	glUniformMatrix4fv(loc[2], 1, GL_FALSE, view);
 	glUniformMatrix4fv(loc[3], 1, GL_FALSE, proj);
-	if(mdl->type >= MDL_RIG)
-		glUniformMatrix4fv(loc[4], 1, GL_FALSE, mdl->jnt_mat);
+	if(rig != NULL)
+		glUniformMatrix4fv(loc[4], 1, GL_FALSE, rig->jnt_mat);
 
 	/* Draw the vertices */
 	glDrawElements(GL_TRIANGLES, mdl->idx_num, GL_UNSIGNED_INT, 0);
@@ -612,25 +652,4 @@ extern void mdl_render(short slot, mat4_t mat_pos, mat4_t mat_rot)
 	tex_unuse();
 	shd_unuse();
 	glBindVertexArray(0);
-}
-
-
-
-extern void mdl_anim_clear(short slot)
-{
-	int i;
-	struct model *mdl;
-
-	if(mdl_check_slot(slot))
-		return;
-
-	mdl = models[slot];
-	if(!mdl || mdl->status != MDL_OK)
-		return;
-
-	if(mdl->type < MDL_RIG)
-		return;
-
-	for(i = 0; i < mdl->jnt_num; i++)
-		mat4_idt(mdl->jnt_mat + (i * 16));
 }

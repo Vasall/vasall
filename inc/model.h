@@ -6,6 +6,7 @@
 #include "sdl.h"
 #include "asset.h"
 #include "camera.h"
+#include "rig.h"
 #include "amoloader/amoloader.h"
 
 #define MDL_NAME_MAX            8
@@ -25,10 +26,12 @@ struct mdl_joint;
 struct mdl_joint {
 	char name[100];
 	int par;
+	int child_num;
+	int child_buf[10];
 };
 
 struct mdl_keyfr {
-	float ts;
+	float prog;
 
 	float *pos;
 	float *rot;
@@ -78,6 +81,7 @@ struct model {
 	int              jnt_num;
 	struct mdl_joint *jnt_buf;
 	float            *jnt_mat;
+	int              jnt_root;
 
 	int              anim_num;
 	struct mdl_anim  *anim_buf;
@@ -102,6 +106,16 @@ extern int mdl_init(void);
  * Close the model-wrapper, remove all models and free the allocated memory.
  */
 extern void mdl_close(void);
+
+
+/* 
+ * Check if a given slot-number is in range of the model-array.
+ *
+ * @slot: The slot-number to check
+ *
+ * Returns: 0 if slot-number is valid, 1 if not 
+ */
+extern int mdl_check_slot(short slot);
 
 
 /* 
@@ -169,16 +183,9 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot);
  * @slot: The slot of the model to render
  * @mat_pos: The position-matrix
  * @mat_rot: The rotation-matrix
+ * @rig: Pointer to a rig or NULL if the model has none
  */
-extern void mdl_render(short slot, mat4_t mat_pos, mat4_t mat_rot);
-
-
-/* 
- * Clear the joint-matrices of a model.
- *
- * @short: The slot of the model
- */
-extern void mdl_anim_clear(short slot);
-
+extern void mdl_render(short slot, mat4_t mat_pos, mat4_t rot_mat,
+		struct model_rig *rig);
 
 #endif

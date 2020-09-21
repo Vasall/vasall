@@ -64,7 +64,7 @@ extern void wld_render(float interp)
 	if(interp) {/* Prevent warning for not using parameter */}
 
 	mat4_idt(idt);
-	mdl_render(world.terrain, idt, idt);
+	mdl_render(world.terrain, idt, idt, NULL);
 }
 
 

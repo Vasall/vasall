@@ -1,6 +1,8 @@
 #ifndef _MBASIC_H
 #define _MBASIC_H
 
+#define MPI 3.14159265358979323846
+
 #define ABS(x) ((x < 0) ? (-x) : (x))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define ROUND(x) ((x)>=0?(long)((x)+0.5):(long)((x)-0.5))

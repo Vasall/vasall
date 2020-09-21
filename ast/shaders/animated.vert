@@ -36,5 +36,5 @@ void main()
 	gl_Position = proj * view * mpos * mrot * totalLocPos;
 
 	uv = vtxTex;
-	nrm = totalNrm.xyz;
+	nrm = (mrot * totalNrm).xyz;
 }

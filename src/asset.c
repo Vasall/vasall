@@ -150,13 +150,11 @@ extern short shd_set(char *name, char *vs, char *fs, int num, char **vars)
 	glAttachShader(assets.shd.prog[slot], fshd);
 
 	/* Bind the vertex-attributes */
-	for(i = 0; i < num; i++) {
+	for(i = 0; i < num; i++)
 		glBindAttribLocation(assets.shd.prog[slot], i, vars[i]);
-	}
 
-	if(glGetError() != GL_NO_ERROR) {
-		ERR_LOG(("Failed to enable attr"));
-	}
+	if(glGetError() != GL_NO_ERROR)
+		ERR_LOG(("Failed to bind attribute-location"));
 
 	/* Link the shader-program */
 	glLinkProgram(assets.shd.prog[slot]);
@@ -248,7 +246,7 @@ extern void shd_use(short slot, int attr, int num, char **vars, int *loc)
 		glEnableVertexAttribArray(i);
 
 	if(glGetError() != GL_NO_ERROR) {
-		ERR_LOG(("Failed to enable attr"));
+		ERR_LOG(("Failed to enable attribute"));
 		return;
 	}
 

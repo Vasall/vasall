@@ -251,3 +251,85 @@ extern float vec3_barry_centric(vec3_t p1, vec3_t p2, vec3_t p3, vec2_t pos)
 
 	return (l1 * p1[1]) + (l2 * p2[1]) + (l3 * p3[1]);
 }
+
+
+
+extern void vec4_set(vec4_t out, float x, float y, float z, float w)
+{
+	out[0] = x;
+	out[1] = y;
+	out[2] = z;
+	out[3] = w;
+}
+
+extern void vec4_clr(vec4_t in)
+{
+	memset(in, 0, VEC4_SIZE);
+}
+
+extern void vec4_cpy(vec4_t out, vec4_t in)
+{
+	memcpy(out, in, VEC4_SIZE);
+}
+
+extern int vec4_cmp(vec4_t in1, vec4_t in2)
+{
+	if(in1[0] != in2[0] || in1[1] != in2[1] || in1[2] != in2[2] || 
+			in1[3] != in2[3])
+		return 0;
+
+	return 1;
+}
+
+extern void vec4_add(vec4_t in1, vec4_t in2, vec4_t out)
+{
+	out[0] = in1[0] + in2[0];
+	out[1] = in1[1] + in2[1];
+	out[2] = in1[2] + in2[2];
+	out[3] = in1[3] + in2[3];
+}
+
+extern void vec4_sub(vec4_t in1, vec4_t in2, vec4_t out)
+{
+	out[0] = in1[0] - in2[0];
+	out[1] = in1[1] - in2[1];
+	out[2] = in1[2] - in2[2];
+	out[3] = in1[3] - in2[3];
+}
+
+extern void vec4_scl(vec4_t in, float f, vec4_t out)
+{
+	out[0] = in[0] * f;
+	out[1] = in[1] * f;
+	out[2] = in[2] * f;
+	out[3] = in[3] * f;
+}
+
+extern float vec4_mag(vec2_t in)
+{
+	double l = (in[0] * in[0]) + (in[1] * in[1]) + (in[2] * in[2]) +
+		(in[3] * in[3]);
+	return (float)sqrt(l);
+}
+
+extern void vec4_nrm(vec4_t in, vec4_t out)
+{
+	float len = vec2_mag(in);
+	if(len == 0.0) {
+		out[0] = 0.0;
+		out[1] = 0.0;
+		out[2] = 0.0;
+		out[3] = 0.0;
+		return;
+	}
+
+	out[0] = in[0] / len;
+	out[1] = in[1] / len;
+	out[2] = in[2] / len;
+	out[3] = in[3] / len;
+}
+
+extern void vec4_print(vec4_t in)
+{
+	printf("%.2f/%.2f/%.2f/%.2f", in[0], in[1], in[2], in[3]);
+}

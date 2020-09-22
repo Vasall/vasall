@@ -14,11 +14,12 @@
 #define OBJ_SLOTS      128
 #define OBJ_DATA_MAX   128
 
-#define OBJ_M_NONE     (0<<0)
+#define OBJ_M_NONE     0
 #define OBJ_M_MOVE     (1<<0)
 #define OBJ_M_MODEL    (1<<1)
 #define OBJ_M_DATA     (1<<2)
 #define OBJ_M_PEER     (1<<3)
+#define OBJ_M_ANIM     (1<<4)
 
 #define OBJ_M_ENTITY (OBJ_M_MOVE|OBJ_M_MODEL)
 #define OBJ_M_PLAYER (OBJ_M_ENTITY|OBJ_M_PEER)

@@ -40,6 +40,8 @@ extern float  vec2_mag(vec2_t in);
 extern void   vec2_nrm(vec2_t in, vec2_t out);
 extern void   vec2_print(vec2_t in);
 
+
+
 extern void   vec3_set(vec3_t out, float x, float y, float z);
 extern void   vec3_clr(vec3_t in);
 extern void   vec3_cpy(vec3_t out, vec3_t in);
@@ -61,5 +63,18 @@ extern void   vec3_trans(vec3_t in, mat3_t mat, vec3_t out);
 extern void   vec3_print(vec3_t in);
 
 extern float  vec3_barry_centric(vec3_t p1, vec3_t p2, vec3_t p3, vec2_t pos);
+
+
+
+extern void   vec4_set(vec4_t out, float x, float y, float z, float w);
+extern void   vec4_clr(vec4_t in);
+extern void   vec4_cpy(vec4_t out, vec4_t in);
+extern int    vec4_cmp(vec4_t in1, vec4_t in2);
+extern void   vec4_add(vec4_t in1, vec4_t in2, vec4_t out);
+extern void   vec4_sub(vec4_t in1, vec4_t in2, vec4_t out);
+extern void   vec4_scl(vec4_t in1, float f, vec4_t out);
+extern float  vec4_mag(vec4_t in);
+extern void   vec4_nrm(vec4_t in, vec4_t out);
+extern void   vec4_print(vec4_t in);
 
 #endif

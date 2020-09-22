@@ -560,12 +560,12 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 				amo_keyfr = &data->ani_lst[i].keyfr_lst[j];
 
 				/* Allocate memory for location-data */
-				tmp = mdl->jnt_num * sizeof(float) * 3;
+				tmp = mdl->jnt_num * VEC3_SIZE;
 				if(!(keyfr->pos = malloc(tmp)))
 					goto err_free_data;
 
 				/* Allocate memory for rotation-data */
-				tmp = mdl->jnt_num * sizeof(float) * 4;
+				tmp = mdl->jnt_num * VEC4_SIZE;
 				if(!(keyfr->rot = malloc(tmp)))
 					goto err_free_data;
 
@@ -573,11 +573,11 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 				keyfr->prog = data->ani_lst[i].keyfr_lst[j].prog;
 
 				/* Copy location-data */
-				tmp = mdl->jnt_num * sizeof(float) * 3;
+				tmp = mdl->jnt_num * VEC3_SIZE;
 				memcpy(keyfr->pos, amo_keyfr->pos, tmp);
 
 				/* Copy rotation-data */
-				tmp = mdl->jnt_num * sizeof(float) * 4;
+				tmp = mdl->jnt_num * VEC4_SIZE;
 				memcpy(keyfr->rot, amo_keyfr->rot, tmp);
 			}
 		}
@@ -643,7 +643,7 @@ extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
 	glUniformMatrix4fv(loc[2], 1, GL_FALSE, view);
 	glUniformMatrix4fv(loc[3], 1, GL_FALSE, proj);
 	if(rig != NULL)
-		glUniformMatrix4fv(loc[4], 1, GL_FALSE, rig->jnt_mat);
+		glUniformMatrix4fv(loc[4], 1, GL_FALSE, (float *)rig->jnt_mat);
 
 	/* Draw the vertices */
 	glDrawElements(GL_TRIANGLES, mdl->idx_num, GL_UNSIGNED_INT, 0);

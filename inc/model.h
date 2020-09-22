@@ -33,8 +33,8 @@ struct mdl_joint {
 struct mdl_keyfr {
 	float prog;
 
-	float *pos;
-	float *rot;
+	vec3_t *pos;
+	vec4_t *rot;
 };
 
 struct mdl_anim {
@@ -44,15 +44,6 @@ struct mdl_anim {
 
 	int               keyfr_num;
 	struct mdl_keyfr  *keyfr_buf;
-};
-
-struct mdl_anim_wrapper {
-	int                    joint_num;
-	struct mdl_anim_joint  *joint_lst;
-	float                  *joint_mat;
-
-	int              num;
-	struct mdl_anim  *lst;
 };
 
 enum mdl_type {

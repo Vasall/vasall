@@ -81,9 +81,13 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 	vec3_set(objects.dir[slot], 1, 0, 1);
 	objects.model[slot] = model;
 
+	objects.rig[slot] = NULL;
 	if(models[model]->type >= MDL_RIG) {
 		if(!(objects.rig[slot] = rig_derive(model)))
 			goto err_reset_slot;
+
+		/* Add flag to mask */
+		objects.mask[slot] |= OBJ_M_ANIM;
 	}
 
 	mat4_idt(objects.mat_pos[slot]);
@@ -681,6 +685,10 @@ extern void obj_sys_prerender(float interp)
 	vec3_t del;
 
 	for(i = 0; i < OBJ_SLOTS; i++) {
+		if(objects.mask[i] & OBJ_M_ANIM) {
+			rig_update(objects.rig[i]);
+		}
+
 		if(objects.mask[i] & OBJ_M_MODEL) {
 			/* Update render-position of the object */
 			vec3_sub(objects.pos[i], objects.prev_pos[i], del);

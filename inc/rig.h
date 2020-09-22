@@ -1,6 +1,8 @@
 #ifndef _MDLRIG_H
 #define _MDLRIG_H
 
+#include "vec.h"
+#include "mat.h"
 #include <stdint.h>
 
 /*
@@ -22,7 +24,9 @@ struct model_rig {
 	uint32_t ts;
 
 	int jnt_num;
-	float *jnt_mat;
+	vec3_t *jnt_pos;
+	vec4_t *jnt_rot;
+	mat4_t *jnt_mat;
 };
 
 
@@ -44,6 +48,6 @@ extern struct model_rig *rig_derive(short slot);
 extern void rig_free(struct model_rig *rig);
 
 
-extern void rig_update(void);
+extern void rig_update(struct model_rig *rig);
 
 #endif

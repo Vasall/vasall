@@ -305,16 +305,16 @@ extern void vec4_scl(vec4_t in, float f, vec4_t out)
 	out[3] = in[3] * f;
 }
 
-extern float vec4_mag(vec2_t in)
+extern float vec4_mag(vec4_t in)
 {
-	double l = (in[0] * in[0]) + (in[1] * in[1]) + (in[2] * in[2]) +
-		(in[3] * in[3]);
+	double l;
+	l = (in[0] * in[0]) + (in[1] * in[1]) + (in[2] * in[2]) + (in[3] * in[3]);
 	return (float)sqrt(l);
 }
 
 extern void vec4_nrm(vec4_t in, vec4_t out)
 {
-	float len = vec2_mag(in);
+	float len = vec4_mag(in);
 	if(len == 0.0) {
 		out[0] = 0.0;
 		out[1] = 0.0;

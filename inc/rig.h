@@ -21,6 +21,7 @@ struct model_rig {
 	
 	short anim;
 	float prog;
+	char c;
 	uint32_t ts;
 
 	int jnt_num;

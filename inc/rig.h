@@ -5,6 +5,9 @@
 #include "mat.h"
 #include <stdint.h>
 
+
+#define JOINT_MAX_NUM 100
+
 /*
  * A simple rig-struct containing the necessary data for the
  * animation of an object.
@@ -27,7 +30,7 @@ struct model_rig {
 	int jnt_num;
 	vec3_t *jnt_pos;
 	vec4_t *jnt_rot;
-	mat4_t *jnt_mat;
+	mat4_t jnt_mat[JOINT_MAX_NUM];
 };
 
 
@@ -49,6 +52,9 @@ extern struct model_rig *rig_derive(short slot);
 extern void rig_free(struct model_rig *rig);
 
 
+/*
+ * 
+ */
 extern void rig_update(struct model_rig *rig);
 
 #endif

@@ -9,14 +9,18 @@
 struct camera_wrapper camera;
 
 
+static vec3_t CAMERA_RIGHT = {1.0, 0.0, 0.0};
+static vec3_t CAMERA_FORW =  {0.0, 1.0, 0.0};
+static vec3_t CAMERA_UP =    {0.0, 0.0, 1.0};
+
 extern int cam_init(float aov, float asp, float near, float far)
 {
 	/* Set the default position of the camera */
 	vec3_set(camera.pos, 0.0, 0.0, 0.0);
 
 	/* Set the direction-vector for the camera */	
-	vec3_set(camera.forward, 1.0, 0.0, 0.0);
-	vec3_set(camera.right, 0.0, 0.0, 1.0);
+	vec3_cpy(camera.forward, CAMERA_FORW);
+	vec3_cpy(camera.right,   CAMERA_RIGHT);
 
 	/* Set the sensitivity of the mouse */
 	camera.sens = 0.01;
@@ -69,12 +73,10 @@ extern void cam_get_pos(vec3_t pos)
 
 extern void cam_set_dir(vec3_t dir)
 {
-	vec3_t up = {0.0, 1.0, 0.0};
-
 	vec3_cpy(camera.forward, dir);
 	vec3_nrm(camera.forward, camera.forward);
 
-	vec3_cross(up, camera.forward, camera.right);
+	vec3_cross(CAMERA_UP, camera.forward, camera.right);
 
 	cam_update_view();
 }
@@ -98,13 +100,11 @@ extern void cam_zoom(int val)
 
 extern void cam_rot(float d_yaw, float d_pitch)
 {
-	vec3_t stdup = {0.0, 1.0, 0.0};
-
 	d_yaw *= camera.sens;
 	d_pitch *= camera.sens;
 
 	if(d_yaw != 0.0) {
-		vec3_rot_y(camera.forward, d_yaw, camera.forward);
+		vec3_rot_z(camera.forward, d_yaw, camera.forward);
 	}
 
 	if(d_pitch != 0.0) {
@@ -114,7 +114,7 @@ extern void cam_rot(float d_yaw, float d_pitch)
 
 	vec3_nrm(camera.forward, camera.forward);
 
-	vec3_cross(stdup, camera.forward, camera.right);
+	vec3_cross(CAMERA_UP, camera.forward, camera.right);
 	vec3_nrm(camera.right, camera.right);
 
 	cam_update();
@@ -133,14 +133,11 @@ extern void cam_mov(vec3_t mov)
 
 extern void cam_look_at(vec3_t trg)
 {
-	vec3_t up = {0.0, 1.0, 0.0};
-
-	if(camera.pos[0] == trg[0] && camera.pos[1] == trg[1] &&
-			camera.pos[2] == trg[2]) {
+	if(vec3_cmp(camera.pos, trg)) {
 		printf("Target equal to cam position!\n");
-		vec3_set(camera.forward, 1.0, 0.0, 0.0);
+		vec3_cpy(camera.forward, CAMERA_FORW);
 
-		vec3_cross(up, camera.forward, camera.right);
+		vec3_cross(CAMERA_UP, camera.forward, camera.right);
 		vec3_nrm(camera.right, camera.right);
 		return;
 	}
@@ -148,7 +145,7 @@ extern void cam_look_at(vec3_t trg)
 	vec3_sub(camera.pos, trg, camera.forward);
 	vec3_nrm(camera.forward, camera.forward);
 
-	vec3_cross(up, camera.forward, camera.right);
+	vec3_cross(CAMERA_UP, camera.forward, camera.right);
 	vec3_nrm(camera.right, camera.right);
 }
 
@@ -189,9 +186,6 @@ extern void cam_update_view(void)
 	vec3_t forw;
 	vec3_t right;
 	vec3_t up;
-	vec3_t stdup;
-
-	vec3_set(stdup, 0.0, 1.0, 0.0);
 
 	vec3_cpy(forw, camera.forward);
 	vec3_cpy(right, camera.right);
@@ -221,14 +215,12 @@ extern void cam_update_view(void)
 
 extern void cam_set(vec3_t pos, vec3_t trg)
 {	
-	vec3_t up = {0.0, 1.0, 0.0};
-
 	vec3_cpy(camera.pos, pos);
 
 	vec3_sub(pos, trg, camera.forward);
 	vec3_nrm(camera.forward, camera.forward);
 
-	vec3_cross(up, camera.forward, camera.right);
+	vec3_cross(CAMERA_UP, camera.forward, camera.right);
 	vec3_nrm(camera.right, camera.right);
 
 	cam_update_view();

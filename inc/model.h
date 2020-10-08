@@ -28,6 +28,9 @@ struct mdl_joint {
 	int par;
 	int child_num;
 	int child_buf[10];
+	mat4_t mat_rel;
+	mat4_t mat_base;
+	mat4_t mat;
 };
 
 struct mdl_keyfr {
@@ -71,7 +74,6 @@ struct model {
 
 	int              jnt_num;
 	struct mdl_joint *jnt_buf;
-	float            *jnt_mat;
 	int              jnt_root;
 
 	int              anim_num;

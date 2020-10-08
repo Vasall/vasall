@@ -129,7 +129,6 @@ extern short mdl_set(char *name)
 	/* Initialize joint-attributes */
 	mdl->jnt_num = 0;
 	mdl->jnt_buf = NULL;
-	mdl->jnt_mat = NULL;
 	mdl->jnt_root = -1;
 		
 	/* Initialize animation-attributes */
@@ -191,10 +190,6 @@ extern void mdl_del(short slot)
 	if(mdl->jnt_buf)
 		free(mdl->jnt_buf);
 
-	/* Free the joint-matrices */
-	if(mdl->jnt_mat)
-		free(mdl->jnt_mat);
-
 	/* Free the animation-buffer and keyframes */
 	if(mdl->anim_buf) {
 		for(i = 0; i < mdl->anim_num; i++) {
@@ -236,7 +231,7 @@ extern void mdl_set_data(short slot, int vtxnum, float *vtx, float *tex,
 	/* Calculate the size of a single vertex in bytes */
 	if(jnt && wgt) {
 		/* With joints and weights */
-		vtx_size = 12 * sizeof(float) + 4 * sizeof(int);
+		vtx_size = (12 * sizeof(float)) + (4 * sizeof(int));
 
 		/* Set the model-type */
 		mdl->type = MDL_RIG; 
@@ -407,6 +402,30 @@ static void mdl_order_joints(short slot)
 	}
 }
 
+static void mdl_calc_joint(struct model *mdl, short slot);
+static void mdl_calc_joint(struct model *mdl, short slot)
+{
+	int i;
+	struct mdl_joint *jnt;	
+
+	jnt = &mdl->jnt_buf[slot];
+
+	/* Copy relative joint-matrix */
+	mat4_cpy(jnt->mat_rel, jnt->mat);
+
+	/* Adjust absolute joint-matrix using parent-joint */
+	if(jnt->par >= 0) {
+		mat4_t mat;
+
+		mat4_mult(mdl->jnt_buf[jnt->par].mat, jnt->mat, mat);
+		mat4_cpy(jnt->mat, mat);
+	}
+
+	/* Call function recursivly on child-joints */
+	for(i = 0; i < jnt->child_num; i++)
+		mdl_calc_joint(mdl, jnt->child_buf[i]);
+}
+
 extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 {
 	struct amo_model *data;
@@ -460,6 +479,8 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 	amo_getdata(data, &vtxnum, (void **)&vtx, (void **)&tex, (void **)&nrm,
 			(void **)&jnt, (void **)&wgt, &idxnum, &idx);
 
+	printf("Path: %s\n", pth);
+
 	/* Attach data to the model */
 	mdl_set_data(slot, vtxnum, vtx, tex, nrm, jnt, wgt, idxnum, idx);
 
@@ -494,13 +515,24 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 			mdl->jnt_buf[i].par = tmp;			
 		}
 
-		/* Allocate memory for joint-matrices */
-		tmp = mdl->jnt_num * sizeof(float) * 16;
-		if(!(mdl->jnt_mat = malloc(tmp)))
-			goto err_free_data;
+		/* Copy joint-matrices */
+		for(i = 0; i < mdl->jnt_num; i++) {
+			mat4_cpy(mdl->jnt_buf[i].mat, data->jnt_lst[i].mat);
+		}
 
 		/* Link the children to the parent-joints */
 		mdl_order_joints(slot);
+
+		/* Calculate the base matrices of the joints */
+		mdl_calc_joint(mdl, mdl->jnt_root);
+
+		/* Inverse the matrices of the joints */
+		for(i = 0; i < mdl->jnt_num; i++) {
+			mat4_std(mdl->jnt_buf[i].mat);
+
+			mat4_cpy(mdl->jnt_buf[i].mat_base, mdl->jnt_buf[i].mat);
+			mat4_inv(mdl->jnt_buf[i].mat, mdl->jnt_buf[i].mat_base);
+		}
 	}
 
 	/* Copy animations */
@@ -642,8 +674,10 @@ extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
 	glUniformMatrix4fv(loc[1], 1, GL_FALSE, rot_mat);
 	glUniformMatrix4fv(loc[2], 1, GL_FALSE, view);
 	glUniformMatrix4fv(loc[3], 1, GL_FALSE, proj);
-	if(rig != NULL)
-		glUniformMatrix4fv(loc[4], 1, GL_FALSE, (float *)rig->jnt_mat);
+	if(rig != NULL) {
+		glUniformMatrix4fv(loc[4], mdl->jnt_num, GL_FALSE,
+				(float *)rig->jnt_mat);
+	}
 
 	/* Draw the vertices */
 	glDrawElements(GL_TRIANGLES, mdl->idx_num, GL_UNSIGNED_INT, 0);

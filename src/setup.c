@@ -52,7 +52,7 @@ extern void test1(char *buf, int len)
 	char zero = 0;
 	float asp;
 
-	vec3_t dir = {-1.0, 1.0, 0.0};
+	vec3_t dir = {0.0, -1.0, 0.0};
 
 	if(buf || len) {/* Prevent warning for not using parameters */}
 

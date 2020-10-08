@@ -172,6 +172,7 @@ extern void vec3_rot_x(vec3_t in, float angle, vec3_t out)
 {
 	mat3_t rmat;
 	mat3_idt(rmat);
+	rmat[0x0] =  1.0;
 	rmat[0x4] =  cos(angle);
 	rmat[0x5] = -sin(angle);
 	rmat[0x7] =  sin(angle);
@@ -185,6 +186,7 @@ extern void vec3_rot_y(vec3_t in, float angle, vec3_t out)
 	mat3_idt(rmat);
 	rmat[0x0] =  cos(angle);
 	rmat[0x2] =  sin(angle);
+	rmat[0x3] =  1.0;
 	rmat[0x6] = -sin(angle);
 	rmat[0x8] =  cos(angle);
 	vec3_trans(in, rmat, out);
@@ -198,6 +200,7 @@ extern void vec3_rot_z(vec3_t in, float angle, vec3_t out)
 	rmat[0x1] = -sin(angle);
 	rmat[0x3] =  sin(angle);
 	rmat[0x4] =  cos(angle);
+	rmat[0x8] =  1.0;
 	vec3_trans(in, rmat, out);
 }
 

@@ -78,7 +78,7 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 	objects.pos[slot][1] = wld_get_height(x, z) + 5.6;
 
 	/* Setup model-data */
-	vec3_set(objects.dir[slot], 1, 0, 1);
+	vec3_set(objects.dir[slot], 0.0, 1.0, 0.0);
 	objects.model[slot] = model;
 
 	objects.rig[slot] = NULL;
@@ -216,17 +216,19 @@ extern void obj_update_matrix(short slot)
 	mat4_idt(objects.mat_pos[slot]);
 	mat4_idt(objects.mat_rot[slot]);
 
+#if 0
 	/* Set the position of the model */
 	objects.mat_pos[slot][0xc] = objects.pos[slot][0];
 	objects.mat_pos[slot][0xd] = objects.pos[slot][1];
 	objects.mat_pos[slot][0xe] = objects.pos[slot][2];
 
 	/* Set the rotation of the model */
-	rot = atan2(-objects.dir[slot][2], objects.dir[slot][0]);
+	rot = atan2(-objects.dir[slot][1], objects.dir[slot][0]);
 	objects.mat_rot[slot][0x0] =  cos(rot);
-	objects.mat_rot[slot][0x2] = -sin(rot);
-	objects.mat_rot[slot][0x8] =  sin(rot);
-	objects.mat_rot[slot][0xa] =  cos(rot);
+	objects.mat_rot[slot][0x1] =  sin(rot);
+	objects.mat_rot[slot][0x4] =  -sin(rot);
+	objects.mat_rot[slot][0x5] =  cos(rot);
+#endif
 }
 
 
@@ -576,7 +578,7 @@ extern void obj_move(short slot)
 			vec3_scl(vel, (1.0 - TICK_TIME_S * t_speed), vel);
 
 			/* Acceleration */
-			vec3_set(acl, mov[0], 0, mov[1]);
+			vec3_set(acl, mov[0], mov[1], 0.0);
 			vec3_scl(acl, 6, acl);
 			vec3_scl(acl, (TICK_TIME_S * t_speed), acl);
 
@@ -594,9 +596,9 @@ extern void obj_move(short slot)
 				vel[0] = 0;
 			}
 
-			if(ABS(pos[2]) > 32.0) {
-				pos[2] = 32.0 * SIGN(pos[2]);
-				vel[2] = 0;
+			if(ABS(pos[1]) > 32.0) {
+				pos[1] = 32.0 * SIGN(pos[1]);
+				vel[1] = 0;
 			}
 
 			if(ABS(vel[0] + vel[1]) >= 0.0004)
@@ -604,8 +606,6 @@ extern void obj_move(short slot)
 
 			if(objects.mark_flg[slot]) {	
 				if(run_ts == objects.mark[slot].ts) {
-					printf("Use marker\n");
-
 					vec3_cpy(pos, objects.mark[slot].pos);
 					vec3_cpy(vel, objects.mark[slot].vel);
 					vec2_cpy(mov, objects.mark[slot].mov);
@@ -716,6 +716,11 @@ extern void obj_sys_render(void)
 	vec3_t pos;
 	vec3_t dir;
 	float rot;
+	
+	mat4_t tmp;
+
+	mat4_idt(tmp);
+		
 
 	for(i = 0; i < OBJ_SLOTS; i++) {
 		if(objects.mask[i] & OBJ_M_MODEL) {
@@ -727,12 +732,15 @@ extern void obj_sys_render(void)
 			objects.mat_pos[i][0xd] = pos[1];
 			objects.mat_pos[i][0xe] = pos[2];
 
+#if 0
+
 			/* Set the rotation of the model */
-			rot = atan2(-dir[2], dir[0]);
+			rot = atan2(dir[1], dir[0]);
 			objects.mat_rot[i][0x0] =  cos(rot);
-			objects.mat_rot[i][0x2] = -sin(rot);
-			objects.mat_rot[i][0x8] =  sin(rot);
-			objects.mat_rot[i][0xa] =  cos(rot);
+			objects.mat_rot[i][0x1] =  sin(rot);
+			objects.mat_rot[i][0x4] =  -sin(rot);
+			objects.mat_rot[i][0x5] =  cos(rot);
+#endif
 
 			mdl_render(objects.model[i], objects.mat_pos[i],
 					objects.mat_rot[i], objects.rig[i]);

@@ -121,10 +121,10 @@ static void game_proc_input(void)
 
 
 	/* Get direction of the camera */
-	vec2_set(right, camera.right[0], camera.right[2]);
+	vec2_set(right, camera.right[0], camera.right[1]);
 	vec2_nrm(right, right);
 
-	vec2_set(forw, camera.forward[0], camera.forward[2]);
+	vec2_set(forw, camera.forward[0], camera.forward[1]);
 	vec2_nrm(forw, forw);
 
 	/* Combine input-direction and camera-direction */

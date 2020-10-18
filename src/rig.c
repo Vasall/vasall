@@ -71,14 +71,28 @@ extern void rig_free(struct model_rig *rig)
 }
 
 
-static void interp(vec4_t in1, vec4_t in2, float p, vec4_t out)
+static void rot_interp(vec4_t in1, vec4_t in2, float p, vec4_t out)
 {
-	out[0] = in1[0] + (in2[0] - in1[0]) * p;
-	out[1] = in1[1] + (in2[1] - in1[1]) * p;
-	out[2] = in1[2] + (in2[2] - in1[2]) * p;
-	out[3] = in1[3] + (in2[3] - in1[3]) * p;
+	vec4_t conv;
+
+	conv[0] = in1[0] + (in2[0] - in1[0]) * p;
+	conv[1] = in1[1] + (in2[1] - in1[1]) * p;
+	conv[2] = in1[2] + (in2[2] - in1[2]) * p;
+	conv[3] = in1[3] + (in2[3] - in1[3]) * p;
+
+	vec4_cpy(out, conv);
 }
 
+static void pos_interp(vec3_t in1, vec3_t in2, float p, vec3_t out)
+{
+	vec3_t conv;
+
+	conv[0] = in1[0] + (in2[0] - in1[0]) * p;
+	conv[1] = in1[1] + (in2[1] - in1[1]) * p;
+	conv[2] = in1[2] + (in2[2] - in1[2]) * p;
+
+	vec3_cpy(out, conv);
+}
 
 static void rig_calc_rec(struct model_rig *rig, int idx);
 static void rig_calc_rec(struct model_rig *rig, int idx)
@@ -88,33 +102,40 @@ static void rig_calc_rec(struct model_rig *rig, int idx)
 	struct mdl_keyfr *keyfr0, *keyfr1;
 	int i;
 	vec3_t p;
-	vec4_t t;
 	vec4_t r;
 	mat4_t mat;
 	mat4_t m;
 	int par;
-	static int c = 0;
 
 	mdl = models[rig->model];
-	anim = &mdl->anim_buf[1];
-	
+	anim = &mdl->anim_buf[rig->anim];
+
+	/* Get last and next keyframe */
 	keyfr0 = &anim->keyfr_buf[(int)rig->c];
 	keyfr1 = &anim->keyfr_buf[(rig->c + 1) % anim->keyfr_num];
 
-
 	/* 
-	 * Get the current position and rotation of the joint.
+	 * Interpolate the rotation of the joint.
 	 */
-	vec3_cpy(rig->jnt_pos[idx], keyfr0->pos[idx]);
-	interp(keyfr0->rot[idx], keyfr1->rot[idx], rig->prog, r);
+	rot_interp(keyfr0->rot[idx], keyfr1->rot[idx], rig->prog, r);
+
+	/* Normalize quaternion */
+	vec4_nrm(r, r);
+
+	/* Copy rotation into rotation-list */
 	vec4_cpy(rig->jnt_rot[idx], r);
 
 	/*
-	 * Calculate the matrix of the joint relative to the parent.
+	 * Interpolate the position of the joint.
 	 */
-	vec3_cpy(p, rig->jnt_pos[idx]);
-	vec4_cpy(t, rig->jnt_rot[idx]);
-	vec4_nrm(t, r);
+	pos_interp(keyfr0->pos[idx], keyfr1->pos[idx], rig->prog, p);
+
+	/* Copy position into position-list */
+	vec3_cpy(rig->jnt_pos[idx], p);
+
+	/*
+	 * Set the current animation-matrix for the joint.
+	 */
 
 	/* Add the rotation to the matrix */
 	mat4_rotq(mat, r[0], r[1], r[2], r[3]);
@@ -122,51 +143,24 @@ static void rig_calc_rec(struct model_rig *rig, int idx)
 	/* Add the position to the matrix */
 	mat4_pos(mat, p[0], p[1], p[2]);
 
-	if(c < 3) {
-		printf("Relative matrix:\n");
-		mat4_print(mat);
-	}
-
 	/*
 	 * Add matrix to relative joint-matrix.
 	 */
 	mat4_mult(mdl->jnt_buf[idx].mat_rel, mat, mat);
 
-	if(c < 3) {
-		printf("Combined matrix:\n");
-		mat4_print(mat);
-	}
-
 	/*
 	 * Translate matrix to model-space.
 	 */
 	par = mdl->jnt_buf[idx].par; 
-	if(par >= 0) {
-		if(c < 3) {
-			printf("Parent matrix(%d):\n", par);
-			mat4_print(rig->jnt_mat[par]);
-		}
-
+	if(par >= 0)
 		mat4_mult(rig->jnt_mat[par], mat, m);
-	}
-	else {
+	else
 		mat4_cpy(m, mat);
-	}
-
-	if(c < 3) {
-		printf("Absolute matrix:\n");
-		mat4_print(m);
-	}
 
 	/*
 	 * Copy matrix into table.
 	 */
 	mat4_cpy(rig->jnt_mat[idx], m);
-
-	if(c < 3) {
-		printf("--\n");
-	}
-	c++;
 
 	/*
 	 * Call function recusivly for child-joints.
@@ -180,16 +174,20 @@ extern void rig_update(struct model_rig *rig)
 	struct model *mdl;
 	struct mdl_anim *anim;
 	int i;
-	static int c = 0;
 
 	mdl = models[rig->model];
-	anim = &mdl->anim_buf[0];
+	anim = &mdl->anim_buf[rig->anim];
 
 	/* Update the progress */
 	rig->prog += 0.005;
 	if(rig->prog >= 1.0) {
 		rig->prog -= 1.0;
-		rig->c = (rig->c + 1) % anim->keyfr_num;
+		rig->c = (rig->c + 1);
+
+		if(rig->c >= anim->keyfr_num) {
+			rig->c = 0;
+			rig->anim = (rig->anim + 1) % mdl->anim_num;
+		}
 	}
 
 	/* Calculate the joint-matrices */
@@ -197,21 +195,7 @@ extern void rig_update(struct model_rig *rig)
 
 	/* Subtract the base matrices of the current joint-matrices */
 	for(i = 0; i < mdl->jnt_num; i++) {
-		if(c < 3) {
-			printf("---\n");
-			printf("Inverse matrix:\n");
-			mat4_print(mdl->jnt_buf[i].mat);
-			printf("Rig Matrix:\n");
-			mat4_print(rig->jnt_mat[i]);
-		}
-
 		mat4_mul(mdl->jnt_buf[i].mat, rig->jnt_mat[i],
 				rig->jnt_mat[i]);
-
-		if(c < 3) {
-			printf("Final Matrix:\n");
-			mat4_print(rig->jnt_mat[i]);
-		}
-		c++;
 	}
 }

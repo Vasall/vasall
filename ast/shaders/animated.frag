@@ -3,7 +3,7 @@
 in vec2 uv;
 in vec3 nrm;
 
-vec3 LIGHT_VEC = -vec3(0.259, -0.864, 0.432);
+vec3 LIGHT_VEC = -vec3(0.259, 0.432, -0.864);
 vec3 LIGHT_COL = vec3(1.0, 1.0, 1.0);
 vec2 LIGHT_BIAS = vec2(0.2, 0.8);
 

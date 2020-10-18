@@ -58,7 +58,7 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 {
 	short slot;
 	float x;
-	float z;
+	float y;
 
 	/* Get slot to place object on */
 	if((slot = obj_get_slot()) < 0)
@@ -68,14 +68,16 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 	objects.mask[slot] = mask;
 	objects.id[slot] = id;
 
+	vec3_set(pos, 15.0, 15.0, 0.0);
+
 	/* Setup position, velocity and direction */
 	vec3_cpy(objects.pos[slot], pos);
 	vec3_clr(objects.vel[slot]);
 
 	/* Get the height of the terrain at the objects-position */
 	x = objects.pos[slot][0];
-	z = objects.pos[slot][2];
-	objects.pos[slot][1] = wld_get_height(x, z) + 5.6;
+	y = objects.pos[slot][1];
+	/* objects.pos[slot][1] = wld_get_height(x, z); */
 
 	/* Setup model-data */
 	vec3_set(objects.dir[slot], 0.0, 1.0, 0.0);
@@ -216,19 +218,17 @@ extern void obj_update_matrix(short slot)
 	mat4_idt(objects.mat_pos[slot]);
 	mat4_idt(objects.mat_rot[slot]);
 
-#if 0
 	/* Set the position of the model */
 	objects.mat_pos[slot][0xc] = objects.pos[slot][0];
 	objects.mat_pos[slot][0xd] = objects.pos[slot][1];
 	objects.mat_pos[slot][0xe] = objects.pos[slot][2];
 
 	/* Set the rotation of the model */
-	rot = atan2(-objects.dir[slot][1], objects.dir[slot][0]);
+	rot = atan2(objects.dir[slot][1], objects.dir[slot][0]);
 	objects.mat_rot[slot][0x0] =  cos(rot);
 	objects.mat_rot[slot][0x1] =  sin(rot);
 	objects.mat_rot[slot][0x4] =  -sin(rot);
 	objects.mat_rot[slot][0x5] =  cos(rot);
-#endif
 }
 
 
@@ -601,8 +601,7 @@ extern void obj_move(short slot)
 				vel[1] = 0;
 			}
 
-			if(ABS(vel[0] + vel[1]) >= 0.0004)
-				vec3_nrm(vel, dir);
+			vec3_nrm(vel, dir);
 
 			if(objects.mark_flg[slot]) {	
 				if(run_ts == objects.mark[slot].ts) {
@@ -720,7 +719,10 @@ extern void obj_sys_render(void)
 	mat4_t tmp;
 
 	mat4_idt(tmp);
-		
+
+	vec3_print(objects.ren_pos[0]);
+	printf("\n");
+
 
 	for(i = 0; i < OBJ_SLOTS; i++) {
 		if(objects.mask[i] & OBJ_M_MODEL) {
@@ -732,15 +734,13 @@ extern void obj_sys_render(void)
 			objects.mat_pos[i][0xd] = pos[1];
 			objects.mat_pos[i][0xe] = pos[2];
 
-#if 0
-
 			/* Set the rotation of the model */
-			rot = atan2(dir[1], dir[0]);
+			rot = atan2(-dir[0], dir[1]);	
+			
 			objects.mat_rot[i][0x0] =  cos(rot);
 			objects.mat_rot[i][0x1] =  sin(rot);
 			objects.mat_rot[i][0x4] =  -sin(rot);
 			objects.mat_rot[i][0x5] =  cos(rot);
-#endif
 
 			mdl_render(objects.model[i], objects.mat_pos[i],
 					objects.mat_rot[i], objects.rig[i]);

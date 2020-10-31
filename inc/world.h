@@ -14,7 +14,7 @@ struct world_wrapper {
 	vec2_t   max_pos;
 	float    *heights;
 	vec3_t   rot;
-	short    terrain;
+	short    terrain;	
 };
 
 

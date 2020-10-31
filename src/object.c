@@ -68,7 +68,7 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 	objects.mask[slot] = mask;
 	objects.id[slot] = id;
 
-	vec3_set(pos, 15.0, 15.0, 0.0);
+	pos[2] = 0.0;
 
 	/* Setup position, velocity and direction */
 	vec3_cpy(objects.pos[slot], pos);
@@ -590,7 +590,7 @@ extern void obj_move(short slot)
 			vec3_cpy(prev, pos);
 			vec3_add(pos, del, pos);
 
-			/* Limit space */
+			/* Limit movement-space */
 			if(ABS(pos[0]) > 32.0) {
 				pos[0] = 32.0 * SIGN(pos[0]);
 				vel[0] = 0;
@@ -715,14 +715,9 @@ extern void obj_sys_render(void)
 	vec3_t pos;
 	vec3_t dir;
 	float rot;
-	
-	mat4_t tmp;
-
-	mat4_idt(tmp);
 
 	vec3_print(objects.ren_pos[0]);
 	printf("\n");
-
 
 	for(i = 0; i < OBJ_SLOTS; i++) {
 		if(objects.mask[i] & OBJ_M_MODEL) {

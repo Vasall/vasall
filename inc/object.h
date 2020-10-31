@@ -21,6 +21,7 @@
 #define OBJ_M_PEER     (1<<3)
 #define OBJ_M_ANIM     (1<<4)
 
+#define OBJ_M_STATIC (OBJ_M_MODEL)
 #define OBJ_M_ENTITY (OBJ_M_MOVE|OBJ_M_MODEL)
 #define OBJ_M_PLAYER (OBJ_M_ENTITY|OBJ_M_PEER)
 

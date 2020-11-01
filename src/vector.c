@@ -1,5 +1,4 @@
-#include "vec.h"
-#include "mat.h"
+#include "vector.h"
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -3,7 +3,7 @@
 
 #include "sdl.h"
 #include "node.h"
-#include "vec.h"
+#include "vector.h"
 #include "input.h"
 
 #define PIPE_LEN 32

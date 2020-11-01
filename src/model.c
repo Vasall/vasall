@@ -535,8 +535,22 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 		}
 	}
 
+	/* Copy collision-boxes */
+	mdl->col_mask = 0;
+	if(data->format >= AMO_FORMAT_COL) {	
+		/*
+		 * If a broadphase-collision-box is defined.
+		 */
+		if(data->col_mask & AMO_COLM_BP) {
+			/* Update the collision-mask */
+			mdl->col_mask |= MDL_COLM_BP;
+
+
+		}
+	}
+
 	/* Copy animations */
-	if(data->ani_c > 0) {
+	if(data->format >= AMO_FORMAT_AMO) {
 		/* Set type of the model */
 		mdl->type = MDL_ANIM;
 

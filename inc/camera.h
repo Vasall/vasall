@@ -2,8 +2,8 @@
 #define _CAMERA_H
 
 #include "camera.h"
-#include "vec.h"
-#include "mat.h"
+#include "vector.h"
+#include "matrix.h"
 #include "object.h"
 
 typedef enum {LEFT, RIGHT, FORWARD, BACK} Direction;

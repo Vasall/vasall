@@ -1,8 +1,9 @@
 #ifndef _MODEL_H
 #define _MODEL_H
 
-#include "vec.h"
-#include "mat.h"
+#include "vector.h"
+#include "matrix.h"
+#include "shape.h"
 #include "sdl.h"
 #include "asset.h"
 #include "camera.h"
@@ -20,6 +21,10 @@ enum mdl_status {
 	MDL_ERR_LOADING =       4,
 	MDL_ERR_SHADER =        5,
 	MDL_ERR_FINISHING =     6
+};
+
+struct mdl_col {
+	struct cube3d bpcol;	
 };
 
 struct mdl_joint;
@@ -55,31 +60,36 @@ enum mdl_type {
 	MDL_ANIM = 3
 };
 
+#define MDL_COLM_BP (1<<0)
+
 struct model {
-	short         slot;
-	char          name[9];
-	enum mdl_type type;
-	unsigned int  vao;
+	short             slot;
+	char              name[9];
+	enum mdl_type     type;
+	int               col_mask;
+	unsigned int      vao;
 	
-	unsigned int  idx_bao;
-	int           idx_num;
-	unsigned int  *idx_buf;
+	unsigned int      idx_bao;
+	int               idx_num;
+	unsigned int      *idx_buf;
 	
-	unsigned int  vtx_bao;
-	int           vtx_num;
-	char          *vtx_buf;
+	unsigned int      vtx_bao;
+	int               vtx_num;
+	char              *vtx_buf;
 
-	short         tex;
-	short         shd;
+	short             tex;
+	short             shd;
 
-	int              jnt_num;
-	struct mdl_joint *jnt_buf;
-	int              jnt_root;
+	struct mdl_col    col;
 
-	int              anim_num;
-	struct mdl_anim  *anim_buf;
+	int               jnt_num;
+	struct mdl_joint  *jnt_buf;
+	int               jnt_root;
 
-	uint8_t       status;
+	int               anim_num;
+	struct mdl_anim   *anim_buf;
+
+	uint8_t           status;
 };
 
 

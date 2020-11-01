@@ -8,6 +8,8 @@ int load_resources(void)
 	char *vars1[3] = {"vtxPos\0", "vtxTex\0", "vtxNrm\0"};
 	char *vars2[5] = {"vtxPos\0", "vtxTex\0", "vtxNrm\0", "vtxJnt\0", "vtxWgt\0"};
 
+	printf("Start loading resources\n");
+
 	/* fonts */
 	if(txt_load_ttf("ast/fonts/mecha.ttf", 24) < 0)
 		return -1;
@@ -35,15 +37,18 @@ int load_resources(void)
 	if(tex_load_png("flr", "ast/textures/floor.png") < 0)
 		return -1;
 
+	printf("a\n");
+
 	/* models */
 	if(mdl_load("wld", "ast/models/floor.obj", tex_get("flr"), shd_get("mdl")) < 0)
 		return -1;
 
+	printf("b");
+
 	if(mdl_load("plr", "ast/models/test.amo", tex_get("bas"), shd_get("ani")) < 0)
 		return -1;
 
-	if(mdl_load("slp", "ast/models/slope.obj", tex_get("bas"), shd_get("mdl")) < 0)
-		return -1;
+	printf("Finished loading resources\n");
 
 	return 0;
 }
@@ -72,9 +77,6 @@ extern void test1(char *buf, int len)
 	cam_proj_mat(45.0, asp, 0.1, 1000.0);
 
 	printf("bb\n");
-
-	/* Place objects */
-	obj_set(id, OBJ_M_STATIC, pos, mdl_get("slp"), NULL, 0, 1);
 
 	printf("aa\n");
 

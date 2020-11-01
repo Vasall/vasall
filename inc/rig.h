@@ -1,8 +1,8 @@
 #ifndef _MDLRIG_H
 #define _MDLRIG_H
 
-#include "vec.h"
-#include "mat.h"
+#include "vector.h"
+#include "matrix.h"
 #include <stdint.h>
 
 

@@ -2,7 +2,7 @@
 #define _INPUT_H
 
 #include "sdl.h"
-#include "vec.h"
+#include "vector.h"
 
 #define INPUT_SLOTS    16
 

@@ -1,7 +1,7 @@
-#ifndef _VEC_H
-#define _VEC_H
+#ifndef _VECTOR_H
+#define _VECTOR_H
 
-#include "mat.h"
+#include "matrix.h"
 
 #define M_PI 3.141592654
 #define TO_RADS (3.14/180.0)

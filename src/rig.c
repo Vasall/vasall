@@ -1,7 +1,6 @@
 #include "rig.h"
 #include "model.h"
 #include "sdl.h"
-#include "mat.h"
 
 extern struct model_rig *rig_derive(short slot)
 {

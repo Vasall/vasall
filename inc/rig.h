@@ -1,5 +1,5 @@
-#ifndef _MDLRIG_H
-#define _MDLRIG_H
+#ifndef _RIG_H
+#define _RIG_H
 
 #include "vector.h"
 #include "matrix.h"

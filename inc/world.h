@@ -4,17 +4,38 @@
 #include "asset.h"
 #include "model.h"
 
-#define CHUNK_SIZE 32
+/* The side length of a single chunk in worldunits */
+#define _CHUNK_SIZE 32
 
 
+#define WLD_CHUNK_NUM 9
+
+/*
+ * A single chunk in the world.
+ *
+ * @pos: The upper-left corner in the world
+ * @size: The size of the chunk in world-units
+ */
+struct world_chunk {
+	uint32_t   id;
+
+	vec2_t     pos;
+	vec2_t     size;
+
+	int        ptnum;
+	float      *heights;
+
+
+};
+
+
+/*
+ * The world-chunk-wrapper responsible for loading and managing the current
+ * chunks.
+ */
 struct world_wrapper {
-	int2_t   size;
-	int      ptnum;
-	vec2_t   min_pos;
-	vec2_t   max_pos;
-	float    *heights;
-	vec3_t   rot;
-	short    terrain;	
+	int                 chunk_num;
+	struct world_chunk  *chunks;
 };
 
 
@@ -38,6 +59,24 @@ extern void wld_close(void);
 
 
 /*
+ * Load a chunk and push it into the chunk-buffer.
+ *
+ * @id: The id of the chunk to add
+ * @buf: The buffer containing the chunk-data
+ * @len: The length of the buffer in bytes
+ */
+extern int wld_load_chunk(uint32_t id, char *buf, int len);
+
+
+/*
+ * Remove and delete a chunk from the chunk-buffer. 
+ *
+ * @id: The id of the chunk to delete
+ */
+extern void wld_del_chunk(uint32_t id);
+
+
+/*
  * Render the terrain and the static objects in the world.
  *
  * @interp: The interpolation-factor
@@ -54,13 +93,5 @@ extern void wld_render(float interp);
  * Returns: Either the height or 0 if an error occurred
  */
 extern float wld_get_height(float x, float z);
-
-
-/*
- * Generate the heightmap.
- *
- * Returns: Either 0 on success or -1 if an error occurred
- */
-extern int wld_gen_terrain(void);
 
 #endif

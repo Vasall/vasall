@@ -17,32 +17,10 @@ static int twodim(int x, int y, int w) {return y * w + x;}
 
 extern int wld_init(void)
 {
-	vec2_t del;
+	world.chunk_num = 0;
+	
+	if(!(
 
-	world.size[0] = CHUNK_SIZE;
-	world.size[1] = CHUNK_SIZE;
-
-	del[0] = world.size[0] / 2.0;
-	del[1] = world.size[1] / 2.0;	
-
-	world.min_pos[0] = -del[0];
-	world.min_pos[1] = -del[1];
-
-	world.max_pos[0] = del[0];
-	world.max_pos[1] = del[1];
-
-	world.ptnum = (CHUNK_SIZE * CHUNK_SIZE);
-	if(!(world.heights = malloc(sizeof(float) * (world.ptnum))))
-		return -1;
-
-	memset(world.heights, 0, world.ptnum);
-	memset(&world.rot, 0, sizeof(vec3_t));
-
-	if(wld_gen_terrain() < 0) {
-		ERR_LOG(("Failed to generate terrain"));	
-		free(world.heights);
-		return -1;
-	}
 
 	return 0;
 }
@@ -130,30 +108,4 @@ extern float wld_get_height(float x, float z)
 	}
 
 	return ret;
-}
-
-
-extern int wld_gen_terrain(void)
-{
-	int x;
-	int z;
-	int i;
-	float *heights = NULL;
-
-	world.size[0] = CHUNK_SIZE;
-	world.size[1] = CHUNK_SIZE;
-
-	heights = world.heights;
-	for(x = 0; x < world.size[0]; x++) {
-		for(z = 0; z < world.size[1]; z++) {
-			i = twodim(z, x, world.size[1]);
-			heights[i] = 0;
-		}
-	}
-
-	/* Allocate memory for the model-struct */
-	if((world.terrain = mdl_get("wld")) < 0)
-		return -1;
-
-	return 0;
 }

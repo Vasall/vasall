@@ -15,17 +15,26 @@
 #define OBJ_SLOTS      128
 #define OBJ_DATA_MAX   128
 
+/*
+ * The different object-masks for objects, which specifies initialization,
+ * updating and handling.
+ */
 #define OBJ_M_NONE     0
-#define OBJ_M_MOVE     (1<<0)
-#define OBJ_M_MODEL    (1<<1)
-#define OBJ_M_DATA     (1<<2)
-#define OBJ_M_PEER     (1<<3)
-#define OBJ_M_ANIM     (1<<4)
+#define OBJ_M_MODEL    (1<<0)
+#define OBJ_M_FIXED    (1<<1)
+#define OBJ_M_MOVE     (1<<2)
+#define OBJ_M_DATA     (1<<3)
+#define OBJ_M_SYNC     (1<<4)
+#define OBJ_M_PEER     (1<<5)
+#define OBJ_M_ANIM     (1<<6)
 
-#define OBJ_M_STATIC (OBJ_M_MODEL)
-#define OBJ_M_ENTITY (OBJ_M_MOVE|OBJ_M_MODEL)
+#define OBJ_M_STATIC (OBJ_M_MODEL|OBJ_M_FIXED)
+#define OBJ_M_ENTITY (OBJ_M_MODEL|OBJ_M_MOVE|OBJ_M_SYNC)
 #define OBJ_M_PLAYER (OBJ_M_ENTITY|OBJ_M_PEER)
 
+/*
+ * The different masks for the object-attributes.
+ */
 #define OBJ_A_ID       (1<<0)
 #define OBJ_A_MASK     (1<<1)
 #define OBJ_A_POS      (1<<2)
@@ -71,6 +80,9 @@ struct object_table {
 	struct model_rig      *rig[OBJ_SLOTS];
 	mat4_t                mat_pos[OBJ_SLOTS];
 	mat4_t                mat_rot[OBJ_SLOTS];
+
+	/* Collision */
+	
 
 	/* Object/Player-Data like Health and Mana */
 	int                   len[OBJ_SLOTS];

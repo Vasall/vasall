@@ -43,10 +43,11 @@ int load_resources(void)
 	if(mdl_load("wld", "ast/models/floor.obj", tex_get("flr"), shd_get("mdl")) < 0)
 		return -1;
 
-	printf("b");
-
 	if(mdl_load("plr", "ast/models/test.amo", tex_get("bas"), shd_get("ani")) < 0)
 		return -1;
+
+	if(mdl_load("slp", "ast/models/slope.amo", tex_get("bas"), shd_get("mdl")) < 0)
+			return -1;
 
 	printf("Finished loading resources\n");
 
@@ -67,6 +68,9 @@ extern void test1(char *buf, int len)
 
 	if(buf || len) {/* Prevent warning for not using parameters */}
 
+	/* Place a slope */
+	obj_set(id, OBJ_M_STATIC, pos, mdl_get("slp"), NULL, 0, 0);
+
 	/* Setup camera */
 	cam_trg_obj(core.obj);
 	camera.dist = 10.0;
@@ -75,10 +79,6 @@ extern void test1(char *buf, int len)
 	/* Update projection-matrix */
 	asp = (float)window.win_w / (float)window.win_h;
 	cam_proj_mat(45.0, asp, 0.1, 1000.0);
-
-	printf("bb\n");
-
-	printf("aa\n");
 
 	/* Switch from menuscreen to gamescreen */
 	node = ui_get(window.root, "mns");

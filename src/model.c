@@ -7,6 +7,7 @@
 #include <string.h>
 
 
+/* Redefine the global model-list */
 struct model *models[MDL_SLOTS];
 
 
@@ -158,6 +159,7 @@ extern short mdl_get(char *name)
 
 	return -1;
 }
+
 
 extern void mdl_del(short slot)
 {
@@ -545,7 +547,9 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 			/* Update the collision-mask */
 			mdl->col_mask |= MDL_COLM_BP;
 
-
+			/* Copy the position and size of collision-box */
+			vec3_cpy(mdl->col.bpcol.pos, data->bp_col.pos);
+			vec3_cpy(mdl->col.bpcol.size, data->bp_col.size);
 		}
 	}
 
@@ -688,6 +692,8 @@ extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
 	glUniformMatrix4fv(loc[1], 1, GL_FALSE, rot_mat);
 	glUniformMatrix4fv(loc[2], 1, GL_FALSE, view);
 	glUniformMatrix4fv(loc[3], 1, GL_FALSE, proj);
+
+	/* If a rig is given pass to OpenGL for animation */
 	if(rig != NULL) {
 		glUniformMatrix4fv(loc[4], mdl->jnt_num, GL_FALSE,
 				(float *)rig->jnt_mat);

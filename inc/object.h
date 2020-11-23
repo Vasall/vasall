@@ -16,20 +16,21 @@
 #define OBJ_DATA_MAX   128
 
 /*
- * The different object-masks for objects, which specifies initialization,
- * updating and handling.
+ * The different object-masks specifying behaviour and datahandling for the
+ * objects.
  */
 #define OBJ_M_NONE     0
-#define OBJ_M_MODEL    (1<<0)
-#define OBJ_M_FIXED    (1<<1)
-#define OBJ_M_MOVE     (1<<2)
-#define OBJ_M_DATA     (1<<3)
-#define OBJ_M_SYNC     (1<<4)
-#define OBJ_M_PEER     (1<<5)
-#define OBJ_M_ANIM     (1<<6)
+#define OBJ_M_MODEL    (1<<0)  /* Attach and render a model for this object  */
+#define OBJ_M_RIG      (1<<1)  /* Rig the model for animation and collision  */
+#define OBJ_M_MOVE     (1<<2)  /* The object is movable                      */
+#define OBJ_M_SOLID    (1<<3)  /* Should the object be solid with colliders  */
+#define OBJ_M_SYNC     (1<<4)  /* Synchronize the object with other peers    */
+#define OBJ_M_PEER     (1<<5)  /* The object is a peers player               */
+#define OBJ_M_DATA     (1<<6)  /* A databuffer is attached to the object     */
 
-#define OBJ_M_STATIC (OBJ_M_MODEL|OBJ_M_FIXED)
-#define OBJ_M_ENTITY (OBJ_M_MODEL|OBJ_M_MOVE|OBJ_M_SYNC)
+/* Wrapper-masks */
+#define OBJ_M_STATIC (OBJ_M_MODEL|OBJ_M_SOLID)
+#define OBJ_M_ENTITY (OBJ_M_MODEL|OBJ_M_RIG|OBJ_M_MOVE|OBJ_M_SOLID|OBJ_M_SYNC)
 #define OBJ_M_PLAYER (OBJ_M_ENTITY|OBJ_M_PEER)
 
 /*
@@ -63,51 +64,62 @@ struct comp_marker {
 	vec2_t       mov;
 };
 
+#define OBJ_COLM_NONE           0
+#define OBJ_COLM_BP             (1<<0)
+
+struct object_collision {
+	int mask;
+
+	struct cube3d box;
+	vec3_t min;
+	vec3_t max;
+};
+
 struct object_table {
-	short num;
+	short                    num;
 	
-	uint32_t              mask[OBJ_SLOTS];
-	uint32_t              id[OBJ_SLOTS];
+	uint32_t                 mask[OBJ_SLOTS];
+	uint32_t                 id[OBJ_SLOTS];
 	
-	vec3_t                pos[OBJ_SLOTS];
-	vec3_t                vel[OBJ_SLOTS];
+	vec3_t                   pos[OBJ_SLOTS];
+	vec3_t                   vel[OBJ_SLOTS];
 
 	/* Variables used for rendering and animation */
-	vec3_t                ren_pos[OBJ_SLOTS];
-	vec3_t                dir[OBJ_SLOTS];
-	vec3_t                ren_dir[OBJ_SLOTS];
-	short                 model[OBJ_SLOTS];
-	struct model_rig      *rig[OBJ_SLOTS];
-	mat4_t                mat_pos[OBJ_SLOTS];
-	mat4_t                mat_rot[OBJ_SLOTS];
+	vec3_t                   ren_pos[OBJ_SLOTS];
+	vec3_t                   dir[OBJ_SLOTS];
+	vec3_t                   ren_dir[OBJ_SLOTS];
+	short                    model[OBJ_SLOTS];
+	struct model_rig         *rig[OBJ_SLOTS];
+	mat4_t                   mat_pos[OBJ_SLOTS];
+	mat4_t                   mat_rot[OBJ_SLOTS];
 
 	/* Collision */
-	
+	struct object_collision	 col[OBJ_SLOTS];
 
 	/* Object/Player-Data like Health and Mana */
-	int                   len[OBJ_SLOTS];
-	char                  buf[OBJ_SLOTS][OBJ_DATA_MAX];
+	int                      len[OBJ_SLOTS];
+	char                     data[OBJ_SLOTS][OBJ_DATA_MAX];
 
 	/* Vars used for interpolation */
-	vec3_t                prev_pos[OBJ_SLOTS];
-	vec3_t                prev_dir[OBJ_SLOTS];
+	vec3_t                   prev_pos[OBJ_SLOTS];
+	vec3_t                   prev_dir[OBJ_SLOTS];
 
 	/* Vars used to store most recent input */
-	vec2_t                mov[OBJ_SLOTS];
-	uint16_t              act[OBJ_SLOTS];
+	vec2_t                   mov[OBJ_SLOTS];
+	uint16_t                 act[OBJ_SLOTS];
 
 	/* Buffer containing all recent inputs */
-	struct object_inputs  inp[OBJ_SLOTS];
+	struct object_inputs     inp[OBJ_SLOTS];
 
 	/* Next comparison-marker used for maintaing synchronicity */
-	char                  mark_flg[OBJ_SLOTS];
-	struct comp_marker    mark[OBJ_SLOTS];
+	char                     mark_flg[OBJ_SLOTS];
+	struct comp_marker       mark[OBJ_SLOTS];
 
-	uint32_t              last_ack_ts[OBJ_SLOTS];
-	uint32_t              last_upd_ts[OBJ_SLOTS];
+	uint32_t                 last_ack_ts[OBJ_SLOTS];
+	uint32_t                 last_upd_ts[OBJ_SLOTS];
 
-	vec3_t                last_pos[OBJ_SLOTS];
-	vec3_t                last_vel[OBJ_SLOTS];
+	vec3_t                   last_pos[OBJ_SLOTS];
+	vec3_t                   last_vel[OBJ_SLOTS];
 };
 
 

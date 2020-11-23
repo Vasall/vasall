@@ -24,7 +24,18 @@ enum mdl_status {
 };
 
 struct mdl_col {
-	struct cube3d bpcol;	
+	struct cube3d  bpcol;
+
+	vec3_t         necol;
+
+	int            cm_vtx_c;
+	int            cm_tri_c;
+	vec3_t         *cm_vtx;
+	int3_t         *cm_idx;
+	vec3_t         *cm_pln_vec;
+	vec3_t         *cm_nrm;
+
+
 };
 
 struct mdl_joint;
@@ -61,12 +72,13 @@ enum mdl_type {
 };
 
 #define MDL_COLM_BP (1<<0)
+#define MDL_COLM_NE (1<<1)
+#define MDL_COLM_CM (1<<2)
 
 struct model {
 	short             slot;
 	char              name[9];
 	enum mdl_type     type;
-	int               col_mask;
 	unsigned int      vao;
 	
 	unsigned int      idx_bao;
@@ -80,14 +92,15 @@ struct model {
 	short             tex;
 	short             shd;
 
-	struct mdl_col    col;
-
 	int               jnt_num;
 	struct mdl_joint  *jnt_buf;
 	int               jnt_root;
 
 	int               anim_num;
 	struct mdl_anim   *anim_buf;
+
+	int               col_mask;
+	struct mdl_col    col;
 
 	uint8_t           status;
 };

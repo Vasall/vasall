@@ -537,22 +537,6 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 		}
 	}
 
-	/* Copy collision-boxes */
-	mdl->col_mask = 0;
-	if(data->format >= AMO_FORMAT_COL) {	
-		/*
-		 * If a broadphase-collision-box is defined.
-		 */
-		if(data->col_mask & AMO_COLM_BP) {
-			/* Update the collision-mask */
-			mdl->col_mask |= MDL_COLM_BP;
-
-			/* Copy the position and size of collision-box */
-			vec3_cpy(mdl->col.bpcol.pos, data->bp_col.pos);
-			vec3_cpy(mdl->col.bpcol.size, data->bp_col.size);
-		}
-	}
-
 	/* Copy animations */
 	if(data->format >= AMO_FORMAT_AMO) {
 		/* Set type of the model */
@@ -629,6 +613,88 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 				/* Copy rotation-data */
 				tmp = mdl->jnt_num * VEC4_SIZE;
 				memcpy(keyfr->rot, amo_keyfr->rot, tmp);
+			}
+		}
+	}
+
+	/* Copy collision-boxes */
+	mdl->col_mask = 0;
+	if(data->format >= AMO_FORMAT_COL) {	
+		/*
+		 * If a broadphase-collision-box is defined.
+		 */
+		if(data->col_mask & AMO_COLM_BP) {
+			/* Update the collision-mask */
+			mdl->col_mask |= MDL_COLM_BP;
+
+			/* Copy the position and size of collision-box */
+			vec3_cpy(mdl->col.bpcol.pos, data->bp_col.pos);
+			vec3_cpy(mdl->col.bpcol.size, data->bp_col.size);
+		}
+
+		/*
+		 * If a collision-mesh is defined.
+		 */
+		if(data->col_mask & AMO_COLM_CM) {
+			/* Update collision-mask */
+			mdl->col_mask |= MDL_COLM_CM;
+
+			/* Copy number of vertices and faces */
+			mdl->col.cm_vtx_c = data->cm_vtx_c;
+			mdl->col.cm_tri_c = data->cm_idx_c;
+
+			printf("Load collision-mesh: %d\n", data->cm_idx_c);
+
+			/* Allocate memory for vertices */
+			tmp = data->cm_vtx_c * VEC3_SIZE;
+			if(!(mdl->col.cm_vtx = malloc(tmp)))
+				goto err_free_data;
+
+			/* Copy vertex-data */
+			memcpy(mdl->col.cm_vtx, data->cm_vtx_buf, tmp);
+
+			/* Allocate memory for indices */
+			tmp = data->cm_idx_c * INT3_SIZE;
+			if(!(mdl->col.cm_idx = malloc(tmp)))
+				goto err_free_data;
+
+			/* Copy index-data */
+			memcpy(mdl->col.cm_idx, data->cm_idx_buf, tmp);
+
+			/* Allocate memory for the plane-vectors */
+			tmp = mdl->col.cm_tri_c * 2 * VEC3_SIZE;
+			if(!(mdl->col.cm_pln_vec = malloc(tmp)))
+				goto err_free_data;
+
+			/* Allocate memory for the normal-vectors */
+			tmp = mdl->col.cm_tri_c * VEC3_SIZE;
+			if(!(mdl->col.cm_nrm = malloc(tmp)))
+				goto err_free_data;
+
+			/* Calculate plane- and normal-vectors */
+			for(i = 0; i < mdl->col.cm_tri_c; i++) {
+				int3_t cur;
+				vec3_t a;
+				vec3_t b;
+				vec3_t c;
+				vec3_t del1;
+				vec3_t del2;
+
+				memcpy(cur, mdl->col.cm_idx[i], INT3_SIZE);
+
+				vec3_cpy(a, mdl->col.cm_vtx[cur[0]]);
+				vec3_cpy(b, mdl->col.cm_vtx[cur[1]]);
+				vec3_cpy(c, mdl->col.cm_vtx[cur[2]]);
+
+				/* Calculate the plane-vectors */
+				vec3_sub(b, a, del1);
+				vec3_sub(c, a, del2);
+
+				vec3_cpy(mdl->col.cm_pln_vec[i * 2], del1);
+				vec3_cpy(mdl->col.cm_pln_vec[i * 2 + 1], del2);
+
+				/* Calculate the normal-vector */
+				vec3_cross(del1, del2, mdl->col.cm_nrm[i]); 
 			}
 		}
 	}

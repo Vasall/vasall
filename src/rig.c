@@ -2,6 +2,7 @@
 #include "model.h"
 #include "sdl.h"
 
+
 extern struct model_rig *rig_derive(short slot)
 {
 	struct model_rig *rig;
@@ -23,7 +24,7 @@ extern struct model_rig *rig_derive(short slot)
 	if(!(rig = malloc(sizeof(struct model_rig))))
 		return NULL;
 
-	/* Set the rig-attributes */
+	/* Initialize the rig-attributes */
 	rig->model = slot;
 	rig->anim = 0;
 	rig->c = 0;
@@ -50,8 +51,11 @@ extern struct model_rig *rig_derive(short slot)
 	return rig;
 
 err_free_arrs:
-	if(rig->jnt_pos) free(rig->jnt_pos);
-	if(rig->jnt_rot) free(rig->jnt_rot);
+	if(rig->jnt_pos)
+		free(rig->jnt_pos);
+
+	if(rig->jnt_rot)
+		free(rig->jnt_rot);
 
 err_free_rig:
 	free(rig);

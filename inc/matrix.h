@@ -1,6 +1,8 @@
 #ifndef _MATRIX_H
 #define _MATRIX_H
 
+#define NULLMAT ((float *)NULL)
+
 #define MAT3_SIZE (sizeof(float)*9)
 typedef float mat3_t[9];
 

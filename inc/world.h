@@ -5,27 +5,41 @@
 #include "model.h"
 
 /* The side length of a single chunk in worldunits */
-#define _CHUNK_SIZE 32
+#define _CHUNK_SIZE 64
 
 
-#define WLD_CHUNK_NUM 9
+#define WLD_CHUNK_LIM 9
+
+#define WLD_CHUNK_OBJ_LIM 32
+
+#define WLD_COL_AXIS_X 0
+#define WLD_COL_AXIS_Y 1
+#define WLD_COL_AXIS_Z 2
+
+#define WLD_COL_MIN (0<<31)
+#define WLD_COL_MAX (1<<31)
 
 /*
- * A single chunk in the world.
+ * A single collision-representing an object in the world, which is used for the
+ * broadphase-collision-detection.
  *
- * @pos: The upper-left corner in the world
- * @size: The size of the chunk in world-units
+ * @data: Containing the box owner id and the min-max-flag
+ * @value: The min or max value
  */
-struct world_chunk {
-	uint32_t   id;
+struct world_col_point {
+	unsigned int    data;
+	float           value;
+};
 
-	vec2_t     pos;
-	vec2_t     size;
+struct world_col_box {
+	short    obj;
 
-	int        ptnum;
-	float      *heights;
+	struct   cube3d box;
 
+	short    min[3];
+	short    max[3];
 
+	short    colobj[5];
 };
 
 
@@ -34,8 +48,15 @@ struct world_chunk {
  * chunks.
  */
 struct world_wrapper {
-	int                 chunk_num;
-	struct world_chunk  *chunks;
+	vec2_t                  pos;
+	vec2_t                  size;
+
+	/* SAP-collision */
+	struct world_col_point  col_point[3][2*WLD_CHUNK_OBJ_LIM];
+	struct world_col_box    col_box[WLD_CHUNK_OBJ_LIM];
+
+	/* Temporary world-model TODO */
+	short mdl;
 };
 
 
@@ -85,13 +106,35 @@ extern void wld_render(float interp);
 
 
 /*
- * Get the height of the terrain at a certain position.
+ * 
+ * Add a new collision-box to the world.
  *
- * @x: The x-position
- * @z: The z-position
+ * @obj: The index of the object in the object-table
+ * @pos: The current position of the collision-box
+ * @box: The collision-box
+ * @idx: A pointer to write the index of the collision-box to
  *
- * Returns: Either the height or 0 if an error occurred
+ * Returns: 0 on success or -1 if an error occurred
  */
-extern float wld_get_height(float x, float z);
+extern int wld_col_add(short obj, vec3_t pos, struct cube3d box, short *idx);
+
+
+/*
+ * Move a collision-box to a new position.
+ *
+ * @slot: The slot of the collision-box in the list
+ * @pos: The new position
+ *
+ * Returns: 0 on success or -1 if an error occurred
+ */
+extern int wld_col_move(short slot, vec3_t pos);
+
+
+/*
+ * Sort the endpoints and update the overlapping collision-boxes.
+ *
+ * Returns: 0 on success or -1 if an error occurred
+ */
+extern int wld_col_update(void);
 
 #endif

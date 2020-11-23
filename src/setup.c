@@ -43,7 +43,7 @@ int load_resources(void)
 	if(mdl_load("wld", "ast/models/floor.obj", tex_get("flr"), shd_get("mdl")) < 0)
 		return -1;
 
-	if(mdl_load("plr", "ast/models/test.amo", tex_get("bas"), shd_get("ani")) < 0)
+	if(mdl_load("plr", "ast/models/base.amo", tex_get("bas"), shd_get("ani")) < 0)
 		return -1;
 
 	if(mdl_load("slp", "ast/models/slope.amo", tex_get("bas"), shd_get("mdl")) < 0)
@@ -73,7 +73,7 @@ extern void test1(char *buf, int len)
 
 	/* Setup camera */
 	cam_trg_obj(core.obj);
-	camera.dist = 10.0;
+	camera.dist = 3.0;
 	cam_set_dir(dir);
 
 	/* Update projection-matrix */

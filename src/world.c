@@ -17,10 +17,30 @@ static int twodim(int x, int y, int w) {return y * w + x;}
 
 extern int wld_init(void)
 {
-	world.chunk_num = 0;
-	
-	if(!(
+	int i;
+	float tmp;
 
+	/* Set the position and size of the world */
+	tmp = _CHUNK_SIZE / 2.0; 
+	vec2_set(world.pos, -tmp, -tmp);
+	vec2_set(world.size, _CHUNK_SIZE, _CHUNK_SIZE);
+
+
+	/* Initialize the collision-boxes */
+	for(i = 0; i < WLD_CHUNK_OBJ_LIM; i++) {
+		world.col_box[i].obj = -1;	
+	}
+
+	/* Initialize the collision-min-max-points */
+	for(i = 0; i < 2 * WLD_CHUNK_OBJ_LIM; i++) {
+		world.col_point[0][i].data = 0;
+		world.col_point[1][i].data = 0;
+		world.col_point[2][i].data = 0;
+	}
+
+	/* Set temporary world-model TODO */
+	if((world.mdl = mdl_get("wld")) < 0)
+		return -1;
 
 	return 0;
 }
@@ -28,10 +48,7 @@ extern int wld_init(void)
 
 extern void wld_close(void)
 {
-	if(!world.heights)
-		return;
 
-	free(world.heights);
 }
 
 
@@ -41,71 +58,184 @@ extern void wld_render(float interp)
 
 	if(interp) {/* Prevent warning for not using parameter */}
 
+	/* Render the temporary world-model TODO */
 	mat4_idt(idt);
-	mdl_render(world.terrain, idt, idt, NULL);
+	mdl_render(world.mdl, idt, idt, NULL);
 }
 
 
-extern float wld_get_height(float x, float z)
+static short wld_col_pnt_add(char axis, int flg, short box, float value)
 {
-	float ret = 0.0;
-	vec2_t rel_pos, coord;
-	int2_t map_idx;
-	float heights[4];
+	int i;
 
-	rel_pos[0] = ABS(world.min_pos[0] - x);
-	rel_pos[1] = ABS(world.min_pos[1] - z);
+	for(i = 0; i < 2 * WLD_CHUNK_OBJ_LIM; i++) {
+		if(world.col_point[axis][i].data == 0) {
+			world.col_point[axis][i].data = (box + 1) | flg;
+			world.col_point[axis][i].value = value;
 
-	map_idx[0] = floor(rel_pos[0]);
-	map_idx[1] = floor(rel_pos[1]);
-
-	/* Check if the position is in range */
-	if(map_idx[0] < 0 || map_idx[0] >= world.size[0] ||
-			map_idx[1] < 0 || map_idx[1] >= world.size[1])
-		return 0;
-
-	heights[0] = world.heights[twodim(map_idx[0], map_idx[1], world.size[0])];
-	heights[1] = world.heights[twodim(map_idx[0] + 1, map_idx[1], world.size[0])];
-	heights[2] = world.heights[twodim(map_idx[0], map_idx[1] + 1, world.size[0])];
-	heights[3] = world.heights[twodim(map_idx[0] + 1, map_idx[1] + 1, world.size[0])];
-
-	coord[0] = rel_pos[0] - floor(rel_pos[0]);
-	coord[1] = rel_pos[1] - floor(rel_pos[1]);
-
-	if(coord[0] <= (1 - coord[1])) {
-		vec3_t v1, v2, v3;
-
-		v1[0] = 0.0;
-		v1[1] = heights[0];
-		v1[2] = 0.0;
-
-		v2[0] = 1.0;
-		v2[1] = heights[1];
-		v2[2] = 0.0;
-
-		v3[0] = 0.0;
-		v3[1] = heights[2];
-		v3[2] = 1.0;
-
-		ret = vec3_barry_centric(v1, v2, v3, coord);
-	}
-	else {
-		vec3_t v1, v2, v3;
-
-		v1[0] = 1.0;
-		v1[1] = heights[1];
-		v1[2] = 0.0;
-
-		v2[0] = 1.0;
-		v2[1] = heights[3];
-		v2[2] = 1.0;
-
-		v3[0] = 0.0;
-		v3[1] = heights[2];
-		v3[2] = 1.0;
-
-		ret = vec3_barry_centric(v1, v2, v3, coord);
+			return i; 
+		}
 	}
 
-	return ret;
+	return -1;
+}
+
+extern int wld_col_add(short obj, vec3_t pos, struct cube3d colbox, short *idx)
+{
+	short i;
+	short j;
+	short slot;
+	short tmp;
+	vec3_t relpos;
+	vec3_t min;
+	vec3_t max;
+
+
+	/* Get a free slot in the array */
+	slot = -1;
+	for(i = 0; i < WLD_CHUNK_OBJ_LIM; i++) {
+		if(world.col_box[i].obj == -1) {
+			slot = i;
+			break;
+		}
+	}
+
+	/* If no slots are available */
+	if(slot < 0)
+		return -1;
+
+	/* Set the index of the object */
+	world.col_box[slot].obj = obj;
+
+	/* Copy the cube-struct */
+	world.col_box[slot].box = colbox;
+
+	/* Clear the point indices */
+	for(i = 0; i < 3; i++) {
+		world.col_box[slot].min[i] = -1;
+		world.col_box[slot].max[i] = -1;
+	}
+
+	/* Clear the list of colliding objects */
+	for(i = 0; i < 5; i++)
+		world.col_box[slot].colobj[i] = -1;
+
+	/* Add the endpoints to the point-arrays */
+	vec3_add(colbox.pos, pos, relpos);
+
+	vec3_sub(relpos, colbox.size, min);
+	vec3_add(relpos, colbox.size, max);
+
+
+	/* Insert the endpoints into the corresponding arrays */
+	for(i = 0; i < 3; i++) {
+		/*
+		 * Insert the min-endpoint.
+		 */
+
+		/* Find a slot */
+		tmp = -1;
+		for(j = 0; j < WLD_CHUNK_OBJ_LIM * 2; j++) {
+			if(world.col_point[i][j].data == 0) {
+				tmp = j;
+			}
+		}
+
+		if(tmp < 0)
+			goto err_remv_points;
+
+		/* Add point */
+		world.col_point[i][j].data = slot | WLD_COL_MIN; 
+		world.col_point[i][j].value = min[i];
+
+		/* Save index of point */
+		world.col_box[slot].min[i] = tmp;	
+
+		/*
+		 * Insert the max-endpoint.
+		 */
+
+		/* Find slot */
+		tmp = -1;
+		for(j = 0; j < WLD_CHUNK_OBJ_LIM * 2; j++) {
+			if(world.col_point[i][j].data == 0) {
+				tmp = j;
+			}
+		}
+
+		if(tmp < 0)
+			goto err_remv_points;
+
+		/* Add point */
+		world.col_point[i][j].data = slot | WLD_COL_MAX; 
+		world.col_point[i][j].value = min[i];
+
+		/* Save index of point */
+		world.col_box[slot].max[i] = tmp;	
+	}
+
+	return 0;
+
+err_remv_points:
+	/*
+	 * Clear the endpoints
+	 */
+	for(i = 0; i < 3; i++) {
+		if((tmp = world.col_box[slot].min[i]) >= 0)
+			world.col_point[i][tmp].data = 0;
+
+		if((tmp = world.col_box[slot].max[i]) >= 0)
+			world.col_point[i][tmp].data = 0;
+	}
+
+	/*
+	 * Clear the collision-box
+	 */
+	world.col_box[slot].obj = -1;
+
+	return -1;
+}
+
+
+extern int wld_col_move(short slot, vec3_t pos)
+{
+	int i;
+	vec3_t half;
+	vec3_t min;
+	vec3_t max;
+	vec3_t relpos;
+
+	/* Check if slot is valid */
+	if(slot < 0 || world.col_box[slot].obj < 0)
+		return -1;
+
+	/* Calculate new endpoints */
+	vec3_add(world.col_box[slot].box.pos, pos, relpos);
+
+	vec3_sub(relpos, world.col_box[slot].box.size, min);
+	vec3_add(relpos, world.col_box[slot].box.size, max);
+
+
+	/* Update points */
+	for(i = 0; i < 3; i++) {
+		world.col_point[i][world.col_box[slot].min[i]].value = min[i];
+		world.col_point[i][world.col_box[slot].max[i]].value = max[i];
+	}
+
+	return 0;
+}
+
+
+extern int wld_col_update(void)
+{
+	int i;
+	int j;
+
+	for(i = 0; i < 3; i++) {
+		for(j = 0; j < 3; j++) {
+
+		}
+	}
+
+	return 0;
 }

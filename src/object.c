@@ -57,10 +57,8 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 		char *data, int len, uint32_t ts)
 {
 	short slot;
-	float x;
-	float y;
 
-	/* Get slot to place object on */
+	/* Get a slot to place object on */
 	if((slot = obj_get_slot()) < 0)
 		return -1;
 
@@ -68,40 +66,85 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 	objects.mask[slot] = mask;
 	objects.id[slot] = id;
 
+	/* TODO: Get altitude at current position */
 	pos[2] = 0.0;
 
 	/* Setup position, velocity and direction */
 	vec3_cpy(objects.pos[slot], pos);
 	vec3_clr(objects.vel[slot]);
 
-	/* Get the height of the terrain at the objects-position */
-	x = objects.pos[slot][0];
-	y = objects.pos[slot][1];
-	/* objects.pos[slot][1] = wld_get_height(x, z); */
+	/* Initialize object model and rig if requested */
+	objects.model[slot] = -1;
+	if(mask & OBJ_M_MODEL) {
+		vec3_set(objects.dir[slot], 0.0, 1.0, 0.0);
+		objects.model[slot] = model;
 
-	/* Setup model-data */
-	vec3_set(objects.dir[slot], 0.0, 1.0, 0.0);
-	objects.model[slot] = model;
-
-	objects.rig[slot] = NULL;
-	if(models[model]->type >= MDL_RIG) {
-		if(!(objects.rig[slot] = rig_derive(model)))
-			goto err_reset_slot;
-
-		/* Add flag to mask */
-		objects.mask[slot] |= OBJ_M_ANIM;
+		/* Attach a rig to the object */
+		objects.rig[slot] = NULL;
+		if(mask & OBJ_M_RIG) {
+			if(models[model]->type >= MDL_RIG) {
+				if(!(objects.rig[slot] = rig_derive(model)))
+					goto err_reset_slot;
+			}
+		}
 	}
 
+	objects.col[slot].mask = OBJ_COLM_NONE;
+	if(mask & OBJ_M_SOLID) {
+		if(models[model]->col_mask & MDL_COLM_BP) {
+			vec3_t tmp;
+			vec3_t relp;
+
+			objects.col[slot].box = models[model]->col.bpcol;
+			
+			printf("ID: %u, Slot: %d\n", id, slot);
+			printf("Pos: "); vec3_print(objects.col[slot].box.pos); printf("\n");
+			printf("Size: "); vec3_print(objects.col[slot].box.size); printf("\n");
+			
+			objects.col[slot].mask |= OBJ_COLM_BP;
+
+			/* TODO: Quick collision-box update */
+			vec3_add(objects.col[slot].box.pos, objects.pos[slot], relp);
+
+			vec3_sub(relp, objects.col[slot].box.size, objects.col[slot].min);
+			vec3_add(relp, objects.col[slot].box.size, objects.col[slot].max);
+		}
+	}
+
+#if 0
+	/* Initialize collision-buffers if requested */
+	object.col[slot].mask = OBJ_COLM_NONE;
+	if(mask & OBJ_M_SOLID) {
+		/* Add broadphase-collision if possible */
+		if(models[model].col_mask & MDL_COLM_BP) {
+			int tmp;
+			struct cube3d box = models[model].col.bpcol;
+
+			/* Add the collision-box to the collision-system */
+			if(wld_col_add(slot, pos, box, &tmp) < 0)
+				goto err_reset_slot;
+
+			/* Update the collision-mask */
+			objects.col[slot].mask |= OBJ_COLM_BP;
+
+			/* Set the index of the bp-collider */
+			objects.col[slot].bpcol = tmp;
+		}
+	}
+#endif
+
+	/* Initialize the position and rotation matrices */
 	mat4_idt(objects.mat_pos[slot]);
 	mat4_idt(objects.mat_rot[slot]);
 
-	/* Setup object-data-buffer */
+	/* Initialize data-buffer if requested */
 	objects.len[slot] = 0;
-
-	if(data && len) {
-		len = (len > OBJ_DATA_MAX) ? (OBJ_DATA_MAX) : (len);
-		objects.len[slot] = len;
-		memcpy(objects.buf[slot], data, len);
+	if(mask & OBJ_M_DATA) {
+		if(data && len) {
+			len = (len > OBJ_DATA_MAX) ? (OBJ_DATA_MAX) : (len);
+			objects.len[slot] = len;
+			memcpy(objects.data[slot], data, len);
+		}
 	}
 
 	/* Set interpolation variables */
@@ -180,7 +223,7 @@ extern int obj_mod(short slot, short attr, void *data, int len)
 
 		case(OBJ_A_BUF):
 			objects.len[slot] = len;
-			memcpy(objects.buf[slot], data, len);
+			memcpy(objects.data[slot], data, len);
 			break;
 
 		default:
@@ -325,7 +368,7 @@ extern int obj_collect(uint16_t flg, void *in, short in_num, void **out,
 				ptr += 4;
 				written += 4;
 
-				memcpy(ptr, objects.buf[slot], tmp);
+				memcpy(ptr, objects.data[slot], tmp);
 				ptr += tmp;
 				written += tmp;
 			}
@@ -664,16 +707,70 @@ extern void obj_print(short slot)
  * object-systems
  */
 
+static int _box_overlap(short a, short b)
+{
+	static c = 0;
+
+	vec3_t min1;
+	vec3_t max1;
+	vec3_t min2;
+	vec3_t max2;
+
+	vec3_cpy(min1, objects.col[a].min);
+	vec3_cpy(max1, objects.col[a].max);
+	vec3_cpy(min2, objects.col[b].min);
+	vec3_cpy(max2, objects.col[b].max);
+
+	if(c == 0) {
+		c = 1;
+		printf("min:\n");
+		vec3_print(min1); printf("\n");
+		vec3_print(min2); printf("\n");
+
+		printf("max:\n");
+		vec3_print(max1); printf("\n");
+		vec3_print(max2); printf("\n");
+	}
+
+	return (min1[0] <= max2[0] && max1[0] >= min2[0]) &&
+		(min1[1] <= max2[1] && max1[1] >= min2[1]) &&
+		(min1[2] <= max2[2] && max1[2] >= min2[2]);
+}
+
 extern void obj_sys_update(void)
 {
 	int i;
+	int j;
 	uint32_t ts = core.now_ts;
 
 	for(i = 0; i < OBJ_SLOTS; i++) {
-		if((objects.mask[i] & OBJ_M_MOVE) == OBJ_M_MOVE)
+		if(objects.mask[i] & OBJ_M_MOVE) {
+			vec3_t tmp;
+			vec3_t relp;
+
 			obj_move(i);
 
+			/* TODO: Quick collision-box update */
+			vec3_add(objects.col[i].box.pos, objects.pos[i], relp);
+
+			vec3_sub(relp, objects.col[i].box.size, objects.col[i].min);
+			vec3_add(relp, objects.col[i].box.size, objects.col[i].max);
+		}
+
 		objects.last_upd_ts[i] = ts;
+	}
+
+	for(i = 0; i < OBJ_SLOTS; i++) {
+		/* TODO: Quick collision */
+		if(objects.mask[i] & OBJ_M_SOLID) {
+			for(j = 0; j < OBJ_SLOTS; j++) {
+				if(i != j && (objects.mask[j] & OBJ_M_SOLID)) {
+					if(_box_overlap(i, j)) {
+						printf("collision\n");
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -684,7 +781,7 @@ extern void obj_sys_prerender(float interp)
 	vec3_t del;
 
 	for(i = 0; i < OBJ_SLOTS; i++) {
-		if(objects.mask[i] & OBJ_M_ANIM) {
+		if(objects.mask[i] & OBJ_M_RIG) {
 			rig_update(objects.rig[i]);
 		}
 
@@ -715,9 +812,6 @@ extern void obj_sys_render(void)
 	vec3_t pos;
 	vec3_t dir;
 	float rot;
-
-	vec3_print(objects.ren_pos[0]);
-	printf("\n");
 
 	for(i = 0; i < OBJ_SLOTS; i++) {
 		if(objects.mask[i] & OBJ_M_MODEL) {

@@ -34,7 +34,7 @@ struct world_col_point {
 struct world_col_box {
 	short    obj;
 
-	struct   cube3d box;
+	cube_t   box;
 
 	short    min[3];
 	short    max[3];
@@ -116,7 +116,7 @@ extern void wld_render(float interp);
  *
  * Returns: 0 on success or -1 if an error occurred
  */
-extern int wld_col_add(short obj, vec3_t pos, struct cube3d box, short *idx);
+extern int wld_col_add(short obj, vec3_t pos, cube_t box, short *idx);
 
 
 /*

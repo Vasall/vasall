@@ -625,11 +625,27 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 		 */
 		if(data->col_mask & AMO_COLM_BP) {
 			/* Update the collision-mask */
-			mdl->col_mask |= MDL_COLM_BP;
+			mdl->col_mask |= COL_M_BP;
 
 			/* Copy the position and size of collision-box */
-			vec3_cpy(mdl->col.bpcol.pos, data->bp_col.pos);
-			vec3_cpy(mdl->col.bpcol.size, data->bp_col.size);
+			vec3_cpy(mdl->col.bp_col.pos, data->bp_col.pos);
+			vec3_cpy(mdl->col.bp_col.scl, data->bp_col.scl);
+		}
+		/* 
+		 * If a near-elipsoid is defined.
+		 */
+		if(data->col_mask & AMO_COLM_NE) {
+			mdl->col_mask |= COL_M_NE;
+
+			/* Copy the position and size of collision-box */
+			vec3_cpy(mdl->col.ne_col.pos, data->ne_col.pos);
+			vec3_cpy(mdl->col.ne_col.scl, data->ne_col.scl);
+
+			/* Calculate "change of basis" matrix */
+			mat3_idt(mdl->col.ne_cbs);
+			mdl->col.ne_cbs[0] = 1.0 / mdl->col.ne_col.scl[0];
+			mdl->col.ne_cbs[4] = 1.0 / mdl->col.ne_col.scl[1];
+			mdl->col.ne_cbs[8] = 1.0 / mdl->col.ne_col.scl[2];
 		}
 
 		/*
@@ -637,7 +653,7 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 		 */
 		if(data->col_mask & AMO_COLM_CM) {
 			/* Update collision-mask */
-			mdl->col_mask |= MDL_COLM_CM;
+			mdl->col_mask |= COL_M_CM;
 
 			/* Copy number of vertices and faces */
 			mdl->col.cm_vtx_c = data->cm_vtx_c;
@@ -661,14 +677,14 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 			/* Copy index-data */
 			memcpy(mdl->col.cm_idx, data->cm_idx_buf, tmp);
 
-			/* Allocate memory for the plane-vectors */
-			tmp = mdl->col.cm_tri_c * 2 * VEC3_SIZE;
-			if(!(mdl->col.cm_pln_vec = malloc(tmp)))
-				goto err_free_data;
-
 			/* Allocate memory for the normal-vectors */
 			tmp = mdl->col.cm_tri_c * VEC3_SIZE;
 			if(!(mdl->col.cm_nrm = malloc(tmp)))
+				goto err_free_data;
+
+			/* Allocate memory for the equations */
+			tmp = mdl->col.cm_tri_c * VEC4_SIZE;
+			if(!(mdl->col.cm_equ = malloc(tmp)))
 				goto err_free_data;
 
 			/* Calculate plane- and normal-vectors */
@@ -679,6 +695,7 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 				vec3_t c;
 				vec3_t del1;
 				vec3_t del2;
+				vec3_t nrm;
 
 				memcpy(cur, mdl->col.cm_idx[i], INT3_SIZE);
 
@@ -690,11 +707,19 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 				vec3_sub(b, a, del1);
 				vec3_sub(c, a, del2);
 
-				vec3_cpy(mdl->col.cm_pln_vec[i * 2], del1);
-				vec3_cpy(mdl->col.cm_pln_vec[i * 2 + 1], del2);
-
 				/* Calculate the normal-vector */
-				vec3_cross(del1, del2, mdl->col.cm_nrm[i]); 
+				vec3_cross(del1, del2, nrm);
+				vec3_nrm(nrm, nrm);
+
+				/* Copy the normal-vector */
+				vec3_cpy(mdl->col.cm_nrm[i], nrm);
+
+				/* Set the equation */
+				mdl->col.cm_equ[i][0] = a[0];
+				mdl->col.cm_equ[i][1] = a[1];
+				mdl->col.cm_equ[i][2] = a[2];
+				mdl->col.cm_equ[i][3] = -(nrm[0] * a[0] +
+						nrm[1] * a[1] + nrm[2] * a[2]);
 			}
 		}
 	}

@@ -48,7 +48,7 @@ extern void vec2_scl(vec2_t in, float f, vec2_t out)
 	out[1] = in[1] * f;
 }
 
-extern float vec2_mag(vec2_t in)
+extern float vec2_len(vec2_t in)
 {
 	double l = (in[0] * in[0]) + (in[1] * in[1]);
 	return (float)sqrt(l);
@@ -56,7 +56,7 @@ extern float vec2_mag(vec2_t in)
 
 extern void vec2_nrm(vec2_t in, vec2_t out)
 {
-	float len = vec2_mag(in);
+	float len = vec2_len(in);
 	if(len == 0.0) {
 		out[0] = 0.0;
 		out[1] = 0.0;
@@ -134,15 +134,31 @@ extern void vec3_inv_scl(vec3_t in, float f, vec3_t out)
 	out[2] = in[2] / f;
 }
 
-extern float vec3_mag(vec3_t in)
+extern void vec3_div(vec3_t in1, vec3_t in2, vec3_t out)
+{
+	vec3_t tmp;
+
+	tmp[0] = in1[0] / in2[0];
+	tmp[1] = in1[1] / in2[1];
+	tmp[2] = in1[2] / in2[2];
+
+	vec3_cpy(out, tmp);
+}
+
+extern float vec3_len(vec3_t in)
 {
 	double l = (in[0] * in[0]) + (in[1] * in[1]) + (in[2] * in[2]);
 	return (float)sqrt(l);
 }
 
+extern float vec3_sqrlen(vec3_t in)
+{
+	return (in[0] * in[0]) + (in[1] * in[1]) + (in[2] * in[2]);
+}
+
 extern void vec3_nrm(vec3_t in, vec3_t out)
 {
-	float len = vec3_mag(in);
+	float len = vec3_len(in);
 	if(len == 0.0) {
 		out[0] = 0.0;
 		out[1] = 0.0;
@@ -254,6 +270,17 @@ extern float vec3_barry_centric(vec3_t p1, vec3_t p2, vec3_t p3, vec2_t pos)
 	return (l1 * p1[1]) + (l2 * p2[1]) + (l3 * p3[1]);
 }
 
+extern void vec3_calc_nrm(vec3_t a, vec3_t b, vec3_t c, vec3_t nrm)
+{
+	vec3_t d1;
+	vec3_t d2;
+
+	vec3_sub(b, a, d1);
+	vec3_sub(c, a, d2);
+
+	vec3_cross(d1, d2, nrm);
+	vec3_nrm(nrm, nrm);
+}
 
 
 extern void vec4_set(vec4_t out, float x, float y, float z, float w)
@@ -307,7 +334,7 @@ extern void vec4_scl(vec4_t in, float f, vec4_t out)
 	out[3] = in[3] * f;
 }
 
-extern float vec4_mag(vec4_t in)
+extern float vec4_len(vec4_t in)
 {
 	double l;
 	l = (in[0] * in[0]) + (in[1] * in[1]) + (in[2] * in[2]) + (in[3] * in[3]);
@@ -316,7 +343,7 @@ extern float vec4_mag(vec4_t in)
 
 extern void vec4_nrm(vec4_t in, vec4_t out)
 {
-	float len = vec4_mag(in);
+	float len = vec4_len(in);
 	if(len == 0.0) {
 		out[0] = 0.0;
 		out[1] = 0.0;

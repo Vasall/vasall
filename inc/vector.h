@@ -17,7 +17,7 @@ extern int    vec2_cmp(vec2_t in1, vec2_t in2);
 extern void   vec2_add(vec2_t in1, vec2_t in2, vec2_t out);
 extern void   vec2_sub(vec2_t in1, vec2_t in2, vec2_t out);
 extern void   vec2_scl(vec2_t in1, float f, vec2_t out);
-extern float  vec2_mag(vec2_t in);
+extern float  vec2_len(vec2_t in);
 extern void   vec2_nrm(vec2_t in, vec2_t out);
 extern void   vec2_print(vec2_t in);
 
@@ -34,7 +34,9 @@ extern void   vec3_add(vec3_t in1, vec3_t in2, vec3_t out);
 extern void   vec3_sub(vec3_t in1, vec3_t in2, vec3_t out);
 extern void   vec3_scl(vec3_t in, float f, vec3_t out);
 extern void   vec3_inv_scl(vec3_t in, float f, vec3_t out);
-extern float  vec3_mag(vec3_t in);
+extern void   vec3_div(vec3_t in1, vec3_t in2, vec3_t out);
+extern float  vec3_len(vec3_t in);
+extern float  vec3_sqrlen(vec3_t in);
 extern void   vec3_nrm(vec3_t in, vec3_t out);
 extern float  vec3_dot(vec3_t in1, vec3_t in2);
 extern void   vec3_cross(vec3_t in1, vec3_t in2, vec3_t out);
@@ -46,6 +48,7 @@ extern void   vec3_trans(vec3_t in, mat3_t mat, vec3_t out);
 extern void   vec3_print(vec3_t in);
 
 extern float  vec3_barry_centric(vec3_t p1, vec3_t p2, vec3_t p3, vec2_t pos);
+extern void   vec3_calc_nrm(vec3_t a, vec3_t b, vec3_t c, vec3_t nrm);
 
 
 #define VEC4_SIZE (sizeof(float)*4)
@@ -58,7 +61,7 @@ extern int    vec4_cmp(vec4_t in1, vec4_t in2);
 extern void   vec4_add(vec4_t in1, vec4_t in2, vec4_t out);
 extern void   vec4_sub(vec4_t in1, vec4_t in2, vec4_t out);
 extern void   vec4_scl(vec4_t in1, float f, vec4_t out);
-extern float  vec4_mag(vec4_t in);
+extern float  vec4_len(vec4_t in);
 extern void   vec4_nrm(vec4_t in, vec4_t out);
 extern void   vec4_print(vec4_t in);
 

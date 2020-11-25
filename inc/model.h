@@ -24,16 +24,17 @@ enum mdl_status {
 };
 
 struct mdl_col {
-	struct cube3d  bpcol;
+	cube_t         bp_col;
 
-	vec3_t         necol;
+	sphere_t       ne_col;
+	mat3_t         ne_cbs;
 
 	int            cm_vtx_c;
 	int            cm_tri_c;
 	vec3_t         *cm_vtx;
 	int3_t         *cm_idx;
-	vec3_t         *cm_pln_vec;
 	vec3_t         *cm_nrm;
+	vec4_t         *cm_equ;
 
 
 };
@@ -71,9 +72,10 @@ enum mdl_type {
 	MDL_ANIM = 3
 };
 
-#define MDL_COLM_BP (1<<0)
-#define MDL_COLM_NE (1<<1)
-#define MDL_COLM_CM (1<<2)
+#define COL_M_NONE 0
+#define COL_M_BP (1<<0)
+#define COL_M_NE (1<<1)
+#define COL_M_CM (1<<2)
 
 struct model {
 	short             slot;

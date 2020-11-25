@@ -7,7 +7,7 @@
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define ROUND(x) ((x)>=0?(long)((x)+0.5):(long)((x)-0.5))
 #define SIGN(x) ((x/ABS(x)))
-
+#define SQRT(x) (x * x)
 
 extern float clamp(float v);
 extern float dist(float x, float y, float xp, float yp);

@@ -26,7 +26,7 @@ extern int cam_init(float aov, float asp, float near, float far)
 	camera.sens = 0.01;
 
 	/* Calculate the initial distance */
-	camera.dist = vec3_mag(camera.pos);
+	camera.dist = vec3_len(camera.pos);
 
 	/* Create the projection matrix */
 	mat4_idt(camera.proj);

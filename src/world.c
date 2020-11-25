@@ -80,7 +80,7 @@ static short wld_col_pnt_add(char axis, int flg, short box, float value)
 	return -1;
 }
 
-extern int wld_col_add(short obj, vec3_t pos, struct cube3d colbox, short *idx)
+extern int wld_col_add(short obj, vec3_t pos, cube_t colbox, short *idx)
 {
 	short i;
 	short j;
@@ -123,8 +123,8 @@ extern int wld_col_add(short obj, vec3_t pos, struct cube3d colbox, short *idx)
 	/* Add the endpoints to the point-arrays */
 	vec3_add(colbox.pos, pos, relpos);
 
-	vec3_sub(relpos, colbox.size, min);
-	vec3_add(relpos, colbox.size, max);
+	vec3_sub(relpos, colbox.scl, min);
+	vec3_add(relpos, colbox.scl, max);
 
 
 	/* Insert the endpoints into the corresponding arrays */
@@ -212,8 +212,8 @@ extern int wld_col_move(short slot, vec3_t pos)
 	/* Calculate new endpoints */
 	vec3_add(world.col_box[slot].box.pos, pos, relpos);
 
-	vec3_sub(relpos, world.col_box[slot].box.size, min);
-	vec3_add(relpos, world.col_box[slot].box.size, max);
+	vec3_sub(relpos, world.col_box[slot].box.scl, min);
+	vec3_add(relpos, world.col_box[slot].box.scl, max);
 
 
 	/* Update points */

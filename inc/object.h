@@ -64,13 +64,10 @@ struct comp_marker {
 	vec2_t       mov;
 };
 
-#define OBJ_COLM_NONE           0
-#define OBJ_COLM_BP             (1<<0)
-
 struct object_collision {
 	int mask;
 
-	struct cube3d box;
+	cube_t box;
 	vec3_t min;
 	vec3_t max;
 };
@@ -95,6 +92,10 @@ struct object_table {
 
 	/* Collision */
 	struct object_collision	 col[OBJ_SLOTS];
+	char                     colflg[OBJ_SLOTS];
+	float                    colt[OBJ_SLOTS];
+	float                    coldist[OBJ_SLOTS];
+	vec3_t                   colpnt[OBJ_SLOTS];
 
 	/* Object/Player-Data like Health and Mana */
 	int                      len[OBJ_SLOTS];

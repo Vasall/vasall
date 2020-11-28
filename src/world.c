@@ -11,9 +11,9 @@
 /* Redefine the global world-wrapper */
 struct world_wrapper world;
 
-
+#if 0
 static int twodim(int x, int y, int w) {return y * w + x;}
-
+#endif
 
 extern int wld_init(void)
 {
@@ -63,15 +63,15 @@ extern void wld_render(float interp)
 	mdl_render(world.mdl, idt, idt, NULL);
 }
 
-
+#if 0
 static short wld_col_pnt_add(char axis, int flg, short box, float value)
 {
 	int i;
 
 	for(i = 0; i < 2 * WLD_CHUNK_OBJ_LIM; i++) {
-		if(world.col_point[axis][i].data == 0) {
-			world.col_point[axis][i].data = (box + 1) | flg;
-			world.col_point[axis][i].value = value;
+		if(world.col_point[(int)axis][i].data == 0) {
+			world.col_point[(int)axis][i].data = (box + 1) | flg;
+			world.col_point[(int)axis][i].value = value;
 
 			return i; 
 		}
@@ -200,7 +200,6 @@ err_remv_points:
 extern int wld_col_move(short slot, vec3_t pos)
 {
 	int i;
-	vec3_t half;
 	vec3_t min;
 	vec3_t max;
 	vec3_t relpos;
@@ -239,3 +238,4 @@ extern int wld_col_update(void)
 
 	return 0;
 }
+#endif

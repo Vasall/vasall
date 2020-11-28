@@ -85,17 +85,13 @@ struct object_table {
 	vec3_t                   ren_pos[OBJ_SLOTS];
 	vec3_t                   dir[OBJ_SLOTS];
 	vec3_t                   ren_dir[OBJ_SLOTS];
-	short                    model[OBJ_SLOTS];
+	short                    mdl[OBJ_SLOTS];
 	struct model_rig         *rig[OBJ_SLOTS];
 	mat4_t                   mat_pos[OBJ_SLOTS];
 	mat4_t                   mat_rot[OBJ_SLOTS];
 
 	/* Collision */
-	struct object_collision	 col[OBJ_SLOTS];
-	char                     colflg[OBJ_SLOTS];
-	float                    colt[OBJ_SLOTS];
-	float                    coldist[OBJ_SLOTS];
-	vec3_t                   colpnt[OBJ_SLOTS];
+	struct object_collision  col[OBJ_SLOTS]; 
 
 	/* Object/Player-Data like Health and Mana */
 	int                      len[OBJ_SLOTS];
@@ -270,6 +266,8 @@ extern int obj_add_input(short slot, uint32_t mask, uint32_t ts, vec2_t mov,
  */
 extern int obj_update(void *in);
 
+
+extern void obj_hdl_col(short slot, vec3_t pos, vec3_t del, vec3_t opos);
 
 /*
  * 

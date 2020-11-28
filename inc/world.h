@@ -104,7 +104,7 @@ extern void wld_del_chunk(uint32_t id);
  */
 extern void wld_render(float interp);
 
-
+#if 0
 /*
  * 
  * Add a new collision-box to the world.
@@ -136,5 +136,6 @@ extern int wld_col_move(short slot, vec3_t pos);
  * Returns: 0 on success or -1 if an error occurred
  */
 extern int wld_col_update(void);
+#endif
 
 #endif

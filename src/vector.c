@@ -134,6 +134,17 @@ extern void vec3_inv_scl(vec3_t in, float f, vec3_t out)
 	out[2] = in[2] / f;
 }
 
+extern void vec3_mult(vec3_t in1, vec3_t in2, vec3_t out)
+{
+	vec3_t tmp;
+
+	tmp[0] = in1[0] * in2[0];
+	tmp[1] = in1[1] * in2[1];
+	tmp[2] = in1[2] * in2[2];
+
+	vec3_cpy(out, tmp);
+}
+
 extern void vec3_div(vec3_t in1, vec3_t in2, vec3_t out)
 {
 	vec3_t tmp;

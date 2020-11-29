@@ -681,24 +681,96 @@ return_trigs:
 }
 
 
-static int _trig_col(struct col_pck *pck, vec3_t pos, vec3_t del, 
-		short num, vec3_t trig, int recDepth)
+static void _trig_col(struct col_pck *pck, vec3_t pos, vec3_t del, 
+		short num, vec3_t *trig, int recDepth, vec3_t opos)
 {
 	float unitsPerMeter = 100.0;
 	float unitScale = unitsPerMeter / 100.0;
 	float veryCloseDistance = 0.005 * unitScale;
 
-	if(recDepth) {
-		vec3_cpy(*opos, pos);
-		return 1;
+	vec3_t destPoint;
+	vec3_t newBasePoint;
+
+	vec3_t retPos;
+
+	vec3_t slidePlaneOrigin;
+	vec3_t slidePlaneNormal;
+	struct col_pln slidingPlane;
+	vec3_t newDestinationPoint;
+	float tmpDist;
+	vec3_t newVelocityVector;
+
+
+	if(recDepth > 5) {
+		vec3_cpy(opos, pos);
+		return;
 	}
 
 	vec3_cpy(pck->velocity, del);
 	vec3_nrm(del, pck->normalizedVelocity);
-	vec3_cpy(pck->basePosition, pos);
-	pck->foundCollision = false;
+	vec3_cpy(pck->basePoint, pos);
+	pck->foundCollision = 0;
 
-	check_trigs(pck, vec3_t p0, vec3_t p1, vec3_t p2);
+	check_trigs(pck, num, trig);
+
+	if(pck->foundCollision == 0) {
+		vec3_add(pos, del, opos);
+		return;
+	}
+
+	/*
+	 * Collision occurred
+	 */
+
+	vec3_add(pos, del, destPoint);
+	vec3_cpy(newBasePoint, pos);
+
+	if(pck->nearestDistance >= veryCloseDistance) {
+		vec3_t v;
+
+		vec3_nrm(del, v);
+		vec3_scl(v, pck->nearestDistance - veryCloseDistance, v);
+
+		vec3_add(v, pck->basePoint, newBasePoint);
+
+		/*
+		 * Adjust polygon intersection point (so sliding plane will be
+		 * unaffected by the fact that we move slightly less than
+		 * collision tells us)
+		 */
+		vec3_nrm(v, v);
+		vec3_scl(v, veryCloseDistance, v);
+
+		vec3_sub(pck->intersectionPoint, v, pck->intersectionPoint);
+	}
+
+	/* Determine the sliding plane */
+	vec3_cpy(slidePlaneOrigin, pck->intersectionPoint);
+	vec3_sub(newBasePoint, pck->intersectionPoint, slidePlaneNormal);
+	vec3_nrm(slidePlaneNormal, slidePlaneNormal);
+
+
+	col_create_nrm(&slidingPlane, slidePlaneOrigin, slidePlaneNormal);
+
+
+	tmpDist = col_dist(&slidingPlane, destPoint);	
+	vec3_scl(slidePlaneNormal, tmpDist, slidePlaneNormal);
+
+	vec3_sub(destPoint, slidePlaneNormal, newDestinationPoint);
+
+	vec3_sub(newDestinationPoint, pck->intersectionPoint, newVelocityVector);
+
+	/*
+	 * Recursion
+	 */
+	if(vec3_len(newVelocityVector) < veryCloseDistance) {
+		vec3_cpy(opos, newBasePoint);
+		return;
+	}
+
+	recDepth++;
+	_trig_col(pck, newBasePoint, newVelocityVector, num, trig, recDepth, retPos);
+	vec3_cpy(opos, retPos);
 }
 
 
@@ -706,22 +778,27 @@ extern void obj_hdl_col(short slot, vec3_t pos, vec3_t del, vec3_t opos)
 {		
 	vec3_t trig[36];
 	short trignum;
-	int i;
 	struct col_pck pck;
+
+	vec3_t epos;
+	vec3_t edel;
+	vec3_t retPos;
 
 	if(!_col_trig(slot, pos, del, 12, trig, &trignum)) {
 		vec3_add(pos, del, opos);
+		return;
 	}
 
+	vec3_cpy(pck.eRadius, models[objects.mdl[slot]]->col.ne_col.scl);
 	vec3_cpy(pck.R3Position, pos);
 	vec3_cpy(pck.R3Velocity, del);
 
-	if(_trig_col(&pck, pos, del, trignum, trig, 0)) {
-		
-	}
-	else {
-		vec3_add(pos, del, opos);
-	}
+	vec3_div(pos, pck.eRadius, epos);
+	vec3_div(del, pck.eRadius, edel);
+
+	_trig_col(&pck, epos, edel, trignum, trig, 0, retPos);
+
+	vec3_mult(retPos, pck.eRadius, opos);
 }
 
 
@@ -794,14 +871,18 @@ extern void obj_move(short slot)
 			/* Scale velocity by tick-time */
 			vec3_scl(vel, TICK_TIME_S, del);
 
+			/* Save current position */
+			vec3_cpy(prev, pos);
+
 			/* Check collision */
 			if(omask & OBJ_M_SOLID) {
-				obj_hdl_col(slot, pos, del);
+				/* Collide and update position */
+				obj_hdl_col(slot, pos, del, pos);
 			}
-
-			/* Update position */
-			vec3_cpy(prev, pos);
-			vec3_add(pos, del, pos);
+			else {
+				/* Update position */
+				vec3_add(pos, del, pos);
+			}
 
 			/* Limit movement-space */
 			if(ABS(pos[0]) > 32.0) {

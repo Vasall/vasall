@@ -166,8 +166,7 @@ static int _min_root(float a, float b, float c, float maxR, float *root)
 }
 
 /* Check if a collision between the sphere and triangle occurrs */
-extern int trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1,
-	vec3_t p2, float *tout, vec3_t vout)
+extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 {
 	struct col_pln pln;
 
@@ -202,7 +201,7 @@ extern int trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1,
 			 * Sphere is not embedded in plane.
 			 * No collision possible!
 			 */
-			return 0;
+			return;
 		}
 		else {
 			/*
@@ -232,7 +231,7 @@ extern int trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1,
 			 * Both t values are outside values [0,1]
 			 * No collision possible!
 			 */
-			return 0;
+			return;
 		}
 
 		/* Clamp to [0, 1] */
@@ -269,8 +268,6 @@ extern int trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1,
 			foundCollision = 1;
 			t = t0;
 			vec3_cpy(collisionPoint, interPnt);
-
-			printf("Intersection\n");
 		}
 	}
 
@@ -445,17 +442,33 @@ extern int trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1,
 	}
 
 	if(foundCollision) {
-		*tout = t;
-		vec3_cpy(vout, collisionPoint);
+		vec3_t del;
+		float dist;
 
-		return 1;
+		vec3_sub(collisionPoint, pck->basePoint, del);
+		dist = vec3_len(del);
+
+		if(pck->foundCollision == 0 || pck->nearestDistance > dist) {
+			pck->foundCollision = 1;
+			pck->nearestDistance = dist;
+			vec3_cpy(pck->intersectionPoint, collisionPoint);
+		}
 	}
-
-	return 0;
 }
 
 
-extern int check_trigs(struct col_ock *pck, vec3_t p0, vec3_t p1, vec3_t p2)
+extern void check_trigs(struct col_pck *pck, short num, vec3_t *trig)
 {
-	
+	int i;
+	int j;
+	vec3_t vtx[3];
+
+	for(i = 0; i < num; i++) {
+		for(j = 0; j < 3; j++) {
+			vec3_cpy(vtx[j], trig[i * 3 + j]);
+			vec3_div(vtx[j], pck->eRadius, vtx[j]);
+		}
+
+		trig_check(pck, vtx[0], vtx[1], vtx[2]);
+	}
 }

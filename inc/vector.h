@@ -34,6 +34,7 @@ extern void   vec3_add(vec3_t in1, vec3_t in2, vec3_t out);
 extern void   vec3_sub(vec3_t in1, vec3_t in2, vec3_t out);
 extern void   vec3_scl(vec3_t in, float f, vec3_t out);
 extern void   vec3_inv_scl(vec3_t in, float f, vec3_t out);
+extern void   vec3_mult(vec3_t in1, vec3_t in2, vec3_t out);
 extern void   vec3_div(vec3_t in1, vec3_t in2, vec3_t out);
 extern float  vec3_len(vec3_t in);
 extern float  vec3_sqrlen(vec3_t in);

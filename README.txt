@@ -46,21 +46,8 @@ INSTALLATION
   Change into the created folder:
     $ cd vasall-client
 
-  Create the necessary folders for the object-files and the final binary:
-    $ mkdir bin obj lib
-    
-  Then change the directory and clone the networking-library:
-    $ cd lib && git clone https://github.com/Vasall/lcp
-   
-  Additionally we have to get a module:
-    $ cd lcp
-    $ svn checkout https://github.com/miniupnp/miniupnp/trunk/miniupnpc
-
-  Build the module using the following command:
-    $ cd miniupnpc && make && cd ..
-    
-  Compile the networking-library:
-    $ mkdir obj && make && cd ../..
+  For the automatic installation of a few libraries not in Debian/Ubuntu:
+    $ ./configure
 
   Compile the sourcecode:
     $ make

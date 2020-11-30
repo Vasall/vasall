@@ -1,0 +1,59 @@
+#!/bin/sh
+
+check_lib() {
+	if [ -f "/usr/include/$1" ] || [ -f "/usr/local/include/$1" ]; then
+		echo "Library $2 found on system"
+	else
+		echo "Library $2 not found on system"
+		exit 1
+	fi
+}
+
+update_lcp() {
+	echo "Updating lcp"
+	if [ ! -d "lib/lcp" ]; then
+		git clone https://github.com/Vasall/lcp.git lib/lcp
+		cd lib/lcp
+	else
+		cd lib/lcp
+		git pull
+	fi
+
+	svn checkout https://github.com/miniupnp/miniupnp/trunk/miniupnpc
+	cd miniupnpc
+	make
+	cd ..
+	mkdir obj
+	make
+	cd ../..
+}
+
+update_amoloader() {
+	echo "Updating amoloader"
+	if [ ! -d "lib/amoloader" ]; then
+		git clone https://github.com/Vasall/amoloader.git lib/amoloader
+		cd lib/amoloader
+	else
+		cd lib/amoloader
+		git pull
+	fi
+
+	make
+	cd ../..
+}
+
+check_lib SDL2/SDL.h SDL2
+check_lib SDL2/SDL_ttf.h SDL_ttf
+check_lib SDL2/SDL_image.h SDL_image
+check_lib GL/glut.h freeglut3
+check_lib openssl/sha.h openssl
+check_lib gmpxx.h GMP
+
+echo ""
+
+update_lcp
+update_amoloader
+
+echo ""
+
+make dirs

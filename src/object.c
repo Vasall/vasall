@@ -621,7 +621,6 @@ static int _col_trig(short slot, vec3_t pos, vec3_t del, int lim,
 
 	struct model *mdl_a;
 	struct model *mdl_b;
-	struct col_pck colpck;
 
 	short trignum = 0;
 
@@ -638,7 +637,6 @@ static int _col_trig(short slot, vec3_t pos, vec3_t del, int lim,
 
 		/* Create the collision-package */
 		vec3_add(pos, mdl_a->col.ne_col.pos, tmp);
-		col_init_pck(&colpck, tmp, del, mdl_a->col.ne_col.scl);
 
 		/* Go through all triangles */
 		for(j = 0; j < mdl_b->col.cm_tri_c; j++) {
@@ -774,31 +772,37 @@ static void _trig_col(struct col_pck *pck, vec3_t pos, vec3_t del,
 }
 
 
-extern void obj_hdl_col(short slot, vec3_t pos, vec3_t del, vec3_t opos)
+extern int obj_hdl_col(short slot, vec3_t pos, vec3_t del, vec3_t opos)
 {		
-	vec3_t trig[36];
+	vec3_t trig[60];
 	short trignum;
 	struct col_pck pck;
 
+	vec3_t relpos;
 	vec3_t epos;
 	vec3_t edel;
 	vec3_t retPos;
 
-	if(!_col_trig(slot, pos, del, 12, trig, &trignum)) {
+	if(!_col_trig(slot, pos, del, 20, trig, &trignum)) {
 		vec3_add(pos, del, opos);
-		return;
+		return 0;
 	}
 
+	vec3_add(pos, models[objects.mdl[slot]]->col.ne_col.pos, relpos);
+	
+
 	vec3_cpy(pck.eRadius, models[objects.mdl[slot]]->col.ne_col.scl);
-	vec3_cpy(pck.R3Position, pos);
+	vec3_cpy(pck.R3Position, relpos);
 	vec3_cpy(pck.R3Velocity, del);
 
-	vec3_div(pos, pck.eRadius, epos);
+	vec3_div(relpos, pck.eRadius, epos);
 	vec3_div(del, pck.eRadius, edel);
 
 	_trig_col(&pck, epos, edel, trignum, trig, 0, retPos);
 
 	vec3_mult(retPos, pck.eRadius, opos);
+	vec3_sub(opos, models[objects.mdl[slot]]->col.ne_col.pos, opos);
+	return 1;
 }
 
 
@@ -820,6 +824,11 @@ extern void obj_move(short slot)
 
 	short inp_i;
 	short inp_num;
+
+	static vec3_t vvel = {0.0, 0.0, 0.0};
+	vec3_t grav = {0.0, 0.0, -9.81};
+	vec3_t tmp;
+
 
 	/* Check if objects is defined */
 	if((omask = objects.mask[slot]) == OBJ_M_NONE)
@@ -874,6 +883,9 @@ extern void obj_move(short slot)
 			/* Save current position */
 			vec3_cpy(prev, pos);
 
+			vec3_print(pos);
+			printf(" - ");
+
 			/* Check collision */
 			if(omask & OBJ_M_SOLID) {
 				/* Collide and update position */
@@ -883,6 +895,37 @@ extern void obj_move(short slot)
 				/* Update position */
 				vec3_add(pos, del, pos);
 			}
+
+			vec3_print(pos);
+			printf(" - ");
+
+			/*
+			 * Gravity
+			 */
+
+			vec3_scl(grav, TICK_TIME_S, tmp);
+			vec3_add(vvel, tmp, vvel);
+			if(vec3_len(vvel) >= 10.0) {
+				vec3_nrm(vvel, vvel);
+				vec3_scl(vvel, 10.0, vvel);
+			}
+
+			vec3_scl(vvel, TICK_TIME_S, del);
+
+			/* Check collision */
+			if(omask & OBJ_M_SOLID) {
+				/* Collide and update position */
+				if(obj_hdl_col(slot, pos, del, pos)) {
+					vvel[2] = 0.0;
+				}
+			}
+			else {
+				/* Update position */
+				vec3_add(pos, del, pos);
+			}
+
+			vec3_print(pos);
+			printf("\n");
 
 			/* Limit movement-space */
 			if(ABS(pos[0]) > 32.0) {

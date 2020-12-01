@@ -38,10 +38,6 @@ extern int wld_init(void)
 		world.col_point[2][i].data = 0;
 	}
 
-	/* Set temporary world-model TODO */
-	if((world.mdl = mdl_get("wld")) < 0)
-		return -1;
-
 	return 0;
 }
 
@@ -54,13 +50,8 @@ extern void wld_close(void)
 
 extern void wld_render(float interp) 
 {
-	mat4_t idt;
-
-	if(interp) {/* Prevent warning for not using parameter */}
-
-	/* Render the temporary world-model TODO */
-	mat4_idt(idt);
-	mdl_render(world.mdl, idt, idt, NULL);
+	if(interp) {}
+	return;
 }
 
 #if 0

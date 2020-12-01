@@ -2,7 +2,8 @@
 #include "mbasic.h"
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <math.h>
+#include <stdint.h>
 
 extern int col_create_pnt(struct col_pln *pln, vec3_t p0, vec3_t p1, vec3_t p2)
 {
@@ -87,44 +88,46 @@ extern int col_overlap(vec3_t min1, vec3_t max1, vec3_t min2, vec3_t max2)
 }
 
 
-extern int pnt_in_trig(vec3_t pnt, vec3_t pa, vec3_t pb, vec3_t pc)
+#define in(a) ((uint32_t)a)
+static int pnt_in_trig(vec3_t pnt, vec3_t pa,vec3_t pb, vec3_t pc)
 {
-	vec3_t v0;
-	vec3_t v1;
-	vec3_t v2;
+	vec3_t e10;
+	vec3_t e20;
+	float a;
+	float b;
+	float c;
+	float ac_bb;
+	vec3_t vp;
+	float d;
+	float e;
+	float x;
+	float y;
+	float z;
 
-	float d00;
-	float d01;
-	float d02;
-	float d11;
-	float d12;
+	vec3_sub(pb, pa, e10);
+	vec3_sub(pc, pa, e20);
 
-	float invDenom;
-	float u;
-	float v;
+	a = vec3_dot(e10, e10);
+	b = vec3_dot(e10, e20);
+	c = vec3_dot(e20, e20);
+	
+	ac_bb = (a * c) - (b * b);
 
-	vec3_sub(pc, pa, v0);
-	vec3_sub(pb, pa, v1);
-	vec3_sub(pnt, pa, v2);
+	vec3_sub(pnt, pa, vp);
 
-	d00 = vec3_dot(v0, v0);
-	d01 = vec3_dot(v0, v1);
-	d02 = vec3_dot(v0, v2);
-	d11 = vec3_dot(v1, v1);
-	d12 = vec3_dot(v1, v2);
-
-	invDenom = 1 / (d00 * d11 - d01 * d01);
-	u = (d11 * d02 - d01 * d12) * invDenom;
-	v = (d00 * d12 - d01 * d02) * invDenom;
-
-	return (u >= 0) && (v >= 0) && (u + v < 1);
+	d = vec3_dot(vp, e10);
+	e = vec3_dot(vp, e20);
+	x = (d * c) - (e * b);
+	y = (e * a) - (d * b);
+	z = x + y - ac_bb;
+	
+	return ((in(z) & ~(in(x)|in(y))) & 0x80000000);
 }
-
 
 static int _min_root(float a, float b, float c, float maxR, float *root)
 {
 	/* Check if a solution exists */
-	float determinant = b * b - 4.0f * a * c;
+	double determinant = b * b - 4.0f * a * c;
 	float sqrtD;
 	float r1;
 	float r2;
@@ -137,8 +140,7 @@ static int _min_root(float a, float b, float c, float maxR, float *root)
 	 * Calculate the two roots: (if determinant == 0 then
 	 * x1==x2 but let’s disregard that slight optimization)
 	 */
-	sqrtD = POW2(determinant);
-
+	sqrtD = (float)sqrt(determinant);
 	r1 = (-b - sqrtD) / (2 * a);
 	r2 = (-b + sqrtD) / (2 * a);
 
@@ -188,6 +190,10 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 	/* Construct plane */
 	col_create_pnt(&pln, p0, p1, p2);
 
+	/* Is triangle front-facing to the velocity vector? */
+	if(!col_facing(&pln, pck->normalizedVelocity))
+		return;
+
 	/* Calculate the signed distance */
 	distToPlane = col_dist(&pln, pck->basePoint);
 
@@ -235,8 +241,10 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 		}
 
 		/* Clamp to [0, 1] */
-		t0 = clamp(t0);
-		t1 = clamp(t1);
+		if (t0 < 0.0) t0 = 0.0;
+		if (t1 < 0.0) t1 = 0.0;
+		if (t0 > 1.0) t0 = 1.0;
+		if (t1 > 1.0) t1 = 1.0;
 	}
 
 
@@ -314,7 +322,7 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 
 		a = velSqrLen;
 
-		/* Point 1 */
+		/* Point 0 */
 		vec3_sub(base, p0, tmp0);
 		b = 2.0 * vec3_dot(velocity, tmp0);
 		vec3_sub(p0, base, tmp0);
@@ -324,7 +332,6 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 			foundCollision = 1;
 			t = newT;
 			vec3_cpy(collisionPoint, p0);
-			printf("With point 0\n");
 		}
 
 		/* Point 1 */
@@ -337,7 +344,6 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 			foundCollision = 1;
 			t = newT;
 			vec3_cpy(collisionPoint, p1);
-			printf("With point 1\n");
 		}
 
 		/* Point 2 */
@@ -350,7 +356,6 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 			foundCollision = 1;
 			t = newT;
 			vec3_cpy(collisionPoint, p2);
-			printf("With point 2\n");
 		}
 
 		/*
@@ -366,9 +371,9 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 		edgeDotVel = vec3_dot(edge, velocity);
 		edgeDotPosToVtx = vec3_dot(edge, posToVtx);
 
-		a = edgeSqr * -velSqrLen + edgeDotVel * edgeDotVel;
+		a = edgeSqr * -velSqrLen + POW2(edgeDotVel);
 		b = edgeSqr * (2.0 * velDot) - 2.0 * edgeDotVel * edgeDotPosToVtx;
-		c = edgeSqr * (1.0 - vec3_sqrlen(posToVtx)) + edgeDotPosToVtx * edgeDotPosToVtx;
+		c = edgeSqr * (1.0 - vec3_sqrlen(posToVtx)) + POW2(edgeDotPosToVtx);
 
 		if(_min_root(a, b, c, t, &newT)) {
 			/* Check if intersection within line segment */
@@ -381,8 +386,6 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 
 				vec3_scl(edge, f, tmp0);
 				vec3_add(p0, tmp0, collisionPoint);
-
-				printf("With edge 0\n");
 			}
 		}
 
@@ -393,9 +396,9 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 		edgeDotVel = vec3_dot(edge, velocity);
 		edgeDotPosToVtx = vec3_dot(edge, posToVtx);
 
-		a = edgeSqr * -velSqrLen + edgeDotVel * edgeDotVel;
+		a = edgeSqr * -velSqrLen + POW2(edgeDotVel);
 		b = edgeSqr * (2.0 * velDot) - 2.0 * edgeDotVel * edgeDotPosToVtx;
-		c = edgeSqr * (1.0 - vec3_sqrlen(posToVtx)) + edgeDotPosToVtx * edgeDotPosToVtx;
+		c = edgeSqr * (1.0 - vec3_sqrlen(posToVtx)) + POW2(edgeDotPosToVtx);
 
 		if(_min_root(a, b, c, t, &newT)) {
 			/* Check if intersection within line segment */
@@ -408,8 +411,6 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 
 				vec3_scl(edge, f, tmp0);
 				vec3_add(p1, tmp0, collisionPoint);
-
-				printf("With edge 0\n");
 			}
 		}
 
@@ -420,9 +421,9 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 		edgeDotVel = vec3_dot(edge, velocity);
 		edgeDotPosToVtx = vec3_dot(edge, posToVtx);
 
-		a = edgeSqr * -velSqrLen + edgeDotVel * edgeDotVel;
+		a = edgeSqr * -velSqrLen + POW2(edgeDotVel);
 		b = edgeSqr * (2.0 * velDot) - 2.0 * edgeDotVel * edgeDotPosToVtx;
-		c = edgeSqr * (1.0 - vec3_sqrlen(posToVtx)) + edgeDotPosToVtx * edgeDotPosToVtx;
+		c = edgeSqr * (1.0 - vec3_sqrlen(posToVtx)) + POW2(edgeDotPosToVtx);
 
 		if(_min_root(a, b, c, t, &newT)) {
 			/* Check if intersection within line segment */
@@ -435,8 +436,6 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 
 				vec3_scl(edge, f, tmp0);
 				vec3_add(p2, tmp0, collisionPoint);
-
-				printf("With edge 0\n");
 			}
 		}
 	}
@@ -445,10 +444,9 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 		vec3_t del;
 		float dist;
 
-		vec3_sub(collisionPoint, pck->basePoint, del);
-		dist = vec3_len(del);
+		dist = t * vec3_len(pck->velocity);
 
-		if(pck->foundCollision == 0 || pck->nearestDistance > dist) {
+		if(pck->foundCollision == 0 || dist < pck->nearestDistance) {
 			pck->foundCollision = 1;
 			pck->nearestDistance = dist;
 			vec3_cpy(pck->intersectionPoint, collisionPoint);

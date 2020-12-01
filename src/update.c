@@ -26,8 +26,9 @@ void game_proc_evt(SDL_Event *evt)
 	uint8_t axis;
 	float val;
 	float tmp;
+	vec3_t vtmp;
 
-	switch(evt->type) {
+	switch(evt->type) {	
 		case SDL_CONTROLLERAXISMOTION:
 			axis = evt->caxis.axis;
 			val = evt->caxis.value;
@@ -49,6 +50,15 @@ void game_proc_evt(SDL_Event *evt)
 			}
 			break;
 
+		case SDL_CONTROLLERBUTTONDOWN:
+			switch(evt->cbutton.button) {
+				case SDL_CONTROLLER_BUTTON_RIGHTSTICK:
+					vec3_flip(objects.dir[core.obj], vtmp);
+					cam_set_dir(vtmp);
+					break;
+			}
+			break;
+
 		case SDL_KEYDOWN:
 			switch((int)evt->key.keysym.scancode) {
 				case 4:  /* Pressed A */
@@ -62,6 +72,10 @@ void game_proc_evt(SDL_Event *evt)
 					break;
 				case 26: /* Pressed W */
 					input.mov[1] = -1.0;
+					break;
+
+				case 8:
+					objects.pos[0][2] = 10.0;
 					break;
 			}
 			break;

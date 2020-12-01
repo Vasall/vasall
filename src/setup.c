@@ -31,7 +31,10 @@ int load_resources(void)
 		return -1;
 
 	/* textures */
-	if(tex_load_png("bas", "ast/textures/base.png") < 0)
+	if(tex_load_png("ba0", "ast/textures/base00.png") < 0)
+		return -1;
+
+	if(tex_load_png("ba1", "ast/textures/base01.png") < 0)
 		return -1;
 
 	if(tex_load_png("flr", "ast/textures/floor.png") < 0)
@@ -40,13 +43,13 @@ int load_resources(void)
 	printf("a\n");
 
 	/* models */
-	if(mdl_load("wld", "ast/models/floor.obj", tex_get("flr"), shd_get("mdl")) < 0)
+	if(mdl_load("wld", "ast/models/plane.amo", tex_get("flr"), shd_get("mdl")) < 0)
 		return -1;
 
-	if(mdl_load("plr", "ast/models/base.amo", tex_get("bas"), shd_get("ani")) < 0)
+	if(mdl_load("plr", "ast/models/base.amo", tex_get("ba0"), shd_get("ani")) < 0)
 		return -1;
 
-	if(mdl_load("slp", "ast/models/slope.amo", tex_get("bas"), shd_get("mdl")) < 0)
+	if(mdl_load("tst", "ast/models/test.amo", tex_get("ba1"), shd_get("mdl")) < 0)
 			return -1;
 
 	printf("Finished loading resources\n");
@@ -69,7 +72,8 @@ extern void test1(char *buf, int len)
 	if(buf || len) {/* Prevent warning for not using parameters */}
 
 	/* Place a slope */
-	obj_set(id, OBJ_M_STATIC, pos, mdl_get("slp"), NULL, 0, 0);
+	obj_set(id, OBJ_M_STATIC, pos, mdl_get("wld"), NULL, 0, 0);
+	obj_set(id + 100, OBJ_M_STATIC, pos, mdl_get("tst"), NULL, 0, 0);
 
 	/* Setup camera */
 	cam_trg_obj(core.obj);

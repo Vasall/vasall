@@ -44,8 +44,6 @@ extern int col_init_pck(struct col_pck *pck, vec3_t pos, vec3_t vel, vec3_t e);
 
 extern int col_overlap(vec3_t min1, vec3_t max1, vec3_t min2, vec3_t max2);
 
-extern int pnt_in_trig(vec3_t pnt, vec3_t pa, vec3_t pb, vec3_t pc);
-
 extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2);
 
 extern void check_trigs(struct col_pck *pck, short num, vec3_t *trig);

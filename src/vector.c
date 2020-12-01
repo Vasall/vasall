@@ -6,7 +6,11 @@
 #include <string.h>
 
 
-extern void vec2_set(vec2_t out, float x, float y)
+/*
+ * 2D-Vector
+ */
+
+extern void vec2_set(vec3_t out, float x, float y)
 {
 	out[0] = x;
 	out[1] = y;
@@ -14,11 +18,13 @@ extern void vec2_set(vec2_t out, float x, float y)
 
 extern void vec2_clr(vec2_t in)
 {
+	/*  */
 	memset(in, 0, VEC2_SIZE);
 }
 
 extern void vec2_cpy(vec2_t out, vec2_t in)
 {
+	/*  */
 	memcpy(out, in, VEC2_SIZE);
 }
 
@@ -48,10 +54,34 @@ extern void vec2_scl(vec2_t in, float f, vec2_t out)
 	out[1] = in[1] * f;
 }
 
+extern void vec2_inv_scl(vec2_t in, float f, vec2_t out)
+{
+	out[0] = in[0] / f;
+	out[1] = in[1] / f;
+}
+
+extern void vec2_mult(vec2_t in1, vec2_t in2, vec2_t out)
+{
+	out[0] = in1[0] * in2[0];
+	out[1] = in1[1] * in2[1];
+}
+
+extern void vec2_div(vec2_t in1, vec2_t in2, vec2_t out)
+{
+	out[0] = in1[0] / in2[0];
+	out[1] = in1[1] / in2[1];
+}
+
 extern float vec2_len(vec2_t in)
 {
 	double l = (in[0] * in[0]) + (in[1] * in[1]);
 	return (float)sqrt(l);
+}
+
+extern float vec2_sqrlen(vec2_t in)
+{
+	/*  */
+	return (in[0] * in[0]) + (in[1] * in[1]);
 }
 
 extern void vec2_nrm(vec2_t in, vec2_t out)
@@ -67,12 +97,22 @@ extern void vec2_nrm(vec2_t in, vec2_t out)
 	out[1] = in[1] / len;
 }
 
-extern void vec2_print(vec2_t in)
+extern float vec2_dot(vec2_t v1, vec2_t v2)
 {
-	printf("%.2f/%.2f", in[0], in[1]);
+	/*  */
+	return v1[0] * v2[0] + v1[1] * v2[1];
+}
+
+extern void vec2_print(vec2_t v)
+{
+	/*  */
+	printf("%.2f/%.2f", v[0], v[1]);
 }
 
 
+/*
+ * 3D-Vector
+ */
 
 extern void vec3_set(vec3_t out, float x, float y, float z)
 {
@@ -83,11 +123,13 @@ extern void vec3_set(vec3_t out, float x, float y, float z)
 
 extern void vec3_clr(vec3_t in)
 {
+	/*  */
 	memset(in, 0, VEC3_SIZE);
 }
 
 extern void vec3_cpy(vec3_t out, vec3_t in)
 {
+	/*  */
 	memcpy(out, in, VEC3_SIZE);
 }
 
@@ -136,24 +178,16 @@ extern void vec3_inv_scl(vec3_t in, float f, vec3_t out)
 
 extern void vec3_mult(vec3_t in1, vec3_t in2, vec3_t out)
 {
-	vec3_t tmp;
-
-	tmp[0] = in1[0] * in2[0];
-	tmp[1] = in1[1] * in2[1];
-	tmp[2] = in1[2] * in2[2];
-
-	vec3_cpy(out, tmp);
+	out[0] = in1[0] * in2[0];
+	out[1] = in1[1] * in2[1];
+	out[2] = in1[2] * in2[2];
 }
 
 extern void vec3_div(vec3_t in1, vec3_t in2, vec3_t out)
 {
-	vec3_t tmp;
-
-	tmp[0] = in1[0] / in2[0];
-	tmp[1] = in1[1] / in2[1];
-	tmp[2] = in1[2] / in2[2];
-
-	vec3_cpy(out, tmp);
+	out[0] = in1[0] / in2[0];
+	out[1] = in1[1] / in2[1];
+	out[2] = in1[2] / in2[2];
 }
 
 extern float vec3_len(vec3_t in)
@@ -164,6 +198,7 @@ extern float vec3_len(vec3_t in)
 
 extern float vec3_sqrlen(vec3_t in)
 {
+	/*  */
 	return (in[0] * in[0]) + (in[1] * in[1]) + (in[2] * in[2]);
 }
 
@@ -184,6 +219,7 @@ extern void vec3_nrm(vec3_t in, vec3_t out)
 
 extern float vec3_dot(vec3_t v1, vec3_t v2)
 {
+	/*  */
 	return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
 }
 
@@ -264,35 +300,47 @@ extern void vec3_trans(vec3_t in, mat3_t mat, vec3_t out)
 	out[2] = tmp[0] * mat[0x6] + tmp[1] * mat[0x7] + tmp[2] * mat[0x8];
 }
 
-extern void vec3_print(vec3_t v)
-{
-	printf("%.2f/%.2f/%.2f", v[0], v[1], v[2]);
-}
-
-extern float vec3_barry_centric(vec3_t p1, vec3_t p2, vec3_t p3, vec2_t pos)
-{
-	float det, l1, l2, l3;
-
-	det = (p2[2] - p3[2]) * (p1[0] - p3[0]) + (p3[0] - p2[0]) * (p1[2] - p3[2]);
-	l1 = ((p2[2] - p3[2]) * (pos[0] - p3[0]) + (p3[0] - p2[0]) * (pos[1] - p3[2])) / det;
-	l2 = ((p3[2] - p1[2]) * (pos[0] - p3[0]) + (p1[0] - p3[0]) * (pos[1] - p3[2])) / det;
-	l3 = 1.0 - l1 - l2;
-
-	return (l1 * p1[1]) + (l2 * p2[1]) + (l3 * p3[1]);
-}
-
-extern void vec3_calc_nrm(vec3_t a, vec3_t b, vec3_t c, vec3_t nrm)
+extern void vec3_calc_nrm(vec3_t p0, vec3_t p1, vec3_t p2, vec3_t nrm)
 {
 	vec3_t d1;
 	vec3_t d2;
 
-	vec3_sub(b, a, d1);
-	vec3_sub(c, a, d2);
+	vec3_sub(p1, p0, d1);
+	vec3_sub(p2, p0, d2);
 
 	vec3_cross(d1, d2, nrm);
 	vec3_nrm(nrm, nrm);
 }
 
+extern float vec3_barry_centric(vec3_t p0, vec3_t p1, vec3_t p2, vec2_t pos)
+{
+	float det, l1, l2, l3;
+
+	det = (p1[2] - p2[2]) * (p0[0]  - p2[0]) + (p2[0] - p1[0]) * (p0[2]  - p2[2]);
+	l1 = ((p1[2] - p2[2]) * (pos[0] - p2[0]) + (p2[0] - p1[0]) * (pos[1] - p2[2])) / det;
+	l2 = ((p2[2] - p0[2]) * (pos[0] - p2[0]) + (p0[0] - p2[0]) * (pos[1] - p2[2])) / det;
+	l3 = 1.0 - l1 - l2;
+
+	return (l1 * p0[1]) + (l2 * p1[1]) + (l3 * p2[1]);
+}
+
+extern void vec3_flip(vec3_t in, vec3_t out)
+{
+	out[0] = in[0] * -1.0;
+	out[1] = in[1] * -1.0;
+	out[2] = in[2] * -1.0;
+}
+
+extern void vec3_print(vec3_t v)
+{
+	/*  */
+	printf("%.2f/%.2f/%.2f", v[0], v[1], v[2]);
+}
+
+
+/* 
+ * 4D-Vector
+ */
 
 extern void vec4_set(vec4_t out, float x, float y, float z, float w)
 {
@@ -304,11 +352,13 @@ extern void vec4_set(vec4_t out, float x, float y, float z, float w)
 
 extern void vec4_clr(vec4_t in)
 {
+	/*  */
 	memset(in, 0, VEC4_SIZE);
 }
 
 extern void vec4_cpy(vec4_t out, vec4_t in)
 {
+	/*  */
 	memcpy(out, in, VEC4_SIZE);
 }
 
@@ -371,5 +421,6 @@ extern void vec4_nrm(vec4_t in, vec4_t out)
 
 extern void vec4_print(vec4_t in)
 {
+	/*  */
 	printf("%.2f/%.2f/%.2f/%.2f", in[0], in[1], in[2], in[3]);
 }

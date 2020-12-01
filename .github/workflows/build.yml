@@ -6,28 +6,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
       - name: Install Dependencies
         run: |
           sudo apt update
           sudo apt install libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev freeglut3-dev
-      - name: Install lcp
-        run: |
-          mkdir lib
-          cd lib
-          git clone https://github.com/Vasall/lcp
-          cd lcp
-          svn checkout https://github.com/miniupnp/miniupnp/trunk/miniupnpc 
-          cd miniupnpc
-          make
-          cd ..
-          mkdir obj
-          make
-      - name: Install amoloader
-        run: |
-          cd lib
-          git clone https://github.com/Vasall/amoloader
-          cd amoloader
-          make
+
+      - name: configure
+        run: ./configure
+
       - name: make
         run: |
           mkdir obj bin

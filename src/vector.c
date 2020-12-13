@@ -199,7 +199,7 @@ extern float vec3_len(vec3_t in)
 extern float vec3_sqrlen(vec3_t in)
 {
 	/*  */
-	return (in[0] * in[0]) + (in[1] * in[1]) + (in[2] * in[2]);
+	return ((in[0] * in[0]) + (in[1] * in[1]) + (in[2] * in[2]));
 }
 
 extern void vec3_nrm(vec3_t in, vec3_t out)
@@ -217,10 +217,18 @@ extern void vec3_nrm(vec3_t in, vec3_t out)
 	out[2] = in[2] / len;
 }
 
+extern void vec3_setlen(vec3_t in, float l, vec3_t out)
+{
+	vec3_t v;
+
+	vec3_nrm(in, v);
+	vec3_scl(v, l, out);
+}
+
 extern float vec3_dot(vec3_t v1, vec3_t v2)
 {
 	/*  */
-	return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
+	return (v1[0] * v2[0]) + (v1[1] * v2[1]) + (v1[2] * v2[2]);
 }
 
 extern void vec3_cross(vec3_t v1, vec3_t v2, vec3_t out)

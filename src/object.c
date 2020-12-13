@@ -680,16 +680,14 @@ return_trigs:
 
 
 static void _trig_col(struct col_pck *pck, vec3_t pos, vec3_t del, 
-		short num, vec3_t *trig, int recDepth, vec3_t opos)
+		short num, vec3_t *trig, int recDepth, vec3_t *opos)
 {
 	float unitsPerMeter = 100.0;
 	float unitScale = unitsPerMeter / 100.0;
-	float veryCloseDistance = 0.005 * unitScale;
+	float veryCloseDistance = 0.0000005f * unitScale;
 
 	vec3_t destPoint;
 	vec3_t newBasePoint;
-
-	vec3_t retPos;
 
 	vec3_t slidePlaneOrigin;
 	vec3_t slidePlaneNormal;
@@ -698,36 +696,36 @@ static void _trig_col(struct col_pck *pck, vec3_t pos, vec3_t del,
 	float tmpDist;
 	vec3_t newVelocityVector;
 
-
+	/* Limit recusrion-depth */
 	if(recDepth > 5) {
-		vec3_cpy(opos, pos);
+		vec3_cpy(*opos, pos);
 		return;
 	}
 
+	/* Fill collision-packet with the necessary data */
 	vec3_cpy(pck->velocity, del);
 	vec3_nrm(del, pck->normalizedVelocity);
 	vec3_cpy(pck->basePoint, pos);
 	pck->foundCollision = 0;
 
+	/* Check if a collision occurred and calculate the collision-point */
 	check_trigs(pck, num, trig);
 
+	/* If no collision has been found */
 	if(pck->foundCollision == 0) {
-		vec3_add(pos, del, opos);
+		vec3_add(pos, del, *opos);
 		return;
 	}
-
-	/*
-	 * Collision occurred
-	 */
 
 	vec3_add(pos, del, destPoint);
 	vec3_cpy(newBasePoint, pos);
 
 	if(pck->nearestDistance >= veryCloseDistance) {
 		vec3_t v;
+		float tf;
 
-		vec3_nrm(del, v);
-		vec3_scl(v, pck->nearestDistance - veryCloseDistance, v);
+		tf = MIN(vec3_len(del), pck->nearestDistance - veryCloseDistance);
+		vec3_setlen(del, tf, v);
 
 		vec3_add(v, pck->basePoint, newBasePoint);
 
@@ -736,9 +734,7 @@ static void _trig_col(struct col_pck *pck, vec3_t pos, vec3_t del,
 		 * unaffected by the fact that we move slightly less than
 		 * collision tells us)
 		 */
-		vec3_nrm(v, v);
-		vec3_scl(v, veryCloseDistance, v);
-
+		vec3_setlen(v, veryCloseDistance, v);
 		vec3_sub(pck->intersectionPoint, v, pck->intersectionPoint);
 	}
 
@@ -746,29 +742,30 @@ static void _trig_col(struct col_pck *pck, vec3_t pos, vec3_t del,
 	vec3_cpy(slidePlaneOrigin, pck->intersectionPoint);
 	vec3_sub(newBasePoint, pck->intersectionPoint, slidePlaneNormal);
 	vec3_nrm(slidePlaneNormal, slidePlaneNormal);
-
-
 	col_create_nrm(&slidingPlane, slidePlaneOrigin, slidePlaneNormal);
 
 
-	tmpDist = col_dist(&slidingPlane, destPoint);	
+	/* Calculate the new destination point */
+	tmpDist = col_signedDistanceTo(&slidingPlane, destPoint);	
 	vec3_scl(slidePlaneNormal, tmpDist, slidePlaneNormal);
-
 	vec3_sub(destPoint, slidePlaneNormal, newDestinationPoint);
 
+	/*
+	 * Generate the slide vector, which will become our new velocity vector
+	 * for the next iteration.
+	 */
 	vec3_sub(newDestinationPoint, pck->intersectionPoint, newVelocityVector);
 
 	/*
-	 * Recursion
+	 * Recursion:
 	 */
 	if(vec3_len(newVelocityVector) < veryCloseDistance) {
-		vec3_cpy(opos, newBasePoint);
+		vec3_cpy(*opos, newBasePoint);
 		return;
 	}
 
 	recDepth++;
-	_trig_col(pck, newBasePoint, newVelocityVector, num, trig, recDepth, retPos);
-	vec3_cpy(opos, retPos);
+	_trig_col(pck, newBasePoint, newVelocityVector, num, trig, recDepth, opos);
 }
 
 
@@ -783,26 +780,56 @@ extern int obj_hdl_col(short slot, vec3_t pos, vec3_t del, vec3_t opos)
 	vec3_t edel;
 	vec3_t retPos;
 
+	/*
+	 * Get all triangles the object is colliding with, by first collecting
+	 * all objects the bp-collision-box is intersecting with and then select
+	 * the triangles.
+	 */
 	if(!_col_trig(slot, pos, del, 20, trig, &trignum)) {
 		vec3_add(pos, del, opos);
 		return 0;
 	}
 
+	/*
+	 * Get the centerpoint of the ne-collision-sphere by adding the offset
+	 * to the current position of the object.
+	 */
 	vec3_add(pos, models[objects.mdl[slot]]->col.ne_col.pos, relpos);
-	
 
+	/*
+	 * Copy the scaling-factors of the sphere, which will be used for
+	 * conversion from R3-Space to eSpace.
+	 */
 	vec3_cpy(pck.eRadius, models[objects.mdl[slot]]->col.ne_col.scl);
+
+	/*
+	 * Copy both the position and the movement in R3-Space.
+	 */
 	vec3_cpy(pck.R3Position, relpos);
+	del[2] = 0.0;
 	vec3_cpy(pck.R3Velocity, del);
 
+	/*
+	 * Convert position and movement to eSpace.
+	 */
 	vec3_div(relpos, pck.eRadius, epos);
 	vec3_div(del, pck.eRadius, edel);
 
-	_trig_col(&pck, epos, edel, trignum, trig, 0, retPos);
+	/*
+	 * Check for collision with the triangle.
+	 */
+	_trig_col(&pck, epos, edel, trignum, trig, 0, &retPos);
 
+	/*
+	 * Convert position back to R3-Space and subtract offset.
+	 */
 	vec3_mult(retPos, pck.eRadius, opos);
 	vec3_sub(opos, models[objects.mdl[slot]]->col.ne_col.pos, opos);
-	return 1;
+
+	/*
+	 * Return if a collision occurred.
+	 */
+	return (pck.foundCollision == 1);
 }
 
 
@@ -883,9 +910,6 @@ extern void obj_move(short slot)
 			/* Save current position */
 			vec3_cpy(prev, pos);
 
-			vec3_print(pos);
-			printf(" - ");
-
 			/* Check collision */
 			if(omask & OBJ_M_SOLID) {
 				/* Collide and update position */
@@ -895,9 +919,6 @@ extern void obj_move(short slot)
 				/* Update position */
 				vec3_add(pos, del, pos);
 			}
-
-			vec3_print(pos);
-			printf(" - ");
 
 			/*
 			 * Gravity
@@ -911,21 +932,11 @@ extern void obj_move(short slot)
 			}
 
 			vec3_scl(vvel, TICK_TIME_S, del);
+			vec3_add(pos, del, pos);
 
-			/* Check collision */
-			if(omask & OBJ_M_SOLID) {
-				/* Collide and update position */
-				if(obj_hdl_col(slot, pos, del, pos)) {
-					vvel[2] = 0.0;
-				}
+			if(pos[2] < 0.0) {
+				pos[2] = 0.0;
 			}
-			else {
-				/* Update position */
-				vec3_add(pos, del, pos);
-			}
-
-			vec3_print(pos);
-			printf("\n");
 
 			/* Limit movement-space */
 			if(ABS(pos[0]) > 32.0) {

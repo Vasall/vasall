@@ -1,9 +1,9 @@
 #ifndef _VECTOR_H
 #define _VECTOR_H
 
+#include "mbasic.h"
 #include "matrix.h"
 
-#define M_PI 3.141592654
 #define TO_RADS (3.14/180.0)
 
 
@@ -44,6 +44,7 @@ extern void   vec3_div(vec3_t in1, vec3_t in2, vec3_t out);
 extern float  vec3_len(vec3_t in);
 extern float  vec3_sqrlen(vec3_t in);
 extern void   vec3_nrm(vec3_t in, vec3_t out);
+extern void   vec3_setlen(vec3_t in, float l, vec3_t out);
 extern float  vec3_dot(vec3_t in1, vec3_t in2);
 extern void   vec3_cross(vec3_t in1, vec3_t in2, vec3_t out);
 extern void   vec3_rot_x(vec3_t in, float angle, vec3_t out);

@@ -432,20 +432,3 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 		}
 	}
 }
-
-
-extern void check_trigs(struct col_pck *pck, short num, vec3_t *trig)
-{
-	int i;
-	int j;
-	vec3_t vtx[3];
-
-	for(i = 0; i < num; i++) {
-		for(j = 0; j < 3; j++) {
-			vec3_cpy(vtx[j], trig[i * 3 + j]);
-			vec3_div(vtx[j], pck->eRadius, vtx[j]);
-		}
-
-		trig_check(pck, vtx[0], vtx[1], vtx[2]);
-	}
-}

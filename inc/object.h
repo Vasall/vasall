@@ -267,8 +267,6 @@ extern int obj_add_input(short slot, uint32_t mask, uint32_t ts, vec2_t mov,
 extern int obj_update(void *in);
 
 
-extern int obj_hdl_col(short slot, vec3_t pos, vec3_t del, vec3_t opos);
-
 /*
  * 
  */

@@ -72,7 +72,7 @@ extern void test1(char *buf, int len)
 	if(buf || len) {/* Prevent warning for not using parameters */}
 
 	/* Place a slope */
-	obj_set(id, OBJ_M_MODEL, pos, mdl_get("wld"), NULL, 0, 0);
+	obj_set(id, OBJ_M_STATIC, pos, mdl_get("wld"), NULL, 0, 0);
 	obj_set(id + 100, OBJ_M_STATIC, pos, mdl_get("tst"), NULL, 0, 0);
 
 	/* Setup camera */

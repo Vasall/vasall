@@ -607,8 +607,7 @@ static int _col_objs(short slot, vec3_t pos, vec3_t del, int lim,
 }
 
 /* Collect all triangles the object collides with */
-static int _col_trig(short slot, vec3_t pos, vec3_t del, int lim,
-		vec3_t *otrig, short *onum)
+static void checkCollision(struct col_pck *pck)
 {
 	int i;
 	int j;
@@ -616,71 +615,46 @@ static int _col_trig(short slot, vec3_t pos, vec3_t del, int lim,
 
 	vec3_t tmp;
 
-	short colnum;
-	short colobj[5];
-
-	struct model *mdl_a;
-	struct model *mdl_b;
-
-	short trignum = 0;
-
-	if(!_col_objs(slot, pos, del, 5, colobj, &colnum))
-		return 0;
-
-	/* Get pointers to the model */
-	mdl_a = models[objects.mdl[slot]];
+	struct model *mdl;
 
 	/* Go through all objects */
-	for(i = 0; i < colnum; i++) {
-		/* Get pointer to the model */
-		mdl_b = models[objects.mdl[colobj[i]]];
+	for(i = 0; i < OBJ_SLOTS; i++) {
+		if(objects.mask[i] == OBJ_M_NONE)
+			continue;
 
-		/* Create the collision-package */
-		vec3_add(pos, mdl_a->col.ne_col.pos, tmp);
+		if((objects.mask[i] & OBJ_M_SOLID) == 0)
+			continue;
+
+		/* Get pointer to the model */
+		mdl = models[objects.mdl[i]];
 
 		/* Go through all triangles */
-		for(j = 0; j < mdl_b->col.cm_tri_c; j++) {
+		for(j = 0; j < mdl->col.cm_tri_c; j++) {
 			vec3_t vtx[3];
 			int3_t idx;
 
 			/* Get indices of triangles */
-			memcpy(idx, mdl_b->col.cm_idx[j], INT3_SIZE);
+			memcpy(idx, mdl->col.cm_idx[j], INT3_SIZE);
 
 			/* Load triangle vertices and convert to eSpace */
 			for(k = 0; k < 3; k++) {
 				vec3_t tmpv;
 
 				/* Copy vertex */
-				vec3_cpy(tmpv, mdl_b->col.cm_vtx[idx[k]]);
-				vec3_add(objects.pos[colobj[i]], tmpv, vtx[k]);
+				vec3_cpy(tmpv, mdl->col.cm_vtx[idx[k]]);
+				vec3_add(objects.pos[i], tmpv, vtx[k]);
+
+				/* Convert to eSpace */
+				vec3_div(vtx[k], pck->eRadius, vtx[k]);
 			}
 
-			/* If possible push vertices into list */
-			if(trignum < lim) {
-				for(k = 0; k < 3; k++) {
-					int tmpi = trignum * 3 + k;
-					vec3_cpy(otrig[tmpi], vtx[k]);
-				}
-				trignum++;
-
-				if(trignum >= lim)
-					goto return_trigs;
-			}
+			trig_check(pck, vtx[0], vtx[1], vtx[2]);
 		}
 	}
-
-return_trigs:
-	if(trignum > 0) {
-		*onum = trignum;
-		return 1;
-	}
-
-	return 0;
 }
 
 
-static void _trig_col(struct col_pck *pck, vec3_t pos, vec3_t del, 
-		short num, vec3_t *trig, int recDepth, vec3_t *opos)
+static void collideWithWorld(struct col_pck *pck, vec3_t pos, vec3_t del, int recDepth, vec3_t *opos)
 {
 	float unitsPerMeter = 100.0;
 	float unitScale = unitsPerMeter / 100.0;
@@ -709,7 +683,7 @@ static void _trig_col(struct col_pck *pck, vec3_t pos, vec3_t del,
 	pck->foundCollision = 0;
 
 	/* Check if a collision occurred and calculate the collision-point */
-	check_trigs(pck, num, trig);
+	checkCollision(pck);
 
 	/* If no collision has been found */
 	if(pck->foundCollision == 0) {
@@ -765,30 +739,18 @@ static void _trig_col(struct col_pck *pck, vec3_t pos, vec3_t del,
 	}
 
 	recDepth++;
-	_trig_col(pck, newBasePoint, newVelocityVector, num, trig, recDepth, opos);
+	collideWithWorld(pck, newBasePoint, newVelocityVector, recDepth, opos);
 }
 
 
-extern int obj_hdl_col(short slot, vec3_t pos, vec3_t del, vec3_t opos)
+static int collideAndSlide(short slot, vec3_t pos, vec3_t del, vec3_t opos)
 {		
-	vec3_t trig[60];
-	short trignum;
 	struct col_pck pck;
 
 	vec3_t relpos;
 	vec3_t epos;
 	vec3_t edel;
 	vec3_t retPos;
-
-	/*
-	 * Get all triangles the object is colliding with, by first collecting
-	 * all objects the bp-collision-box is intersecting with and then select
-	 * the triangles.
-	 */
-	if(!_col_trig(slot, pos, del, 20, trig, &trignum)) {
-		vec3_add(pos, del, opos);
-		return 0;
-	}
 
 	/*
 	 * Get the centerpoint of the ne-collision-sphere by adding the offset
@@ -806,7 +768,6 @@ extern int obj_hdl_col(short slot, vec3_t pos, vec3_t del, vec3_t opos)
 	 * Copy both the position and the movement in R3-Space.
 	 */
 	vec3_cpy(pck.R3Position, relpos);
-	del[2] = 0.0;
 	vec3_cpy(pck.R3Velocity, del);
 
 	/*
@@ -818,7 +779,7 @@ extern int obj_hdl_col(short slot, vec3_t pos, vec3_t del, vec3_t opos)
 	/*
 	 * Check for collision with the triangle.
 	 */
-	_trig_col(&pck, epos, edel, trignum, trig, 0, &retPos);
+	collideWithWorld(&pck, epos, edel, 0, &retPos);
 
 	/*
 	 * Convert position back to R3-Space and subtract offset.
@@ -853,7 +814,7 @@ extern void obj_move(short slot)
 	short inp_num;
 
 	static vec3_t vvel = {0.0, 0.0, 0.0};
-	vec3_t grav = {0.0, 0.0, -9.81};
+	vec3_t grav = {0.0, 0.0, -2.81};
 	vec3_t tmp;
 
 
@@ -913,7 +874,7 @@ extern void obj_move(short slot)
 			/* Check collision */
 			if(omask & OBJ_M_SOLID) {
 				/* Collide and update position */
-				obj_hdl_col(slot, pos, del, pos);
+				collideAndSlide(slot, pos, del, pos);
 			}
 			else {
 				/* Update position */
@@ -932,10 +893,15 @@ extern void obj_move(short slot)
 			}
 
 			vec3_scl(vvel, TICK_TIME_S, del);
-			vec3_add(pos, del, pos);
-
-			if(pos[2] < 0.0) {
-				pos[2] = 0.0;
+	
+			/* Check collision */
+			if(omask & OBJ_M_SOLID) {
+				/* Collide and update position */
+				collideAndSlide(slot, pos, del, pos);
+			}
+			else {
+				/* Update position */
+				vec3_add(pos, del, pos);
 			}
 
 			/* Limit movement-space */

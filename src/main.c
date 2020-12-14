@@ -88,8 +88,8 @@ int main(void)
 		ERR_LOG(("Failed to setup core-handler"));
 		goto err_close_obj;
 	}
-
-	/* net_insert("unrealguthrie\0", "CAT12345\0", &test1, &test2); */
+	
+	net_insert("unrealguthrie\0", "CAT12345\0", &test1, &test2);
 
 	while(core.running) {
 		core_proc_evt();

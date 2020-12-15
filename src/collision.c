@@ -70,8 +70,8 @@ extern int col_init_pck(struct col_pck *pck, vec3_t pos, vec3_t vel, vec3_t e)
 {
 	vec3_cpy(pck->eRadius, e);
 
-	vec3_cpy(pck->R3Position, pos);
-	vec3_cpy(pck->R3Velocity, vel);
+	vec3_cpy(pck->R3Pos, pos);
+	vec3_cpy(pck->R3Vel, vel);
 
 	vec3_div(vel, e, pck->velocity);
 	vec3_nrm(pck->velocity, pck->normalizedVelocity);
@@ -427,7 +427,7 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 			if(pck->foundCollision == 0 || dist < pck->nearestDistance) {
 				pck->foundCollision = 1;
 				pck->nearestDistance = dist;
-				vec3_cpy(pck->intersectionPoint, collisionPoint);
+				vec3_cpy(pck->colPnt, collisionPoint);
 			}
 		}
 	}

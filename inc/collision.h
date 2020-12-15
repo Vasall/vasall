@@ -21,8 +21,8 @@ struct col_pck {
 	vec3_t eRadius;
 
 	/* Info about the move being requested (in R3) */
-	vec3_t R3Velocity;
-	vec3_t R3Position;
+	vec3_t R3Vel;
+	vec3_t R3Pos;
 
 	/* Info about the move being requested (in eSpace) */
 	vec3_t velocity;
@@ -32,8 +32,8 @@ struct col_pck {
 	/* Hit information */
 	char foundCollision;
 	float nearestDistance;
-	vec3_t intersectionPoint;
-
+	vec3_t colPnt;
+	char grounded;
 };
 
 extern int col_init_pck(struct col_pck *pck, vec3_t pos, vec3_t vel, vec3_t e);

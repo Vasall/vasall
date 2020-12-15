@@ -658,7 +658,7 @@ static void collideWithWorld(struct col_pck *pck, vec3_t pos, vec3_t del, int re
 {
 	float unitsPerMeter = 100.0;
 	float unitScale = unitsPerMeter / 100.0;
-	float veryCloseDistance = 0.0000005f * unitScale;
+	float veryCloseDistance = 0.005f * unitScale;
 
 	vec3_t destPoint;
 	vec3_t newBasePoint;
@@ -709,12 +709,12 @@ static void collideWithWorld(struct col_pck *pck, vec3_t pos, vec3_t del, int re
 		 * collision tells us)
 		 */
 		vec3_setlen(v, veryCloseDistance, v);
-		vec3_sub(pck->intersectionPoint, v, pck->intersectionPoint);
+		vec3_sub(pck->colPnt, v, pck->colPnt);
 	}
 
 	/* Determine the sliding plane */
-	vec3_cpy(slidePlaneOrigin, pck->intersectionPoint);
-	vec3_sub(newBasePoint, pck->intersectionPoint, slidePlaneNormal);
+	vec3_cpy(slidePlaneOrigin, pck->colPnt);
+	vec3_sub(newBasePoint, pck->colPnt, slidePlaneNormal);
 	vec3_nrm(slidePlaneNormal, slidePlaneNormal);
 	col_create_nrm(&slidingPlane, slidePlaneOrigin, slidePlaneNormal);
 
@@ -728,7 +728,7 @@ static void collideWithWorld(struct col_pck *pck, vec3_t pos, vec3_t del, int re
 	 * Generate the slide vector, which will become our new velocity vector
 	 * for the next iteration.
 	 */
-	vec3_sub(newDestinationPoint, pck->intersectionPoint, newVelocityVector);
+	vec3_sub(newDestinationPoint, pck->colPnt, newVelocityVector);
 
 	/*
 	 * Recursion:
@@ -752,6 +752,8 @@ static int collideAndSlide(short slot, vec3_t pos, vec3_t del, vec3_t opos)
 	vec3_t edel;
 	vec3_t retPos;
 
+	unsigned int retMask = 0;
+
 	/*
 	 * Get the centerpoint of the ne-collision-sphere by adding the offset
 	 * to the current position of the object.
@@ -767,8 +769,8 @@ static int collideAndSlide(short slot, vec3_t pos, vec3_t del, vec3_t opos)
 	/*
 	 * Copy both the position and the movement in R3-Space.
 	 */
-	vec3_cpy(pck.R3Position, relpos);
-	vec3_cpy(pck.R3Velocity, del);
+	vec3_cpy(pck.R3Pos, relpos);
+	vec3_cpy(pck.R3Vel, del);
 
 	/*
 	 * Convert position and movement to eSpace.
@@ -781,6 +783,14 @@ static int collideAndSlide(short slot, vec3_t pos, vec3_t del, vec3_t opos)
 	 */
 	collideWithWorld(&pck, epos, edel, 0, &retPos);
 
+	if(pck.foundCollision) {
+		retMask |= 1;
+		
+		if(pck.colPnt[2] <= epos[2] - pck.eRadius[2] + 0.2 && del[2] <= 0.0) {
+			retMask |= 2;
+		}
+	}
+
 	/*
 	 * Convert position back to R3-Space and subtract offset.
 	 */
@@ -790,7 +800,7 @@ static int collideAndSlide(short slot, vec3_t pos, vec3_t del, vec3_t opos)
 	/*
 	 * Return if a collision occurred.
 	 */
-	return (pck.foundCollision == 1);
+	return retMask;
 }
 
 
@@ -813,8 +823,7 @@ extern void obj_move(short slot)
 	short inp_i;
 	short inp_num;
 
-	static vec3_t vvel = {0.0, 0.0, 0.0};
-	vec3_t grav = {0.0, 0.0, -2.81};
+	vec3_t grav = {0.0, 0.0, -9.81};
 	vec3_t tmp;
 
 
@@ -854,22 +863,35 @@ extern void obj_move(short slot)
 
 	while(1) {
 		while(run_ts < lim_ts) {
-			/* Friction */
+			/* 
+			 * Process Friction.
+			 */
 			vec3_scl(vel, (1.0 - TICK_TIME_S * t_speed), vel);
 
-			/* Acceleration */
+			/*
+			 * Process Movement-Acceleration.
+			 */
 			vec3_set(acl, mov[0], mov[1], 0.0);
 			vec3_scl(acl, 6, acl);
 			vec3_scl(acl, (TICK_TIME_S * t_speed), acl);
 
-			/* Update velocity of the player-object */
+			/* Update velocity of the object */
 			vec3_add(vel, acl, vel);
 
-			/* Scale velocity by tick-time */
-			vec3_scl(vel, TICK_TIME_S, del);
+			/*
+			 * Process Gravity.
+			 */	
+			vec3_scl(grav, (TICK_TIME_S * t_speed), acl);
+			
+			/* Update velocity of the object */
+			vec3_add(vel, acl, vel);
 
 			/* Save current position */
 			vec3_cpy(prev, pos);
+
+			/* Scale velocity by tick-time */
+			vec3_scl(vel, TICK_TIME_S, del);
+			del[2] = 0.0;
 
 			/* Check collision */
 			if(omask & OBJ_M_SOLID) {
@@ -881,23 +903,22 @@ extern void obj_move(short slot)
 				vec3_add(pos, del, pos);
 			}
 
-			/*
-			 * Gravity
-			 */
 
-			vec3_scl(grav, TICK_TIME_S, tmp);
-			vec3_add(vvel, tmp, vvel);
-			if(vec3_len(vvel) >= 10.0) {
-				vec3_nrm(vvel, vvel);
-				vec3_scl(vvel, 10.0, vvel);
-			}
+			/* Scale velocity by tick-time */
+			vec3_scl(vel, TICK_TIME_S, del);
+			del[0] = 0.0;
+			del[1] = 0.0;
 
-			vec3_scl(vvel, TICK_TIME_S, del);
-	
 			/* Check collision */
 			if(omask & OBJ_M_SOLID) {
 				/* Collide and update position */
-				collideAndSlide(slot, pos, del, pos);
+				if(collideAndSlide(slot, pos, del, pos) & 2) {
+					vel[2] = 0.0;
+					printf("a\n");
+				}
+				else {
+					printf("\n");
+				}
 			}
 			else {
 				/* Update position */

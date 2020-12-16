@@ -554,57 +554,6 @@ extern int obj_update(void *in)
 	return 0;
 }
 
-/* Collect all other objects the given object is colliding with*/
-static int _col_objs(short slot, vec3_t pos, vec3_t del, int lim,
-		short *obj, short *num)
-{
-	int i;
-	short c = 0;
-
-	struct model *mdl_a;
-	struct model *mdl_b;
-
-	vec3_t relp;
-	vec3_t min1;
-	vec3_t max1;
-	vec3_t min2;
-	vec3_t max2;
-
-	mdl_a = models[objects.mdl[slot]];
-	vec3_add(pos, mdl_a->col.bp_col.pos, relp);
-	vec3_sub(relp, mdl_a->col.bp_col.scl, min1);
-
-	vec3_add(pos, del, relp);
-	vec3_add(relp, mdl_a->col.bp_col.pos, relp);
-	vec3_add(relp, mdl_a->col.bp_col.scl, max1);
-
-	for(i = 0; i < OBJ_SLOTS; i++) {
-		if(i != slot && (objects.mask[i] & OBJ_M_SOLID)) {
-			mdl_b = models[objects.mdl[i]];
-
-			vec3_add(objects.pos[i], mdl_b->col.bp_col.pos, relp);
-			vec3_sub(relp, mdl_b->col.bp_col.scl, min2);
-			vec3_add(relp, mdl_b->col.bp_col.scl, max2);
-
-			if(col_overlap(min1, max1, min2, max2)) {
-				if(c < lim) {
-					obj[c] = i;
-					c++;
-
-					if(c >= lim)
-						break;
-				}
-			}
-		}
-	}
-
-	if(c > 0) {
-		*num = c;
-		return 1;
-	}
-
-	return 0;
-}
 
 /* Collect all triangles the object collides with */
 static void checkCollision(struct col_pck *pck)
@@ -652,7 +601,6 @@ static void checkCollision(struct col_pck *pck)
 		}
 	}
 }
-
 
 static void collideWithWorld(struct col_pck *pck, vec3_t pos, vec3_t del, int recDepth, vec3_t *opos)
 {
@@ -720,7 +668,7 @@ static void collideWithWorld(struct col_pck *pck, vec3_t pos, vec3_t del, int re
 
 
 	/* Calculate the new destination point */
-	tmpDist = col_signedDistanceTo(&slidingPlane, destPoint);	
+	tmpDist = col_dist(&slidingPlane, destPoint);	
 	vec3_scl(slidePlaneNormal, tmpDist, slidePlaneNormal);
 	vec3_sub(destPoint, slidePlaneNormal, newDestinationPoint);
 
@@ -742,6 +690,77 @@ static void collideWithWorld(struct col_pck *pck, vec3_t pos, vec3_t del, int re
 	collideWithWorld(pck, newBasePoint, newVelocityVector, recDepth, opos);
 }
 
+#if 0
+static int sphere_sweep(struct col_pck *pck, vec3_t pos, vec3_t del, vec3_t *opos)
+{
+	vec3_t cpos;
+	vec3_t cdel;
+	vec3_t dest;
+	struct col_pln first_plane;
+	int i;
+	float very_close_dist = 0.00005;
+	vec3_t tmpv;
+
+	int mask = 0;
+
+	vec3_cpy(cpos, pos);
+	vec3_cpy(cdel, del);
+	vec3_add(cpos, cdel, dest);
+
+	for(i = 0; i < 3; ++i) {
+		/* Fill collision-packet with the necessary data */
+		vec3_cpy(pck->velocity, cdel);
+		vec3_nrm(cdel, pck->normalizedVelocity);
+		vec3_cpy(pck->basePoint, cpos);
+		pck->foundCollision = 0;
+
+		/* Check if collisions occurred */
+		checkCollision(pck);
+		
+		if(!pck->foundCollision) {
+			vec3_cpy(*opos, dest);
+			return mask;
+		}
+	
+		mask = 1;
+
+		float dist = vec3_len(cdel) * pck->t;
+		float short_dist = MAX(dist - very_close_dist, 0.0f);
+		vec3_setlen(cdel, short_dist, tmpv);
+		vec3_add(cpos, tmpv, cpos);
+		
+		if (i == 0) {
+			float long_radius = 1.0f + very_close_dist;
+			float f;
+
+			first_plane = pck->pln;
+			
+			f = col_dist(&first_plane, dest) - long_radius;
+			vec3_scl(first_plane.normal, f, tmpv);
+			vec3_sub(dest, tmpv, dest);
+
+			vec3_sub(dest, cpos, cdel);
+		} 
+		else if (i == 1) {
+			struct col_pln second_plane = pck->pln;
+			vec3_t crease;
+		
+			vec3_cross(first_plane.normal, second_plane.normal, crease);
+			vec3_nrm(crease, crease);
+
+			vec3_sub(dest, cpos, tmpv);
+			float dis = vec3_dot(tmpv, crease);
+
+			vec3_scl(crease, dis, cdel);
+
+			vec3_add(cpos, cdel, dest);
+		}
+	}
+	
+	vec3_cpy(*opos, cpos);
+	return mask;
+}
+#endif
 
 static int collideAndSlide(short slot, vec3_t pos, vec3_t del, vec3_t opos)
 {		
@@ -784,11 +803,7 @@ static int collideAndSlide(short slot, vec3_t pos, vec3_t del, vec3_t opos)
 	collideWithWorld(&pck, epos, edel, 0, &retPos);
 
 	if(pck.foundCollision) {
-		retMask |= 1;
-		
-		if(pck.colPnt[2] <= epos[2] - pck.eRadius[2] + 0.2 && del[2] <= 0.0) {
-			retMask |= 2;
-		}
+		retMask = 1;
 	}
 
 	/*
@@ -912,12 +927,8 @@ extern void obj_move(short slot)
 			/* Check collision */
 			if(omask & OBJ_M_SOLID) {
 				/* Collide and update position */
-				if(collideAndSlide(slot, pos, del, pos) & 2) {
-					vel[2] = 0.0;
-					printf("a\n");
-				}
-				else {
-					printf("\n");
+				if(collideAndSlide(slot, pos, del, pos)) {
+					vel[2] = 0;
 				}
 			}
 			else {

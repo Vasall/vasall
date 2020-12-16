@@ -58,7 +58,7 @@ extern int col_facing(struct col_pln *pln, vec3_t dir)
 }
 
 
-extern float col_signedDistanceTo(struct col_pln *pln, vec3_t p)
+extern float col_dist(struct col_pln *pln, vec3_t p)
 {
 	/*  */
 	return vec3_dot(p, pln->normal) + pln->equation[3];
@@ -174,7 +174,7 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 		char embeddedInPlane = 0;
 
 		/* Calculate the signed distance */
-		double signedDistToTrianglePlane = col_signedDistanceTo(&pln, pck->basePoint);
+		double signedDistToTrianglePlane = col_dist(&pln, pck->basePoint);
 
 		/* Calculate denominator */
 		float normalDotVelocity = vec3_dot(pln.normal, pck->velocity);
@@ -427,7 +427,9 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 			if(pck->foundCollision == 0 || dist < pck->nearestDistance) {
 				pck->foundCollision = 1;
 				pck->nearestDistance = dist;
+				pck->t = t;
 				vec3_cpy(pck->colPnt, collisionPoint);
+				pck->pln = pln;
 			}
 		}
 	}

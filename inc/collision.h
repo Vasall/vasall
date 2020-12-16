@@ -13,7 +13,7 @@ extern int col_create_pnt(struct col_pln *pln, vec3_t p0, vec3_t p1, vec3_t p2);
 extern int col_create_nrm(struct col_pln *pln, vec3_t p, vec3_t nrm);
 
 extern int col_facing(struct col_pln *pln, vec3_t dir);
-extern float col_signedDistanceTo(struct col_pln *pln, vec3_t p);
+extern float col_dist(struct col_pln *pln, vec3_t p);
 
 
 struct col_pck {
@@ -33,7 +33,8 @@ struct col_pck {
 	char foundCollision;
 	float nearestDistance;
 	vec3_t colPnt;
-	char grounded;
+	struct col_pln pln;
+	float t;
 };
 
 extern int col_init_pck(struct col_pck *pck, vec3_t pos, vec3_t vel, vec3_t e);

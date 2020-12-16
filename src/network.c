@@ -15,7 +15,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <ifaddrs.h>
-#include <openssl/sha.h>
+#include <openssl/evp.h>
 
 /* Redefine global network-wrapper */
 struct network_wrapper network;
@@ -604,23 +604,6 @@ extern int peer_handle(struct lcp_evt *evt)
 	return r;
 }
 
-
-static int hashSHA256(void* input, unsigned long length, unsigned char *md)
-{
-	SHA256_CTX context;
-	if(!SHA256_Init(&context))
-		return -1;
-
-	if(!SHA256_Update(&context, (unsigned char*)input, length))
-		return -1;
-
-	if(!SHA256_Final(md, &context))
-		return -1;
-
-	return 0;
-}
-
-
 extern int net_insert(char *uname, char *pswd, net_fnc on_success, 
 		net_fnc on_failed)
 {
@@ -647,7 +630,7 @@ extern int net_insert(char *uname, char *pswd, net_fnc on_success,
 	network.on_failed = on_failed;
 
 	/* Encrypt password */
-	hashSHA256(pswd, strlen(pswd), pswd_enc);
+	EVP_Digest(pswd, strlen(pswd), pswd_enc, NULL, EVP_sha256(), NULL);
 
 	tmp = hdr_set(pck, HDR_OP_INS, 0x1, 0x0, NULL);
 	strcpy(pck + tmp, uname);

@@ -56,3 +56,7 @@ INSTALLATION
   playing the game using this command:
     $ ./bin/vasall-client
  
+CONTACT
+   
+   Email: admin@vasall.net
+   Discord: https://discord.gg/ahnbSfB

@@ -571,11 +571,19 @@ static void checkCollision(struct col_pck *pck)
 		if(objects.mask[i] == OBJ_M_NONE)
 			continue;
 
+		/* Don't check collision with the same object */
+		if(i == pck->objSlot)
+			continue;
+
 		if((objects.mask[i] & OBJ_M_SOLID) == 0)
 			continue;
 
 		/* Get pointer to the model */
 		mdl = models[objects.mdl[i]];
+
+		/* TODO: Check collision with other player-objects */
+		if((mdl->col_mask & COL_M_CM) == 0)
+			continue;
 
 		/* Go through all triangles */
 		for(j = 0; j < mdl->col.cm_tri_c; j++) {
@@ -778,6 +786,11 @@ static int collideAndSlide(short slot, vec3_t pos, vec3_t del, vec3_t opos)
 	 * to the current position of the object.
 	 */
 	vec3_add(pos, models[objects.mdl[slot]]->col.ne_col.pos, relpos);
+
+	/*
+	 * Set object slot, so the object won't check itself for collision.
+	 */
+	pck.objSlot = slot;
 
 	/*
 	 * Copy the scaling-factors of the sphere, which will be used for

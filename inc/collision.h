@@ -17,6 +17,8 @@ extern float col_dist(struct col_pln *pln, vec3_t p);
 
 
 struct col_pck {
+	short objSlot;
+		
 	/* Ellipsoid radius */
 	vec3_t eRadius;
 

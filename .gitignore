@@ -14,5 +14,5 @@
 # for ctags vim
 /tags
 
-# Just to be safe
+# Just to be safe, ignore all object-files
 *.o

@@ -2,7 +2,7 @@
 # Generic Makefile, capable of including static
 # libraries
 #
-# Modified by:      admin@enudstudios.com
+# Modified by:      admin@vasall.net
 # Date:             2020-01-09
 #
 # Original Author:  yanick.rochon@gmail.com

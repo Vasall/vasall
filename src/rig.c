@@ -122,9 +122,6 @@ static void rig_calc_rec(struct model_rig *rig, int idx)
 	 */
 	rot_interp(keyfr0->rot[idx], keyfr1->rot[idx], rig->prog, r);
 
-	/* Normalize quaternion */
-	vec4_nrm(r, r);
-
 	/* Copy rotation into rotation-list */
 	vec4_cpy(rig->jnt_rot[idx], r);
 
@@ -187,9 +184,8 @@ extern void rig_update(struct model_rig *rig)
 		rig->prog -= 1.0;
 		rig->c = (rig->c + 1);
 
-		if(rig->c >= anim->keyfr_num) {
+		if(rig->c >= anim->keyfr_num - 1) {
 			rig->c = 0;
-			rig->anim = (rig->anim + 1) % mdl->anim_num;
 		}
 	}
 

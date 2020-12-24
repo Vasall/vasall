@@ -538,7 +538,7 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 	}
 
 	/* Copy animations */
-	if(data->format >= AMO_FORMAT_AMO) {
+	if(data->data_m & AMO_DM_ANI) {
 		/* Set type of the model */
 		mdl->type = MDL_ANIM;
 
@@ -619,7 +619,7 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 
 	/* Copy collision-boxes */
 	mdl->col_mask = 0;
-	if(data->format >= AMO_FORMAT_COL) {	
+	if(data->data_m & AMO_DM_COL) {
 		/*
 		 * If a broadphase-collision-box is defined.
 		 */

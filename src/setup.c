@@ -46,7 +46,7 @@ int load_resources(void)
 	if(mdl_load("wld", "ast/models/plane.amo", tex_get("flr"), shd_get("mdl")) < 0)
 		return -1;
 
-	if(mdl_load("plr", "ast/models/base.amo", tex_get("ba0"), shd_get("mdl")) < 0)
+	if(mdl_load("plr", "ast/models/base.amo", tex_get("ba0"), shd_get("ani")) < 0)
 		return -1;
 
 	if(mdl_load("tst", "ast/models/test.amo", tex_get("ba1"), shd_get("mdl")) < 0)

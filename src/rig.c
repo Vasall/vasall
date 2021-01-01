@@ -110,43 +110,41 @@ static void rig_calc_rec(struct model_rig *rig, int idx)
 	mat4_t m;
 	int par;
 
+	mat4_t loc_posm;
+	mat4_t loc_rotm;
+
 	mdl = models[rig->model];
 	anim = &mdl->anim_buf[rig->anim];
 
-	/* Get last and next keyframe */
+	/* Get last and next keyframe
 	keyfr0 = &anim->keyfr_buf[(int)rig->c];
 	keyfr1 = &anim->keyfr_buf[(rig->c + 1) % anim->keyfr_num];
+	*/
+
+	keyfr0 = &anim->keyfr_buf[0];
+	keyfr1 = &anim->keyfr_buf[0];
 
 	/* 
 	 * Interpolate the rotation of the joint.
 	 */
 	rot_interp(keyfr0->rot[idx], keyfr1->rot[idx], rig->prog, r);
 
-	/* Copy rotation into rotation-list */
-	vec4_cpy(rig->jnt_rot[idx], r);
-
 	/*
 	 * Interpolate the position of the joint.
 	 */
 	pos_interp(keyfr0->pos[idx], keyfr1->pos[idx], rig->prog, p);
 
-	/* Copy position into position-list */
-	vec3_cpy(rig->jnt_pos[idx], p);
-
 	/*
 	 * Set the current animation-matrix for the joint.
 	 */
 
-	/* Add the rotation to the matrix */
 	mat4_rotq(mat, r[0], r[1], r[2], r[3]);
-
-	/* Add the position to the matrix */
 	mat4_pos(mat, p[0], p[1], p[2]);
 
 	/*
 	 * Add matrix to relative joint-matrix.
 	 */
-	mat4_mult(mdl->jnt_buf[idx].mat_rel, mat, mat);
+	mat4_cpy(mat, mdl->jnt_buf[idx].mat_rel);
 
 	/*
 	 * Translate matrix to model-space.
@@ -175,6 +173,8 @@ extern void rig_update(struct model_rig *rig)
 	struct mdl_anim *anim;
 	int i;
 
+	static int c = 0;
+
 	mdl = models[rig->model];
 	anim = &mdl->anim_buf[rig->anim];
 
@@ -189,12 +189,17 @@ extern void rig_update(struct model_rig *rig)
 		}
 	}
 
-	/* Calculate the joint-matrices */
-	rig_calc_rec(rig, mdl->jnt_root);
+	rig->prog = 0;
 
-	/* Subtract the base matrices of the current joint-matrices */
-	for(i = 0; i < mdl->jnt_num; i++) {
-		mat4_mul(mdl->jnt_buf[i].mat, rig->jnt_mat[i],
-				rig->jnt_mat[i]);
+	if(c == 0) {
+		/* Calculate the joint-matrices */
+		rig_calc_rec(rig, mdl->jnt_root);
+		c = 1;
+
+		/* Subtract the base matrices of the current joint-matrices */
+		for(i = 0; i < mdl->jnt_num; i++) {
+			mat4_mult(mdl->jnt_buf[i].mat,rig->jnt_mat[i],
+					rig->jnt_mat[i]);
+		}
 	}
 }

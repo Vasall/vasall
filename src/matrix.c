@@ -98,27 +98,6 @@ extern void mat4_mult(mat4_t m1, mat4_t m2, mat4_t out)
 	mat4_cpy(out, conv);
 }
 
-extern void mat4_mul(mat4_t m1, mat4_t m2, mat4_t out)
-{
-	int i, j, k;
-	float a, b;
-	mat4_t conv;
-	mat4_zero(conv);
-
-	for(i = 0; i < 4; i++) {
-		for(j = 0; j < 4; j++) {
-			for(k = 0; k < 4; k++) {
-				a = m1[i * 4 + k];
-				b = m2[k * 4 + j];
-
-				conv[i * 4 + j] += a * b;
-			}
-		}
-	}
-
-	mat4_cpy(out, conv);
-}
-
 extern void mat4_inv(mat4_t out, mat4_t in)
 {
 	double inv[16], det;

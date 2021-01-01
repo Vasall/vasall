@@ -20,7 +20,6 @@ extern void mat4_zero(mat4_t m);
 extern void mat4_idt(mat4_t m);
 extern void mat4_cpy(mat4_t out, mat4_t in);
 extern void mat4_mult(mat4_t m1, mat4_t m2, mat4_t out);
-extern void mat4_mul(mat4_t m1, mat4_t m2, mat4_t out);
 extern void mat4_inv(mat4_t out, mat4_t in);
 extern void mat4_transp(mat4_t out, mat4_t in);
 extern void mat4_print(mat4_t m);

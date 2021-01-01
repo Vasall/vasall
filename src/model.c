@@ -423,6 +423,12 @@ static void mdl_calc_joint(struct model *mdl, short slot)
 		mat4_cpy(jnt->mat, mat);
 	}
 
+#if 0
+	printf("%s\n", jnt->name);
+	mat4_print(jnt->mat);
+#endif
+	
+
 	/* Call function recursivly on child-joints */
 	for(i = 0; i < jnt->child_num; i++)
 		mdl_calc_joint(mdl, jnt->child_buf[i]);
@@ -751,6 +757,8 @@ extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
 	struct model *mdl;
 	int attr;
 	int vari;
+	
+	unsigned int err = 0;
 
 	if(mdl_check_slot(slot))
 		return;
@@ -792,6 +800,10 @@ extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
 
 	/* Draw the vertices */
 	glDrawElements(GL_TRIANGLES, mdl->idx_num, GL_UNSIGNED_INT, 0);
+
+	while((err = glGetError()) != GL_NO_ERROR) {
+	    printf("Error: %d\n", err);
+	}  
 
 	/* Unuse the texture, shader and VAO */
 	tex_unuse();

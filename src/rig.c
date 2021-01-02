@@ -107,11 +107,11 @@ static void rig_calc_rec(struct model_rig *rig, int idx)
 	vec3_t p;
 	vec4_t r;
 	mat4_t mat;
-	mat4_t m;
 	int par;
 
 	mat4_t loc_posm;
 	mat4_t loc_rotm;
+	mat4_t loc_mat;
 
 	mdl = models[rig->model];
 	anim = &mdl->anim_buf[rig->anim];
@@ -122,7 +122,7 @@ static void rig_calc_rec(struct model_rig *rig, int idx)
 	*/
 
 	keyfr0 = &anim->keyfr_buf[0];
-	keyfr1 = &anim->keyfr_buf[0];
+	keyfr1 = &anim->keyfr_buf[1];
 
 	/* 
 	 * Interpolate the rotation of the joint.
@@ -137,28 +137,28 @@ static void rig_calc_rec(struct model_rig *rig, int idx)
 	/*
 	 * Set the current animation-matrix for the joint.
 	 */
-
-	mat4_rotq(mat, r[0], r[1], r[2], r[3]);
-	mat4_pos(mat, p[0], p[1], p[2]);
+	mat4_idt(loc_posm);
+	mat4_pos(loc_posm, p[0], p[1], p[2]);
+	mat4_idt(loc_rotm);
+	mat4_rotq(loc_rotm, r[0], r[1], r[2], r[3]);
+	mat4_mult(loc_posm, loc_rotm, mat);
 
 	/*
 	 * Add matrix to relative joint-matrix.
 	 */
-	mat4_cpy(mat, mdl->jnt_buf[idx].mat_rel);
+	mat4_mult(mdl->jnt_buf[idx].mat_rel, mat, mat);
 
 	/*
 	 * Translate matrix to model-space.
 	 */
 	par = mdl->jnt_buf[idx].par; 
 	if(par >= 0)
-		mat4_mult(rig->jnt_mat[par], mat, m);
-	else
-		mat4_cpy(m, mat);
+		mat4_mult(rig->jnt_mat[par], mat, mat);
 
 	/*
 	 * Copy matrix into table.
 	 */
-	mat4_cpy(rig->jnt_mat[idx], m);
+	mat4_cpy(rig->jnt_mat[idx], mat);
 
 	/*
 	 * Call function recusivly for child-joints.
@@ -189,17 +189,19 @@ extern void rig_update(struct model_rig *rig)
 		}
 	}
 
-	rig->prog = 0;
+	/* Calculate the joint-matrices */
+	rig_calc_rec(rig, mdl->jnt_root);
 
-	if(c == 0) {
-		/* Calculate the joint-matrices */
-		rig_calc_rec(rig, mdl->jnt_root);
-		c = 1;
-
-		/* Subtract the base matrices of the current joint-matrices */
-		for(i = 0; i < mdl->jnt_num; i++) {
-			mat4_mult(mdl->jnt_buf[i].mat,rig->jnt_mat[i],
-					rig->jnt_mat[i]);
+	/* Subtract the base matrices of the current joint-matrices */
+	for(i = 0; i < mdl->jnt_num; i++) {
+		if(c == 0) {
+			printf("%s\n", mdl->jnt_buf[i].name);
+			mat4_print(rig->jnt_mat[i]);
 		}
+
+		mat4_mult(rig->jnt_mat[i], mdl->jnt_buf[i].mat, 
+				rig->jnt_mat[i]);
 	}
+
+	c = 1;
 }

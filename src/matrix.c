@@ -273,7 +273,7 @@ extern void mat4_std(mat4_t m)
 }
 
 extern void mat4_pos(mat4_t m, float x, float y, float z)
-{
+{	
 	m[0xc] = x;
 	m[0xd] = y;
 	m[0xe] = z;

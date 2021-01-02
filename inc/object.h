@@ -22,15 +22,16 @@
 #define OBJ_M_NONE     0
 #define OBJ_M_MODEL    (1<<0)  /* Attach and render a model for this object  */
 #define OBJ_M_RIG      (1<<1)  /* Rig the model for animation and collision  */
-#define OBJ_M_MOVE     (1<<2)  /* The object is movable                      */
-#define OBJ_M_SOLID    (1<<3)  /* Should the object be solid with colliders  */
-#define OBJ_M_SYNC     (1<<4)  /* Synchronize the object with other peers    */
-#define OBJ_M_PEER     (1<<5)  /* The object is a peers player               */
-#define OBJ_M_DATA     (1<<6)  /* A databuffer is attached to the object     */
+#define OBJ_M_GRAV     (1<<2)  /*  */
+#define OBJ_M_MOVE     (1<<3)  /* The object is movable                      */
+#define OBJ_M_SOLID    (1<<4)  /* Should the object be solid with colliders  */
+#define OBJ_M_SYNC     (1<<5)  /* Synchronize the object with other peers    */
+#define OBJ_M_PEER     (1<<6)  /* The object is a peers player               */
+#define OBJ_M_DATA     (1<<7)  /* A databuffer is attached to the object     */
 
 /* Wrapper-masks */
 #define OBJ_M_STATIC (OBJ_M_MODEL|OBJ_M_SOLID)
-#define OBJ_M_ENTITY (OBJ_M_MODEL|OBJ_M_RIG|OBJ_M_MOVE|OBJ_M_SOLID|OBJ_M_SYNC)
+#define OBJ_M_ENTITY (OBJ_M_MODEL|OBJ_M_RIG|OBJ_M_MOVE|OBJ_M_SYNC)
 #define OBJ_M_PLAYER (OBJ_M_ENTITY|OBJ_M_PEER)
 
 /*

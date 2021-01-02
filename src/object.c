@@ -909,10 +909,12 @@ extern void obj_move(short slot)
 			/*
 			 * Process Gravity.
 			 */	
-			vec3_scl(grav, (TICK_TIME_S * t_speed), acl);
+			if(omask & OBJ_M_GRAV) {
+				vec3_scl(grav, (TICK_TIME_S * t_speed), acl);
 			
-			/* Update velocity of the object */
-			vec3_add(vel, acl, vel);
+				/* Update velocity of the object */
+				vec3_add(vel, acl, vel);
+			}
 
 			/* Save current position */
 			vec3_cpy(prev, pos);
@@ -932,21 +934,23 @@ extern void obj_move(short slot)
 			}
 
 
-			/* Scale velocity by tick-time */
-			vec3_scl(vel, TICK_TIME_S, del);
-			del[0] = 0.0;
-			del[1] = 0.0;
+			if(omask & OBJ_M_GRAV) {
+				/* Scale velocity by tick-time */
+				vec3_scl(vel, TICK_TIME_S, del);
+				del[0] = 0.0;
+				del[1] = 0.0;
 
-			/* Check collision */
-			if(omask & OBJ_M_SOLID) {
-				/* Collide and update position */
-				if(collideAndSlide(slot, pos, del, pos)) {
-					vel[2] = 0;
+				/* Check collision */
+				if(omask & OBJ_M_SOLID) {
+					/* Collide and update position */
+					if(collideAndSlide(slot, pos, del, pos)) {
+						vel[2] = 0;
+					}
 				}
-			}
-			else {
-				/* Update position */
-				vec3_add(pos, del, pos);
+				else {
+					/* Update position */
+					vec3_add(pos, del, pos);
+				}
 			}
 
 			/* Limit movement-space */

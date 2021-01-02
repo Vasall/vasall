@@ -785,7 +785,7 @@ extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
 
 	/* Use texture */
 	tex_use(mdl->tex);
-
+	
 	/* Set the uniform-variables */
 	glUniformMatrix4fv(loc[0], 1, GL_FALSE, pos_mat);
 	glUniformMatrix4fv(loc[1], 1, GL_FALSE, rot_mat);
@@ -799,11 +799,7 @@ extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
 	}
 
 	/* Draw the vertices */
-	glDrawElements(GL_TRIANGLES, mdl->idx_num, GL_UNSIGNED_INT, 0);
-
-	while((err = glGetError()) != GL_NO_ERROR) {
-	    printf("Error: %d\n", err);
-	}  
+	glDrawElements(GL_TRIANGLES, mdl->idx_num, GL_UNSIGNED_INT, 0);  
 
 	/* Unuse the texture, shader and VAO */
 	tex_unuse();

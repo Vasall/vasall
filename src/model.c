@@ -409,26 +409,19 @@ static void mdl_calc_joint(struct model *mdl, short slot)
 {
 	int i;
 	struct mdl_joint *jnt;	
+	mat4_t mat;
 
 	jnt = &mdl->jnt_buf[slot];
 
-	/* Copy relative joint-matrix */
-	mat4_cpy(jnt->mat_rel, jnt->mat);
+	mat4_cpy(mat, jnt->mat_rel);
 
 	/* Adjust absolute joint-matrix using parent-joint */
-	if(jnt->par >= 0) {
-		mat4_t mat;
+	if(jnt->par >= 0)
+		mat4_mult(mdl->jnt_buf[jnt->par].mat_base, mat, mat);
 
-		mat4_mult(mdl->jnt_buf[jnt->par].mat, jnt->mat, mat);
-		mat4_cpy(jnt->mat, mat);
-	}
-
-#if 0
-	printf("%s\n", jnt->name);
-	mat4_print(jnt->mat);
-#endif
+	/* Attach base-matrix to joint */
+	mat4_cpy(jnt->mat_base, mat);
 	
-
 	/* Call function recursivly on child-joints */
 	for(i = 0; i < jnt->child_num; i++)
 		mdl_calc_joint(mdl, jnt->child_buf[i]);
@@ -525,7 +518,7 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 
 		/* Copy joint-matrices */
 		for(i = 0; i < mdl->jnt_num; i++) {
-			mat4_cpy(mdl->jnt_buf[i].mat, data->jnt_lst[i].mat);
+			mat4_cpy(mdl->jnt_buf[i].mat_rel, data->jnt_lst[i].mat);
 		}
 
 		/* Link the children to the parent-joints */
@@ -536,10 +529,10 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 
 		/* Inverse the matrices of the joints */
 		for(i = 0; i < mdl->jnt_num; i++) {
-			mat4_std(mdl->jnt_buf[i].mat);
+			mat4_std(mdl->jnt_buf[i].mat_base);
 
-			mat4_cpy(mdl->jnt_buf[i].mat_base, mdl->jnt_buf[i].mat);
-			mat4_inv(mdl->jnt_buf[i].mat, mdl->jnt_buf[i].mat_base);
+			mat4_inv(mdl->jnt_buf[i].mat_inv,
+					mdl->jnt_buf[i].mat_base);
 		}
 	}
 
@@ -757,7 +750,8 @@ extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
 	struct model *mdl;
 	int attr;
 	int vari;
-	
+	int i;
+
 	unsigned int err = 0;
 
 	if(mdl_check_slot(slot))

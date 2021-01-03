@@ -28,8 +28,6 @@ struct model_rig {
 	uint32_t ts;
 
 	int jnt_num;
-	vec3_t *jnt_pos;
-	vec4_t *jnt_rot;
 	mat4_t jnt_mat[JOINT_MAX_NUM];
 };
 

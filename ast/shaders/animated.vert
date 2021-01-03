@@ -1,10 +1,10 @@
 #version 330 core
 
-in vec3 vtxPos;
-in vec2 vtxTex;
-in vec3 vtxNrm;
+in vec3  vtxPos;
+in vec2  vtxTex;
+in vec3  vtxNrm;
 in ivec4 vtxJnt;
-in vec4 vtxWgt;
+in vec4  vtxWgt;
 
 uniform mat4 mpos;
 uniform mat4 mrot;

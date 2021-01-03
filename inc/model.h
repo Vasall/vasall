@@ -47,7 +47,7 @@ struct mdl_joint {
 	int child_buf[10];
 	mat4_t mat_rel;
 	mat4_t mat_base;
-	mat4_t mat;
+	mat4_t mat_inv;
 };
 
 struct mdl_keyfr {

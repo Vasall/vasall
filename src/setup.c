@@ -11,45 +11,45 @@ int load_resources(void)
 	printf("Start loading resources\n");
 
 	/* fonts */
-	if(txt_load_ttf("ast/fonts/mecha.ttf", 24) < 0)
+	if(txt_load_ttf("res/fonts/mecha.ttf", 24) < 0)
 		return -1;
 
-	if(txt_load_ttf("ast/fonts/roboto_reg.ttf", 16) < 0)
+	if(txt_load_ttf("res/fonts/roboto_reg.ttf", 16) < 0)
 		return -1;
 
-	if(txt_load_ttf("ast/fonts/aller.ttf", 16) < 0)
+	if(txt_load_ttf("res/fonts/aller.ttf", 16) < 0)
 		return -1;
 
-	if(txt_load_ttf("ast/fonts/roboto_bold.ttf", 28) < 0)
+	if(txt_load_ttf("res/fonts/roboto_bold.ttf", 28) < 0)
 		return -1;
 
 	/* shaders */
-	if(shd_set("mdl", "ast/shaders/model.vert", "ast/shaders/model.frag", 3, vars1) < 0)
+	if(shd_set("mdl", "res/shaders/model.vert", "res/shaders/model.frag", 3, vars1) < 0)
 		return -1;
 
-	if(shd_set("ani", "ast/shaders/animated.vert", "ast/shaders/animated.frag", 5, vars2) < 0)
+	if(shd_set("ani", "res/shaders/animated.vert", "res/shaders/animated.frag", 5, vars2) < 0)
 		return -1;
 
 	/* textures */
-	if(tex_load_png("ba0", "ast/textures/base00.png") < 0)
+	if(tex_load_png("ba0", "res/textures/base00.png") < 0)
 		return -1;
 
-	if(tex_load_png("ba1", "ast/textures/col_blue.png") < 0)
+	if(tex_load_png("ba1", "res/textures/col_blue.png") < 0)
 		return -1;
 
-	if(tex_load_png("flr", "ast/textures/floor.png") < 0)
+	if(tex_load_png("flr", "res/textures/floor.png") < 0)
 		return -1;
 
 	printf("a\n");
 
 	/* models */
-	if(mdl_load("wld", "ast/models/plane.amo", tex_get("flr"), shd_get("mdl")) < 0)
+	if(mdl_load("wld", "res/models/plane.amo", tex_get("flr"), shd_get("mdl")) < 0)
 		return -1;
 
-	if(mdl_load("plr", "ast/models/base.amo", tex_get("ba0"), shd_get("ani")) < 0)
+	if(mdl_load("plr", "res/models/base.amo", tex_get("ba0"), shd_get("ani")) < 0)
 		return -1;
 
-	if(mdl_load("tst", "ast/models/test.amo", tex_get("ba1"), shd_get("mdl")) < 0)
+	if(mdl_load("tst", "res/models/test.amo", tex_get("ba1"), shd_get("mdl")) < 0)
 			return -1;
 
 	printf("Finished loading resources\n");

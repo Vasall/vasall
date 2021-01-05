@@ -70,8 +70,8 @@ extern void   vec4_sub(vec4_t in1, vec4_t in2, vec4_t out);
 extern void   vec4_scl(vec4_t in1, float f, vec4_t out);
 extern float  vec4_len(vec4_t in);
 extern void   vec4_nrm(vec4_t in, vec4_t out);
+extern float  vec4_dot(vec4_t in1, vec4_t in2);
 extern void   vec4_print(vec4_t in);
-
 
 #define INT2_SIZE (sizeof(int)*2)
 typedef int int2_t[2];

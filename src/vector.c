@@ -427,6 +427,12 @@ extern void vec4_nrm(vec4_t in, vec4_t out)
 	out[3] = in[3] / len;
 }
 
+extern float  vec4_dot(vec4_t in1, vec4_t in2)
+{
+	return (in1[0] * in2[0]) + (in1[1] * in2[1]) + (in1[2] * in2[2]) +
+		(in1[3] * in2[3]);
+}
+
 extern void vec4_print(vec4_t in)
 {
 	/*  */

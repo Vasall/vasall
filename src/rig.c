@@ -55,14 +55,23 @@ extern void rig_free(struct model_rig *rig)
 
 static void rot_interp(vec4_t in1, vec4_t in2, float p, vec4_t out)
 {
-	vec4_t conv;
+	vec4_t conv = {1.0, 0.0, 0.0, 0.0};
+	float dot = vec4_dot(in1, in2);
+	float pi = 1.0 - p;
 
-	conv[0] = in1[0] + (in2[0] - in1[0]) * p;
-	conv[1] = in1[1] + (in2[1] - in1[1]) * p;
-	conv[2] = in1[2] + (in2[2] - in1[2]) * p;
-	conv[3] = in1[3] + (in2[3] - in1[3]) * p;
+	if(dot < 0) {
+		conv[0] = pi * in1[0] + p * -in2[0];
+		conv[1] = pi * in1[1] + p * -in2[1];
+		conv[2] = pi * in1[2] + p * -in2[2];
+		conv[3] = pi * in1[3] + p * -in2[3];
+	} else {
+		conv[0] = pi * in1[0] + p * in2[0];
+		conv[1] = pi * in1[1] + p * in2[1];
+		conv[2] = pi * in1[2] + p * in2[2];
+		conv[3] = pi * in1[3] + p * in2[3];
+	}
 
-	vec4_cpy(out, conv);
+	vec4_nrm(conv, out);
 }
 
 static void pos_interp(vec3_t in1, vec3_t in2, float p, vec3_t out)
@@ -100,22 +109,16 @@ static void rig_calc_rec(struct model_rig *rig, int idx)
 	keyfr0 = &anim->keyfr_buf[(int)rig->c];
 	keyfr1 = &anim->keyfr_buf[(rig->c + 1) % anim->keyfr_num];
 	*/
+
 	rig->prog = 1;
-	keyfr0 = &anim->keyfr_buf[0];
-	keyfr1 = &anim->keyfr_buf[1];
+	keyfr0 = &anim->keyfr_buf[1];
+	keyfr1 = &anim->keyfr_buf[2];
 
 	/* 
 	 * Interpolate the position and rotation of the joint.
 	 */
 	pos_interp(keyfr0->pos[idx], keyfr1->pos[idx], rig->prog, p);
 	rot_interp(keyfr0->rot[idx], keyfr1->rot[idx], rig->prog, r);
-
-	if(c < 67) {
-		printf("%s\n", mdl->jnt_buf[idx].name);
-		vec4_print(r);
-		printf("\n");
-		c++;
-	}
 
 	/*
 	 * Set local current animation-matrix for the joint.
@@ -152,7 +155,6 @@ extern void rig_update(struct model_rig *rig)
 	struct model *mdl;
 	struct mdl_anim *anim;
 	int i;
-	static int c = 0;
 
 	mdl = models[rig->model];
 	anim = &mdl->anim_buf[rig->anim];
@@ -168,21 +170,12 @@ extern void rig_update(struct model_rig *rig)
 		}
 	}
 
-	rig->prog = 0.5;
-
 	/* Calculate the joint-matrices */
 	rig_calc_rec(rig, mdl->jnt_root);
 
 	/* Subtract the base matrices of the current joint-matrices */
 	for(i = 0; i < mdl->jnt_num; i++) {
-		if(c == 2) {
-			printf("%s\n", mdl->jnt_buf[i].name);
-			mat4_print(rig->jnt_mat[i]);
-		}
-
 		mat4_mult(rig->jnt_mat[i], mdl->jnt_buf[i].mat_inv,
 				rig->jnt_mat[i]);
 	}
-
-	c = 1;
 }

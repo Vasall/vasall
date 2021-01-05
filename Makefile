@@ -55,15 +55,15 @@ $(BINDIR)/$(TARGET): $(OBJECTS)
 	@$(LINKER) $(OBJECTS) $(LFLAGS) -o $@
 	@echo "Linking complete!"
 
-$(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c dirs
+$(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
 	@$(CC) $(CFLAGS) $(ERRFLAGS) -c $< -o $@
 	@echo "Compiled "$<" successfully!"
 
 # Create the directories to store the object-files and the final binary
 .PHONY: dirs
 dirs:
-	if [ -d "./obj" ]; then make obj; fi
-	if [ -d "./bin" ]; then make bin; fi
+	mkdir -p obj
+	mkdir -p bin
 
 # Build all submodules in the lib-folder
 .PHONY: libs

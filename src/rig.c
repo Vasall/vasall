@@ -31,31 +31,12 @@ extern struct model_rig *rig_derive(short slot)
 	rig->prog = 0;
 	rig->ts = 0;
 	rig->jnt_num = mdl->jnt_num;
-	rig->jnt_pos = NULL;
-	rig->jnt_rot = NULL;
-
-	/* Allocate memory for the current joint-positions */
-	tmp = rig->jnt_num * VEC3_SIZE;
-	if(!(rig->jnt_pos = malloc(tmp)))
-		goto err_free_rig;
-
-	/* Allocate memory for the current joint-rotations */
-	tmp = rig->jnt_num * VEC4_SIZE;
-	if(!(rig->jnt_rot = malloc(tmp)))
-		goto err_free_arrs;
 
 	/* Initialize joint-matrices as identitiy-matrices */
 	for(i = 0; i < rig->jnt_num; i++)
 		mat4_idt(rig->jnt_mat[i]);
 
 	return rig;
-
-err_free_arrs:
-	if(rig->jnt_pos)
-		free(rig->jnt_pos);
-
-	if(rig->jnt_rot)
-		free(rig->jnt_rot);
 
 err_free_rig:
 	free(rig);
@@ -68,22 +49,29 @@ extern void rig_free(struct model_rig *rig)
 	if(!rig)
 		return;
 
-	free(rig->jnt_rot);
-	free(rig->jnt_pos);
 	free(rig);
 }
 
 
 static void rot_interp(vec4_t in1, vec4_t in2, float p, vec4_t out)
 {
-	vec4_t conv;
+	vec4_t conv = {1.0, 0.0, 0.0, 0.0};
+	float dot = vec4_dot(in1, in2);
+	float pi = 1.0 - p;
 
-	conv[0] = in1[0] + (in2[0] - in1[0]) * p;
-	conv[1] = in1[1] + (in2[1] - in1[1]) * p;
-	conv[2] = in1[2] + (in2[2] - in1[2]) * p;
-	conv[3] = in1[3] + (in2[3] - in1[3]) * p;
+	if(dot < 0) {
+		conv[0] = pi * in1[0] + p * -in2[0];
+		conv[1] = pi * in1[1] + p * -in2[1];
+		conv[2] = pi * in1[2] + p * -in2[2];
+		conv[3] = pi * in1[3] + p * -in2[3];
+	} else {
+		conv[0] = pi * in1[0] + p * in2[0];
+		conv[1] = pi * in1[1] + p * in2[1];
+		conv[2] = pi * in1[2] + p * in2[2];
+		conv[3] = pi * in1[3] + p * in2[3];
+	}
 
-	vec4_cpy(out, conv);
+	vec4_nrm(conv, out);
 }
 
 static void pos_interp(vec3_t in1, vec3_t in2, float p, vec3_t out)
@@ -107,60 +95,53 @@ static void rig_calc_rec(struct model_rig *rig, int idx)
 	vec3_t p;
 	vec4_t r;
 	mat4_t mat;
-	mat4_t m;
 	int par;
+	static int c = 0;
+
+	mat4_t loc_posm;
+	mat4_t loc_rotm;
+	mat4_t loc_mat;
 
 	mdl = models[rig->model];
 	anim = &mdl->anim_buf[rig->anim];
 
-	/* Get last and next keyframe */
+	/* Get last and next keyframe
 	keyfr0 = &anim->keyfr_buf[(int)rig->c];
 	keyfr1 = &anim->keyfr_buf[(rig->c + 1) % anim->keyfr_num];
+	*/
+
+	rig->prog = 1;
+	keyfr0 = &anim->keyfr_buf[1];
+	keyfr1 = &anim->keyfr_buf[2];
 
 	/* 
-	 * Interpolate the rotation of the joint.
-	 */
-	rot_interp(keyfr0->rot[idx], keyfr1->rot[idx], rig->prog, r);
-
-	/* Copy rotation into rotation-list */
-	vec4_cpy(rig->jnt_rot[idx], r);
-
-	/*
-	 * Interpolate the position of the joint.
+	 * Interpolate the position and rotation of the joint.
 	 */
 	pos_interp(keyfr0->pos[idx], keyfr1->pos[idx], rig->prog, p);
-
-	/* Copy position into position-list */
-	vec3_cpy(rig->jnt_pos[idx], p);
+	rot_interp(keyfr0->rot[idx], keyfr1->rot[idx], rig->prog, r);
 
 	/*
-	 * Set the current animation-matrix for the joint.
+	 * Set local current animation-matrix for the joint.
 	 */
-
-	/* Add the rotation to the matrix */
-	mat4_rotq(mat, r[0], r[1], r[2], r[3]);
-
-	/* Add the position to the matrix */
-	mat4_pos(mat, p[0], p[1], p[2]);
+	mat4_idt(loc_rotm);
+	mat4_rotq(loc_rotm, r[0], r[1], r[2], r[3]);
+	mat4_idt(loc_posm);
+	mat4_pos(loc_posm, p[0], p[1], p[2]);
+	mat4_mult(loc_posm, loc_rotm, loc_mat);
 
 	/*
 	 * Add matrix to relative joint-matrix.
 	 */
-	mat4_mult(mdl->jnt_buf[idx].mat_rel, mat, mat);
+	mat4_mult(mdl->jnt_buf[idx].mat_rel, loc_mat, mat);
 
 	/*
 	 * Translate matrix to model-space.
 	 */
 	par = mdl->jnt_buf[idx].par; 
 	if(par >= 0)
-		mat4_mult(rig->jnt_mat[par], mat, m);
-	else
-		mat4_cpy(m, mat);
+		mat4_mult(rig->jnt_mat[par], mat, mat);
 
-	/*
-	 * Copy matrix into table.
-	 */
-	mat4_cpy(rig->jnt_mat[idx], m);
+	mat4_cpy(rig->jnt_mat[idx], mat);
 
 	/*
 	 * Call function recusivly for child-joints.
@@ -194,7 +175,7 @@ extern void rig_update(struct model_rig *rig)
 
 	/* Subtract the base matrices of the current joint-matrices */
 	for(i = 0; i < mdl->jnt_num; i++) {
-		mat4_mul(mdl->jnt_buf[i].mat, rig->jnt_mat[i],
+		mat4_mult(rig->jnt_mat[i], mdl->jnt_buf[i].mat_inv,
 				rig->jnt_mat[i]);
 	}
 }

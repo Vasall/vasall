@@ -41,13 +41,24 @@ struct mdl_col {
 
 struct mdl_joint;
 struct mdl_joint {
+	/* The null-terminated name of the joint */
 	char name[100];
+
+	/* The index of the parent-joint in the joint-array */
 	int par;
+
+	/* The number of child-joints and their indices in the joint-array */
 	int child_num;
 	int child_buf[10];
-	mat4_t mat_rel;
-	mat4_t mat_base;
-	mat4_t mat_inv;
+
+	/* The rest-matrix of the joint relative to the parent */
+	mat4_t loc_bind_mat;
+
+	/* The rest-matrix relative to the model-origin */
+	mat4_t bind_mat;
+
+	/* The inverse-rest-matrix relative to the model-origin */
+	mat4_t inv_bind_mat;
 };
 
 struct mdl_keyfr {

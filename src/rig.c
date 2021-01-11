@@ -105,14 +105,9 @@ static void rig_calc_rec(struct model_rig *rig, int idx)
 	mdl = models[rig->model];
 	anim = &mdl->anim_buf[rig->anim];
 
-	/* Get last and next keyframe
+	/* Get last and next keyframe */
 	keyfr0 = &anim->keyfr_buf[(int)rig->c];
 	keyfr1 = &anim->keyfr_buf[(rig->c + 1) % anim->keyfr_num];
-	*/
-
-	rig->prog = 1;
-	keyfr0 = &anim->keyfr_buf[1];
-	keyfr1 = &anim->keyfr_buf[2];
 
 	/* 
 	 * Interpolate the position and rotation of the joint.

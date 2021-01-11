@@ -7,7 +7,9 @@
 
 
 /*
+ *
  * 2D-Vector
+ *
  */
 
 extern void vec2_set(vec3_t out, float x, float y)
@@ -18,13 +20,11 @@ extern void vec2_set(vec3_t out, float x, float y)
 
 extern void vec2_clr(vec2_t in)
 {
-	/*  */
 	memset(in, 0, VEC2_SIZE);
 }
 
 extern void vec2_cpy(vec2_t out, vec2_t in)
 {
-	/*  */
 	memcpy(out, in, VEC2_SIZE);
 }
 
@@ -80,7 +80,6 @@ extern float vec2_len(vec2_t in)
 
 extern float vec2_sqrlen(vec2_t in)
 {
-	/*  */
 	return (in[0] * in[0]) + (in[1] * in[1]);
 }
 
@@ -99,19 +98,19 @@ extern void vec2_nrm(vec2_t in, vec2_t out)
 
 extern float vec2_dot(vec2_t v1, vec2_t v2)
 {
-	/*  */
-	return v1[0] * v2[0] + v1[1] * v2[1];
+	return (v1[0] * v2[0]) + (v1[1] * v2[1]);
 }
 
 extern void vec2_print(vec2_t v)
 {
-	/*  */
 	printf("%.2f/%.2f", v[0], v[1]);
 }
 
 
 /*
+ *
  * 3D-Vector
+ *
  */
 
 extern void vec3_set(vec3_t out, float x, float y, float z)
@@ -123,13 +122,11 @@ extern void vec3_set(vec3_t out, float x, float y, float z)
 
 extern void vec3_clr(vec3_t in)
 {
-	/*  */
 	memset(in, 0, VEC3_SIZE);
 }
 
 extern void vec3_cpy(vec3_t out, vec3_t in)
 {
-	/*  */
 	memcpy(out, in, VEC3_SIZE);
 }
 
@@ -198,7 +195,6 @@ extern float vec3_len(vec3_t in)
 
 extern float vec3_sqrlen(vec3_t in)
 {
-	/*  */
 	return ((in[0] * in[0]) + (in[1] * in[1]) + (in[2] * in[2]));
 }
 
@@ -227,7 +223,6 @@ extern void vec3_setlen(vec3_t in, float l, vec3_t out)
 
 extern float vec3_dot(vec3_t v1, vec3_t v2)
 {
-	/*  */
 	return (v1[0] * v2[0]) + (v1[1] * v2[1]) + (v1[2] * v2[2]);
 }
 
@@ -277,7 +272,10 @@ extern void vec3_rot_z(vec3_t in, float angle, vec3_t out)
 extern void vec3_rot_axes(vec3_t in, float angle, vec3_t axis, vec3_t out)
 {
 	mat3_t rmat;
-	float q0, q1, q2, q3;
+	float q0;
+	float q1;
+	float q2;
+	float q3;
 
 	vec3_nrm(axis, axis);
 	q0 = cos(angle / 2);
@@ -322,7 +320,10 @@ extern void vec3_calc_nrm(vec3_t p0, vec3_t p1, vec3_t p2, vec3_t nrm)
 
 extern float vec3_barry_centric(vec3_t p0, vec3_t p1, vec3_t p2, vec2_t pos)
 {
-	float det, l1, l2, l3;
+	float det;
+	float l1;
+	float l2;
+	float l3;
 
 	det = (p1[2] - p2[2]) * (p0[0]  - p2[0]) + (p2[0] - p1[0]) * (p0[2]  - p2[2]);
 	l1 = ((p1[2] - p2[2]) * (pos[0] - p2[0]) + (p2[0] - p1[0]) * (pos[1] - p2[2])) / det;
@@ -334,20 +335,32 @@ extern float vec3_barry_centric(vec3_t p0, vec3_t p1, vec3_t p2, vec2_t pos)
 
 extern void vec3_flip(vec3_t in, vec3_t out)
 {
-	out[0] = in[0] * -1.0;
-	out[1] = in[1] * -1.0;
-	out[2] = in[2] * -1.0;
+	out[0] = -in[0];
+	out[1] = -in[1];
+	out[2] = -in[2];
+}
+
+extern void vec3_interp(vec3_t v1, vec3_t v2, float p, vec3_t out)
+{
+	vec3_t conv;
+
+	conv[0] = v1[0] + (v2[0] - v1[0]) * p;
+	conv[1] = v1[1] + (v2[1] - v1[1]) * p;
+	conv[2] = v1[2] + (v2[2] - v1[2]) * p;
+
+	vec3_cpy(out, conv);
 }
 
 extern void vec3_print(vec3_t v)
 {
-	/*  */
 	printf("%.2f/%.2f/%.2f", v[0], v[1], v[2]);
 }
 
 
 /* 
+ * 
  * 4D-Vector
+ *
  */
 
 extern void vec4_set(vec4_t out, float x, float y, float z, float w)
@@ -360,13 +373,11 @@ extern void vec4_set(vec4_t out, float x, float y, float z, float w)
 
 extern void vec4_clr(vec4_t in)
 {
-	/*  */
 	memset(in, 0, VEC4_SIZE);
 }
 
 extern void vec4_cpy(vec4_t out, vec4_t in)
 {
-	/*  */
 	memcpy(out, in, VEC4_SIZE);
 }
 
@@ -427,7 +438,7 @@ extern void vec4_nrm(vec4_t in, vec4_t out)
 	out[3] = in[3] / len;
 }
 
-extern float  vec4_dot(vec4_t in1, vec4_t in2)
+extern float vec4_dot(vec4_t in1, vec4_t in2)
 {
 	return (in1[0] * in2[0]) + (in1[1] * in2[1]) + (in1[2] * in2[2]) +
 		(in1[3] * in2[3]);
@@ -435,6 +446,5 @@ extern float  vec4_dot(vec4_t in1, vec4_t in2)
 
 extern void vec4_print(vec4_t in)
 {
-	/*  */
 	printf("%.2f/%.2f/%.2f/%.2f", in[0], in[1], in[2], in[3]);
 }

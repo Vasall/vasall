@@ -1,4 +1,4 @@
-#include "mbasic.h"
+#include "extmath.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,10 +11,12 @@ extern float clamp(float v)
 	return v;
 }
 
+
 extern float dist(float x, float y, float xp, float yp)
 {
 	return (sqrt((x - xp) * (x - xp) + (y - yp) * (y - yp)));
 }
+
 
 extern float round(float v)
 {

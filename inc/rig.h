@@ -20,15 +20,15 @@
  * @jnt_buf: The matrices for each joint
  */
 struct model_rig {
-	short model;
+	short     model;
 	
-	short anim;
-	float prog;
-	char c;
-	uint32_t ts;
+	short     anim;
+	float     prog;
+	short     keyfr;
+	uint32_t  ts;
 
-	int jnt_num;
-	mat4_t jnt_mat[JOINT_MAX_NUM];
+	int       jnt_num;
+	mat4_t    jnt_mat[JOINT_MAX_NUM];
 };
 
 
@@ -51,7 +51,9 @@ extern void rig_free(struct model_rig *rig);
 
 
 /*
- * 
+ * Update the rig according to the current animation.
+ *
+ * @rig: Pointer to the rig to update
  */
 extern void rig_update(struct model_rig *rig);
 

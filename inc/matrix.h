@@ -26,7 +26,7 @@ extern void mat4_print(mat4_t m);
 
 extern void mat4_std(mat4_t m);
 
-extern void mat4_pos(mat4_t m, float x, float y, float z);
-extern void mat4_rotq(mat4_t m, float w, float x, float y, float z);
+extern void mat4_fpos(mat4_t m, float x, float y, float z);
+extern void mat4_fqat(mat4_t m, float w, float x, float y, float z);
 
 #endif

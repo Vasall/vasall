@@ -35,11 +35,8 @@ struct mdl_col {
 	int3_t         *cm_idx;
 	vec3_t         *cm_nrm;
 	vec4_t         *cm_equ;
-
-
 };
 
-struct mdl_joint;
 struct mdl_joint {
 	/* The null-terminated name of the joint */
 	char name[100];

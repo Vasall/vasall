@@ -7,7 +7,6 @@ extern struct model_rig *rig_derive(short slot)
 {
 	struct model_rig *rig;
 	struct model *mdl;
-	int tmp;
 	int i;
 
 	if(mdl_check_slot(slot))
@@ -37,10 +36,6 @@ extern struct model_rig *rig_derive(short slot)
 		mat4_idt(rig->jnt_mat[i]);
 
 	return rig;
-
-err_free_rig:
-	free(rig);
-	return NULL;
 }
 
 
@@ -96,7 +91,6 @@ static void rig_calc_rec(struct model_rig *rig, int idx)
 	vec4_t r;
 	mat4_t mat;
 	int par;
-	static int c = 0;
 
 	mat4_t loc_posm;
 	mat4_t loc_rotm;
@@ -127,7 +121,7 @@ static void rig_calc_rec(struct model_rig *rig, int idx)
 	/*
 	 * Add matrix to relative joint-matrix.
 	 */
-	mat4_mult(mdl->jnt_buf[idx].mat_rel, loc_mat, mat);
+	mat4_mult(mdl->jnt_buf[idx].loc_bind_mat, loc_mat, mat);
 
 	/*
 	 * Translate matrix to model-space.
@@ -170,7 +164,7 @@ extern void rig_update(struct model_rig *rig)
 
 	/* Subtract the base matrices of the current joint-matrices */
 	for(i = 0; i < mdl->jnt_num; i++) {
-		mat4_mult(rig->jnt_mat[i], mdl->jnt_buf[i].mat_inv,
+		mat4_mult(rig->jnt_mat[i], mdl->jnt_buf[i].inv_bind_mat,
 				rig->jnt_mat[i]);
 	}
 }

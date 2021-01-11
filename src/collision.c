@@ -5,6 +5,7 @@
 #include <math.h>
 #include <stdint.h>
 
+
 extern int col_create_pnt(struct col_pln *pln, vec3_t p0, vec3_t p1, vec3_t p2)
 {
 	vec3_t tmp0;
@@ -53,14 +54,12 @@ extern int col_create_nrm(struct col_pln *pln, vec3_t p, vec3_t nrm)
 
 extern int col_facing(struct col_pln *pln, vec3_t dir)
 {
-	float dot = vec3_dot(pln->normal, dir);
-	return (dot <= 0);
+	return (vec3_dot(pln->normal, dir) <= 0);
 }
 
 
 extern float col_dist(struct col_pln *pln, vec3_t p)
 {
-	/*  */
 	return vec3_dot(p, pln->normal) + pln->equation[3];
 }
 
@@ -179,6 +178,10 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 		/* Calculate denominator */
 		float normalDotVelocity = vec3_dot(pln.normal, pck->velocity);
 
+		float t = 1.0;
+		int foundCollision = 0;
+		vec3_t collisionPoint;
+
 		/* If sphere is traveling parallel to the plane */
 		if(normalDotVelocity == 0.0f) {
 			if(fabs(signedDistToTrianglePlane) >= 1.0f) {
@@ -226,16 +229,6 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 			if (t1 > 1.0) t1 = 1.0;
 		}
 
-
-		/*
-		 * OK, at this point we have two time values t0 and t1 between which the
-		 * swept sphere intersects with the triangle plane. If any collision is
-		 * to occur it must happen within this interval.
-		 */
-		vec3_t collisionPoint;
-		float t = 1.0;
-		int foundCollision = 0;
-
 		/* 
 		 * First we check for the easy case - collision inside the
 		 * triangle. If this happens it must be at time t0 as this is
@@ -280,7 +273,6 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 			float edgeSqrLen;
 			float edgeDotVel;
 			float edgeDotBaseToVtx;
-			float velDot;
 
 			/*
 			 * Set variables for checking points.
@@ -419,7 +411,6 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 		}
 
 		if(foundCollision == 1) {
-			vec3_t del;
 			float dist;
 
 			dist = t * vec3_len(pck->velocity);

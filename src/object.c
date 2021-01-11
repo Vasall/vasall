@@ -562,8 +562,6 @@ static void checkCollision(struct col_pck *pck)
 	int j;
 	int k;
 
-	vec3_t tmp;
-
 	struct model *mdl;
 
 	/* Go through all objects */
@@ -852,7 +850,6 @@ extern void obj_move(short slot)
 	short inp_num;
 
 	vec3_t grav = {0.0, 0.0, -9.81};
-	vec3_t tmp;
 
 
 	/* Check if objects is defined */

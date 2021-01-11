@@ -1,7 +1,7 @@
 #ifndef _VECTOR_H
 #define _VECTOR_H
 
-#include "mbasic.h"
+#include "extmath.h"
 #include "matrix.h"
 
 #define TO_RADS (3.14/180.0)
@@ -55,6 +55,7 @@ extern void   vec3_trans(vec3_t in, mat3_t mat, vec3_t out);
 extern void   vec3_calc_nrm(vec3_t p0, vec3_t p1, vec3_t p2, vec3_t nrm);
 extern float  vec3_barry_centric(vec3_t p0, vec3_t p1, vec3_t p2, vec2_t pos);
 extern void   vec3_flip(vec3_t in, vec3_t out);
+extern void   vec3_interp(vec3_t v1, vec3_t v2, float p, vec3_t out);
 extern void   vec3_print(vec3_t in);
 
 

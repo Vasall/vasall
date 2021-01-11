@@ -1,4 +1,6 @@
 #include "rig.h"
+
+#include "quaternion.h"
 #include "model.h"
 #include "sdl.h"
 
@@ -26,7 +28,7 @@ extern struct model_rig *rig_derive(short slot)
 	/* Initialize the rig-attributes */
 	rig->model = slot;
 	rig->anim = 0;
-	rig->c = 0;
+	rig->keyfr = 0;
 	rig->prog = 0;
 	rig->ts = 0;
 	rig->jnt_num = mdl->jnt_num;
@@ -45,39 +47,6 @@ extern void rig_free(struct model_rig *rig)
 		return;
 
 	free(rig);
-}
-
-
-static void rot_interp(vec4_t in1, vec4_t in2, float p, vec4_t out)
-{
-	vec4_t conv = {1.0, 0.0, 0.0, 0.0};
-	float dot = vec4_dot(in1, in2);
-	float pi = 1.0 - p;
-
-	if(dot < 0) {
-		conv[0] = pi * in1[0] + p * -in2[0];
-		conv[1] = pi * in1[1] + p * -in2[1];
-		conv[2] = pi * in1[2] + p * -in2[2];
-		conv[3] = pi * in1[3] + p * -in2[3];
-	} else {
-		conv[0] = pi * in1[0] + p * in2[0];
-		conv[1] = pi * in1[1] + p * in2[1];
-		conv[2] = pi * in1[2] + p * in2[2];
-		conv[3] = pi * in1[3] + p * in2[3];
-	}
-
-	vec4_nrm(conv, out);
-}
-
-static void pos_interp(vec3_t in1, vec3_t in2, float p, vec3_t out)
-{
-	vec3_t conv;
-
-	conv[0] = in1[0] + (in2[0] - in1[0]) * p;
-	conv[1] = in1[1] + (in2[1] - in1[1]) * p;
-	conv[2] = in1[2] + (in2[2] - in1[2]) * p;
-
-	vec3_cpy(out, conv);
 }
 
 static void rig_calc_rec(struct model_rig *rig, int idx);
@@ -100,22 +69,22 @@ static void rig_calc_rec(struct model_rig *rig, int idx)
 	anim = &mdl->anim_buf[rig->anim];
 
 	/* Get last and next keyframe */
-	keyfr0 = &anim->keyfr_buf[(int)rig->c];
-	keyfr1 = &anim->keyfr_buf[(rig->c + 1) % anim->keyfr_num];
+	keyfr0 = &anim->keyfr_buf[rig->keyfr];
+	keyfr1 = &anim->keyfr_buf[(rig->keyfr + 1) % anim->keyfr_num];
 
 	/* 
 	 * Interpolate the position and rotation of the joint.
 	 */
-	pos_interp(keyfr0->pos[idx], keyfr1->pos[idx], rig->prog, p);
-	rot_interp(keyfr0->rot[idx], keyfr1->rot[idx], rig->prog, r);
+	vec3_interp(keyfr0->pos[idx], keyfr1->pos[idx], rig->prog, p);
+	qat_interp(keyfr0->rot[idx], keyfr1->rot[idx], rig->prog, r);
 
 	/*
 	 * Set local current animation-matrix for the joint.
 	 */
 	mat4_idt(loc_rotm);
-	mat4_rotq(loc_rotm, r[0], r[1], r[2], r[3]);
+	mat4_fqat(loc_rotm, r[0], r[1], r[2], r[3]);
 	mat4_idt(loc_posm);
-	mat4_pos(loc_posm, p[0], p[1], p[2]);
+	mat4_fpos(loc_posm, p[0], p[1], p[2]);
 	mat4_mult(loc_posm, loc_rotm, loc_mat);
 
 	/*
@@ -152,10 +121,10 @@ extern void rig_update(struct model_rig *rig)
 	rig->prog += 0.005;
 	if(rig->prog >= 1.0) {
 		rig->prog -= 1.0;
-		rig->c = (rig->c + 1);
+		rig->keyfr = (rig->keyfr + 1);
 
-		if(rig->c >= anim->keyfr_num - 1) {
-			rig->c = 0;
+		if(rig->keyfr >= anim->keyfr_num - 1) {
+			rig->keyfr = 0;
 		}
 	}
 

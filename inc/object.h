@@ -1,10 +1,10 @@
 #ifndef _OBJECT_H
 #define _OBJECT_H
 
+#include "extmath.h"
 #include "vector.h"
 #include "matrix.h"
 #include "shape.h"
-#include "mbasic.h"
 #include "sdl.h"
 #include "asset.h"
 #include "model.h"

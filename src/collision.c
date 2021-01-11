@@ -1,5 +1,6 @@
 #include "collision.h"
-#include "mbasic.h"
+
+#include "extmath.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>

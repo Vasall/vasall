@@ -1,6 +1,7 @@
 #include "sdl.h"
+
 #include "error.h"
-#include "mbasic.h"
+#include "extmath.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -109,6 +110,7 @@ extern int sdl_fill_rounded(surf_t *surf, int xo, int yo, int w, int h,
 	return  0;
 }
 
+
 extern rect_t sdl_rect(int x, int y, int w, int h)
 {
 	static rect_t r;
@@ -133,6 +135,7 @@ extern color_t sdl_color(int r, int g, int b, int a)
 
 	return col;
 }
+
 
 extern rect_t *sdl_rect_s(int x, int y, int w, int h)
 {

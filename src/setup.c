@@ -40,8 +40,6 @@ int load_resources(void)
 	if(tex_load_png("flr", "res/textures/floor.png") < 0)
 		return -1;
 
-	printf("a\n");
-
 	/* models */
 	if(mdl_load("wld", "res/models/plane.amo", tex_get("flr"), shd_get("mdl")) < 0)
 		return -1;

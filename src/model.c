@@ -112,8 +112,8 @@ extern short mdl_set(char *name)
 	/* Copy the key for this model */
 	strcpy(mdl->name, name);
 
-	/* Set type of the model */
-	mdl->type = MDL_BARE;
+	/* Set attribute-mask of the model */
+	mdl->attr_m = MDL_M_NONE;
 
 	/* Initialize model-attributes */
 	mdl->vao = 0;
@@ -132,7 +132,7 @@ extern short mdl_set(char *name)
 	mdl->jnt_num = 0;
 	mdl->jnt_buf = NULL;
 	mdl->jnt_root = -1;
-		
+
 	/* Initialize animation-attributes */
 	mdl->anim_buf = NULL;
 
@@ -235,9 +235,6 @@ extern void mdl_set_data(short slot, int vtxnum, float *vtx, float *tex,
 	if(jnt && wgt) {
 		/* With joints and weights */
 		vtx_size = (12 * sizeof(float)) + (4 * sizeof(int));
-
-		/* Set the model-type */
-		mdl->type = MDL_RIG; 
 	}
 	else {
 		/* Just the bare mesh(vtx-positions, uv-coord, nrm-vec) */
@@ -269,7 +266,7 @@ extern void mdl_set_data(short slot, int vtxnum, float *vtx, float *tex,
 		memcpy(ptr, nrm + (i * 3), VEC3_SIZE);
 		ptr += VEC3_SIZE;
 
-		if(mdl->type >= MDL_RIG) {
+		if(mdl->attr_m & AMO_M_RIG) {
 			memcpy(ptr, jnt + (i * 4), INT4_SIZE);
 			ptr += INT4_SIZE;
 
@@ -296,12 +293,12 @@ extern void mdl_set_data(short slot, int vtxnum, float *vtx, float *tex,
 	/* Tex-Coordinate */
 	p = (void *)(3 * sizeof(float));
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, vtx_size, p);
-	
+
 	/* Normal-Vector */
 	p = (void *)(5 * sizeof(float));
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, vtx_size, p);
 
-	if(mdl->type >= MDL_RIG) {
+	if(mdl->attr_m & AMO_M_RIG) {
 		/* Joint-Index */
 		p = (void *)(8 * sizeof(float));
 		glVertexAttribIPointer(3, 4, GL_INT, vtx_size, p);
@@ -422,7 +419,7 @@ static void mdl_calc_joint(struct model *mdl, short slot)
 
 	/* Attach base-matrix to joint */
 	mat4_cpy(jnt->bind_mat, mat);
-	
+
 	/* Call function recursivly on child-joints */
 	for(i = 0; i < jnt->child_num; i++)
 		mdl_calc_joint(mdl, jnt->child_buf[i]);
@@ -468,6 +465,9 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 	mdl_set_texture(slot, tex_slot);
 	mdl_set_shader(slot, shd_slot);
 
+	/* Copy the attribute-mask of the model */
+	mdl->attr_m = data->attr_m;
+
 	/* 
 	 * Get an OpenGL-mesh from the returned data-struct. This is required as
 	 * OpenGL requires that each vertex contains a position, texture-coord,
@@ -481,7 +481,8 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 	amo_getdata(data, &vtxnum, (void **)&vtx, (void **)&tex, (void **)&nrm,
 			(void **)&jnt, (void **)&wgt, &idxnum, &idx);
 
-	printf("Path: %s\n", pth);
+	printf("Name: %s\n", name);
+	printf("Mask: %u\n", mdl->attr_m);
 
 	/* Attach data to the model */
 	mdl_set_data(slot, vtxnum, vtx, tex, nrm, jnt, wgt, idxnum, idx);
@@ -539,10 +540,7 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 	}
 
 	/* Copy animations */
-	if(data->data_m & AMO_DM_ANI) {
-		/* Set type of the model */
-		mdl->type = MDL_ANIM;
-
+	if(data->attr_m & AMO_M_ANI) {
 		/* Copy number of animations */
 		mdl->anim_num = data->ani_c;
 
@@ -570,7 +568,7 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 
 			/* Get duration of the animation */
 			anim->dur = data->ani_lst[i].dur;
-			
+
 			/* Copy number of keyframes */
 			anim->keyfr_num = data->ani_lst[i].keyfr_c;
 
@@ -618,110 +616,101 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 		}
 	}
 
-	/* Copy collision-boxes */
-	mdl->col_mask = 0;
-	if(data->data_m & AMO_DM_COL) {
-		/*
-		 * If a broadphase-collision-box is defined.
-		 */
-		if(data->col_mask & AMO_COLM_BP) {
-			/* Update the collision-mask */
-			mdl->col_mask |= COL_M_BP;
+	/*
+	 * If a broadphase-collision-box is defined.
+	 */
+	if(data->attr_m & AMO_M_CBP) {
+		printf("Load CBP\n");
 
-			/* Copy the position and size of collision-box */
-			vec3_cpy(mdl->col.bp_col.pos, data->bp_col.pos);
-			vec3_cpy(mdl->col.bp_col.scl, data->bp_col.scl);
-		}
-		/* 
-		 * If a near-elipsoid is defined.
-		 */
-		if(data->col_mask & AMO_COLM_NE) {
-			mdl->col_mask |= COL_M_NE;
+		/* Copy the position and size of collision-box */
+		vec3_cpy(mdl->col.bp_col.pos, data->bp_col.pos);
+		vec3_cpy(mdl->col.bp_col.scl, data->bp_col.scl);
+	}
+	/* 
+	 * If a near-elipsoid is defined.
+	 */
+	if(data->attr_m & AMO_M_CNE) {
+		printf("Load CNE\n");
+		/* Copy the position and size of collision-box */
+		vec3_cpy(mdl->col.ne_col.pos, data->ne_col.pos);
+		vec3_cpy(mdl->col.ne_col.scl, data->ne_col.scl);
 
-			/* Copy the position and size of collision-box */
-			vec3_cpy(mdl->col.ne_col.pos, data->ne_col.pos);
-			vec3_cpy(mdl->col.ne_col.scl, data->ne_col.scl);
+		/* Calculate "change of basis" matrix */
+		mat3_idt(mdl->col.ne_cbs);
+		mdl->col.ne_cbs[0] = 1.0 / mdl->col.ne_col.scl[0];
+		mdl->col.ne_cbs[4] = 1.0 / mdl->col.ne_col.scl[1];
+		mdl->col.ne_cbs[8] = 1.0 / mdl->col.ne_col.scl[2];
+	}
 
-			/* Calculate "change of basis" matrix */
-			mat3_idt(mdl->col.ne_cbs);
-			mdl->col.ne_cbs[0] = 1.0 / mdl->col.ne_col.scl[0];
-			mdl->col.ne_cbs[4] = 1.0 / mdl->col.ne_col.scl[1];
-			mdl->col.ne_cbs[8] = 1.0 / mdl->col.ne_col.scl[2];
-		}
+	/*
+	 * If a collision-mesh is defined.
+	 */
+	if(data->attr_m & AMO_M_CCM) {
+		printf("Load CCM\n");
 
-		/*
-		 * If a collision-mesh is defined.
-		 */
-		if(data->col_mask & AMO_COLM_CM) {
-			/* Update collision-mask */
-			mdl->col_mask |= COL_M_CM;
+		/* Copy number of vertices and faces */
+		mdl->col.cm_vtx_c = data->cm_vtx_c;
+		mdl->col.cm_tri_c = data->cm_idx_c;
 
-			/* Copy number of vertices and faces */
-			mdl->col.cm_vtx_c = data->cm_vtx_c;
-			mdl->col.cm_tri_c = data->cm_idx_c;
+		/* Allocate memory for vertices */
+		tmp = data->cm_vtx_c * VEC3_SIZE;
+		if(!(mdl->col.cm_vtx = malloc(tmp)))
+			goto err_free_data;
 
-			printf("Load collision-mesh: %d\n", data->cm_idx_c);
+		/* Copy vertex-data */
+		memcpy(mdl->col.cm_vtx, data->cm_vtx_buf, tmp);
 
-			/* Allocate memory for vertices */
-			tmp = data->cm_vtx_c * VEC3_SIZE;
-			if(!(mdl->col.cm_vtx = malloc(tmp)))
-				goto err_free_data;
+		/* Allocate memory for indices */
+		tmp = data->cm_idx_c * INT3_SIZE;
+		if(!(mdl->col.cm_idx = malloc(tmp)))
+			goto err_free_data;
 
-			/* Copy vertex-data */
-			memcpy(mdl->col.cm_vtx, data->cm_vtx_buf, tmp);
+		/* Copy index-data */
+		memcpy(mdl->col.cm_idx, data->cm_idx_buf, tmp);
 
-			/* Allocate memory for indices */
-			tmp = data->cm_idx_c * INT3_SIZE;
-			if(!(mdl->col.cm_idx = malloc(tmp)))
-				goto err_free_data;
+		/* Allocate memory for the normal-vectors */
+		tmp = mdl->col.cm_tri_c * VEC3_SIZE;
+		if(!(mdl->col.cm_nrm = malloc(tmp)))
+			goto err_free_data;
 
-			/* Copy index-data */
-			memcpy(mdl->col.cm_idx, data->cm_idx_buf, tmp);
+		/* Allocate memory for the equations */
+		tmp = mdl->col.cm_tri_c * VEC4_SIZE;
+		if(!(mdl->col.cm_equ = malloc(tmp)))
+			goto err_free_data;
 
-			/* Allocate memory for the normal-vectors */
-			tmp = mdl->col.cm_tri_c * VEC3_SIZE;
-			if(!(mdl->col.cm_nrm = malloc(tmp)))
-				goto err_free_data;
+		/* Calculate plane- and normal-vectors */
+		for(i = 0; i < mdl->col.cm_tri_c; i++) {
+			int3_t cur;
+			vec3_t a;
+			vec3_t b;
+			vec3_t c;
+			vec3_t del1;
+			vec3_t del2;
+			vec3_t nrm;
 
-			/* Allocate memory for the equations */
-			tmp = mdl->col.cm_tri_c * VEC4_SIZE;
-			if(!(mdl->col.cm_equ = malloc(tmp)))
-				goto err_free_data;
+			memcpy(cur, mdl->col.cm_idx[i], INT3_SIZE);
 
-			/* Calculate plane- and normal-vectors */
-			for(i = 0; i < mdl->col.cm_tri_c; i++) {
-				int3_t cur;
-				vec3_t a;
-				vec3_t b;
-				vec3_t c;
-				vec3_t del1;
-				vec3_t del2;
-				vec3_t nrm;
+			vec3_cpy(a, mdl->col.cm_vtx[cur[0]]);
+			vec3_cpy(b, mdl->col.cm_vtx[cur[1]]);
+			vec3_cpy(c, mdl->col.cm_vtx[cur[2]]);
 
-				memcpy(cur, mdl->col.cm_idx[i], INT3_SIZE);
+			/* Calculate the plane-vectors */
+			vec3_sub(b, a, del1);
+			vec3_sub(c, a, del2);
 
-				vec3_cpy(a, mdl->col.cm_vtx[cur[0]]);
-				vec3_cpy(b, mdl->col.cm_vtx[cur[1]]);
-				vec3_cpy(c, mdl->col.cm_vtx[cur[2]]);
+			/* Calculate the normal-vector */
+			vec3_cross(del1, del2, nrm);
+			vec3_nrm(nrm, nrm);
 
-				/* Calculate the plane-vectors */
-				vec3_sub(b, a, del1);
-				vec3_sub(c, a, del2);
+			/* Copy the normal-vector */
+			vec3_cpy(mdl->col.cm_nrm[i], nrm);
 
-				/* Calculate the normal-vector */
-				vec3_cross(del1, del2, nrm);
-				vec3_nrm(nrm, nrm);
-
-				/* Copy the normal-vector */
-				vec3_cpy(mdl->col.cm_nrm[i], nrm);
-
-				/* Set the equation */
-				mdl->col.cm_equ[i][0] = a[0];
-				mdl->col.cm_equ[i][1] = a[1];
-				mdl->col.cm_equ[i][2] = a[2];
-				mdl->col.cm_equ[i][3] = -(nrm[0] * a[0] +
-						nrm[1] * a[1] + nrm[2] * a[2]);
-			}
+			/* Set the equation */
+			mdl->col.cm_equ[i][0] = a[0];
+			mdl->col.cm_equ[i][1] = a[1];
+			mdl->col.cm_equ[i][2] = a[2];
+			mdl->col.cm_equ[i][3] = -(nrm[0] * a[0] +
+					nrm[1] * a[1] + nrm[2] * a[2]);
 		}
 	}
 
@@ -778,7 +767,7 @@ extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
 
 	/* Use texture */
 	tex_use(mdl->tex);
-	
+
 	/* Set the uniform-variables */
 	glUniformMatrix4fv(loc[0], 1, GL_FALSE, pos_mat);
 	glUniformMatrix4fv(loc[1], 1, GL_FALSE, rot_mat);

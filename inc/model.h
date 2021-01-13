@@ -74,21 +74,20 @@ struct mdl_anim {
 	struct mdl_keyfr  *keyfr_buf;
 };
 
-enum mdl_type {
-	MDL_BARE = 1,
-	MDL_RIG  = 2,
-	MDL_ANIM = 3
-};
+#define MDL_M_NONE 0
+#define MDL_M_MDL AMO_M_MDL
+#define MDL_M_RIG AMO_M_RIG
+#define MDL_M_ANI AMO_M_ANI
 
-#define COL_M_NONE 0
-#define COL_M_BP (1<<0)
-#define COL_M_NE (1<<1)
-#define COL_M_CM (1<<2)
+#define MDL_M_CBP AMO_M_CBP
+#define MDL_M_CNE AMO_M_CNE
+#define MDL_M_CCM AMO_M_CCM
+#define MDL_M_COL (MDL_M_CBP|AMO_M_CNE|AMO_M_CCM)
 
 struct model {
 	short             slot;
 	char              name[9];
-	enum mdl_type     type;
+	uint32_t          attr_m;
 	unsigned int      vao;
 	
 	unsigned int      idx_bao;

@@ -85,40 +85,13 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 		/* Attach a rig to the object */
 		objects.rig[slot] = NULL;
 		if(mask & OBJ_M_RIG) {
-			if(models[model]->type >= MDL_RIG) {
+			if(models[model]->attr_m & MDL_M_RIG) {
 				if(!(objects.rig[slot] = rig_derive(model)))
 					goto err_reset_slot;
 			}
 		}
 	}
 
-	objects.col[slot].mask = COL_M_NONE;
-	if(mask & OBJ_M_SOLID) {
-		/* Copy collision-mask */
-		objects.col[slot].mask = models[model]->col_mask;
-	}
-
-#if 0
-	/* Initialize collision-buffers if requested */
-	object.col[slot].mask = OBJ_COLM_NONE;
-	if(mask & OBJ_M_SOLID) {
-		/* Add broadphase-collision if possible */
-		if(models[model].col_mask & MDL_COLM_BP) {
-			int tmp;
-			cube_t box = models[model].col.bpcol;
-
-			/* Add the collision-box to the collision-system */
-			if(wld_col_add(slot, pos, box, &tmp) < 0)
-				goto err_reset_slot;
-
-			/* Update the collision-mask */
-			objects.col[slot].mask |= OBJ_COLM_BP;
-
-			/* Set the index of the bp-collider */
-			objects.col[slot].bpcol = tmp;
-		}
-	}
-#endif
 
 	/* Initialize the position and rotation matrices */
 	mat4_idt(objects.mat_pos[slot]);
@@ -565,6 +538,8 @@ static void checkCollision(struct col_pck *pck)
 
 	struct model *mdl;
 
+	static int c = 0;
+
 	/* Go through all objects */
 	for(i = 0; i < OBJ_SLOTS; i++) {
 		if(objects.mask[i] == OBJ_M_NONE)
@@ -581,7 +556,7 @@ static void checkCollision(struct col_pck *pck)
 		mdl = models[objects.mdl[i]];
 
 		/* TODO: Check collision with other player-objects */
-		if((mdl->col_mask & COL_M_CM) == 0)
+		if((mdl->attr_m & MDL_M_CCM) == 0)
 			continue;
 
 		/* Go through all triangles */

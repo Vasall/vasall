@@ -18,7 +18,7 @@ extern struct model_rig *rig_derive(short slot)
 	if(!mdl || mdl->status != MDL_OK)
 		return NULL;
 
-	if(mdl->type < MDL_RIG)
+	if(!(mdl->attr_m & MDL_M_RIG))
 		return NULL;
 
 	/* Allocate memory for the rig-struct */
@@ -48,6 +48,7 @@ extern void rig_free(struct model_rig *rig)
 
 	free(rig);
 }
+
 
 static void rig_calc_rec(struct model_rig *rig, int idx);
 static void rig_calc_rec(struct model_rig *rig, int idx)

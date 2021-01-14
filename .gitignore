@@ -8,8 +8,11 @@
 /obj
 /tools
 /dev
-/lib
+/lib/*
 /cli-dbg
+
+# Make exception for amoloader_lib
+!/lib/amoloader_lib
 
 # for ctags vim
 /tags

@@ -8,7 +8,7 @@
 /obj
 /tools
 /dev
-/lib
+/lib/*
 /cli-dbg
 
 # Make exception for amoloader_lib

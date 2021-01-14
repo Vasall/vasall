@@ -49,6 +49,7 @@ extern void rig_free(struct model_rig *rig)
 	free(rig);
 }
 
+
 static void rig_calc_rec(struct model_rig *rig, int idx);
 static void rig_calc_rec(struct model_rig *rig, int idx)
 {	

@@ -28,20 +28,6 @@ update_lcp() {
 	cd ../..
 }
 
-update_amoloader() {
-	echo "Updating amoloader"
-	if [ ! -d "lib/amoloader" ]; then
-		git clone https://github.com/Vasall/amoloader.git lib/amoloader
-		cd lib/amoloader
-	else
-		cd lib/amoloader
-		git pull
-	fi
-
-	make
-	cd ../..
-}
-
 check_lib SDL2/SDL.h SDL2
 check_lib SDL2/SDL_ttf.h SDL_ttf
 check_lib SDL2/SDL_image.h SDL_image
@@ -52,7 +38,6 @@ check_lib gmpxx.h GMP
 echo ""
 
 update_lcp
-update_amoloader
 
 echo ""
 

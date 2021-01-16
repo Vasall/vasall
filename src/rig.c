@@ -49,7 +49,6 @@ extern void rig_free(struct model_rig *rig)
 	free(rig);
 }
 
-
 static void rig_calc_rec(struct model_rig *rig, int idx);
 static void rig_calc_rec(struct model_rig *rig, int idx)
 {	
@@ -64,7 +63,7 @@ static void rig_calc_rec(struct model_rig *rig, int idx)
 
 	mat4_t loc_posm;
 	mat4_t loc_rotm;
-	mat4_t loc_mat;
+	mat4_t loc_trans_mat;
 
 	mdl = models[rig->model];
 	anim = &mdl->anim_buf[rig->anim];
@@ -86,12 +85,12 @@ static void rig_calc_rec(struct model_rig *rig, int idx)
 	mat4_fqat(loc_rotm, r[0], r[1], r[2], r[3]);
 	mat4_idt(loc_posm);
 	mat4_fpos(loc_posm, p[0], p[1], p[2]);
-	mat4_mult(loc_posm, loc_rotm, loc_mat);
+	mat4_mult(loc_posm, loc_rotm, loc_trans_mat);
 
 	/*
 	 * Add matrix to relative joint-matrix.
 	 */
-	mat4_mult(mdl->jnt_buf[idx].loc_bind_mat, loc_mat, mat);
+	mat4_mult(mdl->jnt_buf[idx].loc_bind_mat, loc_trans_mat, mat);
 
 	/*
 	 * Translate matrix to model-space.

@@ -17,5 +17,6 @@ jobs:
 
       - name: make
         run: |
-          mkdir obj bin
+          mkdir -p obj
+          mkdir -p bin
           make

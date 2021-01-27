@@ -49,6 +49,7 @@ extern void rig_free(struct model_rig *rig)
 	free(rig);
 }
 
+
 static void rig_calc_rec(struct model_rig *rig, int idx);
 static void rig_calc_rec(struct model_rig *rig, int idx)
 {	
@@ -118,7 +119,7 @@ extern void rig_update(struct model_rig *rig)
 	anim = &mdl->anim_buf[rig->anim];
 
 	/* Update the progress */
-	rig->prog += 0.005;
+	rig->prog += 0.05;
 	if(rig->prog >= 1.0) {
 		rig->prog -= 1.0;
 		rig->keyfr = (rig->keyfr + 1);

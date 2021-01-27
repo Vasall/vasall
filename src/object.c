@@ -181,6 +181,10 @@ extern int obj_mod(short slot, short attr, void *data, int len)
 			vec3_cpy(objects.vel[slot], data);
 			break;
 
+		case(OBJ_A_DIR):
+			vec3_cpy(objects.dir[slot], data);
+			break;
+
 		case(OBJ_A_BUF):
 			objects.len[slot] = len;
 			memcpy(objects.data[slot], data, len);
@@ -857,7 +861,9 @@ extern void obj_move(short slot)
 	}
 
 	vec2_cpy(mov, objects.mov[slot]);
+#if 0
 	vec3_cpy(dir, objects.dir[slot]);
+#endif
 
 	inp_i = -1;
 	inp_num = objects.inp[slot].num;
@@ -937,7 +943,9 @@ extern void obj_move(short slot)
 				vel[1] = 0;
 			}
 
+#if 0
 			vec3_nrm(vel, dir);
+#endif
 
 			if(objects.mark_flg[slot]) {	
 				if(run_ts == objects.mark[slot].ts) {
@@ -960,7 +968,9 @@ extern void obj_move(short slot)
 			vec3_cpy(objects.pos[slot], pos);
 			vec3_cpy(objects.vel[slot], vel);
 			vec2_cpy(objects.mov[slot], mov);
+#if 0
 			vec3_cpy(objects.dir[slot], dir);
+#endif
 			return;
 		}
 

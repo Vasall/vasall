@@ -742,6 +742,9 @@ extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
 	int attr;
 	int vari;
 
+	void *poff;
+	int rng;
+
 	if(mdl_check_slot(slot))
 		return;
 
@@ -781,7 +784,9 @@ extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
 	}
 
 	/* Draw the vertices */
-	glDrawElements(GL_TRIANGLES, mdl->idx_num, GL_UNSIGNED_INT, 0);  
+	poff = (void *)0;
+	rng = mdl->idx_num;
+	glDrawElements(GL_TRIANGLES, rng, GL_UNSIGNED_INT, poff);
 
 	/* Unuse the texture, shader and VAO */
 	tex_unuse();

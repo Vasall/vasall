@@ -40,6 +40,18 @@ extern void sdl_close(void)
 }
 
 
+extern void sdl_lock_mouse(enum sdl_mouse_mode mode)
+{
+	SDL_bool f;
+
+	if(mode == SDL_MOUSE_LOCK)
+		f = SDL_TRUE;
+	else
+		f = SDL_FALSE;
+
+	SDL_SetRelativeMouseMode(f);
+}
+
 extern int sdl_fill_rounded(surf_t *surf, int xo, int yo, int w, int h,
 		color_t col, short *cor)
 {

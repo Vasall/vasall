@@ -42,7 +42,8 @@
 #define OBJ_A_POS      (1<<2)
 #define OBJ_A_VEL      (1<<3)
 #define OBJ_A_MOV      (1<<4)
-#define OBJ_A_BUF      (1<<5)
+#define OBJ_A_DIR      (1<<5)
+#define OBJ_A_BUF      (1<<6)
 
 #define OBJ_A_ALL (OBJ_A_ID|OBJ_A_MASK|OBJ_A_POS|OBJ_A_VEL|OBJ_A_MOV|OBJ_A_BUF)
 

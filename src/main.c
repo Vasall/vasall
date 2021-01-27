@@ -60,7 +60,7 @@ int main(void)
 	}
 
 	/* Initialize the camera */
-	if(cam_init(45.0, 800.0 / 600.0, 0.1, 1000.0) < 0) {
+	if(cam_init(60.0, 800.0 / 600.0, 0.24, 1000.0) < 0) {
 		ERR_LOG(("Failed to setup camera"));
 		goto err_close_input;
 	}
@@ -88,7 +88,10 @@ int main(void)
 		ERR_LOG(("Failed to setup core-handler"));
 		goto err_close_obj;
 	}
-	
+
+	/*
+	 * TODO: Automatically login
+	 */
 	net_insert("unrealguthrie\0", "CAT12345\0", &test1, &test2);
 
 	while(core.running) {

@@ -238,13 +238,24 @@ extern void cam_update(void)
 	if(camera.trg_obj >= 0) {
 		vec3_t pos;
 		vec3_t tmp;
+		vec3_t dir;
 
 		vec3_cpy(pos, objects.ren_pos[camera.trg_obj]);
 
+		/*
 		pos[2] += 1.0;
 
 		vec3_scl(camera.forward, camera.dist, tmp);
 		vec3_add(pos, tmp, camera.pos);
+		*/
+
+		camera.pos[0] = pos[0];
+		camera.pos[1] = pos[1];
+		camera.pos[2] = pos[2] + 1.85;
+
+		vec3_cpy(dir, camera.forward);
+		dir[2] = 0.0;
+		obj_mod(camera.trg_obj, OBJ_A_DIR, dir, 0);
 	}
 
 	cam_update_view();

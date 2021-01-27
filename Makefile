@@ -10,7 +10,7 @@
 # ------------------------------------------------
 
 # Name of the created executable
-TARGET     := vasall-client
+TARGET     := client
 
 # Get the absolute path to the directory this makefile is in
 MKFILE_PTH := $(abspath $(lastword $(MAKEFILE_LIST)))

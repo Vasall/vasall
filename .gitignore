@@ -12,7 +12,7 @@
 /cli-dbg
 
 # Make exception for amoloader_lib
-!/lib/amoloader_lib
+!/lib/amoloader
 
 # for ctags vim
 /tags

@@ -188,8 +188,8 @@ struct amo_model {
  * 
  * @pth: The file path to the dot-amo file
  * 
- * Returns: Returns the array containing the models read from the given dot-amo
- *          file
+ * Returns: Returns a buffer containing the model-data read from the given
+ *          dot-amo file
  */
 AMO_API struct amo_model *amo_load(const char *pth);
 

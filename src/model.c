@@ -197,6 +197,7 @@ extern void mdl_del(short slot)
 	if(mdl->anim_buf) {
 		for(i = 0; i < mdl->anim_num; i++) {
 			for(j = 0; j < mdl->anim_buf[i].keyfr_num; j++) {
+				free(mdl->anim_buf[i].keyfr_buf[j].mask);
 				free(mdl->anim_buf[i].keyfr_buf[j].pos);
 				free(mdl->anim_buf[i].keyfr_buf[j].rot);
 			}
@@ -442,6 +443,7 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 
 	int i;
 	int j;
+	int k;
 
 	/* Helper-variables */
 	int tmp;
@@ -593,6 +595,11 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 				amo_keyfr = &data->ani_lst[i].keyfr_lst[j];
 
 				/* Allocate memory for location-data */
+				tmp = mdl->jnt_num * sizeof(char);
+				if(!(keyfr->mask = malloc(tmp)))
+					goto err_free_data;	
+
+				/* Allocate memory for location-data */
 				tmp = mdl->jnt_num * VEC3_SIZE;
 				if(!(keyfr->pos = malloc(tmp)))
 					goto err_free_data;
@@ -602,16 +609,37 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 				if(!(keyfr->rot = malloc(tmp)))
 					goto err_free_data;
 
+				/* Reset masks */
+				for(k = 0; k < mdl->jnt_num; k++)
+					keyfr->mask[k] = -1;
+
+					
 				/* Copy timestamp */
 				keyfr->prog = data->ani_lst[i].keyfr_lst[j].prog;
 
-				/* Copy location-data */
-				tmp = mdl->jnt_num * VEC3_SIZE;
-				memcpy(keyfr->pos, amo_keyfr->pos, tmp);
+				/* Copy position and rotation data */
+				for(k = 0; k < amo_keyfr->jnt_num; k++) {
+					short jnti;
+					int a_off;
 
-				/* Copy rotation-data */
-				tmp = mdl->jnt_num * VEC4_SIZE;
-				memcpy(keyfr->rot, amo_keyfr->rot, tmp);
+					/* Get the joint-index in the joint-list */
+					jnti = amo_keyfr->jnt[k];
+
+					/* mask */
+					keyfr->mask[jnti] = jnti;
+
+					/* position */
+					a_off = k * 3;
+					memcpy(keyfr->pos[jnti], 
+							amo_keyfr->pos + a_off,
+							VEC3_SIZE);
+
+					/* rotation */
+					a_off = k * 4;
+					memcpy(keyfr->rot[jnti],
+							amo_keyfr->rot + a_off,
+							VEC4_SIZE);
+				}
 			}
 		}
 	}
@@ -780,7 +808,7 @@ extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
 	/* If a rig is given pass to OpenGL for animation */
 	if(rig != NULL) {
 		glUniformMatrix4fv(loc[4], mdl->jnt_num, GL_FALSE,
-				(float *)rig->jnt_mat);
+				(float *)rig->tran_mat);
 	}
 
 	/* Draw the vertices */

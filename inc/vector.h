@@ -2,13 +2,32 @@
 #define _VECTOR_H
 
 #include "extmath.h"
-#include "matrix.h"
 
-#define TO_RADS (3.14/180.0)
-
+#define DEG_TO_RAD (M_PI/180.0)
+#define RAD_TO_DEG (180.0/M_PI)
 
 #define VEC2_SIZE (sizeof(float)*2)
 typedef float vec2_t[2];
+
+#define VEC3_SIZE (sizeof(float)*3)
+typedef float vec3_t[3];
+
+#define VEC4_SIZE (sizeof(float)*4)
+typedef float vec4_t[4];
+
+#define INT2_SIZE (sizeof(int)*2)
+typedef int int2_t[2];
+
+#define INT3_SIZE (sizeof(int)*3)
+typedef int int3_t[3];
+
+#define INT4_SIZE (sizeof(int)*4)
+typedef int int4_t[4];
+
+#define SHORT2_SIZE (sizeof(short)*2)
+typedef short short2_t[2];
+
+#include "matrix.h"
 
 extern void   vec2_set(vec2_t out, float x, float y);
 extern void   vec2_clr(vec2_t in);
@@ -27,8 +46,6 @@ extern float  vec2_dot(vec2_t in1, vec2_t in2);
 extern void   vec2_print(vec2_t in);
 
 
-#define VEC3_SIZE (sizeof(float)*3)
-typedef float vec3_t[3];
 
 extern void   vec3_set(vec3_t out, float x, float y, float z);
 extern void   vec3_clr(vec3_t in);
@@ -59,8 +76,6 @@ extern void   vec3_interp(vec3_t v1, vec3_t v2, float p, vec3_t out);
 extern void   vec3_print(vec3_t in);
 
 
-#define VEC4_SIZE (sizeof(float)*4)
-typedef float vec4_t[4];
 
 extern void   vec4_set(vec4_t out, float x, float y, float z, float w);
 extern void   vec4_clr(vec4_t in);
@@ -73,17 +88,5 @@ extern float  vec4_len(vec4_t in);
 extern void   vec4_nrm(vec4_t in, vec4_t out);
 extern float  vec4_dot(vec4_t in1, vec4_t in2);
 extern void   vec4_print(vec4_t in);
-
-#define INT2_SIZE (sizeof(int)*2)
-typedef int int2_t[2];
-
-#define INT3_SIZE (sizeof(int)*3)
-typedef int int3_t[3];
-
-#define INT4_SIZE (sizeof(int)*4)
-typedef int int4_t[4];
-
-#define SHORT2_SIZE (sizeof(short)*2)
-typedef short short2_t[2];
 
 #endif

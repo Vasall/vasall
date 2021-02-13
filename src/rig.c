@@ -9,7 +9,6 @@ extern struct model_rig *rig_derive(short slot)
 {
 	struct model_rig *rig;
 	struct model *mdl;
-	int i;
 
 	if(mdl_check_slot(slot))
 		return NULL;
@@ -33,10 +32,6 @@ extern struct model_rig *rig_derive(short slot)
 	rig->ts = 0;
 	rig->jnt_num = mdl->jnt_num;
 
-	/* Initialize joint-matrices as identitiy-matrices */
-	for(i = 0; i < rig->jnt_num; i++)
-		mat4_idt(rig->jnt_mat[i]);
-
 	return rig;
 }
 
@@ -50,42 +45,86 @@ extern void rig_free(struct model_rig *rig)
 }
 
 
+static void rig_reset_loc(struct model_rig *rig)
+{
+	int i;
+
+	for(i = 0; i < rig->jnt_num; i++) {
+		vec3_set(rig->loc_pos[i], 0, 0, 0);
+		vec4_set(rig->loc_rot[i], 1, 0, 0, 0);
+	}
+}
+
+static void rig_calc_jnt(struct model_rig *rig, short anim, short *keyfr,
+		float prog)
+{
+	int i;
+	struct model *mdl;
+	struct mdl_anim *animp;
+	struct mdl_keyfr *keyfr0;
+	struct mdl_keyfr *keyfr1;
+	vec3_t p0, p1, p;
+	vec4_t r0, r1, r;
+
+	mdl = models[rig->model];
+	animp = &mdl->anim_buf[anim];
+	
+	keyfr0 = &animp->keyfr_buf[keyfr[0]];
+	keyfr1 = &animp->keyfr_buf[keyfr[1]];
+
+	for(i = 0; i < mdl->jnt_num; i++) {
+		if(keyfr0->mask[i] < 0 && keyfr1->mask[i] < 0)
+			continue;
+
+		if(keyfr0->mask[i] == -1) {
+			vec3_set(p0, 0, 0, 0);
+			vec4_set(r0, 1, 0, 0, 0);
+		}
+		else {
+			vec3_cpy(p0, keyfr0->pos[i]);
+			vec4_cpy(r0, keyfr0->rot[i]);
+		}
+
+		if(keyfr1->mask[i] == -1) {
+			vec3_set(p1, 0, 0, 0);
+			vec4_set(r1, 1, 0, 0, 0);
+		}
+		else {
+			vec3_cpy(p1, keyfr1->pos[i]);
+			vec4_cpy(r1, keyfr1->rot[i]);
+		}
+
+		vec3_interp(p0, p1, 0, p);
+		qat_interp(r0, r1, 0, r);
+
+		vec3_cpy(rig->loc_pos[i], p1);
+		vec4_cpy(rig->loc_rot[i], r);
+	}
+}
+
 static void rig_calc_rec(struct model_rig *rig, int idx);
 static void rig_calc_rec(struct model_rig *rig, int idx)
 {	
 	struct model *mdl;
-	struct mdl_anim *anim; 
-	struct mdl_keyfr *keyfr0, *keyfr1;
 	int i;
-	vec3_t p;
-	vec4_t r;
 	mat4_t mat;
 	int par;
 
 	mat4_t loc_posm;
 	mat4_t loc_rotm;
 	mat4_t loc_trans_mat;
+	vec4_t tmp;
 
 	mdl = models[rig->model];
-	anim = &mdl->anim_buf[rig->anim];
-
-	/* Get last and next keyframe */
-	keyfr0 = &anim->keyfr_buf[rig->keyfr];
-	keyfr1 = &anim->keyfr_buf[(rig->keyfr + 1) % anim->keyfr_num];
-
-	/* 
-	 * Interpolate the position and rotation of the joint.
-	 */
-	vec3_interp(keyfr0->pos[idx], keyfr1->pos[idx], rig->prog, p);
-	qat_interp(keyfr0->rot[idx], keyfr1->rot[idx], rig->prog, r);
 
 	/*
-	 * Set local current animation-matrix for the joint.
+	 * Set current local animation-matrix for the joint.
 	 */
 	mat4_idt(loc_rotm);
-	mat4_fqat(loc_rotm, r[0], r[1], r[2], r[3]);
+	vec4_cpy(tmp, rig->loc_rot[idx]);
+	mat4_fqat_s(loc_rotm, tmp[0], tmp[1], tmp[2], tmp[3]);
 	mat4_idt(loc_posm);
-	mat4_fpos(loc_posm, p[0], p[1], p[2]);
+	mat4_fpos(loc_posm, rig->loc_pos[idx]);
 	mat4_mult(loc_posm, loc_rotm, loc_trans_mat);
 
 	/*
@@ -94,13 +133,16 @@ static void rig_calc_rec(struct model_rig *rig, int idx)
 	mat4_mult(mdl->jnt_buf[idx].loc_bind_mat, loc_trans_mat, mat);
 
 	/*
-	 * Translate matrix to model-space.
+	 * Multiply with parent matrix if joint has a parent, to convert it from
+	 * local space to model space.
 	 */
-	par = mdl->jnt_buf[idx].par; 
-	if(par >= 0)
-		mat4_mult(rig->jnt_mat[par], mat, mat);
+	if((par = mdl->jnt_buf[idx].par) >= 0)
+		mat4_mult(rig->base_mat[par], mat, mat);
 
-	mat4_cpy(rig->jnt_mat[idx], mat);
+	/*
+	 * Write base matrix for joint.
+	 */
+	mat4_cpy(rig->base_mat[idx], mat);
 
 	/*
 	 * Call function recusivly for child-joints.
@@ -114,6 +156,7 @@ extern void rig_update(struct model_rig *rig)
 	struct model *mdl;
 	struct mdl_anim *anim;
 	int i;
+	short keyfr[2];
 
 	mdl = models[rig->model];
 	anim = &mdl->anim_buf[rig->anim];
@@ -129,12 +172,34 @@ extern void rig_update(struct model_rig *rig)
 		}
 	}
 
-	/* Calculate the joint-matrices */
+	/* 
+	 * Reset local position and rotation of each joint.
+	 */
+	rig_reset_loc(rig);
+
+	/* 
+	 * Calculate both the local position and rotation for each joint at
+	 * current time.
+	 */
+	keyfr[0] = 0;
+	keyfr[1] = 1;
+	rig_calc_jnt(rig, 0, keyfr, 0);
+
+	keyfr[0] = 0;
+	keyfr[1] = 1;
+	rig_calc_jnt(rig, 1, keyfr, 0);
+
+	/* 
+	 * Calculate the base matrix for each joint recursivly.
+	 */
 	rig_calc_rec(rig, mdl->jnt_root);
 
-	/* Subtract the base matrices of the current joint-matrices */
+	/*
+	 * Subtract the base matrices of the current joint-matrices to get the 
+	 * local tranform matrix.
+	 */
 	for(i = 0; i < mdl->jnt_num; i++) {
-		mat4_mult(rig->jnt_mat[i], mdl->jnt_buf[i].inv_bind_mat,
-				rig->jnt_mat[i]);
+		mat4_mult(rig->base_mat[i], mdl->jnt_buf[i].inv_bind_mat,
+				rig->tran_mat[i]);
 	}
 }

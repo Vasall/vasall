@@ -15,6 +15,9 @@ static vec3_t CAMERA_UP =    {0.0, 0.0, 1.0};
 
 extern int cam_init(float aov, float asp, float near, float far)
 {
+	/* Set the initial mode of the camera */
+	camera.mode = CAM_TPV;
+
 	/* Set the default position of the camera */
 	vec3_set(camera.pos, 0.0, 0.0, 0.0);
 
@@ -233,29 +236,39 @@ extern void cam_trg_obj(short obj)
 }
 
 
+extern void cam_tgl_view(void)
+{
+	camera.mode = (camera.mode == CAM_FPV) ? CAM_TPV : CAM_FPV;
+}
+
+
 extern void cam_update(void)
 {
 	if(camera.trg_obj >= 0) {
-		vec3_t pos;
-		vec3_t tmp;
-		vec3_t dir;
+		if(camera.mode == CAM_TPV) {
+			vec3_t pos;
+			vec3_t tmp;
 
-		vec3_cpy(pos, objects.ren_pos[camera.trg_obj]);
+			vec3_cpy(pos, objects.ren_pos[camera.trg_obj]);
+			pos[2] += 1;
 
-		/*
-		pos[2] += 1.0;
+			vec3_scl(camera.forward, camera.dist, tmp);
+			vec3_add(pos, tmp, camera.pos);
+		}
+		else if(camera.mode == CAM_FPV) {
+			vec3_t pos;
+			vec3_t dir;
 
-		vec3_scl(camera.forward, camera.dist, tmp);
-		vec3_add(pos, tmp, camera.pos);
-		*/
+			vec3_cpy(pos, objects.ren_pos[camera.trg_obj]);
 
-		camera.pos[0] = pos[0];
-		camera.pos[1] = pos[1];
-		camera.pos[2] = pos[2] + 1.85;
+			camera.pos[0] = pos[0];
+			camera.pos[1] = pos[1];
+			camera.pos[2] = pos[2] + 1.85;
 
-		vec3_cpy(dir, camera.forward);
-		dir[2] = 0.0;
-		obj_mod(camera.trg_obj, OBJ_A_DIR, dir, 0);
+			vec3_cpy(dir, camera.forward);
+			dir[2] = 0.0;
+			obj_mod(camera.trg_obj, OBJ_A_DIR, dir, 0);
+		}
 	}
 
 	cam_update_view();

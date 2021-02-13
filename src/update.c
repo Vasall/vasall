@@ -60,6 +60,10 @@ void game_proc_evt(SDL_Event *evt)
 			break;
 
 		case SDL_KEYDOWN:
+#if 0
+			printf("key: %d\n", evt->key.keysym.scancode);
+#endif
+
 			switch((int)evt->key.keysym.scancode) {
 				case 4:  /* Pressed A */
 					input.mov[0] = -1.0;
@@ -77,6 +81,9 @@ void game_proc_evt(SDL_Event *evt)
 				case 8:
 					objects.pos[0][2] = 10.0;
 					break;
+
+				case 23:
+					cam_tgl_view();
 			}
 			break;
 

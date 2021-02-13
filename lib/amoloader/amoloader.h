@@ -80,7 +80,11 @@ struct amo_joint {
 struct amo_keyfr {
 	float prog;
 
-	struct amo_joint  **joints;
+	int jnt_num;
+
+	struct amo_joint **joints;
+
+	short             *jnt;
 	float             *pos;
 	float             *rot;
 };

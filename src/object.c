@@ -542,8 +542,6 @@ static void checkCollision(struct col_pck *pck)
 
 	struct model *mdl;
 
-	static int c = 0;
-
 	/* Go through all objects */
 	for(i = 0; i < OBJ_SLOTS; i++) {
 		if(objects.mask[i] == OBJ_M_NONE)
@@ -676,78 +674,6 @@ static void collideWithWorld(struct col_pck *pck, vec3_t pos, vec3_t del, int re
 	collideWithWorld(pck, newBasePoint, newVelocityVector, recDepth, opos);
 }
 
-#if 0
-static int sphere_sweep(struct col_pck *pck, vec3_t pos, vec3_t del, vec3_t *opos)
-{
-	vec3_t cpos;
-	vec3_t cdel;
-	vec3_t dest;
-	struct col_pln first_plane;
-	int i;
-	float very_close_dist = 0.00005;
-	vec3_t tmpv;
-
-	int mask = 0;
-
-	vec3_cpy(cpos, pos);
-	vec3_cpy(cdel, del);
-	vec3_add(cpos, cdel, dest);
-
-	for(i = 0; i < 3; ++i) {
-		/* Fill collision-packet with the necessary data */
-		vec3_cpy(pck->velocity, cdel);
-		vec3_nrm(cdel, pck->normalizedVelocity);
-		vec3_cpy(pck->basePoint, cpos);
-		pck->foundCollision = 0;
-
-		/* Check if collisions occurred */
-		checkCollision(pck);
-		
-		if(!pck->foundCollision) {
-			vec3_cpy(*opos, dest);
-			return mask;
-		}
-	
-		mask = 1;
-
-		float dist = vec3_len(cdel) * pck->t;
-		float short_dist = MAX(dist - very_close_dist, 0.0f);
-		vec3_setlen(cdel, short_dist, tmpv);
-		vec3_add(cpos, tmpv, cpos);
-		
-		if (i == 0) {
-			float long_radius = 1.0f + very_close_dist;
-			float f;
-
-			first_plane = pck->pln;
-			
-			f = col_dist(&first_plane, dest) - long_radius;
-			vec3_scl(first_plane.normal, f, tmpv);
-			vec3_sub(dest, tmpv, dest);
-
-			vec3_sub(dest, cpos, cdel);
-		} 
-		else if (i == 1) {
-			struct col_pln second_plane = pck->pln;
-			vec3_t crease;
-		
-			vec3_cross(first_plane.normal, second_plane.normal, crease);
-			vec3_nrm(crease, crease);
-
-			vec3_sub(dest, cpos, tmpv);
-			float dis = vec3_dot(tmpv, crease);
-
-			vec3_scl(crease, dis, cdel);
-
-			vec3_add(cpos, cdel, dest);
-		}
-	}
-	
-	vec3_cpy(*opos, cpos);
-	return mask;
-}
-#endif
-
 static int collideAndSlide(short slot, vec3_t pos, vec3_t del, vec3_t opos)
 {		
 	struct col_pck pck;
@@ -820,7 +746,6 @@ extern void obj_move(short slot)
 	vec3_t del;
 	vec3_t prev;
 	vec2_t mov;
-	vec3_t dir;
 	float t_speed = 4.0;
 
 	uint32_t lim_ts;

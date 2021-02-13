@@ -61,6 +61,7 @@ struct mdl_joint {
 struct mdl_keyfr {
 	float prog;
 
+	char   *mask;
 	vec3_t *pos;
 	vec4_t *rot;
 };

@@ -272,7 +272,36 @@ extern void mat4_std(mat4_t m)
 	}
 }
 
-extern void mat4_fpos(mat4_t m, float x, float y, float z)
+extern void mat4_fpos(mat4_t m, vec3_t v)
+{	
+	m[0xc] = v[0];
+	m[0xd] = v[1];
+	m[0xe] = v[2];
+
+	m[0xf] = 1.0;
+}
+
+extern void mat4_fqat(mat4_t m, vec4_t v)
+{
+	m[0x0] = 1.0 - 2.0 * (v[2] * v[2] + v[3] * v[3]);
+	m[0x1] = 2.0 * (v[1] * v[2]) + 2.0 * (v[3] * v[0]);
+	m[0x2] = 2.0 * (v[1] * v[3]) - 2.0 * (v[2] * v[0]);
+	m[0x3] = 0.0;
+
+	m[0x4] = 2.0 * (v[1] * v[2]) - 2.0 * (v[3] * v[0]);
+	m[0x5] = 1.0 - 2.0 * (v[0] * v[0]) - 2.0 * (v[3] * v[3]);
+	m[0x6] = 2.0 * (v[2] * v[3]) + 2.0 * (v[1] * v[0]);
+	m[0x7] = 0.0;
+
+	m[0x8] = 2.0 * (v[1] * v[3]) + 2.0 * (v[2] * v[0]);
+	m[0x9] = 2.0 * (v[2] * v[3]) - 2.0 * (v[1] * v[0]);
+	m[0xa] = 1.0 - 2.0 * (v[1] * v[1]) - 2.0 * (v[2] * v[2]);
+	m[0xb] = 0.0;
+
+	m[0xf] = 1.0;
+}
+
+extern void mat4_fpos_s(mat4_t m, float x, float y, float z)
 {	
 	m[0xc] = x;
 	m[0xd] = y;
@@ -281,7 +310,7 @@ extern void mat4_fpos(mat4_t m, float x, float y, float z)
 	m[0xf] = 1.0;
 }
 
-extern void mat4_fqat(mat4_t m, float w, float x, float y, float z)
+extern void mat4_fqat_s(mat4_t m, float w, float x, float y, float z)
 {
 	m[0x0] = 1.0 - 2.0 * (y * y + z * z);
 	m[0x1] = 2.0 * (x * y) + 2.0 * (z * w);

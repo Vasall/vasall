@@ -6,9 +6,14 @@
 #include "matrix.h"
 #include "object.h"
 
-typedef enum {LEFT, RIGHT, FORWARD, BACK} Direction;
+enum cam_mode {
+	CAM_FPV,       /* first-person-view */
+	CAM_TPV        /* third-person-view */
+};
 
 struct camera_wrapper {
+	enum cam_mode mode;
+
 	vec3_t pos;
 	vec3_t dir;
 	vec3_t forward;
@@ -173,6 +178,8 @@ extern void cam_set(vec3_t pos, vec3_t trg);
  */
 extern void cam_trg_obj(short obj);
 
+
+extern void cam_tgl_view(void);
 
 /*
  * Update the camera.

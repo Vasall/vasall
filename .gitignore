@@ -12,6 +12,8 @@
 /cli-dbg
 
 # Make exception for amoloader_lib
+!/lib/amoloader/amoloader.h
+!/lib/amoloader/libamo.a
 
 # for ctags vim
 /tags

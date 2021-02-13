@@ -21,6 +21,7 @@ NOTICE
 
   This is only the client-application which requires a server to run. For 
   several reasons the server-application will stay private.
+  THE SERVER IS CURRENTLY DOWN!
 
 INSTALLATION
 

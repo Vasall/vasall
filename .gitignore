@@ -8,10 +8,12 @@
 /obj
 /tools
 /dev
-/lib
 /cli-dbg
 
-# Make exception for amoloader_lib
+# Make exception for amoloader-library-files
+lib/
+!lib/amoloader
+lib/amoloader/*
 !*/lib/amoloader/amoloader.h
 !*/lib/amoloader/libamo.a
 

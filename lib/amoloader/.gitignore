@@ -1,8 +1,0 @@
-# I'm using vim, therefore ignore swap- and utility-files used by vim
-*.swp
-*.swo
-*.vim
-
-# Ignore the object-files and the final binary
-*.o
-*.a

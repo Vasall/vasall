@@ -72,10 +72,10 @@ void game_proc_evt(SDL_Event *evt)
 					input.mov[0] = 1.0;
 					break;
 				case 22: /* Pressed S */
-					input.mov[1] = 1.0;
+					input.mov[1] = -1.0;
 					break;
 				case 26: /* Pressed W */
-					input.mov[1] = -1.0;
+					input.mov[1] = 1.0;
 					break;
 
 				case 8:
@@ -84,6 +84,19 @@ void game_proc_evt(SDL_Event *evt)
 
 				case 23:
 					cam_tgl_view();
+					break;
+
+				case 81: /* DOWN-ARROW */
+					objects.vagl[camera.trg_obj][1] -= 3.0;
+					if(objects.vagl[camera.trg_obj][1] < -90)
+						objects.vagl[camera.trg_obj][1] = -90;
+					break;
+
+				case 82: /* UP-ARROW */
+					objects.vagl[camera.trg_obj][1] += 3.0;
+					if(objects.vagl[camera.trg_obj][1] > 90)
+						objects.vagl[camera.trg_obj][1] = 90;
+					break;
 			}
 			break;
 
@@ -109,7 +122,7 @@ void game_proc_evt(SDL_Event *evt)
 			/* If left mouse button pressed */
 			if(evt->motion.state == SDL_BUTTON_LMASK) {
 				int x = -evt->motion.xrel;
-				int y = -evt->motion.yrel;
+				int y = evt->motion.yrel;
 
 				/* Rotate the camera */
 				cam_rot(x, y);
@@ -140,16 +153,18 @@ static void game_proc_input(void)
 	/* Rotate the camera */	
 	cam_rot(input.cam[0], input.cam[1]);
 
+	/* Update the camera */
+	cam_update();
 
 	/* Get direction of the camera */
-	vec2_set(right, camera.right[0], camera.right[1]);
+	vec2_cpy(right, camera.right);
 	vec2_nrm(right, right);
 
-	vec2_set(forw, camera.forward[0], camera.forward[1]);
+	vec2_cpy(forw, camera.forward);
 	vec2_nrm(forw, forw);
 
 	/* Combine input-direction and camera-direction */
-	vec2_scl(right, input.mov[0], right);
+	vec2_scl(right, -input.mov[0], right);
 	vec2_scl(forw, input.mov[1], forw);
 
 	vec2_add(forw, right, mov);

@@ -60,6 +60,6 @@ extern void rig_free(struct model_rig *rig);
  *
  * @rig: Pointer to the rig to update
  */
-extern void rig_update(struct model_rig *rig);
+extern void rig_update(struct model_rig *rig, float p);
 
 #endif

@@ -64,7 +64,7 @@ extern void test1(char *buf, int len)
 
 	uint32_t id = 10000;
 
-	vec3_t dir = {0.0, -1.0, 0.0};
+	vec3_t dir = {0.0, 1.0, 0.0};
 	vec3_t pos = {0.0, 0.0, 0.0};
 
 	if(buf || len) {/* Prevent warning for not using parameters */}

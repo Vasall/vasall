@@ -94,8 +94,8 @@ static void rig_calc_jnt(struct model_rig *rig, short anim, short *keyfr,
 			vec4_cpy(r1, keyfr1->rot[i]);
 		}
 
-		vec3_interp(p0, p1, 0, p);
-		qat_interp(r0, r1, 0, r);
+		vec3_interp(p0, p1, prog, p);
+		qat_interp(r0, r1, prog, r);
 
 		vec3_cpy(rig->loc_pos[i], p1);
 		vec4_cpy(rig->loc_rot[i], r);
@@ -151,7 +151,7 @@ static void rig_calc_rec(struct model_rig *rig, int idx)
 		rig_calc_rec(rig, mdl->jnt_buf[idx].child_buf[i]);
 }
 
-extern void rig_update(struct model_rig *rig)
+extern void rig_update(struct model_rig *rig, float p)
 {
 	struct model *mdl;
 	struct mdl_anim *anim;
@@ -181,9 +181,17 @@ extern void rig_update(struct model_rig *rig)
 	 * Calculate both the local position and rotation for each joint at
 	 * current time.
 	 */
-	keyfr[0] = 0;
-	keyfr[1] = 1;
-	rig_calc_jnt(rig, 0, keyfr, 0);
+	if(p < 0) {
+		keyfr[0] = 1;
+		keyfr[1] = 2;
+	}
+	else {
+		keyfr[0] = 1;
+		keyfr[1] = 0;
+	}
+
+	p = ABS(p / 90.0);
+	rig_calc_jnt(rig, 0, keyfr, p);
 
 	keyfr[0] = 0;
 	keyfr[1] = 1;

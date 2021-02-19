@@ -301,9 +301,9 @@ extern void vec3_trans(vec3_t in, mat3_t mat, vec3_t out)
 	vec3_t tmp;
 	vec3_cpy(tmp, in);
 
-	out[0] = tmp[0] * mat[0x0] + tmp[1] * mat[0x1] + tmp[2] * mat[0x2];
-	out[1] = tmp[0] * mat[0x3] + tmp[1] * mat[0x4] + tmp[2] * mat[0x5];
-	out[2] = tmp[0] * mat[0x6] + tmp[1] * mat[0x7] + tmp[2] * mat[0x8];
+	out[0] = tmp[0] * mat[0x0] + tmp[1] * mat[0x3] + tmp[2] * mat[0x6];
+	out[1] = tmp[0] * mat[0x1] + tmp[1] * mat[0x4] + tmp[2] * mat[0x7];
+	out[2] = tmp[0] * mat[0x2] + tmp[1] * mat[0x5] + tmp[2] * mat[0x8];
 }
 
 extern void vec3_calc_nrm(vec3_t p0, vec3_t p1, vec3_t p2, vec3_t nrm)
@@ -442,6 +442,17 @@ extern float vec4_dot(vec4_t in1, vec4_t in2)
 {
 	return (in1[0] * in2[0]) + (in1[1] * in2[1]) + (in1[2] * in2[2]) +
 		(in1[3] * in2[3]);
+}
+
+extern void vec4_trans(vec4_t in, mat4_t mat, vec4_t out)
+{
+	vec4_t tmp;
+	vec4_cpy(tmp, in);
+
+	out[0] = tmp[0] * mat[0x0] + tmp[1] * mat[0x4] + tmp[2] * mat[0x8] + tmp[3] * mat[0xc];
+	out[1] = tmp[0] * mat[0x1] + tmp[1] * mat[0x5] + tmp[2] * mat[0x9] + tmp[3] * mat[0xd];
+	out[2] = tmp[0] * mat[0x2] + tmp[1] * mat[0x6] + tmp[2] * mat[0xa] + tmp[3] * mat[0xe];
+	out[3] = tmp[0] * mat[0x3] + tmp[1] * mat[0x7] + tmp[2] * mat[0xb] + tmp[3] * mat[0xf];
 }
 
 extern void vec4_print(vec4_t in)

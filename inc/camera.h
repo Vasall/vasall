@@ -7,8 +7,8 @@
 #include "object.h"
 
 enum cam_mode {
-	CAM_FPV,       /* first-person-view */
-	CAM_TPV        /* third-person-view */
+	CAM_MODE_FPV,       /* first-person-view */
+	CAM_MODE_TPV        /* third-person-view */
 };
 
 struct camera_wrapper {
@@ -29,7 +29,9 @@ struct camera_wrapper {
 
 	mat4_t proj;
 	mat4_t view;
-	
+
+	float vagl[2];
+
 	float sens;
 };
 

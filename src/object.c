@@ -234,7 +234,7 @@ extern void obj_update_matrix(short slot)
 	rot = atan2(objects.dir[slot][1], objects.dir[slot][0]);
 	objects.mat_rot[slot][0x0] =  cos(rot);
 	objects.mat_rot[slot][0x1] =  sin(rot);
-	objects.mat_rot[slot][0x4] =  -sin(rot);
+	objects.mat_rot[slot][0x4] = -sin(rot);
 	objects.mat_rot[slot][0x5] =  cos(rot);
 }
 
@@ -958,7 +958,7 @@ extern void obj_sys_prerender(float interp)
 
 	for(i = 0; i < OBJ_SLOTS; i++) {
 		if(objects.mask[i] & OBJ_M_RIG) {
-			rig_update(objects.rig[i]);
+			rig_update(objects.rig[i], objects.vagl[1]);
 		}
 
 		if(objects.mask[i] & OBJ_M_MODEL) {

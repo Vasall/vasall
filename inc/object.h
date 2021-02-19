@@ -76,7 +76,11 @@ struct object_collision {
 
 struct object_table {
 	short                    num;
-	
+
+	/*
+	 * shareable object-attributes
+	 */
+
 	uint32_t                 mask[OBJ_SLOTS];
 	uint32_t                 id[OBJ_SLOTS];
 	
@@ -91,6 +95,7 @@ struct object_table {
 	struct model_rig         *rig[OBJ_SLOTS];
 	mat4_t                   mat_pos[OBJ_SLOTS];
 	mat4_t                   mat_rot[OBJ_SLOTS];
+	float                    vagl[OBJ_SLOTS][2]; /* 0: z-axis, 1: x-axis */
 
 	/* Collision */
 	struct object_collision  col[OBJ_SLOTS]; 

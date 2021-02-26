@@ -340,6 +340,17 @@ extern void vec3_flip(vec3_t in, vec3_t out)
 	out[2] = -in[2];
 }
 
+extern float vec3_angle(vec3_t v1, vec3_t v2)
+{
+	float a;
+	float b;
+
+	a = vec3_dot(v1, v2);
+	b = ABS(vec3_len(v1)) * ABS(vec3_len(v2));
+
+	return acos(a / b);
+}
+
 extern void vec3_interp(vec3_t v1, vec3_t v2, float p, vec3_t out)
 {
 	vec3_t conv;

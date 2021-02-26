@@ -868,10 +868,6 @@ extern void obj_move(short slot)
 				vel[1] = 0;
 			}
 
-#if 0
-			vec3_nrm(vel, dir);
-#endif
-
 			if(objects.mark_flg[slot]) {	
 				if(run_ts == objects.mark[slot].ts) {
 					vec3_cpy(pos, objects.mark[slot].pos);
@@ -893,9 +889,7 @@ extern void obj_move(short slot)
 			vec3_cpy(objects.pos[slot], pos);
 			vec3_cpy(objects.vel[slot], vel);
 			vec2_cpy(objects.mov[slot], mov);
-#if 0
-			vec3_cpy(objects.dir[slot], dir);
-#endif
+
 			return;
 		}
 
@@ -958,7 +952,32 @@ extern void obj_sys_prerender(float interp)
 
 	for(i = 0; i < OBJ_SLOTS; i++) {
 		if(objects.mask[i] & OBJ_M_RIG) {
-			rig_update(objects.rig[i], objects.vagl[1]);
+			float agl;
+			vec3_t up = {0, 0, 1};
+
+			agl = vec3_angle(up, objects.dir[i]);
+			agl = RAD_TO_DEG(agl) - 90.0;
+
+			if(i == core.obj) {
+				if(camera.mode == CAM_MODE_FPV) {
+					rig_update(objects.rig[i], 0);
+
+					vec3_t off = {0, 0, 1.6};
+					vec3_t rev = {0, 0, 1.8};
+					vec3_t rot_agl;
+					mat4_t rot;
+
+					vec3_set(rot_agl, agl, 0, 0);
+
+					mat4_idt(rot);
+					mat4_rfagl(rot, rot_agl);
+	
+					rig_fpv_rot(objects.rig[i], off, rev, rot);
+				}
+				else {
+					rig_update(objects.rig[i], -agl);
+				}
+			}
 		}
 
 		if(objects.mask[i] & OBJ_M_MODEL) {

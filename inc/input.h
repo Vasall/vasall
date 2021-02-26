@@ -33,7 +33,7 @@ struct input_wrapper {
 
 	/* The current input-buffer with the different input-values */
 	vec2_t mov;
-	vec2_t cam;
+	vec3_t cam;
 
 	/* The share-buffer to share with peers */
 	struct input_buffer share;

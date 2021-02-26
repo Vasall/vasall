@@ -64,7 +64,6 @@ extern void test1(char *buf, int len)
 
 	uint32_t id = 10000;
 
-	vec3_t dir = {0.0, 1.0, 0.0};
 	vec3_t pos = {0.0, 0.0, 0.0};
 
 	if(buf || len) {/* Prevent warning for not using parameters */}
@@ -76,11 +75,10 @@ extern void test1(char *buf, int len)
 	/* Setup camera */
 	cam_trg_obj(core.obj);
 	camera.dist = 3.0;
-	cam_set_dir(dir);
 
 	/* Update projection-matrix */
 	asp = (float)window.win_w / (float)window.win_h;
-	cam_proj_mat(45.0, asp, 0.24, 1000.0);
+	cam_proj_mat(45.0, asp, 0.18, 1000.0);
 
 	/* Switch from menuscreen to gamescreen */
 	node = ui_get(window.root, "mns");

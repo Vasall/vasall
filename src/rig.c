@@ -122,9 +122,9 @@ static void rig_calc_rec(struct model_rig *rig, int idx)
 	 */
 	mat4_idt(loc_rotm);
 	vec4_cpy(tmp, rig->loc_rot[idx]);
-	mat4_fqat_s(loc_rotm, tmp[0], tmp[1], tmp[2], tmp[3]);
+	mat4_rfqat_s(loc_rotm, tmp[0], tmp[1], tmp[2], tmp[3]);
 	mat4_idt(loc_posm);
-	mat4_fpos(loc_posm, rig->loc_pos[idx]);
+	mat4_pfpos(loc_posm, rig->loc_pos[idx]);
 	mat4_mult(loc_posm, loc_rotm, loc_trans_mat);
 
 	/*
@@ -209,5 +209,36 @@ extern void rig_update(struct model_rig *rig, float p)
 	for(i = 0; i < mdl->jnt_num; i++) {
 		mat4_mult(rig->base_mat[i], mdl->jnt_buf[i].inv_bind_mat,
 				rig->tran_mat[i]);
+	}
+}
+
+extern void rig_fpv_rot(struct model_rig *rig, vec3_t off_v, vec3_t rev_v,
+		mat4_t rot_m)
+{
+	int i;
+	mat4_t off_mov;
+	mat4_t off_rev;
+	mat4_t conv;
+
+	mat4_idt(off_mov);
+	off_mov[0xc] = -off_v[0];
+	off_mov[0xd] = -off_v[1];
+	off_mov[0xe] = -off_v[2];
+	
+	mat4_idt(off_rev);
+	off_rev[0xc] = rev_v[0];
+	off_rev[0xd] = rev_v[1];
+	off_rev[0xe] = rev_v[2];	
+
+	for(i = 0; i < rig->jnt_num; i++) {
+		mat4_cpy(conv, rig->tran_mat[i]);
+
+		mat4_mult(off_mov, conv, conv);
+
+		mat4_mult(rot_m, conv, conv);
+
+		mat4_mult(off_rev, conv, conv);
+
+		mat4_cpy(rig->tran_mat[i], conv);
 	}
 }

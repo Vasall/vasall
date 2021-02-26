@@ -28,10 +28,13 @@ extern void mat4_print(mat4_t m);
 
 extern void mat4_std(mat4_t m);
 
-extern void mat4_fpos(mat4_t m, vec3_t v);
-extern void mat4_fqat(mat4_t m, vec3_t v);
+extern void mat4_pfpos(mat4_t m, vec3_t v);
+extern void mat4_rfqat(mat4_t m, vec3_t v);
+extern void mat4_rfvec(mat4_t m, vec3_t v);
+extern void mat4_rfagl(mat4_t m, vec3_t v);
 
-extern void mat4_fpos_s(mat4_t m, float x, float y, float z);
-extern void mat4_fqat_s(mat4_t m, float w, float x, float y, float z);
+extern void mat4_pfpos_s(mat4_t m, float x, float y, float z);
+extern void mat4_rfqat_s(mat4_t m, float w, float x, float y, float z);
+extern void mat4_rfagl_s(mat4_t m, float x, float y, float z);
 
 #endif

@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <math.h>
 
 extern void mat3_zero(mat3_t m) 
 {
@@ -272,7 +272,7 @@ extern void mat4_std(mat4_t m)
 	}
 }
 
-extern void mat4_fpos(mat4_t m, vec3_t v)
+extern void mat4_pfpos(mat4_t m, vec3_t v)
 {	
 	m[0xc] = v[0];
 	m[0xd] = v[1];
@@ -281,7 +281,7 @@ extern void mat4_fpos(mat4_t m, vec3_t v)
 	m[0xf] = 1.0;
 }
 
-extern void mat4_fqat(mat4_t m, vec4_t v)
+extern void mat4_rfqat(mat4_t m, vec4_t v)
 {
 	m[0x0] = 1.0 - 2.0 * (v[2] * v[2] + v[3] * v[3]);
 	m[0x1] = 2.0 * (v[1] * v[2]) + 2.0 * (v[3] * v[0]);
@@ -301,7 +301,69 @@ extern void mat4_fqat(mat4_t m, vec4_t v)
 	m[0xf] = 1.0;
 }
 
-extern void mat4_fpos_s(mat4_t m, float x, float y, float z)
+extern void mat4_rfvec(mat4_t m, vec3_t v)
+{
+	vec3_t up = {0, 0, 1};
+	vec3_t xaxis;
+	vec3_t yaxis;
+
+	vec3_cross(up, v, xaxis);
+	vec3_nrm(xaxis, xaxis);
+
+	vec3_cross(v, xaxis, yaxis);
+	vec3_nrm(yaxis, yaxis);
+
+	mat4_idt(m);
+
+	m[0x0] = xaxis[0];
+	m[0x1] = yaxis[0];
+	m[0x2] = v[0];
+
+	m[0x4] = xaxis[1];
+	m[0x5] = yaxis[1];
+	m[0x6] = v[1];
+
+	m[0x8] = xaxis[2];
+	m[0x9] = yaxis[2];
+	m[0xa] = v[2];
+}
+
+/* x: pitch, y: roll, z: yaw; angles in euler */
+extern void mat4_rfagl(mat4_t m, vec3_t v)
+{
+	float x = DEG_TO_RAD(v[0]);
+	float y = DEG_TO_RAD(v[1]);
+	float z = DEG_TO_RAD(v[2]);
+
+	/* Yaw */
+	float cosY = cos(z);
+	float sinY = sin(z);
+
+	/* Pitch */
+	float cosP = cos(x);
+	float sinP = sin(x);
+
+	/* Roll */
+	float cosR = cos(y);
+	float sinR = sin(y);
+
+	mat4_idt(m);
+	m[0x0] = cosY * cosR + sinY * sinP * sinR;
+	m[0x1] = cosR * sinY * sinP - sinR * cosY;
+	m[0x2] = cosP * sinY;
+
+	m[0x4] = cosP * sinR;
+	m[0x5] = cosR * cosP;
+	m[0x6] = -sinP;
+
+	m[0x8] = sinR * cosY * sinP - sinY * cosR;
+	m[0x9] = sinY * sinR + cosR * cosY * sinP;
+	m[0xa] = cosP * cosY;
+
+
+}
+
+extern void mat4_pfpos_s(mat4_t m, float x, float y, float z)
 {	
 	m[0xc] = x;
 	m[0xd] = y;
@@ -310,7 +372,7 @@ extern void mat4_fpos_s(mat4_t m, float x, float y, float z)
 	m[0xf] = 1.0;
 }
 
-extern void mat4_fqat_s(mat4_t m, float w, float x, float y, float z)
+extern void mat4_rfqat_s(mat4_t m, float w, float x, float y, float z)
 {
 	m[0x0] = 1.0 - 2.0 * (y * y + z * z);
 	m[0x1] = 2.0 * (x * y) + 2.0 * (z * w);
@@ -328,4 +390,15 @@ extern void mat4_fqat_s(mat4_t m, float w, float x, float y, float z)
 	m[0xb] = 0.0;
 
 	m[0xf] = 1.0;
+}
+
+/* see mat4_rfagl() for parameter info */
+extern void mat4_rfagl_s(mat4_t m, float x, float y, float z)
+{
+	vec3_t v;
+	mat4_t c;
+
+	vec3_set(v, x, y, z);
+	mat4_rfagl(c, v);
+	mat4_cpy(m, c);
 }

@@ -9,9 +9,9 @@
 struct camera_wrapper camera;
 
 
-static vec3_t CAMERA_RIGHT = {1.0, 0.0, 0.0};
-static vec3_t CAMERA_FORW =  {0.0, 1.0, 0.0};
-static vec3_t CAMERA_UP =    {0.0, 0.0, 1.0};
+static vec3_t CAM_RIGHT = {1.0, 0.0, 0.0};
+static vec3_t CAM_FORWARD =  {0.0, 1.0, 0.0};
+static vec3_t CAM_UP =    {0.0, 0.0, 1.0};
 
 extern int cam_init(float aov, float asp, float near, float far)
 {
@@ -19,11 +19,11 @@ extern int cam_init(float aov, float asp, float near, float far)
 	camera.mode = CAM_MODE_TPV;
 
 	/* Set the default position of the camera */
-	vec3_set(camera.pos, 0.0, 0.0, 0.0);
+	vec3_clr(camera.pos);
 
 	/* Set the direction-vector for the camera */	
-	vec3_cpy(camera.forward, CAMERA_FORW);
-	vec3_cpy(camera.right,   CAMERA_RIGHT);
+	vec3_cpy(camera.v_forward, CAM_FORWARD);
+	vec3_cpy(camera.v_right,   CAM_RIGHT);
 
 	/* Set the sensitivity of the mouse */
 	camera.sens = 0.01;
@@ -76,10 +76,10 @@ extern void cam_get_pos(vec3_t pos)
 
 extern void cam_set_dir(vec3_t dir)
 {
-	vec3_cpy(camera.forward, dir);
-	vec3_nrm(camera.forward, camera.forward);
+	vec3_cpy(camera.v_forward, dir);
+	vec3_nrm(camera.v_forward, camera.v_forward);
 
-	vec3_cross(camera.forward, CAMERA_UP, camera.right);
+	vec3_cross(camera.v_forward, CAM_UP, camera.v_right);
 
 	cam_update_view();
 }
@@ -87,7 +87,7 @@ extern void cam_set_dir(vec3_t dir)
 
 extern void cam_get_dir(vec3_t dir)
 {
-	vec3_cpy(dir, camera.forward);
+	vec3_cpy(dir, camera.v_forward);
 }
 
 
@@ -103,29 +103,56 @@ extern void cam_zoom(int val)
 
 extern void cam_rot(float d_yaw, float d_pitch)
 {
+	d_yaw *= -camera.sens;
+	d_pitch *= camera.sens;
+
 	if(camera.mode == CAM_MODE_TPV) {
-		d_yaw *= camera.sens;
-		d_pitch *= camera.sens;
+		d_yaw = -d_yaw;
+	}
 
-		if(d_yaw != 0.0) {
-			vec3_rot_z(camera.forward, d_yaw, camera.forward);
+	if(d_yaw != 0.0) {
+		vec3_rot_z(camera.v_forward, d_yaw, camera.v_forward);
+	}
+
+	if(d_pitch != 0.0) {
+		vec3_rot_axes(camera.v_forward, d_pitch,
+				camera.v_right, camera.v_forward);
+	}
+
+	/*
+	 * Verify the pitch of the camera is in limits in FPV.
+	 */
+	if(camera.mode == CAM_MODE_FPV) {
+		float agl;
+
+		if(camera.v_forward[2] > 0) {	
+			agl = asin(camera.v_forward[2]);
+			agl = RAD_TO_DEG(agl);
+
+			if(agl > CAM_PITCH_LIM)
+				agl = CAM_PITCH_LIM;
+
+			agl = DEG_TO_RAD(agl);
+			camera.v_forward[2] = sin(agl);
+		}
+		else {
+			agl = asin(camera.v_forward[2]);
+			agl = RAD_TO_DEG(agl);
+
+			if(agl < -CAM_PITCH_LIM)
+				agl = -CAM_PITCH_LIM;
+
+			agl = DEG_TO_RAD(agl);
+			camera.v_forward[2] = sin(agl);
 		}
 
-		if(d_pitch != 0.0) {
-			vec3_rot_axes(camera.forward, d_pitch, 
-					camera.right, camera.forward);
-		}
-
-		vec3_nrm(camera.forward, camera.forward);
-
-		vec3_cross(camera.forward, CAMERA_UP, camera.right);
-		vec3_nrm(camera.right, camera.right);
+		vec3_nrm(camera.v_forward, camera.v_forward);
 	}
-	else if(camera.mode == CAM_MODE_FPV) {
-		short s = camera.trg_obj;
 
+	vec3_nrm(camera.v_forward, camera.v_forward);
 
-	}
+	vec3_cross(camera.v_forward, CAM_UP, camera.v_right);
+	vec3_nrm(camera.v_right, camera.v_right);
 }
 
 
@@ -143,18 +170,18 @@ extern void cam_look_at(vec3_t trg)
 {
 	if(vec3_cmp(camera.pos, trg)) {
 		printf("Target equal to cam position!\n");
-		vec3_cpy(camera.forward, CAMERA_FORW);
+		vec3_cpy(camera.v_forward, CAM_FORWARD);
 
-		vec3_cross(camera.forward, CAMERA_UP, camera.right);
-		vec3_nrm(camera.right, camera.right);
+		vec3_cross(camera.v_forward, CAM_UP, camera.v_right);
+		vec3_nrm(camera.v_right, camera.v_right);
 		return;
 	}
 
-	vec3_sub(trg, camera.pos, camera.forward);
-	vec3_nrm(camera.forward, camera.forward);
+	vec3_sub(trg, camera.pos, camera.v_forward);
+	vec3_nrm(camera.v_forward, camera.v_forward);
 
-	vec3_cross(camera.forward, CAMERA_UP, camera.right);
-	vec3_nrm(camera.right, camera.right);
+	vec3_cross(camera.v_forward, CAM_UP, camera.v_right);
+	vec3_nrm(camera.v_right, camera.v_right);
 }
 
 
@@ -195,8 +222,8 @@ extern void cam_update_view(void)
 	vec3_t right;
 	vec3_t up;
 
-	vec3_cpy(forward, camera.forward);
-	vec3_cpy(right, camera.right);
+	vec3_cpy(forward, camera.v_forward);
+	vec3_cpy(right,   camera.v_right);
 
 	vec3_flip(forward, forward);
 	vec3_flip(right, right);
@@ -235,11 +262,11 @@ extern void cam_set(vec3_t pos, vec3_t trg)
 {	
 	vec3_cpy(camera.pos, pos);
 
-	vec3_sub(pos, trg, camera.forward);
-	vec3_nrm(camera.forward, camera.forward);
+	vec3_sub(pos, trg, camera.v_forward);
+	vec3_nrm(camera.v_forward, camera.v_forward);
 
-	vec3_cross(CAMERA_UP, camera.forward, camera.right);
-	vec3_nrm(camera.right, camera.right);
+	vec3_cross(CAM_UP, camera.v_forward, camera.v_right);
+	vec3_nrm(camera.v_right, camera.v_right);
 
 	cam_update_view();
 }
@@ -257,6 +284,12 @@ extern void cam_tgl_view(void)
 }
 
 
+extern void cam_proc_input(void)
+{
+	vec3_cpy(objects.dir[camera.trg_obj], camera.v_forward);
+}
+
+
 extern void cam_update(void)
 {
 	if(camera.trg_obj >= 0) {
@@ -265,52 +298,19 @@ extern void cam_update(void)
 			vec3_t tmp;
 
 			vec3_cpy(pos, objects.ren_pos[camera.trg_obj]);
-			pos[2] += 1;
+			pos[2] += 1.8;
 
-			vec3_scl(camera.forward, -camera.dist, tmp);
+			vec3_scl(camera.v_forward, -camera.dist, tmp);
 			vec3_add(pos, tmp, camera.pos);
 		}
 		else if(camera.mode == CAM_MODE_FPV) {
-			struct model_rig *rig;
-			vec3_t dir;
-			int jnt_idx = 6;
-			mat4_t jnt_base_mat;
-			mat4_t jnt_tran_mat;
-			vec4_t relpos = {0.0, 0.002, 0.03, 1};
-			vec4_t forward = {0, 1, 0, 0};
-			vec4_t right = {1, 0, 0, 0};
 			vec3_t pos;
+			vec3_t tmp;
 
-			/* Get a pointer to the object-rig */
-			rig = objects.rig[camera.trg_obj];
-
-			/* Get both the local- and base-matrix of the joint */
-			mat4_cpy(jnt_base_mat, rig->base_mat[jnt_idx]);
-			mat4_cpy(jnt_tran_mat,  rig->tran_mat[jnt_idx]);
-
-			/* Translate relative position with joint-base-matrix */
-			vec4_trans(relpos, jnt_base_mat, relpos);
-			vec3_cpy(pos, relpos);
-
-			/* Convert forward vector using the local-joint-matrix */
-			vec4_trans(forward, jnt_tran_mat, forward);
-			vec4_trans(right,   jnt_tran_mat, right);
-
-			vec4_nrm(forward,   forward);
-			vec4_nrm(right,     right);	
-
-			/* Write position to camera */
-			vec3_add(pos, objects.ren_pos[camera.trg_obj], pos);
-
-			/* Write direction to camera */
-			vec3_cpy(camera.forward, forward);
-			vec3_cpy(camera.right, right);
+			vec3_cpy(pos, objects.ren_pos[camera.trg_obj]);
+			pos[2] += 1.8;
 
 			vec3_cpy(camera.pos, pos);
-
-			vec3_cpy(dir, camera.forward);
-			dir[2] = 0.0;
-			obj_mod(camera.trg_obj, OBJ_A_DIR, dir, 0);
 		}
 	}
 

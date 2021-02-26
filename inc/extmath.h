@@ -5,6 +5,9 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+#define DEG_TO_RAD(x) (M_PI/180.0*x)
+#define RAD_TO_DEG(x) (180.0/M_PI*x)
+
 #define ABS(x) ((x < 0) ? (-x) : (x))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))

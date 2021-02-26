@@ -62,4 +62,8 @@ extern void rig_free(struct model_rig *rig);
  */
 extern void rig_update(struct model_rig *rig, float p);
 
+
+extern void rig_fpv_rot(struct model_rig *rig, vec3_t off_v, vec3_t rev_v,
+		mat4_t rot_m);
+
 #endif

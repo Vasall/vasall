@@ -121,9 +121,9 @@ void game_proc_evt(SDL_Event *evt)
 		case SDL_MOUSEMOTION:
 			/* If left mouse button pressed */
 			if(evt->motion.state == SDL_BUTTON_LMASK) {
-				int x = -evt->motion.xrel;
+				int x = evt->motion.xrel;
 				int y = evt->motion.yrel;
-
+				
 				/* Rotate the camera */
 				cam_rot(x, y);
 			}
@@ -153,14 +153,14 @@ static void game_proc_input(void)
 	/* Rotate the camera */	
 	cam_rot(input.cam[0], input.cam[1]);
 
-	/* Update the camera */
-	cam_update();
+	/* Adjust the direction of the camera to the input */
+	cam_proc_input();
 
 	/* Get direction of the camera */
-	vec2_cpy(right, camera.right);
+	vec2_cpy(right, camera.v_right);
 	vec2_nrm(right, right);
 
-	vec2_cpy(forw, camera.forward);
+	vec2_cpy(forw, camera.v_forward);
 	vec2_nrm(forw, forw);
 
 	/* Combine input-direction and camera-direction */
@@ -268,6 +268,9 @@ void game_update(void)
 			net_broadcast(HDR_OP_UPD, pck, len);
 		}
 	}
+
+	/* Update the camera */
+	cam_update();
 }
 
 void game_render(void)

@@ -3,9 +3,6 @@
 
 #include "extmath.h"
 
-#define DEG_TO_RAD (M_PI/180.0)
-#define RAD_TO_DEG (180.0/M_PI)
-
 #define VEC2_SIZE (sizeof(float)*2)
 typedef float vec2_t[2];
 
@@ -72,6 +69,8 @@ extern void   vec3_trans(vec3_t in, mat3_t mat, vec3_t out);
 extern void   vec3_calc_nrm(vec3_t p0, vec3_t p1, vec3_t p2, vec3_t nrm);
 extern float  vec3_barry_centric(vec3_t p0, vec3_t p1, vec3_t p2, vec2_t pos);
 extern void   vec3_flip(vec3_t in, vec3_t out);
+extern float  vec3_angle(vec3_t v1, vec3_t v2);
+extern void   vec3_angle_v2(vec3_t, vec2_t out);
 extern void   vec3_interp(vec3_t v1, vec3_t v2, float p, vec3_t out);
 extern void   vec3_print(vec3_t in);
 

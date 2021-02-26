@@ -11,13 +11,16 @@ enum cam_mode {
 	CAM_MODE_TPV        /* third-person-view */
 };
 
+#define CAM_PITCH_LIM 50.0
+
 struct camera_wrapper {
 	enum cam_mode mode;
 
 	vec3_t pos;
 	vec3_t dir;
-	vec3_t forward;
-	vec3_t right;
+
+	vec3_t v_forward;
+	vec3_t v_right;
 
 	float aov;
 	float asp;
@@ -29,8 +32,6 @@ struct camera_wrapper {
 
 	mat4_t proj;
 	mat4_t view;
-
-	float vagl[2];
 
 	float sens;
 };
@@ -182,6 +183,9 @@ extern void cam_trg_obj(short obj);
 
 
 extern void cam_tgl_view(void);
+
+
+extern void cam_proc_input(void);
 
 /*
  * Update the camera.

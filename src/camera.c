@@ -31,12 +31,14 @@ extern int cam_init(float aov, float asp, float near, float far)
 	/* Calculate the initial distance */
 	camera.dist = vec3_len(camera.pos);
 
-	/* Create the projection matrix */
-	mat4_idt(camera.proj);
+	mat4_idt(camera.forw_m);
+
+	/* Create the proj_mection matrix */
+	mat4_idt(camera.proj_m);
 	cam_proj_mat(aov, asp, near, far);
 
 	/* Create the view-matrix */
-	mat4_idt(camera.view);
+	mat4_idt(camera.view_m);
 	cam_update_view();
 
 	camera.trg_obj = -1;
@@ -52,13 +54,13 @@ extern void cam_close(void)
 
 extern void cam_get_proj(mat4_t mat)
 {
-	mat4_cpy(mat, camera.proj);
+	mat4_cpy(mat, camera.proj_m);
 }
 
 
 extern void cam_get_view(mat4_t mat)
 {
-	mat4_cpy(mat, camera.view);
+	mat4_cpy(mat, camera.view_m);
 }
 
 
@@ -106,10 +108,6 @@ extern void cam_rot(float d_yaw, float d_pitch)
 	d_yaw *= -camera.sens;
 	d_pitch *= camera.sens;
 
-	if(camera.mode == CAM_MODE_TPV) {
-		d_yaw = -d_yaw;
-	}
-
 	if(d_yaw != 0.0) {
 		vec3_rot_z(camera.v_forward, d_yaw, camera.v_forward);
 	}
@@ -145,14 +143,31 @@ extern void cam_rot(float d_yaw, float d_pitch)
 			agl = DEG_TO_RAD(agl);
 			camera.v_forward[2] = sin(agl);
 		}
-
-		vec3_nrm(camera.v_forward, camera.v_forward);
 	}
 
 	vec3_nrm(camera.v_forward, camera.v_forward);
 
 	vec3_cross(camera.v_forward, CAM_UP, camera.v_right);
 	vec3_nrm(camera.v_right, camera.v_right);
+
+	/*
+	 * Calculate the forward-rotation-matrix.
+	 */
+	if(camera.mode == CAM_MODE_FPV) {
+		float yaw;
+		float pitch;
+		vec3_t f;
+
+		vec3_cpy(f, camera.v_forward);
+
+		yaw = atan2(f[0], f[1]);
+		pitch = -asin(f[2]);
+
+		yaw = RAD_TO_DEG(yaw);
+		pitch = RAD_TO_DEG(pitch);
+
+		mat4_rfagl_s(camera.forw_m, pitch, 0, yaw);
+	}
 }
 
 
@@ -205,30 +220,44 @@ extern void cam_proj_mat(float aov, float asp, float near, float far)
 	right = top * asp;
 	left = -right; 
 
-	camera.proj[0x0] = (2 * near) / (right - left);
-	camera.proj[0x5] = (2 * near) / (top - bottom); 	
-	camera.proj[0x8] = (right + left) / (right - left); 
-	camera.proj[0x9] = (top + bottom) / (top - bottom); 
-	camera.proj[0xa] = -(far + near) / (far - near); 
-	camera.proj[0xb] = -1; 
-	camera.proj[0xe] = (-2 * far * near) / (far - near); 
-	camera.proj[0xf] = 0;
+	camera.proj_m[0x0] = (2 * near) / (right - left);
+	camera.proj_m[0x5] = (2 * near) / (top - bottom); 	
+	camera.proj_m[0x8] = (right + left) / (right - left); 
+	camera.proj_m[0x9] = (top + bottom) / (top - bottom); 
+	camera.proj_m[0xa] = -(far + near) / (far - near); 
+	camera.proj_m[0xb] = -1; 
+	camera.proj_m[0xe] = (-2 * far * near) / (far - near); 
+	camera.proj_m[0xf] = 0;
 }
 
 
 extern void cam_update_view(void)
 {
-	vec3_t forward;
-	vec3_t right;
-	vec3_t up;
+	vec3_t f;
+	vec3_t r;
+	vec3_t u;
+	
 
-	vec3_cpy(forward, camera.v_forward);
-	vec3_cpy(right,   camera.v_right);
+	if(camera.mode == CAM_MODE_FPV) {
+		vec4_t tmp = {0, 1, 0};
+		vec4_trans(tmp, camera.forw_m, tmp);
 
-	vec3_flip(forward, forward);
-	vec3_flip(right, right);
+		vec3_cpy(f, tmp);
+		vec3_nrm(f, f);
 
-	vec3_cross(right, forward, up);
+		vec3_cross(f, CAM_UP, r);
+		vec3_nrm(r, r);
+	}
+	else {
+		vec3_cpy(f, camera.v_forward);
+		vec3_cpy(r, camera.v_right);
+	}
+
+	vec3_flip(f, f);
+	vec3_flip(r, r);
+
+	vec3_cross(r, f, u);
+	vec3_nrm(u, u);
 
 #if 0
 	printf("VIEW\n");
@@ -237,24 +266,24 @@ extern void cam_update_view(void)
 	printf("up: ");      vec3_print(up);      printf("\n");
 #endif
 
-	camera.view[0x0] = right[0];
-	camera.view[0x4] = right[1];
-	camera.view[0x8] = right[2];
+	camera.view_m[0x0] = r[0];
+	camera.view_m[0x4] = r[1];
+	camera.view_m[0x8] = r[2];
 
-	camera.view[0x1] = up[0];
-	camera.view[0x5] = up[1];
-	camera.view[0x9] = up[2];
+	camera.view_m[0x1] = u[0];
+	camera.view_m[0x5] = u[1];
+	camera.view_m[0x9] = u[2];
 
-	camera.view[0x2] = forward[0];
-	camera.view[0x6] = forward[1];
-	camera.view[0xa] = forward[2];
+	camera.view_m[0x2] = f[0];
+	camera.view_m[0x6] = f[1];
+	camera.view_m[0xa] = f[2];
 
-	camera.view[0xc] = (-right[0] * camera.pos[0]) - 
-		(right[1] * camera.pos[1]) - (right[2] * camera.pos[2]);
-	camera.view[0xd] = (-up[0] * camera.pos[0]) -
-		(up[1] * camera.pos[1]) - (up[2] * camera.pos[2]);
-	camera.view[0xe] = (-forward[0] * camera.pos[0]) -
-		(forward[1] * camera.pos[1]) - (forward[2] * camera.pos[2]);
+	camera.view_m[0xc] = (-r[0] * camera.pos[0]) - (r[1] * camera.pos[1]) -
+		(r[2] * camera.pos[2]);
+	camera.view_m[0xd] = (-u[0] * camera.pos[0]) - (u[1] * camera.pos[1]) -
+		(u[2] * camera.pos[2]);
+	camera.view_m[0xe] = (-f[0] * camera.pos[0]) - (f[1] * camera.pos[1]) -
+		(f[2] * camera.pos[2]);
 }
 
 
@@ -286,7 +315,9 @@ extern void cam_tgl_view(void)
 
 extern void cam_proc_input(void)
 {
-	vec3_cpy(objects.dir[camera.trg_obj], camera.v_forward);
+	if(camera.mode == CAM_MODE_FPV) {
+		vec3_cpy(objects.dir[camera.trg_obj], camera.v_forward);
+	}
 }
 
 
@@ -305,7 +336,6 @@ extern void cam_update(void)
 		}
 		else if(camera.mode == CAM_MODE_FPV) {
 			vec3_t pos;
-			vec3_t tmp;
 
 			vec3_cpy(pos, objects.ren_pos[camera.trg_obj]);
 			pos[2] += 1.8;

@@ -50,6 +50,9 @@ int load_resources(void)
 	if(mdl_load("tst", "res/models/test.amo", tex_get("ba1"), shd_get("mdl")) < 0)
 			return -1;
 
+	if(mdl_load("gun", "res/models/pistol.obj", tex_get("ba1"), shd_get("mdl")) < 0)
+			return -1;
+
 	printf("Finished loading resources\n");
 
 	return 0;
@@ -65,12 +68,14 @@ extern void test1(char *buf, int len)
 	uint32_t id = 10000;
 
 	vec3_t pos = {0.0, 0.0, 0.0};
+	vec3_t pos1 = {12, 0, 0};
 
 	if(buf || len) {/* Prevent warning for not using parameters */}
 
 	/* Place a slope */
 	obj_set(id, OBJ_M_STATIC, pos, mdl_get("wld"), NULL, 0, 0);
 	obj_set(id + 100, OBJ_M_STATIC, pos, mdl_get("tst"), NULL, 0, 0);
+	/* obj_set(id + 101, OBJ_M_STATIC|OBJ_M_RIG, pos1, mdl_get("plr"), NULL, 0, 0); */
 
 	/* Setup camera */
 	cam_trg_obj(core.obj);
@@ -83,6 +88,9 @@ extern void test1(char *buf, int len)
 	/* Switch from menuscreen to gamescreen */
 	node = ui_get(window.root, "mns");
 	ui_set_flag(node, FLG_ACT, &zero);
+
+	SDL_SetRelativeMouseMode(SDL_TRUE);
+
 
 	/* Start the game-loop */
 	game_start();

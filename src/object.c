@@ -964,15 +964,9 @@ extern void obj_sys_prerender(float interp)
 
 					vec3_t off = {0, 0, 1.6};
 					vec3_t rev = {0, 0, 1.8};
-					vec3_t rot_agl;
-					mat4_t rot;
-
-					vec3_set(rot_agl, agl, 0, 0);
-
-					mat4_idt(rot);
-					mat4_rfagl(rot, rot_agl);
 	
-					rig_fpv_rot(objects.rig[i], off, rev, rot);
+					rig_fpv_rot(objects.rig[i], off, rev,
+							camera.forw_m);
 				}
 				else {
 					rig_update(objects.rig[i], -agl);
@@ -1013,18 +1007,12 @@ extern void obj_sys_render(void)
 			vec3_cpy(pos, objects.ren_pos[i]);
 			vec3_cpy(dir, objects.ren_dir[i]);
 
+			mat4_idt(objects.mat_rot[i]);
+
 			/* Set the position of the model */
 			objects.mat_pos[i][0xc] = pos[0];
 			objects.mat_pos[i][0xd] = pos[1];
 			objects.mat_pos[i][0xe] = pos[2];
-
-			/* Set the rotation of the model */
-			rot = atan2(-dir[0], dir[1]);	
-
-			objects.mat_rot[i][0x0] =  cos(rot);
-			objects.mat_rot[i][0x1] =  sin(rot);
-			objects.mat_rot[i][0x4] =  -sin(rot);
-			objects.mat_rot[i][0x5] =  cos(rot);
 
 			mdl_render(objects.mdl[i], objects.mat_pos[i],
 					objects.mat_rot[i], objects.rig[i]);

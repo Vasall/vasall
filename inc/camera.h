@@ -29,9 +29,10 @@ struct camera_wrapper {
 
 	float dist;
 	short trg_obj;
+	mat4_t forw_m;
 
-	mat4_t proj;
-	mat4_t view;
+	mat4_t proj_m;
+	mat4_t view_m;
 
 	float sens;
 };

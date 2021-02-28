@@ -335,17 +335,17 @@ extern void mat4_rfagl(mat4_t m, vec3_t v)
 	float y = DEG_TO_RAD(v[1]);
 	float z = DEG_TO_RAD(v[2]);
 
-	/* Yaw */
-	float cosY = cos(z);
-	float sinY = sin(z);
+	/* Roll */
+	float cosY = cos(y);
+	float sinY = sin(y);
 
 	/* Pitch */
 	float cosP = cos(x);
 	float sinP = sin(x);
 
-	/* Roll */
-	float cosR = cos(y);
-	float sinR = sin(y);
+	/* Yaw */
+	float cosR = cos(z);
+	float sinR = sin(z);
 
 	mat4_idt(m);
 	m[0x0] = cosY * cosR + sinY * sinP * sinR;

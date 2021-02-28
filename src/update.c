@@ -193,6 +193,15 @@ static void game_proc_input(void)
 			obj_add_input(obj, 1, ti, mov, 0);
 		}
 	}
+
+#if 0
+	/*
+	 * Reset cursor position.
+	 * This will reset the cursor-position to the center to the screen. But
+	 * this always bugs around. 
+	 */
+	SDL_WarpMouseInWindow(window.win, window.win_w / 2, window.win_h / 2);	
+#endif
 }
 
 

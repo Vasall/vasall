@@ -32,8 +32,11 @@ First of all you have to get the basic tools to download and build the game:<br/
 
 Now that the necessary tools have been installed, we need to get the
 external libraries:<br/>
-> $ apt install libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev freeglut3-dev
-> $ apt install libgmp-dev libssl-dev
+> $ apt install libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev freeglut3-dev  
+> $ apt install libgmp-dev libssl-dev libvulkan-dev glslang-tools  
+
+Optional for vulkan debugging:<br/>
+> $ apt install vulkan-validationlayers
 
 After installing the external libraries, we can now clone the reposity:<br/>
 > $ git clone https://github.com/clusterwerk/vasall.git

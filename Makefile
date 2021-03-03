@@ -33,7 +33,7 @@ override CFLAGS += $(SDL_CFLAGS)
 LINKER     := gcc
 # Set libararies (FIXME: switch the variables)
 LIBS       := $(shell find $(MKFILE_DIR)$(LIB_PTH)/ -type f -name "*.a")
-STAT_LIBS  := -lm -lgmp -lGL -lGLU -lglut -lcrypto
+STAT_LIBS  := -lm -lgmp -lGL -lGLU -lglut -lcrypto -lvulkan
 override LIBS += $(STAT_LIBS)
 # Linking flags here
 LFLAGS     := -Wall -I. $(LIBS)
@@ -44,19 +44,32 @@ override LFLAGS += $(SDL_LFLAGS)
 SRCDIR     := src
 OBJDIR     := obj
 BINDIR     := bin
+RESDIR     := res
 
 SOURCES    := $(wildcard $(SRCDIR)/*.c)
 INCLUDES   := $(wildcard $(SRCDIR)/*.h)
 OBJECTS    := $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+VSHADERS   := $(wildcard $(RESDIR)/shaders/*.vert)
+FSHADERS   := $(wildcard $(RESDIR)/shaders/*.frag)
+SVSHADERS  := $(VSHADERS:%.vert=%.vert.spv)
+SFSHADERS  := $(FSHADERS:%.frag=%.frag.spv)
 
 rm         := rm -f
 
-$(BINDIR)/$(TARGET): $(OBJECTS)
+$(BINDIR)/$(TARGET): $(OBJECTS) $(SVSHADERS) $(SFSHADERS)
 	@$(LINKER) $(OBJECTS) $(LFLAGS) -o $@
 	@echo "Linking complete!"
 
 $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
 	@$(CC) $(CFLAGS) $(ERRFLAGS) -c $< -o $@
+	@echo "Compiled "$<" successfully!"
+
+%.vert.spv: %.vert
+	@glslangValidator --target-env vulkan1.1 -o $@ $<
+	@echo "Compiled "$<" successfully!"
+
+%.frag.spv: %.frag
+	@glslangValidator --target-env vulkan1.1 -o $@ $<
 	@echo "Compiled "$<" successfully!"
 
 # Create the directories to store the object-files and the final binary

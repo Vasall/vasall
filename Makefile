@@ -33,7 +33,7 @@ override CFLAGS += $(SDL_CFLAGS)
 LINKER     := gcc
 # Set libararies (FIXME: switch the variables)
 LIBS       := $(shell find $(MKFILE_DIR)$(LIB_PTH)/ -type f -name "*.a")
-STAT_LIBS  := -lm -lgmp -lGL -lGLU -lglut -lcrypto
+STAT_LIBS  := -lm -lgmp -lGL -lGLU -lglut -lcrypto -lvulkan
 override LIBS += $(STAT_LIBS)
 # Linking flags here
 LFLAGS     := -Wall -I. $(LIBS)
@@ -57,6 +57,14 @@ $(BINDIR)/$(TARGET): $(OBJECTS)
 
 $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
 	@$(CC) $(CFLAGS) $(ERRFLAGS) -c $< -o $@
+	@echo "Compiled "$<" successfully!"
+
+%.vert.spv: %.vert
+	@glslangValidator --target-env vulkan1.0 -o $@ $<
+	@echo "Compiled "$<" successfully!"
+
+%.frag.spv: %.frag
+	@glslangValidator --target-env vulkan1.0 -o $@ $<
 	@echo "Compiled "$<" successfully!"
 
 # Create the directories to store the object-files and the final binary

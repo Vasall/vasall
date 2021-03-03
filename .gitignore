@@ -22,3 +22,6 @@ lib/amoloader/*
 
 # Just to be safe, ignore all object-files
 *.o
+
+# Ignore compiled SPIR-V shaders
+*.spv

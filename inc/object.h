@@ -10,6 +10,7 @@
 #include "model.h"
 #include "rig.h"
 #include "input.h"
+#include "controller.h"
 #include "core.h"
 
 #define OBJ_SLOTS      128
@@ -290,8 +291,10 @@ extern void obj_print(short slot);
 
 /*
  * A system-function to update all objects in the object-table.
+ *
+ * @now: The current network time (milliseconds)
  */
-extern void obj_sys_update(void);
+extern void obj_sys_update(uint32_t now);
 
 
 /*

@@ -224,13 +224,13 @@ static int win_onmousebuttondown(event_t *evt)
 
 static int win_oncontrolleradded(event_t *evt)
 {
-	inp_add_device(evt->cdevice.which);
+	ctr_add_device(evt->cdevice.which);
 	return 1;
 }
 
 static int win_oncontrollerremoved(event_t *evt)
 {
-	inp_remv_device(evt->cdevice.which);
+	ctr_remv_device(evt->cdevice.which);
 	return 1;
 }
 

@@ -183,7 +183,16 @@ extern void cam_set(vec3_t pos, vec3_t trg);
 extern void cam_trg_obj(short obj);
 
 
-extern void cam_tgl_view(void);
+/*
+ * 
+ */
+extern enum cam_mode cam_get_mode(void); 
+
+
+/*
+ *
+ */
+extern void cam_tgl_mode(void);
 
 
 extern void cam_proc_input(void);

@@ -4,6 +4,7 @@
 #include "sdl.h"
 #include "node.h"
 #include "vector.h"
+#include "controller.h"
 #include "input.h"
 
 #define PIPE_LEN 32

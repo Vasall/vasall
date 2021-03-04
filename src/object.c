@@ -410,63 +410,6 @@ extern int obj_add_input(short slot, uint32_t mask, uint32_t ts, vec2_t mov,
 	return 0;
 }
 
-
-static int obj_add_inputs(void *in)
-{
-	uint32_t id;
-
-	short slot;
-	short i;
-	short num;
-
-	uint32_t mask;
-	uint8_t off;
-	vec2_t mov;
-	uint16_t act = 0;
-	uint32_t ts;
-
-	char *ptr = in;
-	int read = 0;
-
-	/* Extract timestamp */
-	memcpy(&ts, ptr, 4);
-
-	/* Extract general information */
-	memcpy(&id,   ptr + 4,  4);
-	memcpy(&num,  ptr + 8,  2);
-
-	/* Get the slot of the object */
-	if((slot = obj_sel_id(id)) < 0)
-		return 0;
-
-	/* Update pointer-position */
-	ptr += 10;
-	read += 10;
-
-	for(i = 0; i < num; i++) {
-		memcpy(&mask, ptr, 4);
-		ptr += 4;
-
-		memcpy(&off, ptr, 1);
-		ptr += 1;
-
-		if(mask & INP_M_MOV) {
-			vec2_cpy(mov, (float *)ptr);
-			ptr += VEC2_SIZE;
-		}
-
-		/* Update timestamp */
-		ts += off;
-
-		/* Add a new input to the object */
-		obj_add_input(slot, mask, ts, mov, act);
-
-		read += 13;
-	}
-
-	return read;
-}
-
 static int obj_set_marker(void *in)
 {
 	uint32_t ts;
@@ -757,7 +700,7 @@ extern void obj_move(short slot)
 	vec3_t grav = {0.0, 0.0, -9.81};
 
 
-	/* Check if objects is defined */
+	/* Check if objects mask is set */
 	if((omask = objects.mask[slot]) == OBJ_M_NONE)
 		return;
 
@@ -930,18 +873,39 @@ extern void obj_print(short slot)
  * object-systems
  */
 
-extern void obj_sys_update(void)
+extern void obj_sys_update(uint32_t now)
 {
 	int i;
-	uint32_t ts = core.now_ts;
 
+	uint32_t lim_ts;
+	uint32_t run_ts;
+
+	vec3_t pos[OBJ_SLOTS];
+	vec3_t vel[OBJ_SLOTS];
+	vec2_t mov[OBJ_SLOTS];
+	vec3_t dir[OBJ_SLOTS];
+
+	vec3_t acl;
+	vec3_t del;
+
+	struct input_entry inp;
+	char flg = 1;
+
+	/* Pull an entry from the input-pipe */
+	inp_pull(&inp);	
+
+	while(1) {
+	}
+		
 	for(i = 0; i < OBJ_SLOTS; i++) {
 		if(objects.mask[i] & OBJ_M_MOVE) {
 			obj_move(i);
 		}
-
-		objects.last_upd_ts[i] = ts;
 	}
+
+	/* Set the latest update time of the objects */
+	for(i = 0; i < OBJ_SLOTS; i++)
+		objects.last_upd_ts[i] = ts;
 }
 
 
@@ -958,20 +922,7 @@ extern void obj_sys_prerender(float interp)
 			agl = vec3_angle(up, objects.dir[i]);
 			agl = RAD_TO_DEG(agl) - 90.0;
 
-			if(i == core.obj) {
-				if(camera.mode == CAM_MODE_FPV) {
-					rig_update(objects.rig[i], 0);
-
-					vec3_t off = {0, 0, 1.6};
-					vec3_t rev = {0, 0, 1.8};
-	
-					rig_fpv_rot(objects.rig[i], off, rev,
-							camera.forw_m);
-				}
-				else {
-					rig_update(objects.rig[i], -agl);
-				}
-			}
+			rig_update(objects.rig[i], -agl);
 		}
 
 		if(objects.mask[i] & OBJ_M_MODEL) {

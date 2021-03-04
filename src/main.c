@@ -96,7 +96,9 @@ int main(void)
 
 	while(core.running) {
 		core_proc_evt();
+		
 		core_update();
+		
 		core_render();
 	}
 

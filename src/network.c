@@ -187,12 +187,13 @@ extern int net_update(void)
 		/* Received a packet */
 		else if(evt.type == LCP_RECEIVED) {
 			/* Handle packets if they seem valid */
-			if(evt.len >= HDR_SIZE)
+			if(evt.len >= HDR_SIZE) {
 				peer_handle(&evt);
+			}
 		}
 		/* Failed to deliver a packet */
 		else if(evt.type == LCP_FAILED) {
-
+			/* TODO */
 		}
 		/* Peer timed out */
 		else if(evt.type == LCP_TIMEDOUT) {
@@ -267,7 +268,7 @@ extern int net_broadcast(uint16_t op, char *buf, int len)
 
 
 static int peer_hdl_ins(struct req_hdr *hdr, struct lcp_evt *evt,
-		char *ptr, int len)
+		char *in, int len)
 {
 	uint32_t id;
 	uint32_t mask;
@@ -276,6 +277,7 @@ static int peer_hdl_ins(struct req_hdr *hdr, struct lcp_evt *evt,
 	short slot;
 	short peer_num;
 	uint32_t ts;
+	char *ptr = in;
 
 	struct timeval serv_ti;
 	struct timeval loc_ti;
@@ -353,21 +355,22 @@ static int peer_hdl_ins(struct req_hdr *hdr, struct lcp_evt *evt,
 }
 
 static int peer_hdl_lst(struct req_hdr *hdr, struct lcp_evt *evt,
-		char *ptr, int len)
+		char *in, int len)
 {
 	int num;
 
 	if(hdr||evt||len){/* Prevent warning for not using parameters */}
 
-	if((num = ptr[0]) > 0)
-		return net_add_peers(ptr + 1, num);
+	if((num = in[0]) > 0)
+		return net_add_peers(in + 1, num);
 
 	return 0;
 }
 
 static int peer_hdl_cvy(struct req_hdr *hdr, struct lcp_evt *evt,
-		char *ptr, int len)
+		char *in, int len)
 {
+	char *ptr = in;
 	char res = ptr[0];
 	char pck[512];
 	int tmp;
@@ -485,7 +488,7 @@ static int peer_hdl_cvy(struct req_hdr *hdr, struct lcp_evt *evt,
 }
 
 static int peer_hdl_exc(struct req_hdr *hdr, struct lcp_evt *evt,
-		char *ptr, int len)
+		char *in, int len)
 {
 	short num;
 	char *buf;
@@ -495,26 +498,26 @@ static int peer_hdl_exc(struct req_hdr *hdr, struct lcp_evt *evt,
 
 	if(evt||len){/* Prevent warning for not using parameters */}
 
-	memcpy(&num, ptr, 2);
+	memcpy(&num, in, 2);
 
 	/* Insert object-ids into cache */
-	written = net_obj_insert(ptr + 2, num, hdr->src_id, &buf, NULL);
+	written = net_obj_insert(in + 2, num, hdr->src_id, &buf, NULL);
 
 	/* Send response-header */
 	tmp = hdr_set(pck, HDR_OP_GET, hdr->src_id, network.id, network.key);
 
 	/* Attach payload to the packet */
-	memcpy(pck + tmp, buf, written);
+	memcpy(in + tmp, buf, written);
 	free(buf);
 
 	/* Send the packet */
-	lcp_send(network.ctx, &evt->addr, pck, tmp + written);
+	lcp_send(network.ctx, &evt->addr, in, tmp + written);
 
 	return 0;
 }
 
 static int peer_hdl_get(struct req_hdr *hdr, struct lcp_evt *evt,
-		char *ptr, int len)
+		char *in, int len)
 {
 	short num;
 	void *obj_lst;
@@ -526,49 +529,64 @@ static int peer_hdl_get(struct req_hdr *hdr, struct lcp_evt *evt,
 
 	if(len){/* Prevent warning for not using parameters */}
 
-	memcpy(&num, ptr, 2);
+	memcpy(&num, in, 2);
 
-	written = obj_collect(flg, ptr + 2, num, &obj_lst, NULL);
+	written = obj_collect(flg, in + 2, num, &obj_lst, NULL);
 
 	/* Set response-header */
 	tmp = hdr_set(pck, HDR_OP_SBM, hdr->src_id, network.id, network.key);
 
 	/* Attach timestamp */
 	ts = core.now_ts;
-	memcpy(pck + tmp, &ts, 4);
+	memcpy(in + tmp, &ts, 4);
 
 	/* Attach payload to packet */
-	memcpy(pck + tmp + 4, obj_lst, written);
+	memcpy(in + tmp + 4, obj_lst, written);
 	free(obj_lst);
 
 	/* Send the packet */
-	lcp_send(network.ctx, &evt->addr, pck, tmp + written + 4);
+	lcp_send(network.ctx, &evt->addr, in, tmp + written + 4);
 
 	return 0;
 }
 
 static int peer_hdl_sbm(struct req_hdr *hdr, struct lcp_evt *evt,
-		char *ptr, int len)
+		char *in, int len)
 {
 	if(evt||len){/* Prevent warning for not using parameters */}
 
 	/* Submit list of objects */
-	return net_obj_submit(ptr, hdr->src_id);
+	return net_obj_submit(in, hdr->src_id);
 }
 
 static int peer_hdl_upd(struct req_hdr *hdr, struct lcp_evt *evt,
-		char *ptr, int len)
+		char *in, int len)
 {
+	uint8_t flg;
+	char *ptr = in;
+
 	if(hdr||evt||len){/* Prevent warning for not using parameters */}
 		
+	memcpy(&flg, ptr, 1);
+	ptr += 1;
+
+	/* Process new inputs */
+	if(flg & (1<<0)) {
+		inp_unpack(ptr);	
+	}
+	/* Set markers */
+	else if(flg & (1<<1)) {
+
+	}
+
 	/* Update the object */
-	return obj_update(ptr);
+	return 0;
 }
 
 static int peer_hdl_syn(struct req_hdr *hdr, struct lcp_evt *evt,
-		char *ptr, int len)
+		char *in, int len)
 {
-	if(hdr||evt||ptr||len){/* Prevent warning for not using parameters */}
+	if(hdr||evt||in||len){/* Prevent warning for not using parameters */}
 	return 0;
 }
 

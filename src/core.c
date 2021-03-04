@@ -51,11 +51,13 @@ extern void core_proc_evt(void)
 			return;
 		}
 
-		if(win_proc_evt(&evt) > -1)
+		if(win_proc_evt(&evt) > -1) {
 			continue;
+		}
 
-		if(core.proc_evt)
+		if(core.proc_evt) {
 			core.proc_evt(&evt);
+		}
 	}
 }
 
@@ -66,8 +68,9 @@ extern void core_update(void)
 
 	win_update();
 
-	if(core.update)
+	if(core.update) {
 		core.update();
+	}
 }
 
 

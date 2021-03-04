@@ -83,8 +83,16 @@ extern void inp_close(void);
  */
 extern void inp_pipe_clear(enum input_pipe_mode m);
 
+
+/*
+ * 
+ */
 extern void inp_change(enum input_type type, uint32_t ts, void *in);
 
+
+/*
+ * 
+ */
 extern int inp_retrieve(enum input_type type, void *out);
 
 /*

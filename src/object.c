@@ -895,6 +895,7 @@ extern void obj_sys_update(uint32_t now)
 	inp_pull(&inp);	
 
 	while(1) {
+
 	}
 		
 	for(i = 0; i < OBJ_SLOTS; i++) {

@@ -60,6 +60,22 @@ struct object_inputs {
 	uint16_t     act[OBJ_INPUT_SLOTS];
 };
 
+#define OBJ_LOG_SLOTS
+
+struct object_log {
+	short start;
+	short end;
+	short num;
+
+	uint32_t  ts[OBJ_LOG_SLOTS];
+
+	vec3_t    pos[OBJ_LOG_SLOTS];
+	vec3_t    vel[OBJ_LOG_SLOTS];
+
+	vec2_t    mov[OBJ_LOG_SLOTS];
+	vec3_t    dir[OBJ_LOG_SLOTS];
+};
+
 struct comp_marker {
 	uint32_t     ts;
 	vec3_t       pos;
@@ -87,6 +103,10 @@ struct object_table {
 	
 	vec3_t                   pos[OBJ_SLOTS];
 	vec3_t                   vel[OBJ_SLOTS];
+
+	uint32_t                 last_ts[OBJ_SLOTS];
+
+	
 
 	/* Variables used for rendering and animation */
 	vec3_t                   ren_pos[OBJ_SLOTS];

@@ -56,6 +56,8 @@ extern void inp_pipe_clear(enum input_pipe_mode m)
 
 extern void inp_change(enum input_type type, uint32_t ts, void *in)
 {
+	ts = ceil(ts / TICK_TIME) * TICK_TIME;
+
 	switch(type) {
 		case(INP_T_MOV):
 			vec2_cpy(input.mov, (float *)in);

@@ -879,6 +879,9 @@ extern void obj_sys_update(uint32_t now)
 
 	uint32_t lim_ts;
 	uint32_t run_ts;
+	uint32_t inp_ts;
+
+	uint32_t tick_ts = floor(now / TICK_TIME) * TICK_TIME;
 
 	vec3_t pos[OBJ_SLOTS];
 	vec3_t vel[OBJ_SLOTS];
@@ -894,19 +897,22 @@ extern void obj_sys_update(uint32_t now)
 	/* Pull an entry from the input-pipe */
 	inp_pull(&inp);	
 
-	while(1) {
+	inp_ts = ceil(inp->ts / TICK_TIME) * TICK_TIME;
+	run_ts = inp_ts;
+	lim_ts = inp_ts;
 
-	}
-		
-	for(i = 0; i < OBJ_SLOTS; i++) {
-		if(objects.mask[i] & OBJ_M_MOVE) {
-			obj_move(i);
+
+	while(1) {
+		while(run_ts < lim_ts) {
+			run_ts += TICK_TIME;
 		}
 	}
 
+
 	/* Set the latest update time of the objects */
-	for(i = 0; i < OBJ_SLOTS; i++)
+	for(i = 0; i < OBJ_SLOTS; i++) {
 		objects.last_upd_ts[i] = ts;
+	}
 }
 
 

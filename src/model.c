@@ -64,6 +64,9 @@ extern void mdl_close(void)
 		if(mdl->idx_bao)
 			glDeleteBuffers(1, &mdl->idx_bao);
 
+		if(mdl->uni_buf)
+			glDeleteBuffers(1, &mdl->uni_buf);
+
 		/* Destroy vertex-array-object */
 		if(mdl->vao)
 			glDeleteVertexArrays(1, &mdl->vao);
@@ -123,6 +126,7 @@ extern short mdl_set(char *name)
 	mdl->vtx_bao = 0;
 	mdl->vtx_buf = NULL;
 	mdl->vtx_num = 0;
+	mdl->uni_buf = 0;
 
 	/* Clear both texture and shader */
 	mdl->tex = -1;
@@ -179,6 +183,9 @@ extern void mdl_del(short slot)
 
 	if(mdl->vtx_bao)
 		glDeleteBuffers(1, &mdl->vtx_bao);
+
+	if(mdl->uni_buf)
+		glDeleteBuffers(1, &mdl->uni_buf);
 
 	if(mdl->vao)
 		glDeleteVertexArrays(1, &mdl->vao);
@@ -314,6 +321,10 @@ extern void mdl_set_data(short slot, int vtxnum, float *vtx, float *tex,
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mdl->idx_bao);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, idxnum * sizeof(int), 
 			mdl->idx_buf, GL_STATIC_DRAW);
+
+	/* Register uniform buffer */
+	glGenBuffers(1, &mdl->uni_buf);
+	glBindBuffer(GL_UNIFORM_BUFFER, mdl->uni_buf);
 
 	/* Unbind the vertex-array-object */
 	glBindVertexArray(0);
@@ -763,12 +774,10 @@ err_del_mdl:
 extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
 		struct model_rig *rig)
 {
-	char *vars[5] = {"mpos", "mrot", "view", "proj", "jnts"};
-	int loc[5];
 	mat4_t view, proj;
 	struct model *mdl;
 	int attr;
-	int vari;
+	struct uni_buffer uni;
 
 	void *poff;
 	int rng;
@@ -783,9 +792,6 @@ extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
 	/* Get the range of vertex-attributes (0-n) */
 	attr = (rig != NULL) ? (5) : (3);
 
-	/* Get the number of uniform-variables */
-	vari = (rig != NULL) ? (5) : (4);
-
 	/* Get the view- and projection-matrix of the camera */
 	cam_get_view(view);
 	cam_get_proj(proj);
@@ -794,22 +800,24 @@ extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
 	glBindVertexArray(mdl->vao);
 
 	/* Use shader, enable vertex attributes and get uniform locations */
-	shd_use(mdl->shd, attr, vari, vars, loc);
+	shd_use(mdl->shd, attr);
 
 	/* Use texture */
 	tex_use(mdl->tex);
 
 	/* Set the uniform-variables */
-	glUniformMatrix4fv(loc[0], 1, GL_FALSE, pos_mat);
-	glUniformMatrix4fv(loc[1], 1, GL_FALSE, rot_mat);
-	glUniformMatrix4fv(loc[2], 1, GL_FALSE, view);
-	glUniformMatrix4fv(loc[3], 1, GL_FALSE, proj);
-
-	/* If a rig is given pass to OpenGL for animation */
-	if(rig != NULL) {
-		glUniformMatrix4fv(loc[4], mdl->jnt_num, GL_FALSE,
-				(float *)rig->tran_mat);
-	}
+	mat4_cpy(uni.pos_mat, pos_mat);
+	mat4_cpy(uni.rot_mat, rot_mat);
+	mat4_cpy(uni.view, view);
+	mat4_cpy(uni.proj, proj);
+	if(rig != NULL)
+		memcpy(uni.tran_mat, rig->tran_mat, mdl->jnt_num * MAT4_SIZE);
+	
+	glBindBuffer(GL_UNIFORM_BUFFER, mdl->uni_buf);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(struct uni_buffer), &uni,
+				GL_STATIC_DRAW);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	glBindBufferBase(GL_UNIFORM_BUFFER, 0, mdl->uni_buf);
 
 	/* Draw the vertices */
 	poff = (void *)0;

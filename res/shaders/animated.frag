@@ -1,15 +1,15 @@
-#version 330 core
+#version 420
 
-in vec2 uv;
-in vec3 nrm;
+layout(location=0) in vec2 uv;
+layout(location=1) in vec3 nrm;
 
 vec3 LIGHT_VEC = -vec3(0.259, 0.432, -0.864);
 vec3 LIGHT_COL = vec3(1.0, 1.0, 1.0);
 vec2 LIGHT_BIAS = vec2(0.2, 0.8);
 
-uniform sampler2D tex;
+layout(binding=1) uniform sampler2D tex;
 
-out vec4 FragColor;
+layout(location=0) out vec4 FragColor;
 
 vec3 calculateLighting(){
 	float brightness = clamp((dot(nrm, LIGHT_VEC) + 1) / 2, 0.0, 1.0);

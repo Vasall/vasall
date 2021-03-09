@@ -125,11 +125,8 @@ extern short shd_get(char *name);
  *
  * @slot: The slot the shader is on
  * @attr: The upper limit to enable vertex-attributes up to
- * @num: The number of variable-names
- * @vars: The variable-names for the uniform-variables
- * @loc: An array to write the uniform-locations to, has to be: |loc| >= num
  */
-extern void shd_use(short slot, int attr, int num, char **vars, int *loc);
+extern void shd_use(short slot, int attr);
 
 
 /* 

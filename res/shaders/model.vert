@@ -1,16 +1,18 @@
-#version 330 core
+#version 420
 
-in vec3 vtxPos;
-in vec2 vtxTex;
-in vec3 vtxNrm;
+layout(location=0) in vec3 vtxPos;
+layout(location=1) in vec2 vtxTex;
+layout(location=2) in vec3 vtxNrm;
 
-uniform mat4 mpos;
-uniform mat4 mrot;
-uniform mat4 view;
-uniform mat4 proj;
+layout(binding=0) uniform UBO {
+	mat4 mpos;
+	mat4 mrot;
+	mat4 view;
+	mat4 proj;
+};
 
-out vec2 uv;
-out vec3 nrm;
+layout(location=0)out vec2 uv;
+layout(location=1)out vec3 nrm;
 
 void main()
 {

@@ -13,6 +13,14 @@
 #define MDL_NAME_MAX            8
 #define MDL_SLOTS             256
 
+struct uni_buffer {
+	mat4_t pos_mat;
+	mat4_t rot_mat;
+	mat4_t view;
+	mat4_t proj;
+	mat4_t tran_mat[JOINT_MAX_NUM];
+};
+
 enum mdl_status {
 	MDL_OK =                0,
 	MDL_ERR_CREATING =      1,
@@ -101,6 +109,8 @@ struct model {
 
 	short             tex;
 	short             shd;
+
+	unsigned int      uni_buf;
 
 	int               jnt_num;
 	struct mdl_joint  *jnt_buf;

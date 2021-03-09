@@ -91,6 +91,7 @@ extern short shd_set(char *name, char *vs, char *fs, int num, char **vars)
 	char *vtx_src = NULL;
 	char *frg_src = NULL;
 	GLint isLinked = 0;
+	unsigned int loc;
 
 	if((slot = shd_get_slot()) < 0) {
 		ERR_LOG(("Shader-table already full"));
@@ -168,6 +169,10 @@ extern short shd_set(char *name, char *vs, char *fs, int num, char **vars)
 		ERR_LOG(("Failed to link shader: %s", infoLog));
 	}
 
+	loc = glGetUniformBlockIndex(assets.shd.prog[slot], "UBO");
+	if(loc != GL_INVALID_INDEX)
+		glUniformBlockBinding(assets.shd.prog[slot], loc, 0);
+
 	/* Detach and destroy assets.shd */
 	glDetachShader(assets.shd.prog[slot], vshd);
 	glDeleteShader(vshd);
@@ -231,7 +236,7 @@ extern short shd_get(char *name)
 }
 
 
-extern void shd_use(short slot, int attr, int num, char **vars, int *loc)
+extern void shd_use(short slot, int attr)
 {
 	int i;
 
@@ -249,10 +254,6 @@ extern void shd_use(short slot, int attr, int num, char **vars, int *loc)
 		ERR_LOG(("Failed to enable attribute"));
 		return;
 	}
-
-	/* Get the uniform-locations for the given variables */
-	for(i = 0; i < num; i++)
-		loc[i] = glGetUniformLocation(assets.shd.prog[slot], vars[i]);
 
 	if(glGetError() != GL_NO_ERROR) {
 		ERR_LOG(("Failed to get locations"));
@@ -372,6 +373,7 @@ extern void tex_use(short slot)
 	if(tex_check_slot(slot))
 		return;
 
+	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, assets.tex.hdl[slot]);
 }
 

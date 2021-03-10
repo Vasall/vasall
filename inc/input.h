@@ -124,6 +124,14 @@ extern int inp_pull(struct input_entry *ent);
 
 
 /*
+ * Get the timestamp of the oldest entry in the in-input-pipe.
+ *
+ * Returns: Either the timestamp of the oldest input or 0 if an error occurred
+ */
+extern uint32_t inp_next_ts(void);
+
+
+/*
  * Collect all entries in the out-pipe and write them in the default
  * input-share-format to the given pointer. Note that the necessary memory
  * already has to be allocated (estimate INP_ENT_LIM * 19 + 5) and the function
@@ -147,7 +155,6 @@ extern int inp_pack(char *out);
  * Returns: Either the number of bytes read, or -1 if an error occurred
  */
 extern int inp_unpack(char *in);
-
 
 /*
  * Sort the entries in the pipes and process them. 

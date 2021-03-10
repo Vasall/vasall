@@ -171,8 +171,22 @@ extern int inp_pull(struct input_entry *ent)
 			vec3_cpy(ent->dir, pipe->dir[i]);
 			break;
 	}
-	
+
+	/* Reduce number of entries */
+	pipe->num -= 1;
+
 	return 1;
+}
+
+
+extern uint32_t inp_next_ts(void)
+{
+	struct input_pipe *pipe = &input.pipe_in;
+
+	if(pipe->num <= 0)
+		return 0;
+
+	return pipe->ts[pipe->order[pipe->num - 1]];
 }
 
 
@@ -348,9 +362,8 @@ static void inp_pipe_sort(enum input_pipe_mode m)
 			if(pipe->ts[a] < pipe->ts[b]) {
 				found = 1;
 
-				flip = pipe->order[i];
-				pipe->order[i] = pipe->order[i + 1];
-				pipe->order[i + 1] = flip;
+				pipe->order[i] = b;
+				pipe->order[i + 1] = a;
 			}
 		}
 

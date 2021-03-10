@@ -93,6 +93,7 @@ struct object_collision {
 
 struct object_table {
 	short                    num;
+	short                    order[OBJ_SLOTS];
 
 	/*
 	 * shareable object-attributes
@@ -106,7 +107,7 @@ struct object_table {
 
 	uint32_t                 last_ts[OBJ_SLOTS];
 
-	
+	struct object_log        log[OBJ_SLOTS];	
 
 	/* Variables used for rendering and animation */
 	vec3_t                   ren_pos[OBJ_SLOTS];

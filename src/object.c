@@ -17,8 +17,11 @@ extern int obj_init(void)
 {
 	int i;
 
-	for(i = 0; i < OBJ_SLOTS; i++)
+	for(i = 0; i < OBJ_SLOTS; i++) {
+		objects.order[i] = i;
+
 		objects.mask[i] = OBJ_M_NONE;
+	}
 
 	objects.num = 0;
 
@@ -55,6 +58,47 @@ static int obj_check_slot(short slot)
 	return 0;
 }
 
+static void obj_sort(void)
+{
+	int i;
+	char found = 0;
+
+	for(i = 0; i < OBJ_SLOTS; i++)
+		objects.order[i] = i;
+
+	/*
+	 * TODO:
+	 * I did it again. uwu
+	 */
+
+	/* Sort object-order to ascending IDs. */
+	while(1) {
+		found = 0;
+
+		for(i = 0; i < OBJ_SLOTS - 1; i++) {
+			a = objects->order[i];
+			b = objects->order[i + 1];
+
+			if(objects.mask[a] != 0 && objects.mask[b] != 0) {
+				if(objects.id[a] > objects.id[b]) {
+					found = 1;
+
+					objects->order[i] = b;
+					objects->order[i + 1] = a;
+				}
+			}
+			else if(objects.mask[a] == 0 && objects.mask[b] != 0) {
+				found = 1;
+
+				objects->order[i] = b;
+				objects->order[i + 1] = a;
+			}
+		}
+
+		if(!found)
+			break;
+	}
+}
 
 extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 		char *data, int len, uint32_t ts)
@@ -127,6 +171,8 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 
 	/* Increment number of objects in the object-table */
 	objects.num++;
+
+	/* Sort the objects */
 	return slot;
 
 err_reset_slot:
@@ -873,9 +919,72 @@ extern void obj_print(short slot)
  * object-systems
  */
 
+static void obj_log_reset(short slot)
+{
+	objects.log[slot].start = 0;
+	objects.log[slot].end = 0;
+	objects.log[slot].num = 0;
+}
+
+static void obj_log_push(short slot, uint32_t ts, vec3_t pos, vec3_t vel,
+		vec2_t mov, vec3_t dir)
+{
+
+}
+
+/*
+ * TODO: What if the timestamp is older than the oldest log-entry?!
+ */
+static char obj_log_near(short slot, uint32_t ts)
+{
+	int i;
+	char near = objects.log[slot].start;
+
+	for(i = 0; i < objects.log[slot].num; i++) {
+		char tmp = (objects.log[slot].start + i) % OBJ_LOG_SLOTS;
+
+		if(objects.log[slot].ts[tmp] > ts)
+			break;
+
+		near = tmp;
+	}
+
+	return near;
+}
+
+static void obj_log_col(uint32_t ts, char *logi)
+{
+	int i;
+	uint32_t min = ts;
+
+	/* Collect log-entries closest to the timestamp */
+	for(i = 0; i < OBJ_SLOTS; i++) {
+		logi[i] = -1;
+		
+		if(objects.mask[i] != 0) {
+			logi[i] = obj_log_near(i, ts);
+		}
+	}
+}
+
+static void obj_log_cpy(short slot, char i, uint32_t *ts, vec3_t pos, vec3_t vel,
+		vec2_t mov, vec3_t dir)
+{
+	struct object_log *log = &objects.log[slot];
+
+	*ts = log->ts[i];
+		
+	vec3_cpy(pos, log->pos[i]);
+	vec3_cpy(vel, log->vel[i]);
+
+	vec2_cpy(mov, log->mov[i]);
+	vec3_cpy(dir, log->dir[i]);
+}
+
 extern void obj_sys_update(uint32_t now)
 {
 	int i;
+	int obj_s;
 
 	uint32_t lim_ts;
 	uint32_t run_ts;
@@ -883,10 +992,13 @@ extern void obj_sys_update(uint32_t now)
 
 	uint32_t tick_ts = floor(now / TICK_TIME) * TICK_TIME;
 
-	vec3_t pos[OBJ_SLOTS];
-	vec3_t vel[OBJ_SLOTS];
-	vec2_t mov[OBJ_SLOTS];
-	vec3_t dir[OBJ_SLOTS];
+	uint32_t  ts[OBJ_SLOTS];
+	vec3_t    pos[OBJ_SLOTS];
+	vec3_t    vel[OBJ_SLOTS];
+	vec2_t    mov[OBJ_SLOTS];
+	vec3_t    dir[OBJ_SLOTS];
+
+	char      logi[OBJ_SLOTS];
 
 	vec3_t acl;
 	vec3_t del;
@@ -895,11 +1007,26 @@ extern void obj_sys_update(uint32_t now)
 	char flg = 1;
 
 	/* Pull an entry from the input-pipe */
-	inp_pull(&inp);	
+	if(inp_pull(&inp)) {
+		inp_ts = ceil(inp->ts / TICK_TIME) * TICK_TIME;
+		run_ts = inp_ts;
+	
+		/* Get the timestamp of the next input */
+		if((lim_ts = inp_next_ts()) == 0)
+			lim_ts = now;
 
-	inp_ts = ceil(inp->ts / TICK_TIME) * TICK_TIME;
-	run_ts = inp_ts;
-	lim_ts = inp_ts;
+		obj_log_col(run_ts, logi);
+
+		for(i = 0; i < objects.num; i++) {
+			obj_s = objects.order[i];
+			
+			obj_log_cpy(obj_s, logi[obj_s], &ts[obj_s], pos[obj_s],
+					vel[obj_s], mov[obj_s], dir[obj_s]);
+		}
+	}
+	else {
+		
+	}
 
 
 	while(1) {

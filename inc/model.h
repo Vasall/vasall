@@ -1,6 +1,7 @@
 #ifndef _MODEL_H
 #define _MODEL_H
 
+#include "render_engine.h"
 #include "vector.h"
 #include "matrix.h"
 #include "shape.h"
@@ -98,19 +99,23 @@ struct model {
 	char              name[9];
 	uint32_t          attr_m;
 	unsigned int      vao;
+	VkDescriptorSet   set;
 	
 	unsigned int      idx_bao;
 	int               idx_num;
 	unsigned int      *idx_buf;
+	struct vk_buffer  idx_bo;
 	
 	unsigned int      vtx_bao;
 	int               vtx_num;
 	char              *vtx_buf;
+	struct vk_buffer  vtx_bo;
 
 	short             tex;
 	short             shd;
 
 	unsigned int      uni_buf;
+	struct vk_buffer  uni_bo;
 
 	int               jnt_num;
 	struct mdl_joint  *jnt_buf;
@@ -158,10 +163,11 @@ extern int mdl_check_slot(short slot);
  * Create a new entry in the model-table.
  *
  * @name: The name of the model
+ * @shd_slot: the shader slot
  *
  * Returns: Either a slot in the model-table or -1 if an error occurred
  */
-extern short mdl_set(char *name);
+extern short mdl_set(char *name, short shd_slot);
 
 
 /*

@@ -1,6 +1,7 @@
 #ifndef _ASSET_H
 #define _ASSET_H
 
+#include "render_engine.h"
 #include "sdl.h"
 #include "filesystem.h"
 
@@ -14,6 +15,7 @@ struct shader_wrapper {
 	uint8_t    mask[SHD_SLOTS];
 	char       name[SHD_SLOTS][SHD_NAME_MAX+1];
 	uint32_t   prog[SHD_SLOTS];
+	struct vk_pipeline pipeline[SHD_SLOTS];
 };
 
 
@@ -24,6 +26,7 @@ struct texture_wrapper {
 	uint8_t    mask[TEX_SLOTS];
 	char       name[TEX_SLOTS][TEX_NAME_MAX+1];
 	uint32_t   hdl[TEX_SLOTS];
+	struct vk_texture tex[TEX_SLOTS];
 };
 
 
@@ -145,13 +148,11 @@ extern void shd_unuse(void);
  * Manually set a new texture and add it to the texture-table.
  *
  * @name: The name of the texture
- * @px: A buffer containing the RGBA-pixels
- * @w: The with of the texture
- * @h: The height of the texture
+ * @pth: the path to png file
  *
  * Returns: Either the slot the texture is on or -1 if an error occurred
  */
-extern short tex_set(char *name, uint8_t *px, int w, int h);
+extern short tex_set(char *name, char *pth);
 
 
 /*
@@ -185,17 +186,6 @@ extern void tex_use(short slot);
  * Tell OpenGL to stop using the current texture.
  */
 extern void tex_unuse(void);
-
-
-/*
- * Load a texture from a PNG-file and add it to the texture-table.
- *
- * @name: The name of the texture
- * @pth: The ralative path to the PNG-file containing the texture
- *
- * Returns: Either the slot the texture is on or -1 if an error occurred
- */
-extern short tex_load_png(char *name, char *pth);
 
 
 /* ----------------------------------------------- */

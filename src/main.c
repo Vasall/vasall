@@ -29,6 +29,12 @@ int main(void)
 		goto err_close_net;
 	}
 
+	/* Initialize the window and opengl-context */
+	if(win_init() < 0) {
+		ERR_LOG(("Failed to setup window"));
+		goto err_close_mdl;
+	}
+
 	/* Initialize asset-table(shaders, textures, fonts) */
 	if(ast_init() < 0) {
 		ERR_LOG(("Failed to initialize asset-tables"));
@@ -39,12 +45,6 @@ int main(void)
 	if(mdl_init() < 0) {
 		ERR_LOG(("Initialize the model-table"));
 		goto err_free_ast;
-	}
-
-	/* Initialize the window and opengl-context */
-	if(win_init() < 0) {
-		ERR_LOG(("Failed to setup window"));
-		goto err_close_mdl;
 	}
 
 	/* Initialize the input-device-table and input-table */
@@ -112,14 +112,14 @@ err_close_camera:
 err_close_input:
 	inp_close();
 
-err_close_window:
-	win_close();
-
 err_close_mdl:
 	mdl_close();
 
 err_free_ast:
 	ast_close();
+
+err_close_window:
+	win_close();
 
 err_close_sdl:
 	sdl_close();

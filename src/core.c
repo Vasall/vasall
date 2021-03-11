@@ -73,12 +73,12 @@ extern void core_update(void)
 
 extern void core_render(void)
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	ren_start();
 
 	if(core.render)
 		core.render();
 
 	win_render();
 
-	SDL_GL_SwapWindow(window.win);
+	ren_end(window.win);
 }

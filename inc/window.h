@@ -5,6 +5,7 @@
 #include "node.h"
 #include "vector.h"
 #include "input.h"
+#include "render_engine.h"
 
 #define PIPE_LEN 32
 
@@ -33,6 +34,7 @@ struct window_wrapper {
 	int win_h;
 
 	uint32_t shader;
+	struct vk_pipeline pipeline;
 
 	SDL_Cursor *cursors[8];
 };

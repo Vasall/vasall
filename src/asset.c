@@ -45,15 +45,15 @@ extern void ast_close(void)
 		if(assets.tex.mask[i] == 0)
 			continue;
 		
-		glDeleteTextures(1, &assets.tex.hdl[i]);
+		ren_destroy_texture(assets.tex.hdl[i], assets.tex.tex[i]);
 	}
 
 	/* Close the shader-table */
 	for(i = 0; i < SHD_SLOTS; i++) {
 		if(assets.shd.mask[i] == 0)
 			continue;
-	
-		glDeleteProgram(assets.shd.prog[i]);	
+
+		ren_destroy_shader(assets.shd.prog[i], assets.shd.pipeline[i]);
 	}
 }
 
@@ -82,16 +82,7 @@ static int shd_check_slot(short slot)
 
 extern short shd_set(char *name, char *vs, char *fs, int num, char **vars)
 {
-	int i;
 	short slot;
-	int success;
-	char infoLog[512];
-	uint32_t fshd = 0;
-	uint32_t vshd = 0;
-	char *vtx_src = NULL;
-	char *frg_src = NULL;
-	GLint isLinked = 0;
-	unsigned int loc;
 
 	if((slot = shd_get_slot()) < 0) {
 		ERR_LOG(("Shader-table already full"));
@@ -101,109 +92,13 @@ extern short shd_set(char *name, char *vs, char *fs, int num, char **vars)
 	if(!vs || !fs)
 		return -1;
 
-	if((assets.shd.prog[slot] = glCreateProgram()) == 0) {
-		ERR_LOG(("Failed to create shader-program"));
-		goto err_cleanup;
-	}
-
-	/* Load vertex-shader and attach the vertex-shader */
-	if(fs_load_file(vs, (uint8_t **)&vtx_src, NULL) < 0) {
-		ERR_LOG(("Failed to load vtx-shader: %s", vs));
-		goto err_cleanup;
-	}
-
-	/* Create and initialize the vertex-shader */
-	vshd = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vshd, 1, (const GLchar **)&vtx_src, NULL);
-	glCompileShader(vshd);
-
-	/* Check if vertex-shader compiled successfully */
-	glGetShaderiv(vshd, GL_COMPILE_STATUS, &success);
-	if(!success) {
-		glGetShaderInfoLog(vshd, 512, NULL, infoLog);
-		ERR_LOG(("Failed to compile shader"));
-		printf("  %s: %s", vs, infoLog);
-		goto err_cleanup;
-	}
-
-	glAttachShader(assets.shd.prog[slot], vshd);
-
-	/* Load and attach the fragment-shader */
-	if(fs_load_file(fs, (uint8_t **)&frg_src, NULL) < 0) {
-		ERR_LOG(("Failed to load frg-shader: %s", fs));
-		goto err_cleanup;
-	}
-
-	/* Create and initialize the fragment-shader */
-	fshd = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fshd, 1, (const GLchar **)&frg_src, NULL);
-	glCompileShader(fshd);
-
-	/* Check if fragment-shader compiled successfully */
-	glGetShaderiv(fshd, GL_COMPILE_STATUS, &success);
-	if(!success) {
-		glGetShaderInfoLog(fshd, 512, NULL, infoLog);
-		ERR_LOG(("Failed to compile shader"));
-		printf("  %s: %s", fs, infoLog);
-		goto err_cleanup;
-	}
-
-	glAttachShader(assets.shd.prog[slot], fshd);
-
-	/* Bind the vertex-attributes */
-	for(i = 0; i < num; i++)
-		glBindAttribLocation(assets.shd.prog[slot], i, vars[i]);
-
-	if(glGetError() != GL_NO_ERROR)
-		ERR_LOG(("Failed to bind attribute-location"));
-
-	/* Link the shader-program */
-	glLinkProgram(assets.shd.prog[slot]);
-
-	/* Check if shader-program has been linked successfully */
-	glGetProgramiv(assets.shd.prog[slot], GL_LINK_STATUS, (int *)&isLinked);
-	if(isLinked == GL_FALSE) {
-		GLchar infoLog[512];
-        	GLint size;
-        	glGetProgramInfoLog(assets.shd.prog[slot], 512, &size, infoLog);
-		ERR_LOG(("Failed to link shader: %s", infoLog));
-	}
-
-	loc = glGetUniformBlockIndex(assets.shd.prog[slot], "UBO");
-	if(loc != GL_INVALID_INDEX)
-		glUniformBlockBinding(assets.shd.prog[slot], loc, 0);
-
-	/* Detach and destroy assets.shd */
-	glDetachShader(assets.shd.prog[slot], vshd);
-	glDeleteShader(vshd);
-	vshd = 0;
-
-	glDetachShader(assets.shd.prog[slot], fshd);
-	glDeleteShader(fshd);
-	fshd = 0;
+	if(ren_create_shader(vs, fs, &assets.shd.prog[slot],
+					&assets.shd.pipeline[slot], num, vars) < 0)
+		return -1;
 
 	assets.shd.mask[slot] = 1;
 	strcpy(assets.shd.name[slot], name);
-	free(vtx_src);
-	free(frg_src);
 	return slot;
-
-err_cleanup:
-	if(vshd) {
-		glDetachShader(assets.shd.prog[slot], vshd);
-		glDeleteShader(vshd);
-	}
-	if(fshd) {
-		glDetachShader(assets.shd.prog[slot], fshd);
-		glDeleteShader(fshd);
-	}
-
-	if(assets.shd.prog[slot])
-		glDeleteProgram(assets.shd.prog[slot]);
-
-	free(vtx_src);
-	free(frg_src);
-	return -1;
 }
 
 
@@ -214,8 +109,8 @@ extern void shd_del(short slot)
 
 	if(assets.shd.mask[slot] == 0)
 		return;
-	
-	glDeleteProgram(assets.shd.prog[slot]);
+
+	ren_destroy_shader(assets.shd.prog[slot], assets.shd.pipeline[slot]);
 	assets.shd.mask[slot] = 0;
 }
 
@@ -238,27 +133,11 @@ extern short shd_get(char *name)
 
 extern void shd_use(short slot, int attr)
 {
-	int i;
 
 	if(shd_check_slot(slot))
 		return;
 
-	/* Use the attached shader program */
-	glUseProgram(assets.shd.prog[slot]);
-
-	/* Enable the vertices up to attr */
-	for(i = 0; i < attr; i++)
-		glEnableVertexAttribArray(i);
-
-	if(glGetError() != GL_NO_ERROR) {
-		ERR_LOG(("Failed to enable attribute"));
-		return;
-	}
-
-	if(glGetError() != GL_NO_ERROR) {
-		ERR_LOG(("Failed to get locations"));
-		return;
-	}
+	ren_set_shader(assets.shd.prog[slot], attr, assets.shd.pipeline[slot]);
 }
 
 
@@ -291,7 +170,7 @@ static int tex_check_slot(short slot)
 }
 
 
-extern short tex_set(char *name, uint8_t *px, int w, int h)
+extern short tex_set(char *name, char *pth)
 {
 	short slot;
 
@@ -300,42 +179,13 @@ extern short tex_set(char *name, uint8_t *px, int w, int h)
 		return -1;
 	}
 
-	glGenTextures(1, &assets.tex.hdl[slot]);
-	glBindTexture(GL_TEXTURE_2D, assets.tex.hdl[slot]);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, 
-			GL_UNSIGNED_BYTE, px);
-
-	glBindTexture(GL_TEXTURE_2D, 0);
+	if(ren_create_texture(pth, &assets.tex.hdl[slot], &assets.tex.tex[slot])
+					< 0)
+		return -1;
 
 	assets.tex.mask[slot] = 1;
 	strcpy(assets.tex.name[slot], name);
 	return slot;
-}
-
-
-extern short tex_load_png(char *name, char *pth)
-{
-	int w, h, ret = 0;
-	uint8_t *px;
-
-	if(fs_load_png(pth, &px, &w, &h) < 0) {
-		ERR_LOG(("Failed to load texture: %s", pth));
-		return -1;
-	}
-
-	if(tex_set(name, px, w, h) < 0) {
-		ERR_LOG(("Failed add texture to table"));
-		ret = -1;
-	}
-
-	free(px);
-	return ret;
 }
 
 
@@ -347,7 +197,7 @@ extern void tex_del(short slot)
 	if(assets.tex.mask[slot] == 0)
 		return;
 
-	glDeleteTextures(1, &assets.tex.hdl[slot]);
+	ren_destroy_texture(assets.tex.hdl[slot], assets.tex.tex[slot]);
 	assets.tex.mask[slot] = 0;
 }
 

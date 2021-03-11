@@ -1,3 +1,4 @@
+#include "render_engine.h"
 #include "model.h"
 
 #include "error.h"
@@ -58,18 +59,18 @@ extern void mdl_close(void)
 			continue;
 
 		/* Destroy buffer-array-objects */
-		if(mdl->vtx_bao)
-			glDeleteBuffers(1, &mdl->vtx_bao);
+		if(mdl->vtx_bao || mdl->vtx_bo.buffer)
+			ren_destroy_buffer(mdl->vtx_bao, mdl->vtx_bo);
 
-		if(mdl->idx_bao)
-			glDeleteBuffers(1, &mdl->idx_bao);
+		if(mdl->idx_bao || mdl->idx_bo.buffer)
+			ren_destroy_buffer(mdl->idx_bao, mdl->idx_bo);
 
-		if(mdl->uni_buf)
-			glDeleteBuffers(1, &mdl->uni_buf);
+		if(mdl->uni_buf || mdl->uni_bo.buffer)
+			ren_destroy_buffer(mdl->uni_buf, mdl->uni_bo);
 
 		/* Destroy vertex-array-object */
-		if(mdl->vao)
-			glDeleteVertexArrays(1, &mdl->vao);
+		if(mdl->vao || mdl->set)
+			ren_destroy_model_data(mdl->vao, mdl->set);
 
 		/* Free buffers */
 		if(mdl->idx_buf)
@@ -92,7 +93,7 @@ extern int mdl_check_slot(short slot)
 }
 
 
-extern short mdl_set(char *name)
+extern short mdl_set(char *name, short shd_slot)
 {
 	short slot;
 	struct model *mdl;
@@ -120,13 +121,26 @@ extern short mdl_set(char *name)
 
 	/* Initialize model-attributes */
 	mdl->vao = 0;
+	mdl->set = VK_NULL_HANDLE;
 	mdl->idx_bao = 0;
+	mdl->idx_bo.buffer = VK_NULL_HANDLE;
+	mdl->idx_bo.memory = VK_NULL_HANDLE;
+	mdl->idx_bo.data = NULL;
+	mdl->idx_bo.size = 0;
 	mdl->idx_buf = NULL;
 	mdl->idx_num = 0;	
 	mdl->vtx_bao = 0;
+	mdl->vtx_bo.buffer = VK_NULL_HANDLE;
+	mdl->vtx_bo.memory = VK_NULL_HANDLE;
+	mdl->vtx_bo.data = NULL;
+	mdl->vtx_bo.size = 0;
 	mdl->vtx_buf = NULL;
 	mdl->vtx_num = 0;
 	mdl->uni_buf = 0;
+	mdl->uni_bo.buffer = VK_NULL_HANDLE;
+	mdl->uni_bo.memory = VK_NULL_HANDLE;
+	mdl->uni_bo.data = NULL;
+	mdl->uni_bo.size = 0;
 
 	/* Clear both texture and shader */
 	mdl->tex = -1;
@@ -143,7 +157,9 @@ extern short mdl_set(char *name)
 	mdl->status = MDL_OK;
 
 	/* Generate a new vao */
-	glGenVertexArrays(1, &mdl->vao);
+	if(ren_create_model_data(assets.shd.pipeline[shd_slot], &mdl->vao,
+					&mdl->set) < 0)
+		return -1;
 
 	models[slot] = mdl;
 	return slot;
@@ -178,17 +194,17 @@ extern void mdl_del(short slot)
 	if(!(mdl = models[slot]))
 		return;
 
-	if(mdl->idx_bao)
-		glDeleteBuffers(1, &mdl->idx_bao);
+	if(mdl->idx_bao || mdl->idx_bo.buffer)
+		ren_destroy_buffer(mdl->idx_bao, mdl->idx_bo);
 
-	if(mdl->vtx_bao)
-		glDeleteBuffers(1, &mdl->vtx_bao);
+	if(mdl->vtx_bao || mdl->vtx_bo.buffer)
+		ren_destroy_buffer(mdl->vtx_bao, mdl->vtx_bo);
 
-	if(mdl->uni_buf)
-		glDeleteBuffers(1, &mdl->uni_buf);
+	if(mdl->uni_buf || mdl->uni_bo.buffer)
+		ren_destroy_buffer(mdl->uni_buf, mdl->uni_bo);
 
-	if(mdl->vao)
-		glDeleteVertexArrays(1, &mdl->vao);
+	if(mdl->vao || mdl->set)
+		ren_destroy_model_data(mdl->vao, mdl->set);
 
 	if(mdl->idx_buf)
 		free(mdl->idx_buf);
@@ -228,8 +244,6 @@ extern void mdl_set_data(short slot, int vtxnum, float *vtx, float *tex,
 	char *ptr;
 	int vtx_size;
 	struct model *mdl;
-	void *p;
-	GLenum err;
 
 	if(mdl_check_slot(slot))
 		return;
@@ -284,54 +298,22 @@ extern void mdl_set_data(short slot, int vtxnum, float *vtx, float *tex,
 
 	}
 
-	/* Bind vertex-array-object */
-	glBindVertexArray(mdl->vao);
+	if(ren_create_buffer(mdl->vao, GL_ARRAY_BUFFER, vtxnum * vtx_size,
+			mdl->vtx_buf, &mdl->vtx_bao, &mdl->vtx_bo) < 0)
+		goto err_set_failed;
 
-	/* Register the vertex-positions */
-	glGenBuffers(1, &mdl->vtx_bao);
-	glBindBuffer(GL_ARRAY_BUFFER, mdl->vtx_bao);
-	glBufferData(GL_ARRAY_BUFFER, vtxnum * vtx_size, mdl->vtx_buf, 
-			GL_STATIC_DRAW);
+	if(ren_create_buffer(mdl->vao, GL_ELEMENT_ARRAY_BUFFER,
+			idxnum * sizeof(unsigned int), (char*)mdl->idx_buf, &mdl->idx_bao,
+			&mdl->idx_bo) < 0)
+		goto err_set_failed;
 
-	/* Bind the data to the vertices */
-	/* Vertex-Position */
-	p = NULL;
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, vtx_size, p);
+	if(ren_create_buffer(mdl->vao, GL_UNIFORM_BUFFER, sizeof(struct uni_buffer),
+			NULL, &mdl->uni_buf, &mdl->uni_bo) < 0)
+		goto err_set_failed;
 
-	/* Tex-Coordinate */
-	p = (void *)(3 * sizeof(float));
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, vtx_size, p);
-
-	/* Normal-Vector */
-	p = (void *)(5 * sizeof(float));
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, vtx_size, p);
-
-	if(mdl->attr_m & AMO_M_RIG) {
-		/* Joint-Index */
-		p = (void *)(8 * sizeof(float));
-		glVertexAttribIPointer(3, 4, GL_INT, vtx_size, p);
-
-		/* Joint-Weights */
-		p = (void *)(8 * sizeof(float) + 4 * sizeof(int));
-		glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, vtx_size, p);
-	}
-
-	/* Register the indices */
-	glGenBuffers(1, &mdl->idx_bao);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mdl->idx_bao);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, idxnum * sizeof(int), 
-			mdl->idx_buf, GL_STATIC_DRAW);
-
-	/* Register uniform buffer */
-	glGenBuffers(1, &mdl->uni_buf);
-	glBindBuffer(GL_UNIFORM_BUFFER, mdl->uni_buf);
-
-	/* Unbind the vertex-array-object */
-	glBindVertexArray(0);
-
-	if((err = glGetError()) != GL_NO_ERROR) {
-		ERR_LOG(("Failed to set model-data"));
-	}
+	if(ren_set_model_data(mdl->vao, mdl->vtx_bao, vtx_size, jnt && wgt ? 1 : 0,
+			mdl->set, mdl->uni_bo, assets.tex.tex[mdl->tex]) < 0)
+		goto err_set_failed;
 
 	return;
 
@@ -464,7 +446,7 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 
 
 	/* Allocate memory for the model-struct */
-	if((slot = mdl_set(name)) < 0)
+	if((slot = mdl_set(name, shd_slot)) < 0)
 		return -1;
 
 	/* Get pointer to model */
@@ -779,9 +761,6 @@ extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
 	int attr;
 	struct uni_buffer uni;
 
-	void *poff;
-	int rng;
-
 	if(mdl_check_slot(slot))
 		return;
 
@@ -796,14 +775,11 @@ extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
 	cam_get_view(view);
 	cam_get_proj(proj);
 
-	/* Bind the VAO of the model */
-	glBindVertexArray(mdl->vao);
+	/* Use vertices */
+	ren_set_vertices(mdl->vao, mdl->vtx_bo, mdl->idx_bo);
 
 	/* Use shader, enable vertex attributes and get uniform locations */
 	shd_use(mdl->shd, attr);
-
-	/* Use texture */
-	tex_use(mdl->tex);
 
 	/* Set the uniform-variables */
 	mat4_cpy(uni.pos_mat, pos_mat);
@@ -813,19 +789,15 @@ extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
 	if(rig != NULL)
 		memcpy(uni.tran_mat, rig->tran_mat, mdl->jnt_num * MAT4_SIZE);
 	
-	glBindBuffer(GL_UNIFORM_BUFFER, mdl->uni_buf);
-	glBufferData(GL_UNIFORM_BUFFER, sizeof(struct uni_buffer), &uni,
-				GL_STATIC_DRAW);
-	glBindBuffer(GL_UNIFORM_BUFFER, 0);
-	glBindBufferBase(GL_UNIFORM_BUFFER, 0, mdl->uni_buf);
+	/* Set uniform buffer and textures */
+	ren_set_render_model_data(mdl->uni_buf, uni, assets.tex.hdl[mdl->tex],
+			assets.shd.pipeline[mdl->shd], mdl->uni_bo, mdl->set);
 
 	/* Draw the vertices */
-	poff = (void *)0;
-	rng = mdl->idx_num;
-	glDrawElements(GL_TRIANGLES, rng, GL_UNSIGNED_INT, poff);
+	ren_draw(mdl->idx_num);
 
 	/* Unuse the texture, shader and VAO */
-	tex_unuse();
+	/* tex_unuse();
 	shd_unuse();
-	glBindVertexArray(0);
+	glBindVertexArray(0); */
 }

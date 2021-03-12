@@ -22,19 +22,14 @@ extern int ren_init(SDL_Window *window)
 }
 
 
-extern int ren_destroy(void)
+extern void ren_destroy(void)
 {
-	int res;
-
 	if(renderer.mode == REN_MODE_VULKAN) {
-		res = vk_destroy();
+		vk_destroy();
 	}
 	else if(renderer.mode == REN_MODE_OPENGL) {
-		res = gl_destroy();
+		gl_destroy();
 	}
-
-	return res;
-
 }
 
 
@@ -46,7 +41,8 @@ extern int ren_resize(int w, int h)
 		res = vk_resize();
 	}
 	else if(renderer.mode == REN_MODE_OPENGL) {
-		res = gl_resize(w, h);
+		gl_resize(w, h);
+		res = 0;
 	}
 
 	return res;
@@ -54,17 +50,20 @@ extern int ren_resize(int w, int h)
 
 
 extern int ren_create_shader(char *vs, char *fs, uint32_t *prog,
-		struct vk_pipeline *pipeline, int num, char **vars)
+                             struct vk_pipeline *pipeline, int num, char **vars)
 {
 	int i, res;
 	enum vk_in_attr in_attr = 0;
 	char *vk_vs, *vk_fs;
+	size_t vs_len, fs_len;
 
 	for(i = 0; i < num; i++) {
-		if(strcmp(vars[i], "vtxPos") == 0 || strcmp(vars[i], "pos") == 0 ) {
+		if(strcmp(vars[i], "vtxPos") == 0 || strcmp(vars[i], "pos")
+		   == 0 ) {
 			in_attr |= IN_ATTR_POS;
 		}
-		if(strcmp(vars[i], "vtxTex") == 0 || strcmp(vars[i], "tex") == 0 ) {
+		if(strcmp(vars[i], "vtxTex") == 0 || strcmp(vars[i], "tex")
+		   == 0 ) {
 			in_attr |= IN_ATTR_TEX;
 		}
 		if(strcmp(vars[i], "vtxNrm") == 0) {
@@ -78,20 +77,22 @@ extern int ren_create_shader(char *vs, char *fs, uint32_t *prog,
 		}
 	}
 
-	vk_vs = malloc(strlen(vs)+5);
-	vk_fs = malloc(strlen(fs)+5);
-	strcpy(vk_vs, vs);
-	strcpy(vk_fs, fs);
-	vk_vs[strlen(vs)+0] = '.';
-	vk_vs[strlen(vs)+1] = 's';
-	vk_vs[strlen(vs)+2] = 'p';
-	vk_vs[strlen(vs)+3] = 'v';
-	vk_vs[strlen(vs)+4] = '\0';
-	vk_fs[strlen(fs)+0] = '.';
-	vk_fs[strlen(fs)+1] = 's';
-	vk_fs[strlen(fs)+2] = 'p';
-	vk_fs[strlen(fs)+3] = 'v';
-	vk_fs[strlen(fs)+4] = '\0';
+	vs_len = strlen(vs);
+	fs_len = strlen(fs);
+	vk_vs = malloc(vs_len+5);
+	vk_fs = malloc(fs_len+5);
+	strncpy(vk_vs, vs, vs_len);
+	strncpy(vk_fs, fs, fs_len);
+	vk_vs[vs_len+0] = '.';
+	vk_vs[vs_len+1] = 's';
+	vk_vs[vs_len+2] = 'p';
+	vk_vs[vs_len+3] = 'v';
+	vk_vs[vs_len+4] = '\0';
+	vk_fs[fs_len+0] = '.';
+	vk_fs[fs_len+1] = 's';
+	vk_fs[fs_len+2] = 'p';
+	vk_fs[fs_len+3] = 'v';
+	vk_fs[fs_len+4] = '\0';
 
 	if(renderer.mode == REN_MODE_VULKAN) {
 		res = vk_create_pipeline(vk_vs, vk_fs, in_attr, pipeline);
@@ -107,23 +108,19 @@ extern int ren_create_shader(char *vs, char *fs, uint32_t *prog,
 }
 
 
-extern int ren_destroy_shader(uint32_t prog, struct vk_pipeline pipeline)
+extern void ren_destroy_shader(uint32_t prog, struct vk_pipeline pipeline)
 {
-	int res;
-
 	if(renderer.mode == REN_MODE_VULKAN) {
-		res = vk_destroy_pipeline(pipeline);
+		vk_destroy_pipeline(pipeline);
 	}
 	else if(renderer.mode == REN_MODE_OPENGL) {
-		res = gl_delete_program(prog);
+		gl_delete_program(prog);
 	}
-
-	return res;
 }
 
 
 extern int ren_create_texture(char *pth, uint32_t *hdl,
-			struct vk_texture *texture)
+                              struct vk_texture *texture)
 {
 	int res;
 
@@ -138,23 +135,19 @@ extern int ren_create_texture(char *pth, uint32_t *hdl,
 }
 
 
-extern int ren_destroy_texture(uint32_t hdl, struct vk_texture texture)
+extern void ren_destroy_texture(uint32_t hdl, struct vk_texture texture)
 {
-	int res;
-
 	if(renderer.mode == REN_MODE_VULKAN) {
-		res = vk_destroy_texture(texture);
+		vk_destroy_texture(texture);
 	}
 	else if(renderer.mode == REN_MODE_OPENGL) {
-		res = gl_destroy_texture(hdl);
+		gl_destroy_texture(hdl);
 	}
-
-	return res;
 }
 
 
 extern int ren_create_model_data(struct vk_pipeline pipeline, uint32_t *vao,
-				VkDescriptorSet *set)
+                                 VkDescriptorSet *set)
 {
 	int res;
 
@@ -162,7 +155,8 @@ extern int ren_create_model_data(struct vk_pipeline pipeline, uint32_t *vao,
 		res = vk_create_constant_data(pipeline, set);
 	}
 	else if(renderer.mode == REN_MODE_OPENGL) {
-		res = gl_create_vao(vao);
+		gl_create_vao(vao);
+		res = 0;
 	}
 
 	return res;
@@ -177,7 +171,8 @@ extern int ren_destroy_model_data(uint32_t vao, VkDescriptorSet set)
 		res = vk_destroy_constant_data(set);
 	}
 	else if(renderer.mode == REN_MODE_OPENGL) {
-		res = gl_destroy_vao(vao);
+		gl_destroy_vao(vao);
+		res = 0;
 	}
 
 	return res;
@@ -185,7 +180,7 @@ extern int ren_destroy_model_data(uint32_t vao, VkDescriptorSet set)
 
 
 extern int ren_create_buffer(uint32_t vao, int type, size_t size, char *buf,
-				uint32_t *bo, struct vk_buffer *buffer)
+                             uint32_t *bo, struct vk_buffer *buffer)
 {
 	VkBufferUsageFlags usage;
 	int res = 0;
@@ -207,8 +202,10 @@ extern int ren_create_buffer(uint32_t vao, int type, size_t size, char *buf,
 		if(vk_create_buffer(size, usage, 1, buffer) < 0)
 			return -1;
 		
-		if(buf)
-			res = vk_copy_data_to_buffer(buf, *buffer);
+		if(buf) {
+			vk_copy_data_to_buffer(buf, *buffer);
+			res = 0;
+		}
 	}
 	else if(renderer.mode == REN_MODE_OPENGL) {
 		res = gl_create_buffer(vao, type, size, buf, bo);
@@ -218,24 +215,21 @@ extern int ren_create_buffer(uint32_t vao, int type, size_t size, char *buf,
 }
 
 
-extern int ren_destroy_buffer(uint32_t bo, struct vk_buffer buffer)
+extern void ren_destroy_buffer(uint32_t bo, struct vk_buffer buffer)
 {
-	int res;
-
 	if(renderer.mode == REN_MODE_VULKAN) {
-		res = vk_destroy_buffer(buffer);
+		vk_destroy_buffer(buffer);
 	}
 	else if(renderer.mode == REN_MODE_OPENGL) {
-		res = gl_destroy_buffer(bo);
+		gl_destroy_buffer(bo);
 	}
-
-	return res;
 }
 
 
 extern int ren_set_model_data(uint32_t vao, uint32_t vbo, int stride, int rig,
-	VkDescriptorSet set, struct vk_buffer uniform_buffer,
-	struct vk_texture texture)
+                              VkDescriptorSet set,
+                              struct vk_buffer uniform_buffer,
+                              struct vk_texture texture)
 {
 	int res;
 
@@ -246,7 +240,8 @@ extern int ren_set_model_data(uint32_t vao, uint32_t vbo, int stride, int rig,
 		res = vk_set_texture(texture, set);
 	}
 	else if(renderer.mode == REN_MODE_OPENGL) {
-		res = gl_set_input_attr(vao, vbo, stride, rig);
+		gl_set_input_attr(vao, vbo, stride, rig);
+		res = 0;
 	}
 
 	return res;
@@ -261,7 +256,8 @@ extern int ren_start(void)
 		res = vk_render_start();
 	}
 	else if(renderer.mode == REN_MODE_OPENGL) {
-		res = gl_render_start();
+		gl_render_start();
+		res = 0;
 	}
 
 	return res;
@@ -273,7 +269,8 @@ extern int ren_set_shader(uint32_t prog, int attr, struct vk_pipeline pipeline)
 	int res;
 
 	if(renderer.mode == REN_MODE_VULKAN) {
-		res = vk_render_set_pipeline(pipeline);
+		vk_render_set_pipeline(pipeline);
+		res = 0;
 	}
 	else if(renderer.mode == REN_MODE_OPENGL) {
 		res = gl_render_set_program(prog, attr);
@@ -283,60 +280,44 @@ extern int ren_set_shader(uint32_t prog, int attr, struct vk_pipeline pipeline)
 }
 
 
-extern int ren_set_vertices(uint32_t vao, struct vk_buffer vtx_buffer,
-			struct vk_buffer idx_buffer)
+extern void ren_set_vertices(uint32_t vao, struct vk_buffer vtx_buffer,
+                            struct vk_buffer idx_buffer)
 {
-	int res;
-
 	if(renderer.mode == REN_MODE_VULKAN) {
-		if(vk_render_set_vertex_buffer(vtx_buffer) < 0)
-			return -1;
-		
-		res = vk_render_set_index_buffer(idx_buffer);
+		vk_render_set_vertex_buffer(vtx_buffer);
+		vk_render_set_index_buffer(idx_buffer);
 	}
 	else if(renderer.mode == REN_MODE_OPENGL) {
-		res = gl_render_set_vao(vao);
+		gl_render_set_vao(vao);
 	}
-
-	return res;
 }
 
 
-extern int ren_set_render_model_data(unsigned int uni_buf,
-			struct uni_buffer uni, uint32_t hdl, struct vk_pipeline pipeline,
-			struct vk_buffer vk_uni_buf, VkDescriptorSet set)
+extern void ren_set_render_model_data(unsigned int uni_buf,
+                                     struct uni_buffer uni, uint32_t hdl,
+                                     struct vk_pipeline pipeline,
+                                     struct vk_buffer vk_uni_buf,
+                                     VkDescriptorSet set)
 {
-	int res;
-
 	if(renderer.mode == REN_MODE_VULKAN) {
-		if(vk_copy_data_to_buffer(&uni, vk_uni_buf) < 0)
-			return -1;
-		
-		res = vk_render_set_constant_data(pipeline, set);
+		vk_copy_data_to_buffer(&uni, vk_uni_buf);
+		vk_render_set_constant_data(pipeline, set);
 	}
 	else if(renderer.mode == REN_MODE_OPENGL) {
-		if(gl_render_set_uniform_buffer(uni_buf, uni) < 0)
-			return -1;
-		
-		res = gl_render_set_texture(hdl);
+		gl_render_set_uniform_buffer(uni_buf, uni);
+		gl_render_set_texture(hdl);
 	}
-
-	return res;
 }
 
 
-extern int ren_draw(uint32_t indices)
+extern void ren_draw(uint32_t indices)
 {
-	int res;
-
 	if(renderer.mode == REN_MODE_VULKAN) {
-		res = vk_render_draw(indices);
+		vk_render_draw(indices);
 	}
 	else if(renderer.mode == REN_MODE_OPENGL) {
-		res = gl_render_draw(indices);
+		gl_render_draw(indices);
 	}
-
-	return res;
 }
 
 
@@ -348,7 +329,8 @@ extern int ren_end(SDL_Window *window)
 		res = vk_render_end();
 	}
 	else if(renderer.mode == REN_MODE_OPENGL) {
-		res = gl_render_end(window);
+		gl_render_end(window);
+		res = 0;
 	}
 
 	return res;

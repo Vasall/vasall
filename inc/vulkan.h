@@ -1,5 +1,5 @@
-#ifndef VK_H
-#define VK_H
+#ifndef _VK_H
+#define _VK_H
 
 #include <vulkan/vulkan.h>
 #include <SDL2/SDL_vulkan.h>
@@ -32,173 +32,216 @@ struct vk_texture {
 	VkSampler sampler;
 };
 
+
 /*
- * Try to initialize vulkan
+ * Try to initialize vulkan.
  * 
- * @window: a SDL_Window initialized with SDL_WINDOW_VULKAN
+ * @window: A SDL_Window initialized with SDL_WINDOW_VULKAN
+ * 
+ * Returns: 0 on success or -1 if an error occured
  */
 extern int vk_init(SDL_Window* window);
 
-/*
- * Destroy vulkan handles
- */
-extern int vk_destroy(void);
 
 /*
- * Resize the vulkan render area to the current size of the window
+ * Destroy vulkan handles.
+ */
+extern void vk_destroy(void);
+
+
+/*
+ * Resize the vulkan render area to the current size of the window.
+ * 
+ * Returns: 0 on success or -1 if an error occured
  */
 extern int vk_resize(void);
 
-/*
- * Create a new graphics pipeline (equivalent to an OpenGL shader program)
- * 
- * @vtx: the path to the SPIR-V vertex shader
- * @frg: the path to the SPIR-V fragment shader
- * @attr: flags, which determines the input attributes to the vertex shader
- * @pipeline: A pointer to the pipeline, which will be filled by the function
- */
-extern int vk_create_pipeline(char *vtx, char *frg, enum vk_in_attr attr,
-							struct vk_pipeline *pipeline);
 
 /*
- * Destroy a graphics pipeline
+ * Create a new graphics pipeline (equivalent to an OpenGL shader program).
  * 
- * @pipeline: the pipeline which will be destroyed
+ * @vtx: The path to the SPIR-V vertex shader
+ * @frg: The path to the SPIR-V fragment shader
+ * @attr: Flags, which determine the input attributes to the vertex shader
+ * @pipeline: A pointer to the pipeline, which will be filled by the function
+ * 
+ * Returns: 0 on success or -1 if an error occured
  */
-extern int vk_destroy_pipeline(struct vk_pipeline pipeline);
+extern int vk_create_pipeline(char *vtx, char *frg, enum vk_in_attr attr,
+                              struct vk_pipeline *pipeline);
+
+
+/*
+ * Destroy a graphics pipeline.
+ * 
+ * @pipeline: The pipeline which will be destroyed
+ */
+extern void vk_destroy_pipeline(struct vk_pipeline pipeline);
+
 
 /*
  * Create a descriptor set, which holds all the stuff thats going into the
  * shader that aren't vertex attributes (uniform buffers, textures, etc.)
- * One should be created for each model
+ * One should be created for each model.
  * 
- * @pipeline: the pipeline of the model
- * @set: a pointer to the Descriptor Set, which will be filles by the function
+ * @pipeline: The pipeline of the model
+ * @set: A pointer to the VkDescriptorSet, which will be filles by the function
+ * 
+ * Returns: 0 on success or -1 if an error occured
  */
 extern int vk_create_constant_data(struct vk_pipeline pipeline,
-			VkDescriptorSet *set);
+                                   VkDescriptorSet *set);
+
 
 /*
- * Destroy a descriptor set
+ * Destroy a descriptor set.
  * 
- * @set: the descriptor set which will be destroyed
+ * @set: The descriptor set which will be destroyed
+ * 
+ * Returns: 0 on success or -1 if an error occured
  */
 extern int vk_destroy_constant_data(VkDescriptorSet set);
 
+
 /*
- * Create a new buffer
+ * Create a new buffer.
  * 
- * @size: the size of the buffer
- * @usage: the type of the buffer
- * @staging: a boolean which enables memory mapping
+ * @size: The size of the buffer
+ * @usage: The type of the buffer
+ * @staging: A boolean which enables memory mapping
  * @buffer: A pointer to the buffer, which will be filled by the function
+ * 
+ * Returns: 0 on success or -1 if an error occured
  */
 extern int vk_create_buffer(VkDeviceSize size, VkBufferUsageFlags usage,
-					uint8_t staging, struct vk_buffer *buffer);
+                            uint8_t staging, struct vk_buffer *buffer);
+
 
 /*
- * Copy data to a buffer created with staging enabled and unmap the memory
- * The amount of data is the size of the buffer
+ * Copy data to a buffer created with staging enabled.
+ * The amount of data is the size of the buffer.
  * 
- * @data: the data, which will be copied.
- * @buffer: the buffer to copy to
+ * @data: The data, which will be copied.
+ * @buffer: The buffer to copy to
  */
-extern int vk_copy_data_to_buffer(void* data, struct vk_buffer buffer);
+extern void vk_copy_data_to_buffer(void* data, struct vk_buffer buffer);
+
 
 /*
- * Destroy a buffer and free its memory
+ * Destroy a buffer and free its memory.
  * 
- * @buffer: the buffer which will be destroyed
+ * @buffer: The buffer which will be destroyed
  */
-extern int vk_destroy_buffer(struct vk_buffer buffer);
+extern void vk_destroy_buffer(struct vk_buffer buffer);
+
 
 /*
- * Create a new texture
+ * Create a new texture.
  * 
- * @pth: the path to the png of the texture
+ * @pth: The path to the png of the texture
  * @texture: A pointer to the texture, which will be filled by the function
+ * 
+ * Returns: 0 on success or -1 if an error occured
  */
 extern int vk_create_texture(char *pth, struct vk_texture *texture);
 
-/*
- * Destroy a texture
- * 
- * @texture: the texture which will be destroyed
- */
-extern int vk_destroy_texture(struct vk_texture texture);
 
 /*
- * Tell the pipeline to use this uniform buffer
- * Doesn't have to be between start_render() and end_render()
+ * Destroy a texture.
  * 
- * @buffer: the uniform buffer with usage VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
- * @set: the constant data for the model
+ * @texture: The texture which will be destroyed
+ */
+extern void vk_destroy_texture(struct vk_texture texture);
+
+
+/*
+ * Tell the pipeline to use this uniform buffer.
+ * Doesn't have to be between start_render() and end_render().
+ * 
+ * @buffer: The uniform buffer with usage VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
+ * @set: The constant data for the model
+ * 
+ * Returns: 0 on success or -1 if an error occured
  */
 extern int vk_set_uniform_buffer(struct vk_buffer buffer, VkDescriptorSet set);
 
+
 /*
- * Tell the pipeline to use this texture
- * Doesn't have to be between start_render() and end_render()
+ * Tell the pipeline to use this texture.
+ * Doesn't have to be between start_render() and end_render().
  * 
- * @texture: the texture
- * @set: the the constant data for the model
+ * @texture: The texture
+ * @set: The constant data for the model
+ * 
+ * Returns: 0 on success or -1 if an error occured
  */
 extern int vk_set_texture(struct vk_texture texture, VkDescriptorSet set);
 
+
 /*
- * Start rendering
+ * Start rendering.
+ * 
+ * Returns: 0 on success or -1 if an error occured
  */
 extern int vk_render_start(void);
 
-/*
- * Set the pipeline during rendering
- * Has to be in between start_render() and end_render()
- * 
- * @pipeline: the pipeline
- */
-extern int vk_render_set_pipeline(struct vk_pipeline pipeline);
 
 /*
- * Set the descriptor set during rendering
- * Has to be in between start_render() and end_render()
+ * Set the pipeline during rendering.
+ * Has to be in between start_render() and end_render().
  * 
- * @pipeline: the pipeline the model uses
- * @set: the descriptor set
+ * @pipeline: The pipeline
  */
-extern int vk_render_set_constant_data(struct vk_pipeline pipeline,
-							VkDescriptorSet set);
+extern void vk_render_set_pipeline(struct vk_pipeline pipeline);
+
 
 /*
- * Set the vertex buffer during rendering
- * Has to be in between start_render() and end_render()
+ * Set the descriptor set during rendering.
+ * Has to be in between start_render() and end_render().
+ * 
+ * @pipeline: The pipeline the model uses
+ * @set: The descriptor set
+ */
+extern void vk_render_set_constant_data(struct vk_pipeline pipeline,
+                                        VkDescriptorSet set);
+
+
+/*
+ * Set the vertex buffer during rendering.
+ * Has to be in between start_render() and end_render().
  * This buffer must match with the input attributes of the pipeline, e.g
  * first 12 bytes for pos values, second 8 bytes for tex values, etc., but only
  * if you have set IN_ATTR_POS | IN_ATTR_TEX. If, for example, there are no tex
- * values, but nrm values, then the second 12 bytes are for nrm values
+ * values, but nrm values, then the second 12 bytes are for nrm values.
  * 
- * @buffer: the vertex buffer with usage VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
+ * @buffer: The vertex buffer with usage VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
  */
-extern int vk_render_set_vertex_buffer(struct vk_buffer buffer);
+extern void vk_render_set_vertex_buffer(struct vk_buffer buffer);
+
 
 /*
- * Set the index buffer during rendering
- * Has to be in between start_render() and end_render()
+ * Set the index buffer during rendering.
+ * Has to be in between start_render() and end_render().
  * 
- * @buffer: the index buffer with usage VK_BUFFER_USAGE_INDEX_BUFFER_BIT
+ * @buffer: The index buffer with usage VK_BUFFER_USAGE_INDEX_BUFFER_BIT
  */
-extern int vk_render_set_index_buffer(struct vk_buffer buffer);
+extern void vk_render_set_index_buffer(struct vk_buffer buffer);
+
 
 /*
- * Draw the current model during rendering
- * Has to be in between start_render() and end_render()
+ * Draw the current model during rendering.
+ * Has to be in between start_render() and end_render().
  * 
- * @index_count: the amount of indices (not triangles)
+ * @index_count: The amount of indices (not triangles)
  */
-extern int vk_render_draw(uint32_t index_count);
+extern void vk_render_draw(uint32_t index_count);
+
 
 /*
- * End rendering and display the result ot the screen
+ * End rendering and display the result on the screen.
+ * 
+ * Returns: 0 on success or -1 if an error occured
  */
 extern int vk_render_end(void);
 
-#endif /* VK_H */
+#endif /* _VK_H */

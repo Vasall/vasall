@@ -10,9 +10,14 @@ struct opengl_wrapper {
 
 static struct opengl_wrapper ogl;
 
+
 extern int gl_init(SDL_Window *window)
 {
 	ogl.context = SDL_GL_CreateContext(window);
+	if(ogl.context == NULL) {
+		ERR_LOG(("Couldn't create opengl context"));
+		return -1;
+	}
 
 	/* glClearColor(0.196, 0.235, 0.282, 1.0); */
 	glClearColor(0.094, 0.094, 0.094, 1.0);
@@ -24,14 +29,15 @@ extern int gl_init(SDL_Window *window)
 	return 0;
 }
 
-extern int gl_destroy(void)
+
+extern void gl_destroy(void)
 {
 	SDL_GL_DeleteContext(ogl.context);
-	return 0;
 }
 
+
 extern int gl_create_program(char *vs, char *fs, uint32_t *prog, int num,
-					char **vars)
+                             char **vars)
 {
 	int i;
 	int success;
@@ -146,11 +152,12 @@ err_cleanup:
 	return -1;
 }
 
-extern int gl_delete_program(uint32_t prog)
+
+extern void gl_delete_program(uint32_t prog)
 {
 	glDeleteProgram(prog);
-	return 0;
 }
+
 
 extern int gl_create_texture(char *pth, uint32_t *hdl)
 {
@@ -179,26 +186,26 @@ extern int gl_create_texture(char *pth, uint32_t *hdl)
 	return 0;
 }
 
-extern int gl_destroy_texture(uint32_t hdl)
+
+extern void gl_destroy_texture(uint32_t hdl)
 {
 	glDeleteTextures(1, &hdl);
-	return 0;
 }
 
-extern int gl_create_vao(uint32_t *vao)
+extern void gl_create_vao(uint32_t *vao)
 {
 	glGenVertexArrays(1, vao);
-	return 0;
 }
 
-extern int gl_destroy_vao(uint32_t vao)
+
+extern void gl_destroy_vao(uint32_t vao)
 {
 	glDeleteVertexArrays(1, &vao);
-	return 0;
 }
 
+
 extern int gl_create_buffer(uint32_t vao, int type, size_t size, char *buf,
-					uint32_t *bo)
+                            uint32_t *bo)
 {
 	int err;
 
@@ -219,13 +226,14 @@ extern int gl_create_buffer(uint32_t vao, int type, size_t size, char *buf,
 	return 0;
 }
 
-extern int gl_destroy_buffer(uint32_t bo)
+
+extern void gl_destroy_buffer(uint32_t bo)
 {
 	glDeleteBuffers(1, &bo);
-	return 0;
 }
 
-extern int gl_set_input_attr(uint32_t vao, uint32_t vbo, int stride, int rig)
+
+extern void gl_set_input_attr(uint32_t vao, uint32_t vbo, int stride, int rig)
 {
 	void *p;
 
@@ -254,21 +262,20 @@ extern int gl_set_input_attr(uint32_t vao, uint32_t vbo, int stride, int rig)
 		p = (void *)(8 * sizeof(float) + 4 * sizeof(int));
 		glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, stride, p);
 	}
-
-	return 0;
 }
 
-extern int gl_resize(int w, int h)
+
+extern void gl_resize(int w, int h)
 {
 	glViewport(0, 0, w, h);
-	return 0;
 }
 
-extern int gl_render_start(void)
+
+extern void gl_render_start(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	return 0;
 }
+
 
 extern int gl_render_set_program(uint32_t prog, int attr)
 {
@@ -294,20 +301,22 @@ extern int gl_render_set_program(uint32_t prog, int attr)
 	return 0;
 }
 
-extern int gl_render_set_vao(uint32_t vao)
+
+extern void gl_render_set_vao(uint32_t vao)
 {
 	glBindVertexArray(vao);
-	return 0;
 }
 
-extern int gl_render_set_texture(uint32_t hdl)
+
+extern void gl_render_set_texture(uint32_t hdl)
 {
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, hdl);
-	return 0;
 }
 
-extern int gl_render_set_uniform_buffer(unsigned int buf, struct uni_buffer uni)
+
+extern void gl_render_set_uniform_buffer(unsigned int buf,
+                                         struct uni_buffer uni)
 {
 
 	glBindBuffer(GL_UNIFORM_BUFFER, buf);
@@ -315,18 +324,16 @@ extern int gl_render_set_uniform_buffer(unsigned int buf, struct uni_buffer uni)
 				GL_STATIC_DRAW);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 0, buf);
-
-	return 0;
 }
 
-extern int gl_render_draw(size_t indices)
+
+extern void gl_render_draw(size_t indices)
 {
 	glDrawElements(GL_TRIANGLES, indices, GL_UNSIGNED_INT, NULL);
-	return 0;
 }
 
-extern int gl_render_end(SDL_Window *window)
+
+extern void gl_render_end(SDL_Window *window)
 {
 	SDL_GL_SwapWindow(window);
-	return 0;
 }

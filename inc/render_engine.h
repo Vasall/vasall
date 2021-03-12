@@ -4,6 +4,24 @@
 #include "vulkan.h"
 #include "opengl.h"
 
+
+enum render_mode {
+	REN_MODE_OPENGL,
+	REN_MODE_VULKAN
+};
+
+
+/*
+ * The render wrapper.
+ */
+struct render_wrapper {
+	enum render_mode mode;
+};
+
+/* Define the global render-wrapper */
+extern struct render_wrapper renderer;
+
+
 /**
  * Select and initialize the rendering engine
  * 

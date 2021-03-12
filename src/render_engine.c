@@ -1,10 +1,9 @@
 #include "render_engine.h"
 
-struct ren_wrapper {
-	int vulkan;
-};
 
-static struct ren_wrapper ren;
+/* Redefine global render-wrapper */
+struct render_wrapper renderer;
+
 
 extern int ren_init(SDL_Window *window)
 {
@@ -15,15 +14,16 @@ extern int ren_init(SDL_Window *window)
 		}
 		return 0;
 	}
-	ren.vulkan = 1;
+	renderer.vulkan = 1;
 	return 0;
 }
+
 
 extern int ren_destroy(void)
 {
 	int res;
 
-	if(ren.vulkan)
+	if(renderer.vulkan)
 		res = vk_destroy();
 	else
 		res = gl_destroy();
@@ -32,17 +32,19 @@ extern int ren_destroy(void)
 
 }
 
+
 extern int ren_resize(int w, int h)
 {
 	int res;
 
-	if(ren.vulkan)
+	if(renderer.vulkan)
 		res = vk_resize();
 	else
 		res = gl_resize(w, h);
 
 	return res;
 }
+
 
 extern int ren_create_shader(char *vs, char *fs, uint32_t *prog,
 		struct vk_pipeline *pipeline, int num, char **vars)
@@ -84,7 +86,7 @@ extern int ren_create_shader(char *vs, char *fs, uint32_t *prog,
 	vk_fs[strlen(fs)+3] = 'v';
 	vk_fs[strlen(fs)+4] = '\0';
 
-	if(ren.vulkan)
+	if(renderer.vulkan)
 		res = vk_create_pipeline(vk_vs, vk_fs, in_attr, pipeline);
 	else
 		res = gl_create_program(vs, fs, prog, num, vars);
@@ -95,11 +97,12 @@ extern int ren_create_shader(char *vs, char *fs, uint32_t *prog,
 	return res;
 }
 
+
 extern int ren_destroy_shader(uint32_t prog, struct vk_pipeline pipeline)
 {
 	int res;
 
-	if(ren.vulkan)
+	if(renderer.vulkan)
 		res = vk_destroy_pipeline(pipeline);
 	else
 		res = gl_delete_program(prog);
@@ -107,12 +110,13 @@ extern int ren_destroy_shader(uint32_t prog, struct vk_pipeline pipeline)
 	return res;
 }
 
+
 extern int ren_create_texture(char *pth, uint32_t *hdl,
 			struct vk_texture *texture)
 {
 	int res;
 
-	if(ren.vulkan)
+	if(renderer.vulkan)
 		res = vk_create_texture(pth, texture);
 	else
 		res = gl_create_texture(pth, hdl);
@@ -120,11 +124,12 @@ extern int ren_create_texture(char *pth, uint32_t *hdl,
 	return res;
 }
 
+
 extern int ren_destroy_texture(uint32_t hdl, struct vk_texture texture)
 {
 	int res;
 
-	if(ren.vulkan)
+	if(renderer.vulkan)
 		res = vk_destroy_texture(texture);
 	else
 		res = gl_destroy_texture(hdl);
@@ -132,12 +137,13 @@ extern int ren_destroy_texture(uint32_t hdl, struct vk_texture texture)
 	return res;
 }
 
+
 extern int ren_create_model_data(struct vk_pipeline pipeline, uint32_t *vao,
 				VkDescriptorSet *set)
 {
 	int res;
 
-	if(ren.vulkan)
+	if(renderer.vulkan)
 		res = vk_create_constant_data(pipeline, set);
 	else
 		res = gl_create_vao(vao);
@@ -145,17 +151,19 @@ extern int ren_create_model_data(struct vk_pipeline pipeline, uint32_t *vao,
 	return res;
 }
 
+
 extern int ren_destroy_model_data(uint32_t vao, VkDescriptorSet set)
 {
 	int res;
 
-	if(ren.vulkan)
+	if(renderer.vulkan)
 		res = vk_destroy_constant_data(set);
 	else
 		res = gl_destroy_vao(vao);
 
 	return res;
 }
+
 
 extern int ren_create_buffer(uint32_t vao, int type, size_t size, char *buf,
 				uint32_t *bo, struct vk_buffer *buffer)
@@ -173,7 +181,7 @@ extern int ren_create_buffer(uint32_t vao, int type, size_t size, char *buf,
 		usage = type;
 	}
 
-	if(ren.vulkan) {
+	if(renderer.vulkan) {
 		if(vk_create_buffer(size, usage, 1, buffer) < 0)
 			return -1;
 		if(buf)
@@ -184,11 +192,12 @@ extern int ren_create_buffer(uint32_t vao, int type, size_t size, char *buf,
 	return res;
 }
 
+
 extern int ren_destroy_buffer(uint32_t bo, struct vk_buffer buffer)
 {
 	int res;
 
-	if(ren.vulkan)
+	if(renderer.vulkan)
 		res = vk_destroy_buffer(buffer);
 	else
 		res = gl_destroy_buffer(bo);
@@ -196,13 +205,14 @@ extern int ren_destroy_buffer(uint32_t bo, struct vk_buffer buffer)
 	return res;
 }
 
+
 extern int ren_set_model_data(uint32_t vao, uint32_t vbo, int stride, int rig,
 	VkDescriptorSet set, struct vk_buffer uniform_buffer,
 	struct vk_texture texture)
 {
 	int res;
 
-	if(ren.vulkan) {
+	if(renderer.vulkan) {
 		if(vk_set_uniform_buffer(uniform_buffer, set) < 0)
 			return -1;
 		res = vk_set_texture(texture, set);
@@ -213,11 +223,12 @@ extern int ren_set_model_data(uint32_t vao, uint32_t vbo, int stride, int rig,
 	return res;
 }
 
+
 extern int ren_start(void)
 {
 	int res;
 
-	if(ren.vulkan)
+	if(renderer.vulkan)
 		res = vk_render_start();
 	else
 		res = gl_render_start();
@@ -225,11 +236,12 @@ extern int ren_start(void)
 	return res;
 }
 
+
 extern int ren_set_shader(uint32_t prog, int attr, struct vk_pipeline pipeline)
 {
 	int res;
 
-	if(ren.vulkan)
+	if(renderer.vulkan)
 		res = vk_render_set_pipeline(pipeline);
 	else
 		res = gl_render_set_program(prog, attr);
@@ -237,20 +249,24 @@ extern int ren_set_shader(uint32_t prog, int attr, struct vk_pipeline pipeline)
 	return res;
 }
 
+
 extern int ren_set_vertices(uint32_t vao, struct vk_buffer vtx_buffer,
 			struct vk_buffer idx_buffer)
 {
 	int res;
 
-	if(ren.vulkan) {
+	if(renderer.vulkan) {
 		if(vk_render_set_vertex_buffer(vtx_buffer) < 0)
 			return -1;
 		res = vk_render_set_index_buffer(idx_buffer);
-	} else
+	}
+	else {
 		res = gl_render_set_vao(vao);
+	}
 
 	return res;
 }
+
 
 extern int ren_set_render_model_data(unsigned int uni_buf,
 			struct uni_buffer uni, uint32_t hdl, struct vk_pipeline pipeline,
@@ -258,24 +274,27 @@ extern int ren_set_render_model_data(unsigned int uni_buf,
 {
 	int res;
 
-	if(ren.vulkan) {
+	if(renderer.vulkan) {
 		if(vk_copy_data_to_buffer(&uni, vk_uni_buf) < 0)
 			return -1;
+		
 		res = vk_render_set_constant_data(pipeline, set);
 	} else {
 		if(gl_render_set_uniform_buffer(uni_buf, uni) < 0)
 			return -1;
+		
 		res = gl_render_set_texture(hdl);
 	}
 
 	return res;
 }
 
+
 extern int ren_draw(uint32_t indices)
 {
 	int res;
 
-	if(ren.vulkan)
+	if(renderer.vulkan)
 		res = vk_render_draw(indices);
 	else
 		res = gl_render_draw(indices);
@@ -283,11 +302,12 @@ extern int ren_draw(uint32_t indices)
 	return res;
 }
 
+
 extern int ren_end(SDL_Window *window)
 {
 	int res;
 
-	if(ren.vulkan)
+	if(renderer.vulkan)
 		res = vk_render_end();
 	else
 		res = gl_render_end(window);

@@ -32,7 +32,6 @@ extern int obj_init(void)
 /* TODO */
 extern void obj_close(void)
 {
-	/* Etto */	
 	return;
 }
 
@@ -725,184 +724,6 @@ static int collideAndSlide(short slot, vec3_t pos, vec3_t del, vec3_t opos)
 }
 
 
-extern void obj_move(short slot)
-{
-	uint32_t omask;
-	uint32_t mask;
-	vec3_t pos;
-	vec3_t vel;
-	vec3_t acl;
-	vec3_t del;
-	vec3_t prev;
-	vec2_t mov;
-	float t_speed = 4.0;
-
-	uint32_t lim_ts;
-	uint32_t run_ts;
-
-	short inp_i;
-	short inp_num;
-
-	vec3_t grav = {0.0, 0.0, -9.81};
-
-
-	/* Check if objects mask is set */
-	if((omask = objects.mask[slot]) == OBJ_M_NONE)
-		return;
-
-	/* Check if object is moveable */
-	if((omask & OBJ_M_MOVE) == 0)
-		return;
-
-	/* Get object-data to current state */
-	if(objects.inp[slot].num > 0) {
-		vec3_cpy(pos, objects.last_pos[slot]);
-		vec3_cpy(vel, objects.last_vel[slot]);
-
-		lim_ts = objects.inp[slot].ts[0];
-		run_ts = objects.last_ack_ts[slot];
-
-		/* Drop old inputs */
-		if(run_ts > lim_ts)
-			return;
-	}
-	else {
-		vec3_cpy(pos, objects.pos[slot]);
-		vec3_cpy(vel, objects.vel[slot]);
-
-		lim_ts = core.now_ts;
-		run_ts = objects.last_upd_ts[slot];
-	}
-
-	vec2_cpy(mov, objects.mov[slot]);
-#if 0
-	vec3_cpy(dir, objects.dir[slot]);
-#endif
-
-	inp_i = -1;
-	inp_num = objects.inp[slot].num;
-
-	while(1) {
-		while(run_ts < lim_ts) {
-			/* 
-			 * Process Friction.
-			 */
-			vec3_scl(vel, (1.0 - TICK_TIME_S * t_speed), vel);
-
-			/*
-			 * Process Movement-Acceleration.
-			 */
-			vec3_set(acl, mov[0], mov[1], 0.0);
-			vec3_scl(acl, 6, acl);
-			vec3_scl(acl, (TICK_TIME_S * t_speed), acl);
-
-			/* Update velocity of the object */
-			vec3_add(vel, acl, vel);
-
-			/*
-			 * Process Gravity.
-			 */	
-			if(omask & OBJ_M_GRAV) {
-				vec3_scl(grav, (TICK_TIME_S * t_speed), acl);
-			
-				/* Update velocity of the object */
-				vec3_add(vel, acl, vel);
-			}
-
-			/* Save current position */
-			vec3_cpy(prev, pos);
-
-			/* Scale velocity by tick-time */
-			vec3_scl(vel, TICK_TIME_S, del);
-			del[2] = 0.0;
-
-			/* Check collision */
-			if(omask & OBJ_M_SOLID) {
-				/* Collide and update position */
-				collideAndSlide(slot, pos, del, pos);
-			}
-			else {
-				/* Update position */
-				vec3_add(pos, del, pos);
-			}
-
-
-			if(omask & OBJ_M_GRAV) {
-				/* Scale velocity by tick-time */
-				vec3_scl(vel, TICK_TIME_S, del);
-				del[0] = 0.0;
-				del[1] = 0.0;
-
-				/* Check collision */
-				if(omask & OBJ_M_SOLID) {
-					/* Collide and update position */
-					if(collideAndSlide(slot, pos, del, pos)) {
-						vel[2] = 0;
-					}
-				}
-				else {
-					/* Update position */
-					vec3_add(pos, del, pos);
-				}
-			}
-
-			/* Limit movement-space */
-			if(ABS(pos[0]) > 32.0) {
-				pos[0] = 32.0 * SIGN(pos[0]);
-				vel[0] = 0;
-			}
-
-			if(ABS(pos[1]) > 32.0) {
-				pos[1] = 32.0 * SIGN(pos[1]);
-				vel[1] = 0;
-			}
-
-			if(objects.mark_flg[slot]) {	
-				if(run_ts == objects.mark[slot].ts) {
-					vec3_cpy(pos, objects.mark[slot].pos);
-					vec3_cpy(vel, objects.mark[slot].vel);
-					vec2_cpy(mov, objects.mark[slot].mov);
-					objects.mark_flg[slot] = 0;
-				}
-			}
-
-			/* Update run-timer */
-			run_ts += TICK_TIME;
-		}
-
-		/* If all inputs have been processed */
-		inp_i++;
-		if(inp_i >= inp_num) {	
-			objects.inp[slot].num = 0;
-
-			vec3_cpy(objects.pos[slot], pos);
-			vec3_cpy(objects.vel[slot], vel);
-			vec2_cpy(objects.mov[slot], mov);
-
-			return;
-		}
-
-		mask = objects.inp[slot].mask[inp_i];
-
-		if(mask & INP_M_MOV) {
-			vec2_cpy(mov, objects.inp[slot].mov[inp_i]);
-		}
-
-		if(inp_i + 1 < inp_num) {
-			lim_ts = objects.inp[slot].ts[inp_i + 1];
-		}
-		else {
-			/* Save current status as last acknowledged status */
-			vec3_cpy(objects.last_pos[slot], pos);
-			vec3_cpy(objects.last_vel[slot], vel);
-			objects.last_ack_ts[slot] = objects.inp[slot].ts[inp_i];
-
-			lim_ts = core.now_ts;
-		}
-	}
-}
-
-
 extern void obj_print(short slot)
 {
 	if(obj_check_slot(slot))
@@ -960,7 +781,7 @@ static void obj_log_col(uint32_t ts, char *logi)
 	/* Collect log-entries closest to the timestamp */
 	for(i = 0; i < OBJ_SLOTS; i++) {
 		logi[i] = -1;
-		
+
 		if(objects.mask[i] != 0) {
 			logi[i] = obj_log_near(i, ts);
 		}
@@ -973,7 +794,7 @@ static void obj_log_cpy(short slot, char i, uint32_t *ts, vec3_t pos, vec3_t vel
 	struct object_log *log = &objects.log[slot];
 
 	*ts = log->ts[i];
-		
+
 	vec3_cpy(pos, log->pos[i]);
 	vec3_cpy(vel, log->vel[i]);
 
@@ -984,7 +805,8 @@ static void obj_log_cpy(short slot, char i, uint32_t *ts, vec3_t pos, vec3_t vel
 extern void obj_sys_update(uint32_t now)
 {
 	int i;
-	int obj_s;
+	int o;
+	int tmp;
 
 	uint32_t lim_ts;
 	uint32_t run_ts;
@@ -992,53 +814,233 @@ extern void obj_sys_update(uint32_t now)
 
 	uint32_t tick_ts = floor(now / TICK_TIME) * TICK_TIME;
 
-	uint32_t  ts[OBJ_SLOTS];
-	vec3_t    pos[OBJ_SLOTS];
-	vec3_t    vel[OBJ_SLOTS];
-	vec2_t    mov[OBJ_SLOTS];
-	vec3_t    dir[OBJ_SLOTS];
+	uint32_t  ts[OBJ_SLOTS];	/* Get time of the last object update */
+	vec3_t    pos[OBJ_SLOTS];	/* The current position */
+	vec3_t    vel[OBJ_SLOTS];	/* The current velocity */
+	vec2_t    mov[OBJ_SLOTS];	/* The current movement-acceleration */
+	vec3_t    dir[OBJ_SLOTS];	/* The current looking-direction */
 
 	char      logi[OBJ_SLOTS];
 
+	float f;
 	vec3_t acl;
 	vec3_t del;
+
+	float t_speed = 4.0;
+	vec3_t grav = {0, 0, -9.81};
 
 	struct input_entry inp;
 	char flg = 1;
 
 	/* Pull an entry from the input-pipe */
-	if(inp_pull(&inp)) {
-		inp_ts = ceil(inp->ts / TICK_TIME) * TICK_TIME;
+	if(inp_next_ts()) {
+		inp_ts = inp_next_ts();
 		run_ts = inp_ts;
-	
-		/* Get the timestamp of the next input */
-		if((lim_ts = inp_next_ts()) == 0)
-			lim_ts = now;
 
-		obj_log_col(run_ts, logi);
+		obj_log_col(inp_ts, logi);
 
-		for(i = 0; i < objects.num; i++) {
-			obj_s = objects.order[i];
-			
-			obj_log_cpy(obj_s, logi[obj_s], &ts[obj_s], pos[obj_s],
-					vel[obj_s], mov[obj_s], dir[obj_s]);
+		for(i = 0; i < OBJ_SLOTS; i++) {
+			if(objects.mask[i] == OBJ_M_NONE)
+				continue;
+
+			obj_log_cpy(obj_s, logi[i], &ts[i], pos[i],
+					vel[i], mov[i], dir[i]);
+
+			/* Update run-ts to the oldest timestamp */
+			if(run_ts > ts[i]) {
+				run_ts = ts[i];
+			}
 		}
+
+		/* Set the run-limit */	
+		lim_ts = inp_ts;
 	}
 	else {
-		
+		for(i = 0; i < OBJ_SLOTS; i++) {
+			if(objects.mask[i] == OBJ_M_NONE)
+				continue;
+
+			/*
+			 * Copy the objects most recent data to the matching
+			 * list.
+			 */
+			ts[i] = objects.last_ts[i];
+
+			vec3_cpy(pos[i], objects.pos[i]);
+			vec3_cpy(vel[i], objects.vel[i]);
+
+			vec2_cpy(mov[i], objects.mov[i]);
+			vec3_cpy(dir[i], objects.dir[i]);
+
+			/* Update run-ts to the oldest timestamp */
+			if(run_ts > ts[i]) {
+				run_ts = ts[i];
+			}
+		}
+
+		/* Set the run-limit */
+		lim_ts = now;
+
 	}
 
 
 	while(1) {
 		while(run_ts < lim_ts) {
+			/*
+			 * Update the velocity and position of every object in
+			 * ascending order of the object-ID so collisions will
+			 * be processed equally on all clients.
+			 */
+			for(i = 0; i < objects.num; i++) {
+				o = objects.order[i];
+
+				if((objects.mask[o] & OBJ_M_MOVE) == 0)
+					continue;
+
+				/* 
+				 * Skip if the object doesn't have to be updated
+				 * yet.
+				 */
+				if(run_ts < ts[o])
+					continue;
+
+				ts[o] += TICK_TIME;
+
+				/* 
+				 * Process friction.
+				 */
+				f = 1.0 - TICK_TIME_S * t_speed;
+				vec3_scl(vel[o], f, vel[o]);
+
+				/*
+				 * Process movement-acceleration.
+				 */
+				vec3_set(acl, mov[o][0], mov[o][1], 0.0);
+				vec3_scl(acl, 6, acl);
+				f = TICK_TIME_S * t_speed;
+				vec3_scl(acl, f, acl);
+
+				/* Update velocity of the object */
+				vec3_add(vel[o], acl, vel[o]);
+
+				/*
+				 * Process gravity.
+				 */	
+				if(objects.mask[o] & OBJ_M_GRAV) {
+					f = TICK_TIME_S * t_speed;
+					vec3_scl(grav, f, acl);
+
+					/* Update velocity of the object */
+					vec3_add(vel[o], acl, vel[o]);
+				}
+
+				/* Scale velocity by tick-time */
+				vec3_scl(vel, TICK_TIME_S, del);
+				del[2] = 0.0;
+
+				/* Check collision */
+				if(objects.mask[o] & OBJ_M_SOLID) {
+					/* Collide and update position */
+					collideAndSlide(slot, pos[o], del, pos[o]);
+				}
+				else {
+					/* Update position */
+					vec3_add(pos[o], del, pos[o]);
+				}
+
+
+				if(objects.mask[o] & OBJ_M_GRAV) {
+					/* Scale velocity by tick-time */
+					vec3_scl(vel[o], TICK_TIME_S, del);
+					del[0] = 0.0;
+					del[1] = 0.0;
+
+					/* Check collision */
+					if(objects.mask[o] & OBJ_M_SOLID) {
+						/* Collide and update position */
+						if(collideAndSlide(slot, pos[o], del, pos[o])) {
+							vel[o][2] = 0;
+						}
+					}
+					else {
+						/* Update position */
+						vec3_add(pos[0], del, pos[o]);
+					}
+				}
+
+#if 1
+				/* Limit movement-space */
+				if(ABS(pos[o][0]) > 32.0) {
+					pos[o][0] = 32.0 * SIGN(pos[o][0]);
+					vel[o][0] = 0;
+				}
+
+				if(ABS(pos[o][1]) > 32.0) {
+					pos[1][o] = 32.0 * SIGN(pos[o][1]);
+					vel[1][o] = 0;
+				}
+#endif
+			}
+
+			/*
+			 * Update run-timer.
+			 */
 			run_ts += TICK_TIME;
+		}
+
+		/*
+		 * Pull the latest input and copy the data to the affected
+		 * object.
+		 */
+		if(inp_pull(&inp)) {
+			/* Get the slot of the object to input affects */
+			short slot = obj_sel_id(inp->obj_id);
+
+			if(slot > 0) {
+				/*
+				 * Copy the new input-data to the object.
+				 */
+				switch(inp->type) {
+					case(INP_T_MOV):
+						vec2_cpy(mov[slot], inp->mov);
+						break;
+
+					case(INP_T_DIR):
+						vec3_cpy(dir[slot], inp->dir);
+						break;
+
+				}
+			}
+		}
+	
+		/*
+		 * If there's another input, update till the next one occurs, or
+		 * if no other inputs need to be processed, just update to now.
+		 */
+		if(inp_next_ts()) {
+			lim_ts = inp_next_ts();
+		}
+		else {
+			lim_ts = now;
 		}
 	}
 
 
-	/* Set the latest update time of the objects */
+	/*
+	 * Copy the latest update time of the objects.
+	 */
 	for(i = 0; i < OBJ_SLOTS; i++) {
-		objects.last_upd_ts[i] = ts;
+		if(objects.mask[i] == OBJ_M_NONE)
+			continue;
+
+		/* Copy the new values to the objects */
+		vec3_cpy(objects.pos[i], pos[i]);
+		vec3_cpy(objects.vel[i], vel[i]);
+
+		vec2_cpy(objects.mov[i], mov[i]);
+		vec3_cpy(objects.dir[i], dir[i]);
+
+		objects.last_ts[i] = ts[i];
 	}
 }
 

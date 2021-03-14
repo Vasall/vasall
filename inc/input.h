@@ -22,7 +22,7 @@ enum input_type {
 };
 
 struct input_entry {
-	uint32_t  id;
+	uint32_t  obj_id;
 	uint8_t   type;
 	uint32_t  ts;
 
@@ -118,7 +118,8 @@ extern int inp_push(enum input_pipe_mode m, uint32_t id, enum input_type type,
  *
  * @ent: A pointer to write the entry to
  *
- * Returns: 1 if an entry has been returned, or 0 if the list is empty
+ * Returns: 1 if an entry has been returned, or 0 if the list is empty or an
+ *          error has occurred
  */
 extern int inp_pull(struct input_entry *ent);
 
@@ -126,7 +127,8 @@ extern int inp_pull(struct input_entry *ent);
 /*
  * Get the timestamp of the oldest entry in the in-input-pipe.
  *
- * Returns: Either the timestamp of the oldest input or 0 if an error occurred
+ * Returns: Either the timestamp of the oldest input or 0 if no inputs are in
+ *          the list
  */
 extern uint32_t inp_next_ts(void);
 

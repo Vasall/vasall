@@ -24,11 +24,10 @@ extern struct render_wrapper renderer;
 
 /*
  * Select and initialize the rendering engine.
- * 
- * @window: a SDL_Window initialized with SDL_WINDOW_VULKAN
- * 
  * If the function returns with -1 destroy the window and call this function
  * again with a SDL_Window initialized with SDL_WINDOW_OPENGL.
+ *
+ * @window: A SDL_Window initialized with SDL_WINDOW_VULKAN 
  * 
  * Returns: 0 on success or -1 if an error occured
  */
@@ -44,7 +43,7 @@ extern void ren_destroy(void);
 
 
 /*
- * Resize the rendering space
+ * Resize the rendering space.
  */
 extern int ren_resize(int w, int h);
 
@@ -52,14 +51,14 @@ extern int ren_resize(int w, int h);
 /*
  * Create a shader program/pipeline.
  * 
- * @vs: the path to the vertex shader
- * @fs: the path to the fragment shader
- * @prog: a pointer to the handle of the opengl program, which will be set by
+ * @vs: The path to the vertex shader
+ * @fs: The path to the fragment shader
+ * @prog: A pointer to the handle of the opengl program, which will be set by
  *        the function
- * @pipeline: a pointer to the vulkan pipeline, which will be filled by the
+ * @pipeline: A pointer to the vulkan pipeline, which will be filled by the
  *            function
- * @num: the number of elements in the vars array
- * @vars: an array with the names of the input attributes
+ * @num: The number of elements in the vars array
+ * @vars: An array with the names of the input attributes
  * 
  * Returns: 0 on success or -1 if an error occured
  */
@@ -71,19 +70,19 @@ extern int ren_create_shader(char *vs, char *fs, uint32_t *prog,
 /*
  * Destroy a shader program/pipeline.
  * 
- * @prog: the handle of the opengl program
- * @pipeline: the pipeline
+ * @prog: The handle of the opengl program
+ * @pipeline: The pipeline
  */
 extern void ren_destroy_shader(uint32_t prog, struct vk_pipeline pipeline);
 
 
 /*
- * Create a texture.
+ * Create a new texture.
  * 
- * @pth: the path to png of the texture
- * @hdl: a pointer to the handle of the opengl texture, which will be set by
+ * @pth: The path to the PNG of the texture
+ * @hdl: A pointer to the handle of the opengl texture, which will be set by
  *       the function
- * @texture: a pointer to the vulkan texture, which will be filled by the
+ * @texture: A pointer to the vulkan texture, which will be filled by the
  *           function
  * 
  * Returns: 0 on success or -1 if an error occured
@@ -95,8 +94,8 @@ extern int ren_create_texture(char *pth, uint32_t *hdl,
 /*
  * Destroy a texture.
  * 
- * @hdl: the opengl handle of the texture
- * @texture: the vulkan texture
+ * @hdl: The opengl handle of the texture
+ * @texture: The vulkan texture
  */
 extern void ren_destroy_texture(uint32_t hdl, struct vk_texture texture);
 
@@ -105,10 +104,10 @@ extern void ren_destroy_texture(uint32_t hdl, struct vk_texture texture);
  * Create an opengl vertex array object or a vulkan decsriptor set and a vulkan
  * uniform buffer.
  * 
- * @pipeline: the vulkan pipeline
- * @vao: a pointer to the handle of the opengl vao, which will be set by
+ * @pipeline: The vulkan pipeline
+ * @vao: A pointer to the handle of the opengl vao, which will be set by
  *         the function
- * @set: a pointer to the vulkan descriptor set, which will be filled by the
+ * @set: A pointer to the vulkan descriptor set, which will be filled by the
  *       function
  * 
  * Returns: 0 on success or -1 if an error occured
@@ -120,8 +119,8 @@ extern int ren_create_model_data(struct vk_pipeline pipeline, uint32_t *vao,
 /*
  * Destroy the vao or the descriptor set.
  * 
- * @vao: the opengl handle of the vao
- * @set: the vulkan descriptor set
+ * @vao: The opengl handle of the vao
+ * @set: The vulkan descriptor set
  * 
  * Returns: 0 on success or -1 if an error occured
  */
@@ -131,15 +130,15 @@ extern int ren_destroy_model_data(uint32_t vao, VkDescriptorSet set);
 /*
  * Create a buffer.
  * 
- * @vao: the handle of the opengl vao the buffer should be assigned to
- * @type: the type of the buffer can be:
+ * @vao: The handle of the opengl vao the buffer should be assigned to
+ * @type: The type of the buffer can be:
  *        GL_ARRAY_BUFFER for vertex buffer
  *        GL_ELEMENT_ARRAY_BUFFER for index buffer
- * @size: the size of the buffer
- * @buf: the content of the buffer with length 'size'
- * @bo: a pointer to the handle of the opengl buffer, which will be set by
+ * @size: The size of the buffer
+ * @buf: The content of the buffer with length 'size'
+ * @bo: A pointer to the handle of the opengl buffer, which will be set by
  *      the function
- * @buffer: a pointer to the vulkan buffer, which will be filled by the function
+ * @buffer: A pointer to the vulkan buffer, which will be filled by the function
  * 
  * Returns: 0 on success or -1 if an error occured
  */
@@ -150,8 +149,8 @@ extern int ren_create_buffer(uint32_t vao, int type, size_t size, char *buf,
 /*
  * Destroy a buffer.
  * 
- * @bo: the opengl handle of the buffer
- * @buffer: the vulkan buffer
+ * @bo: The opengl handle of the buffer
+ * @buffer: The vulkan buffer
  */
 extern void ren_destroy_buffer(uint32_t bo, struct vk_buffer buffer);
 
@@ -160,13 +159,13 @@ extern void ren_destroy_buffer(uint32_t bo, struct vk_buffer buffer);
  * Set the opengl vertex input attributes or the vulkan uniform buffer and
  * texture of a model.
  * 
- * @vao: the opengl handle of the vao
- * @vbo: the opengl handle of the vertex buffer
- * @stride: the size of one full vertex in the array
- * @rig: a boolean to tell if the model is animated
- * @set: the vulkan descriptor set
- * @uniform_buffer: the vulkan uniform buffer
- * @texture: the vulkan texture
+ * @vao: The opengl handle of the vao
+ * @vbo: The opengl handle of the vertex buffer
+ * @stride: The size of one full vertex in the array
+ * @rig: A boolean to tell if the model is animated
+ * @set: The vulkan descriptor set
+ * @uniform_buffer: The vulkan uniform buffer
+ * @texture: The vulkan texture
  * 
  * Returns: 0 on success or -1 if an error occured
  */
@@ -177,7 +176,7 @@ extern int ren_set_model_data(uint32_t vao, uint32_t vbo, int stride, int rig,
 
 
 /*
- * Start rendering
+ * Start rendering.
  * 
  * Returns: 0 on success or -1 if an error occured
  */
@@ -187,9 +186,9 @@ extern int ren_start(void);
 /*
  * Set the shader program/pipeline during rendering.
  * 
- * @prog: the opengl handle of the program
- * @attr: the amount of input attributes
- * @pipeline: the vulkan pipeline
+ * @prog: The opengl handle of the program
+ * @attr: The amount of input attributes
+ * @pipeline: The vulkan pipeline
  * 
  * Returns: 0 on success or -1 if an error occured
  */
@@ -199,9 +198,9 @@ extern int ren_set_shader(uint32_t prog, int attr, struct vk_pipeline pipeline);
 /*
  * Set the vertex and index buffers during rendering.
  * 
- * @vao: the opengl handle of the vao
- * @vtx_buffer: the vulkan vertex buffer
- * @idx_buffer: the vulkan index buffer
+ * @vao: The opengl handle of the vao
+ * @vtx_buffer: The vulkan vertex buffer
+ * @idx_buffer: The vulkan index buffer
  */
 extern void ren_set_vertices(uint32_t vao, struct vk_buffer vtx_buffer,
                              struct vk_buffer idx_buffer);
@@ -210,12 +209,12 @@ extern void ren_set_vertices(uint32_t vao, struct vk_buffer vtx_buffer,
 /*
  * Set the opengl uniform buffer and texture or the vulkan descriptor set.
  * 
- * @uni_buf: the opengl handle of the uniform buffer
- * @uni: the uniform buffer data
- * @hdl: the opengl handle of the texture
- * @pipeline: the vulkan pipeline
- * @vk_uni_buf: the vulkan uniform buffer
- * @set: the vulkan descriptor set
+ * @uni_buf: The opengl handle of the uniform buffer
+ * @uni: The uniform buffer data
+ * @hdl: The opengl handle of the texture
+ * @pipeline: The vulkan pipeline
+ * @vk_uni_buf: The vulkan uniform buffer
+ * @set: The vulkan descriptor set
  */
 extern void ren_set_render_model_data(unsigned int uni_buf,
                                       struct uni_buffer uni, uint32_t hdl,
@@ -227,7 +226,7 @@ extern void ren_set_render_model_data(unsigned int uni_buf,
 /*
  * Draw the model.
  * 
- * @indices: the amount of indices
+ * @indices: The amount of indices
  */
 extern void ren_draw(uint32_t indices);
 
@@ -235,7 +234,7 @@ extern void ren_draw(uint32_t indices);
 /*
  * End rendering and display the result ot the screen.
  * 
- * @window: the window to display on
+ * @window: The window to display on
  * 
  * Returns: 0 on success or -1 if an error occured
  */

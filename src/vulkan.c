@@ -1,5 +1,7 @@
 #include "vulkan.h"
 
+#include <libgen.h>
+
 #include "error.h"
 #include "filesystem.h"
 #include "window.h"
@@ -1007,7 +1009,7 @@ static int create_set_layout(VkDescriptorSetLayout *set_layout)
  * Create a pipeline layout based on the descriptor set layout.
  * 
  * @set_layout: a pointer to the descriptor set layout
- * @layout: a pointer to the handle of the pipeline layput, which the function
+ * @layout: a pointer to the handle of the pipeline layout, which the function
  *          creates
  * 
  * Returns: 0 on success or -1 if an error occured
@@ -1028,6 +1030,95 @@ static int create_pipeline_layout(VkDescriptorSetLayout *set_layout,
 
 	res = vkCreatePipelineLayout(vk.device, &create_info, NULL, layout);
 	vk_assert(res);
+	return 0;
+}
+
+/*
+ * Get the name of the pipeline cache file generated from the file name of the
+ * vertex shader.
+ * 
+ * @vs: The path to the vertex shader file
+ * 
+ * Returns: The pipeline cache file name
+ */
+static char *get_cache_file_name(char *vs)
+{
+	char *vs_copy;
+	char *pipeline_name;
+	char *dot;
+	char *res;
+
+	vs_copy = malloc(strlen(vs)+1);
+	strcpy(vs_copy, vs);
+
+	pipeline_name = basename(vs_copy);
+	dot = strchr(pipeline_name, '.');
+	pipeline_name[dot-pipeline_name] = '\0';
+
+	res = malloc(strlen(pipeline_name)+12);
+	memcpy(res, ".cache/", 8);
+	strcpy(res+7, pipeline_name);
+	memcpy(res+strlen(pipeline_name)+7, ".bin", 5);
+	return res;
+}
+
+/*
+ * Create a pipeline cache by trying to load the cache file or create a new one
+ * 
+ * @name: The path to the pipeline cache file
+ * @cache: a pointer to the handle of the pipeline cache, which the function
+ *         creates
+ * 
+ * Returns: 0 on success or -1 if an error occured
+ */
+static int create_pipeline_cache(char *name, VkPipelineCache *cache)
+{
+	uint8_t *buf;
+	long len;
+	VkResult res;
+	VkPipelineCacheCreateInfo create_info;
+
+	buf = NULL;
+	len = 0;
+
+	fs_load_file(name, &buf, &len);
+
+	create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+	create_info.pNext = NULL;
+	create_info.flags = 0;
+	create_info.initialDataSize = len;
+	create_info.pInitialData = buf;
+
+	res = vkCreatePipelineCache(vk.device, &create_info, NULL, cache);
+	vk_assert(res);
+	free(buf);
+	return 0;
+}
+
+/*
+ * Save the pipeline chache data into a file
+ * 
+ * @name: The path to the pipeline cache file
+ * @cache: The pipeline cache
+ * 
+ * Returns: 0 on success or -1 if an error occured
+ */
+static int save_cache(char *name, VkPipelineCache cache)
+{
+	VkResult res;
+	size_t len;
+	uint8_t *data;
+
+	res = vkGetPipelineCacheData(vk.device, cache, &len, NULL);
+	vk_assert(res);
+	data = malloc(len);
+	res = vkGetPipelineCacheData(vk.device, cache, &len, data);
+	vk_assert(res);
+
+	fs_create_dir(".cache");
+	fs_write_file(name, data, len);
+
+	free(data);
 	return 0;
 }
 
@@ -1052,6 +1143,8 @@ extern int vk_create_pipeline(char *vtx, char *frg, enum vk_in_attr attr,
 	VkPipelineColorBlendStateCreateInfo color;
 	VkDynamicState dynamic[2];
 	VkPipelineDynamicStateCreateInfo dyn;
+	char *cache_name;
+	VkPipelineCache cache;
 	VkGraphicsPipelineCreateInfo create_info;
 
 	/* Create vertex and fragment shader modules */
@@ -1139,8 +1232,8 @@ extern int vk_create_pipeline(char *vtx, char *frg, enum vk_in_attr attr,
 	}
 
 	in_bin.binding = 0;
-    in_bin.stride = bin_size;
-    in_bin.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+	in_bin.stride = bin_size;
+	in_bin.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
 	vtx_input.sType =
 		VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -1253,6 +1346,8 @@ extern int vk_create_pipeline(char *vtx, char *frg, enum vk_in_attr attr,
 	dyn.dynamicStateCount = 2;
 	dyn.pDynamicStates = dynamic;
 
+	cache_name = get_cache_file_name(vtx);
+
 	/* Create layouts */
 	if(create_set_layout(&pipeline->set_layout) < 0) {
 		res = VK_ERROR_UNKNOWN;
@@ -1262,7 +1357,12 @@ extern int vk_create_pipeline(char *vtx, char *frg, enum vk_in_attr attr,
 	if(create_pipeline_layout(&pipeline->set_layout, &pipeline->layout)
 	   < 0) {
 		res = VK_ERROR_UNKNOWN;
-		goto err;
+		goto err_destroy_set_layout;
+	}
+
+	if(create_pipeline_cache(cache_name, &cache) < 0) {
+		res = VK_ERROR_UNKNOWN;
+		goto err_destroy_layout;
 	}
 
 	/* Create the graphics pipeline */
@@ -1286,11 +1386,20 @@ extern int vk_create_pipeline(char *vtx, char *frg, enum vk_in_attr attr,
 	create_info.basePipelineHandle = VK_NULL_HANDLE;
 	create_info.basePipelineIndex = 0;
 
-	res = vkCreateGraphicsPipelines(vk.device, VK_NULL_HANDLE, 1,
+	res = vkCreateGraphicsPipelines(vk.device, cache, 1,
 	                                &create_info, NULL,
 	                                &pipeline->pipeline);
 
+	save_cache(cache_name, cache);
+	vkDestroyPipelineCache(vk.device, cache, NULL);
+	goto err;
+
+err_destroy_layout:
+	vkDestroyPipelineLayout(vk.device, pipeline->layout, NULL);
+err_destroy_set_layout:
+	vkDestroyDescriptorSetLayout(vk.device, pipeline->set_layout, NULL);
 err:
+	free(cache_name);
 	vkDestroyShaderModule(vk.device, modules[0], NULL);
 	vkDestroyShaderModule(vk.device, modules[1], NULL);
 	vk_assert(res);

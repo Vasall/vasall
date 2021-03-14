@@ -25,3 +25,6 @@ lib/amoloader/*
 
 # Ignore compiled SPIR-V shaders
 *.spv
+
+# Ignore pipeline cache
+.cache

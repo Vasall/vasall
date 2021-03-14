@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 
 extern int fs_load_file(char *pth, uint8_t **buf, long *len)
@@ -69,5 +70,37 @@ extern int fs_load_png(char *pth, uint8_t **buf, int *w, int *h)
 	*buf = buffer;
 	*w = width;
 	*h = height;
+	return 0;
+}
+
+extern int fs_write_file(char *pth, uint8_t *buf, long length)
+{
+	FILE *fd;
+
+	if(!(fd = fopen(pth, "wb"))) {
+		ERR_LOG(("Failed to open file: %s", pth));
+		return -1;
+	}
+
+	fwrite(buf, length, 1, fd);
+
+	fclose(fd);
+	return 0;
+}
+
+
+extern int fs_create_dir(char *pth)
+{
+	struct stat st;
+
+	if(stat(pth, &st) == 0) {
+		return -1;
+	}
+
+	if(mkdir(pth, 0755) < 0) {
+		ERR_LOG(("Failed to create directory: %s", pth));
+		return -1;
+	}
+
 	return 0;
 }

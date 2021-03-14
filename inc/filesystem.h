@@ -30,4 +30,26 @@ extern int fs_load_file(char *pth, uint8_t **buf, long *len);
  */
 extern int fs_load_png(char *pth, uint8_t **buf, int *w, int *h);
 
+/*
+ * Write the content of a buffer into a file, overwriting any previoulsy stored
+ * data inside this file or create a new file.
+ * 
+ * @pth: The path to the file
+ * @buf: A pointer to a buffer containing the data, which will be written to the
+ *       file or NULL
+ * @length: The length of the buffer. If buf is NULL, length must be 0
+ *
+ * Returns: Either 0 on success or -1 if an error occurred
+ */
+extern int fs_write_file(char *pth, uint8_t *buf, long length);
+
+/*
+ * Create a new directory.
+ * 
+ * @pth: The path to the directory
+ *
+ * Returns: Either 0 on success or -1 if an error occurred
+ */
+extern int fs_create_dir(char *pth);
+
 #endif

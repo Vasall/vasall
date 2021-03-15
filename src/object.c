@@ -737,7 +737,13 @@ extern void obj_print(short slot)
 }
 
 /*
- * object-systems
+ * ============================================
+ *                OBJECT_SYSTEMS
+ * ============================================
+ */
+
+/*
+ * object-movement-log
  */
 
 static void obj_log_reset(short slot)
@@ -802,6 +808,80 @@ static void obj_log_cpy(short slot, char i, uint32_t *ts, vec3_t pos, vec3_t vel
 	vec3_cpy(dir, log->dir[i]);
 }
 
+/*
+ * object-input-log
+ */
+
+static void obj_inp_reset(short slot)
+{
+	objects.inp[slot].num = 0;
+	objects.inp[slot].start = 0;
+	objects.inp[slot].end = 0;
+}
+
+static short obj_inp_push(int slot, uint32_t ts, uint8_t type, void *data)
+{
+	short i;
+	short j;
+	short k;
+	short tmp;
+	short from;
+	short to;
+	short lim;
+	short ins = objects.inp[slot].start;
+
+
+	/* Find if the input has to be inserted between two entries */
+	for(i = 0; i < objects.inp[slot].num; i++) {
+		tmp = (objects.inp[slot].start + i) % OBJ_INP_SLOTS;
+		
+		/* If the right place has been found */
+		if(objects.inp[slot].ts[tmp] > ts) {
+			if(objects.inp[slot].num + 1 >= OBJ_INP_SLOTS) {
+				objects.inp[slot].start += 1;
+			}
+			else {
+				objects.inp[slot].num += 1;
+			}
+
+
+			objects.inp[slot].end = 0;
+
+			/* Move all entries one slot back */
+			for(j = 0; j < objects.inp[slot].num - i; j++) {
+				to = (objects.inp[slot].end - j - 1);
+				if(to < 0) to = OBJ_INP_SLOTS - to;
+
+				from = to - 1;
+				if(from < 0) from = OBJ_INP_SLOTS - from;
+
+				objects.inp[slot].ts[to] = objects.inp[slot].ts[from];
+				objects.inp[slot].type[to] = objects.inp[slot].type[from];
+
+				vec2_cpy(objects.inp[slot].mov[to], objects.inp[slot].mov[from]);
+				vec3_cpy(objects.inp[slot].dir[to], objects.inp[slot].dir[from]);
+			}
+		}
+
+		objects.inp[slot].ts[tmp] = ts;
+		objects.inp[slot].type[tmp] = type;
+
+		switch(type) {
+			case(INP_T_MOV):
+				vec2_cpy(objects.inp[slot].mov[tmp], data);
+				break;
+
+			case(INP_T_DIR):
+				vec3_cpy(objects.inp[slot].dir[tmp], data);
+				break;
+		}
+
+		return tmp;
+	}
+}
+
+
+
 extern void obj_sys_update(uint32_t now)
 {
 	int i;
@@ -814,13 +894,7 @@ extern void obj_sys_update(uint32_t now)
 
 	uint32_t tick_ts = floor(now / TICK_TIME) * TICK_TIME;
 
-	uint32_t  ts[OBJ_SLOTS];	/* Get time of the last object update */
-	vec3_t    pos[OBJ_SLOTS];	/* The current position */
-	vec3_t    vel[OBJ_SLOTS];	/* The current velocity */
-	vec2_t    mov[OBJ_SLOTS];	/* The current movement-acceleration */
-	vec3_t    dir[OBJ_SLOTS];	/* The current looking-direction */
-
-	char      logi[OBJ_SLOTS];
+	char     logi[OBJ_SLOTS];
 
 	float f;
 	vec3_t acl;
@@ -833,8 +907,8 @@ extern void obj_sys_update(uint32_t now)
 	char flg = 1;
 
 	/* Pull an entry from the input-pipe */
-	if(inp_next_ts()) {
-		inp_ts = inp_next_ts();
+	if(inp_pull(&inp)) {
+		inp_ts = inp->ts;
 		run_ts = inp_ts;
 
 		obj_log_col(inp_ts, logi);
@@ -843,12 +917,16 @@ extern void obj_sys_update(uint32_t now)
 			if(objects.mask[i] == OBJ_M_NONE)
 				continue;
 
-			obj_log_cpy(obj_s, logi[i], &ts[i], pos[i],
-					vel[i], mov[i], dir[i]);
+			obj_log_cpy(obj_s, logi[i],
+					&objects.ts[i],
+					objects.pos[i],
+					objects.vel[i],
+					objects.mov[i],
+					objects.dir[i]);
 
 			/* Update run-ts to the oldest timestamp */
-			if(run_ts > ts[i]) {
-				run_ts = ts[i];
+			if(run_ts > objects.ts[i]) {
+				run_ts = objects.ts[i];
 			}
 		}
 
@@ -860,27 +938,14 @@ extern void obj_sys_update(uint32_t now)
 			if(objects.mask[i] == OBJ_M_NONE)
 				continue;
 
-			/*
-			 * Copy the objects most recent data to the matching
-			 * list.
-			 */
-			ts[i] = objects.last_ts[i];
-
-			vec3_cpy(pos[i], objects.pos[i]);
-			vec3_cpy(vel[i], objects.vel[i]);
-
-			vec2_cpy(mov[i], objects.mov[i]);
-			vec3_cpy(dir[i], objects.dir[i]);
-
 			/* Update run-ts to the oldest timestamp */
-			if(run_ts > ts[i]) {
-				run_ts = ts[i];
+			if(run_ts > objects.ts[i]) {
+				run_ts = objects.ts[i];
 			}
 		}
 
 		/* Set the run-limit */
 		lim_ts = now;
-
 	}
 
 
@@ -903,8 +968,6 @@ extern void obj_sys_update(uint32_t now)
 				 */
 				if(run_ts < ts[o])
 					continue;
-
-				ts[o] += TICK_TIME;
 
 				/* 
 				 * Process friction.
@@ -968,7 +1031,6 @@ extern void obj_sys_update(uint32_t now)
 					}
 				}
 
-#if 1
 				/* Limit movement-space */
 				if(ABS(pos[o][0]) > 32.0) {
 					pos[o][0] = 32.0 * SIGN(pos[o][0]);
@@ -979,7 +1041,12 @@ extern void obj_sys_update(uint32_t now)
 					pos[1][o] = 32.0 * SIGN(pos[o][1]);
 					vel[1][o] = 0;
 				}
-#endif
+
+				ts[o] += TICK_TIME;
+
+				if((ts[i] % 100) == 0) {
+
+				}
 			}
 
 			/*
@@ -988,47 +1055,23 @@ extern void obj_sys_update(uint32_t now)
 			run_ts += TICK_TIME;
 		}
 
-		/*
-		 * Pull the latest input and copy the data to the affected
-		 * object.
-		 */
-		if(inp_pull(&inp)) {
-			/* Get the slot of the object to input affects */
-			short slot = obj_sel_id(inp->obj_id);
-
-			if(slot > 0) {
-				/*
-				 * Copy the new input-data to the object.
-				 */
-				switch(inp->type) {
-					case(INP_T_MOV):
-						vec2_cpy(mov[slot], inp->mov);
-						break;
-
-					case(INP_T_DIR):
-						vec3_cpy(dir[slot], inp->dir);
-						break;
-
-				}
-			}
+		tmp = 0;
+		while(inp_next_ts() != 0) {
+			if(inp_next_ts() <= )	
 		}
-	
-		/*
-		 * If there's another input, update till the next one occurs, or
-		 * if no other inputs need to be processed, just update to now.
-		 */
-		if(inp_next_ts()) {
-			lim_ts = inp_next_ts();
+
+		/* Get the timestamp of the next input */
+		if() {
+			lim_ts = inp_next_ts(); 
 		}
-		else {
+
+		if(!tmp) {
 			lim_ts = now;
 		}
 	}
 
 
-	/*
-	 * Copy the latest update time of the objects.
-	 */
+	/* Set the latest update time of the objects */
 	for(i = 0; i < OBJ_SLOTS; i++) {
 		if(objects.mask[i] == OBJ_M_NONE)
 			continue;

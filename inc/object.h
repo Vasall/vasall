@@ -48,19 +48,14 @@
 
 #define OBJ_A_ALL (OBJ_A_ID|OBJ_A_MASK|OBJ_A_POS|OBJ_A_VEL|OBJ_A_MOV|OBJ_A_BUF)
 
-#define OBJ_INPUT_SLOTS   6
 
-struct object_inputs {
-	short num;
-	
-	uint32_t     mask[OBJ_INPUT_SLOTS];
-	uint32_t     ts[OBJ_INPUT_SLOTS];
+/*
+ * The object-movement-log used to periodically store the objects current
+ * position, velocity and input which will be used to correct a objects
+ * movement.
+ */
 
-	vec2_t       mov[OBJ_INPUT_SLOTS];
-	uint16_t     act[OBJ_INPUT_SLOTS];
-};
-
-#define OBJ_LOG_SLOTS
+#define OBJ_LOG_SLOTS 12
 
 struct object_log {
 	short start;
@@ -74,6 +69,24 @@ struct object_log {
 
 	vec2_t    mov[OBJ_LOG_SLOTS];
 	vec3_t    dir[OBJ_LOG_SLOTS];
+};
+
+/*
+ * The input buffer to save recent inputs affecting the object.
+ */
+
+#define OBJ_INPUT_SLOTS   24
+
+struct object_inputs {
+	short start;
+	short end;
+	short num;
+
+	uint32_t     ts[OBJ_INP_SLOTS];
+	uint8_t      type[OBJ_INP_SLOTS];	
+	
+	vec2_t       mov[OBJ_INP_SLOTS];
+	vec3_t       dir[OBJ_INP_SLOTS];
 };
 
 struct comp_marker {
@@ -101,17 +114,27 @@ struct object_table {
 
 	uint32_t                 mask[OBJ_SLOTS];
 	uint32_t                 id[OBJ_SLOTS];
-	
+
+	/* The runtime-buffers */
+	uint32_t                 ts[OBJ_SLOTS];
 	vec3_t                   pos[OBJ_SLOTS];
 	vec3_t                   vel[OBJ_SLOTS];
+	vec2_t                   mov[OBJ_SLOTS];
+	vec3_t                   dir[OBJ_SLOTS];
 
-	uint32_t                 last_ts[OBJ_SLOTS];
+	/* The save-buffers for the previous state */
+	uint32_t                 prev_ts[OBJ_SLOTS];
+	vec3_t                   prev_pos[OBJ_SLOTS];
 
-	struct object_log        log[OBJ_SLOTS];	
+	/* Buffer containing the runtime-log */
+	struct object_log        log[OBJ_SLOTS];
+
+	/* Buffer containing all recent inputs */
+	struct object_inputs     inp[OBJ_SLOTS];
+
 
 	/* Variables used for rendering and animation */
 	vec3_t                   ren_pos[OBJ_SLOTS];
-	vec3_t                   dir[OBJ_SLOTS];
 	vec3_t                   ren_dir[OBJ_SLOTS];
 	short                    mdl[OBJ_SLOTS];
 	struct model_rig         *rig[OBJ_SLOTS];
@@ -126,16 +149,8 @@ struct object_table {
 	int                      len[OBJ_SLOTS];
 	char                     data[OBJ_SLOTS][OBJ_DATA_MAX];
 
-	/* Vars used for interpolation */
-	vec3_t                   prev_pos[OBJ_SLOTS];
-	vec3_t                   prev_dir[OBJ_SLOTS];
-
 	/* Vars used to store most recent input */
-	vec2_t                   mov[OBJ_SLOTS];
 	uint16_t                 act[OBJ_SLOTS];
-
-	/* Buffer containing all recent inputs */
-	struct object_inputs     inp[OBJ_SLOTS];
 
 	/* Next comparison-marker used for maintaing synchronicity */
 	char                     mark_flg[OBJ_SLOTS];

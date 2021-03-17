@@ -186,4 +186,9 @@ extern void gl_render_draw(size_t indices);
  */
 extern void gl_render_end(SDL_Window *window);
 
+/*
+ * Print information on version, gpu, vendor, etc.
+ */
+extern void gl_print_info(void);
+
 #endif /* _OPENGL_H */

@@ -48,6 +48,8 @@ extern int win_init(void)
 			goto err_close_window;
 	}
 
+	ren_print_info();
+
 	if(win_setup_shader() < 0)
 		goto err_destroy_render;
 

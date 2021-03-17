@@ -335,3 +335,17 @@ extern int ren_end(SDL_Window *window)
 
 	return res;
 }
+
+
+extern int ren_print_info(void)
+{
+	int res;
+	if(renderer.mode == REN_MODE_VULKAN) {
+		res = vk_print_info();
+	} else if(renderer.mode == REN_MODE_OPENGL) {
+		gl_print_info();
+		res = 0;
+	}
+
+	return res;
+}

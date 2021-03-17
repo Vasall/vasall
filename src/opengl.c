@@ -337,3 +337,24 @@ extern void gl_render_end(SDL_Window *window)
 {
 	SDL_GL_SwapWindow(window);
 }
+
+
+extern void gl_print_info(void)
+{
+	const unsigned char *ver;
+	const unsigned char *vendor;
+	const unsigned char *gpu;
+	const unsigned char *glsl_ver;
+	
+	ver = glGetString(GL_VERSION);
+	vendor = glGetString(GL_VENDOR);
+	gpu = glGetString(GL_RENDERER);
+	glsl_ver = glGetString(GL_SHADING_LANGUAGE_VERSION);
+
+	printf("---OpenGL Info---\n");
+	printf("GL Version: %s\n", ver);
+	printf("Vendor: %s\n", vendor);
+	printf("GPU: %s\n", gpu);
+	printf("GLSL Version: %s\n", glsl_ver);
+	printf("---End---\n");
+}

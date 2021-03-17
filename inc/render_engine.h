@@ -240,4 +240,11 @@ extern void ren_draw(uint32_t indices);
  */
 extern int ren_end(SDL_Window *window);
 
+/*
+ * Print various information on api version, gpu, etc.
+ * 
+ * Returns: 0 on success or -1 if an error occured
+ */
+extern int ren_print_info(void);
+
 #endif /* _RENDER_ENGINE_H */

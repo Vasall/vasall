@@ -2124,3 +2124,104 @@ extern int vk_render_end(void)
 	vk_assert(res);
 	return 0;
 }
+
+
+extern int vk_print_info(void)
+{
+	uint32_t i;
+	VkResult res;
+	uint32_t inst_ver;
+	uint32_t inst_ext_count;
+	VkExtensionProperties *inst_ext;
+	VkPhysicalDeviceProperties2 gpu_props;
+	VkPhysicalDeviceDriverProperties driver_props;
+	uint32_t dev_ext_count;
+	VkExtensionProperties *dev_ext;
+	char *type;
+
+	res = vkEnumerateInstanceVersion(&inst_ver);
+	vk_assert(res);
+
+	res = vkEnumerateInstanceExtensionProperties(NULL, &inst_ext_count,
+	                                             NULL);
+	vk_assert(res);
+	inst_ext = malloc(sizeof(VkExtensionProperties)*inst_ext_count);
+	res = vkEnumerateInstanceExtensionProperties(NULL, &inst_ext_count,
+	                                             inst_ext);
+
+	gpu_props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+	gpu_props.pNext = &driver_props;
+	driver_props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES;
+	driver_props.pNext = NULL;
+	vkGetPhysicalDeviceProperties2(vk.gpu, &gpu_props);
+
+	res = vkEnumerateDeviceExtensionProperties(vk.gpu, NULL, &dev_ext_count,
+	                                           NULL);
+	vk_assert(res);
+	dev_ext = malloc(sizeof(VkExtensionProperties)*dev_ext_count);
+	res = vkEnumerateDeviceExtensionProperties(vk.gpu, NULL, &dev_ext_count,
+	                                           dev_ext);
+
+	printf("---Vulkan Info---\n");
+
+	printf("Instance Version: %d.%d.%d\n\n", VK_VERSION_MAJOR(inst_ver),
+	       VK_VERSION_MINOR(inst_ver), VK_VERSION_PATCH(inst_ver));
+
+	for(i = 0; i < inst_ext_count; i++) {
+		char *surf = strrchr(inst_ext[i].extensionName, '_');
+		if(strcmp(surf, "_surface") == 0) {
+			printf("Instance Extension: %s ver %d\n",
+			       inst_ext[i].extensionName,
+			       inst_ext[i].specVersion);
+		}
+	}
+
+	printf("\nGPU: %s\n", gpu_props.properties.deviceName);
+	switch (gpu_props.properties.deviceType)
+	{
+	case VK_PHYSICAL_DEVICE_TYPE_OTHER:
+		type = "VK_PHYSICAL_DEVICE_TYPE_OTHER";
+		break;
+	case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+		type = "VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU";
+		break;
+	case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+		type = "VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU";
+		break;
+	case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+		type = "VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU";
+		break;
+	case VK_PHYSICAL_DEVICE_TYPE_CPU:
+		type = "VK_PHYSICAL_DEVICE_TYPE_CPU";
+		break;
+	default:
+		type = "Unknown";
+		break;
+	}
+	printf("Type: %s\n", type);
+	printf("API Version: %d.%d.%d\n\n",
+	       VK_VERSION_MAJOR(gpu_props.properties.apiVersion),
+	       VK_VERSION_MINOR(gpu_props.properties.apiVersion),
+	       VK_VERSION_PATCH(gpu_props.properties.apiVersion));
+
+	printf("Driver: %s\n", driver_props.driverName);
+	printf("Driver Info: %s\n", driver_props.driverInfo);
+	printf("Conformance Version: %d.%d.%d.%d\n\n",
+	       driver_props.conformanceVersion.major,
+	       driver_props.conformanceVersion.minor,
+	       driver_props.conformanceVersion.patch,
+	       driver_props.conformanceVersion.subminor);
+
+	for(i = 0; i < dev_ext_count; i++) {
+		if(strcmp(dev_ext[i].extensionName, "VK_KHR_swapchain") == 0) {
+			printf("Device Extension: %s ver %d\n",
+			       dev_ext[i].extensionName,
+			       dev_ext[i].specVersion);
+		}
+	}
+	printf("---End---\n");
+
+	free(dev_ext);
+	free(inst_ext);
+	return 0;
+}

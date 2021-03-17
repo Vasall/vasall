@@ -244,4 +244,11 @@ extern void vk_render_draw(uint32_t index_count);
  */
 extern int vk_render_end(void);
 
+/*
+ * Print information of the instance, gpu, driver, etc.
+ * 
+ * Returns: 0 on success or -1 if an error occured
+ */
+extern int vk_print_info(void);
+
 #endif /* _VK_H */

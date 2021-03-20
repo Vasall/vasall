@@ -30,6 +30,7 @@ struct vk_texture {
 	VkDeviceMemory memory;
 	VkImageView image_view;
 	VkSampler sampler;
+	uint32_t mip_levels;
 };
 
 

@@ -10,6 +10,14 @@
         printf("[VULKAN] %s:%d : ", __FILE__, __LINE__);\
         print_error(res); return -1;}
 
+/* MAX is not in the POSIX standard */
+#ifndef MAX
+#define MAX(a,b) (((a)>(b))?(a):(b))
+#endif /* MAX */
+
+/* Don't judge me. It removes the warning. */
+double log2(double __x);
+
 struct vk_wrapper {
 	VkInstance instance;
 	VkSurfaceKHR surface;
@@ -1525,6 +1533,7 @@ extern void vk_destroy_buffer(struct vk_buffer buffer)
 extern int vk_create_texture(char *pth, struct vk_texture *texture)
 {
 	int w, h;
+	uint32_t i;
 	uint8_t *buf;
 	VkResult res;
 	struct vk_buffer staging;
@@ -1545,6 +1554,8 @@ extern int vk_create_texture(char *pth, struct vk_texture *texture)
 		return -1;
 	}
 
+	texture->mip_levels = floor(log2(MAX(w, h)))+1;
+
 	if(vk_create_buffer(w*h*4, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 1,
 	                    &staging) < 0) {
 		ERR_LOG(("Failed to create staging buffer"));
@@ -1563,12 +1574,13 @@ extern int vk_create_texture(char *pth, struct vk_texture *texture)
 	image_info.extent.width = w;
 	image_info.extent.height = h;
 	image_info.extent.depth = 1;
-	image_info.mipLevels = 1;
+	image_info.mipLevels = texture->mip_levels;
 	image_info.arrayLayers = 1;
 	image_info.samples = VK_SAMPLE_COUNT_1_BIT;
 	image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
-	image_info.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-						VK_IMAGE_USAGE_SAMPLED_BIT;
+	image_info.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+	                   VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+	                   VK_IMAGE_USAGE_SAMPLED_BIT;
 	image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	image_info.queueFamilyIndexCount = 0;
 	image_info.pQueueFamilyIndices = NULL;
@@ -1639,8 +1651,74 @@ extern int vk_create_texture(char *pth, struct vk_texture *texture)
 	                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
 
 	barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-	barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 	barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+
+	vkCmdPipelineBarrier(vk.command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
+	                     VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL,
+	                     0, NULL, 1, &barrier);
+
+	/* Generate Mip Maps */
+	for(i = 1; i < texture->mip_levels; i++) {
+		VkImageBlit image_blit;
+
+		image_blit.srcSubresource.aspectMask =
+			VK_IMAGE_ASPECT_COLOR_BIT;
+		image_blit.srcSubresource.mipLevel = i - 1;
+		image_blit.srcSubresource.baseArrayLayer = 0;
+		image_blit.srcSubresource.layerCount = 1;
+		image_blit.srcOffsets[0].x = 0;
+		image_blit.srcOffsets[0].y = 0;
+		image_blit.srcOffsets[0].z = 0;
+		image_blit.srcOffsets[1].x = w >> (i - 1);
+		image_blit.srcOffsets[1].y = h >> (i - 1);
+		image_blit.srcOffsets[1].z = 1;
+		image_blit.dstSubresource.aspectMask =
+			VK_IMAGE_ASPECT_COLOR_BIT;
+		image_blit.dstSubresource.mipLevel = i;
+		image_blit.dstSubresource.baseArrayLayer = 0;
+		image_blit.dstSubresource.layerCount = 1;
+		image_blit.dstOffsets[0].x = 0;
+		image_blit.dstOffsets[0].y = 0;
+		image_blit.dstOffsets[0].z = 0;
+		image_blit.dstOffsets[1].x = w >> i;
+		image_blit.dstOffsets[1].y = h >> i;
+		image_blit.dstOffsets[1].z = 1;
+
+		barrier.subresourceRange.baseMipLevel = i;
+		barrier.srcAccessMask = 0;
+		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+
+		vkCmdPipelineBarrier(vk.command_buffer,
+		                     VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                     VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL,
+		                     0, NULL, 1, &barrier);
+
+		vkCmdBlitImage(vk.command_buffer, texture->image,
+		               VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+		               texture->image,
+		               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
+		               &image_blit, VK_FILTER_LINEAR);
+
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+		barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+
+		vkCmdPipelineBarrier(vk.command_buffer,
+		                     VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                     VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL,
+		                     0, NULL, 1, &barrier);
+	}
+
+	barrier.subresourceRange.baseMipLevel = 0;
+	barrier.subresourceRange.levelCount = texture->mip_levels;
+	barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+	barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 	barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 	vkCmdPipelineBarrier(vk.command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
@@ -1684,7 +1762,7 @@ extern int vk_create_texture(char *pth, struct vk_texture *texture)
 	view_info.components.a = VK_COMPONENT_SWIZZLE_A;
 	view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	view_info.subresourceRange.baseMipLevel = 0;
-	view_info.subresourceRange.levelCount = 1;
+	view_info.subresourceRange.levelCount = texture->mip_levels;
 	view_info.subresourceRange.baseArrayLayer = 0;
 	view_info.subresourceRange.layerCount = 1;
 
@@ -1710,7 +1788,7 @@ extern int vk_create_texture(char *pth, struct vk_texture *texture)
 	sampler_info.compareEnable = VK_FALSE;
 	sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
 	sampler_info.minLod = 0.0f;
-	sampler_info.maxLod = 0.0f;
+	sampler_info.maxLod = (float) texture->mip_levels;
 	sampler_info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	sampler_info.unnormalizedCoordinates = VK_FALSE;
 

@@ -163,6 +163,7 @@ extern int gl_create_texture(char *pth, uint32_t *hdl)
 {
 	int w, h;
 	uint8_t *px;
+	float ani;
 
 	if(fs_load_png(pth, &px, &w, &h) < 0) {
 		ERR_LOG(("Failed to load texture: %s", pth));
@@ -172,13 +173,19 @@ extern int gl_create_texture(char *pth, uint32_t *hdl)
 	glGenTextures(1, hdl);
 	glBindTexture(GL_TEXTURE_2D, *hdl);
 
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA,
+			GL_UNSIGNED_BYTE, px);
+
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+			GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, 
-			GL_UNSIGNED_BYTE, px);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &ani);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, ani);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 

@@ -1,9 +1,7 @@
 # VASALL DOCUMENTATION
- 
-## ABSTRACT
 
 Vasall is a free-to-play MMO-RPG which focuses mainly on combat and 
-exploration. Note that this project is still in the early stages of
+teamplay. Note that this project is still in the early stages of
 developement.
 
 ## TECHNICAL DESCRIPTION

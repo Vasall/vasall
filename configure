@@ -31,7 +31,6 @@ update_lcp() {
 check_lib SDL2/SDL.h SDL2
 check_lib SDL2/SDL_ttf.h SDL_ttf
 check_lib SDL2/SDL_image.h SDL_image
-check_lib GL/glut.h freeglut3
 check_lib openssl/evp.h crypto
 check_lib gmpxx.h GMP
 check_lib vulkan/vulkan.h vulkan

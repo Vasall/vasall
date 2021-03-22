@@ -2,8 +2,6 @@
 #define _SDL_H
 
 #define GL_GLEXT_PROTOTYPES
-#include <GL/glut.h>
-#include <GL/glext.h>
 #include <GL/gl.h>
 
 #include <SDL2/SDL.h>

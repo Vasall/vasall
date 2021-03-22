@@ -33,7 +33,7 @@ override CFLAGS += $(SDL_CFLAGS)
 LINKER     := gcc
 # Set libararies (FIXME: switch the variables)
 LIBS       := $(shell find $(MKFILE_DIR)$(LIB_PTH)/ -type f -name "*.a")
-STAT_LIBS  := -lm -lgmp -lGL -lGLU -lglut -lcrypto -lvulkan
+STAT_LIBS  := -lm -lgmp -lGL -lcrypto -lvulkan
 override LIBS += $(STAT_LIBS)
 # Linking flags here
 LFLAGS     := -Wall -I. $(LIBS)

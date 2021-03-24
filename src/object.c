@@ -62,6 +62,9 @@ static void obj_sort(void)
 	int i;
 	char found = 0;
 
+	short a;
+	short b;
+
 	for(i = 0; i < OBJ_SLOTS; i++)
 		objects.order[i] = i;
 
@@ -75,22 +78,22 @@ static void obj_sort(void)
 		found = 0;
 
 		for(i = 0; i < OBJ_SLOTS - 1; i++) {
-			a = objects->order[i];
-			b = objects->order[i + 1];
+			a = objects.order[i];
+			b = objects.order[i + 1];
 
 			if(objects.mask[a] != 0 && objects.mask[b] != 0) {
 				if(objects.id[a] > objects.id[b]) {
 					found = 1;
 
-					objects->order[i] = b;
-					objects->order[i + 1] = a;
+					objects.order[i] = b;
+					objects.order[i + 1] = a;
 				}
 			}
 			else if(objects.mask[a] == 0 && objects.mask[b] != 0) {
 				found = 1;
 
-				objects->order[i] = b;
-				objects->order[i + 1] = a;
+				objects.order[i] = b;
+				objects.order[i + 1] = a;
 			}
 		}
 
@@ -104,6 +107,11 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 {
 	short slot;
 
+
+	/* TODO: Get altitude at current position */
+	pos[2] = 0.0;
+
+
 	/* Get a slot to place object on */
 	if((slot = obj_get_slot()) < 0)
 		return -1;
@@ -112,17 +120,31 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 	objects.mask[slot] = mask;
 	objects.id[slot] = id;
 
-	/* TODO: Get altitude at current position */
-	pos[2] = 0.0;
+	/* Set the timestamp of the object */
+	objects.ts[slot] = ts;
 
-	/* Setup position, velocity and direction */
+	/* Setup position and velocity */
 	vec3_cpy(objects.pos[slot], pos);
 	vec3_clr(objects.vel[slot]);
+
+	/* Set movement and direction */
+	vec2_clr(objects.mov[slot]);
+	vec3_set(objects.dir[slot], 0, 1, 0);
+
+	/* Initialize interpolation variables */
+	objects.prev_ts[slot] = objects.ts[slot];
+	vec3_cpy(objects.prev_pos[slot], objects.pos[slot]);
+	vec3_cpy(objects.prev_dir[slot], objects.dir[slot]);
+
+	/* Initialize the movement-log */
+	obj_log_reset(slot);
+	obj_log_set(slot, objects.ts[slot], objects.pos[slot],
+			objects.vel[slot], objects.mov[slot],
+			objects.dir[slot]);
 
 	/* Initialize object model and rig if requested */
 	objects.mdl[slot] = -1;
 	if(mask & OBJ_M_MODEL) {
-		vec3_set(objects.dir[slot], 0.0, 1.0, 0.0);
 		objects.mdl[slot] = model;
 
 		/* Attach a rig to the object */
@@ -135,10 +157,8 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 		}
 	}
 
-
 	/* Initialize the position and rotation matrices */
-	mat4_idt(objects.mat_pos[slot]);
-	mat4_idt(objects.mat_rot[slot]);
+	obj_update_matrix(slot);
 
 	/* Initialize data-buffer if requested */
 	objects.len[slot] = 0;
@@ -149,24 +169,6 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 			memcpy(objects.data[slot], data, len);
 		}
 	}
-
-	/* Set interpolation variables */
-	vec3_cpy(objects.prev_pos[slot], objects.pos[slot]);
-	vec3_cpy(objects.prev_dir[slot], objects.dir[slot]);
-
-	/* Setup last input */
-	vec3_clr(objects.mov[slot]);
-	objects.act[slot] = 0;
-
-	/* Set last update-time */
-	objects.last_ack_ts[slot] = ts;
-	objects.last_upd_ts[slot] = ts;
-
-	/* Set last acknowledged positio */
-	vec3_cpy(objects.last_pos[slot], objects.pos[slot]);
-
-	/* Initialize the object-matrix */
-	obj_update_matrix(slot);
 
 	/* Increment number of objects in the object-table */
 	objects.num++;
@@ -421,78 +423,9 @@ extern int obj_submit(void *in, uint32_t ts)
 	if((slot = obj_set(id, mask, pos, mdl, NULL, 0, ts)) < 0)
 		return -1;
 
-	vec3_cpy(objects.vel[slot], (float *)(ptr + 20));
-	vec2_cpy(objects.mov[slot], (float *)(ptr + 32));
-
-	vec3_cpy(objects.last_pos[slot], (float *)(ptr + 8));
-	vec3_cpy(objects.last_vel[slot], (float *)(ptr + 20));
 	return 0;
 }
 
-
-extern int obj_add_input(short slot, uint32_t mask, uint32_t ts, vec2_t mov,
-		uint16_t act)
-{		
-	short inp_slot;
-
-	if(obj_check_slot(slot))
-		return -1;
-
-	/* Get index to place input on */
-	inp_slot = objects.inp[slot].num;
-
-	objects.inp[slot].mask[inp_slot] = mask;
-	objects.inp[slot].ts[inp_slot] = ts;
-
-	if(mask & INP_M_MOV)
-		vec2_cpy(objects.inp[slot].mov[inp_slot], mov);
-
-	if(mask & INP_M_ACT)
-		memcpy(&objects.inp[slot].act[inp_slot], &act, 2);
-
-	/* Increment input-counter */
-	objects.inp[slot].num++;
-	return 0;
-}
-
-static int obj_set_marker(void *in)
-{
-	uint32_t ts;
-	uint32_t id;
-	short slot;
-	char *ptr = in;
-
-	memcpy(&ts, ptr, 4);
-	ptr += 4;
-
-	/* Skip object number */
-	ptr += 2;
-
-	memcpy(&id, ptr, 4);
-	ptr += 4;
-
-	printf("id: %u\n", id);
-
-	if((slot = obj_sel_id(id)) < 0)
-		return -1;
-
-	printf("Set marker\n");
-
-	objects.mark_flg[slot] = 1;
-
-	memcpy(&objects.mark[slot].ts, &ts, 4);
-
-	vec3_cpy(objects.mark[slot].pos, (float *)ptr);
-	ptr += 12;
-
-	vec3_cpy(objects.mark[slot].vel, (float *)ptr);
-	ptr += 12;
-
-	vec2_cpy(objects.mark[slot].mov, (float *)ptr);
-	ptr += 8;
-
-	return 0;
-}
 
 extern int obj_update(void *in)
 {
@@ -503,6 +436,11 @@ extern int obj_update(void *in)
 	memcpy(&flg, ptr, 1);
 	ptr += 1;
 
+	/*
+	 * TODO: Move network-inputs directly to the input-module.
+	 */
+
+#if 0
 	/* Add inputs */
 	if(flg & (1<<0)) {
 		if((tmp = obj_add_inputs(ptr)) < 1)
@@ -510,12 +448,7 @@ extern int obj_update(void *in)
 
 		ptr += tmp;
 	}
-
-	/* Set marker */
-	if(flg & (1<<1)) {
-		if((obj_set_marker(ptr)) < 0)
-			return -1;
-	}
+#endif
 
 	return 0;
 }
@@ -742,145 +675,6 @@ extern void obj_print(short slot)
  * ============================================
  */
 
-/*
- * object-movement-log
- */
-
-static void obj_log_reset(short slot)
-{
-	objects.log[slot].start = 0;
-	objects.log[slot].end = 0;
-	objects.log[slot].num = 0;
-}
-
-static void obj_log_push(short slot, uint32_t ts, vec3_t pos, vec3_t vel,
-		vec2_t mov, vec3_t dir)
-{
-
-}
-
-/*
- * TODO: What if the timestamp is older than the oldest log-entry?!
- */
-static char obj_log_near(short slot, uint32_t ts)
-{
-	int i;
-	char near = objects.log[slot].start;
-
-	for(i = 0; i < objects.log[slot].num; i++) {
-		char tmp = (objects.log[slot].start + i) % OBJ_LOG_SLOTS;
-
-		if(objects.log[slot].ts[tmp] > ts)
-			break;
-
-		near = tmp;
-	}
-
-	return near;
-}
-
-static void obj_log_col(uint32_t ts, char *logi)
-{
-	int i;
-	uint32_t min = ts;
-
-	/* Collect log-entries closest to the timestamp */
-	for(i = 0; i < OBJ_SLOTS; i++) {
-		logi[i] = -1;
-
-		if(objects.mask[i] != 0) {
-			logi[i] = obj_log_near(i, ts);
-		}
-	}
-}
-
-static void obj_log_cpy(short slot, char i, uint32_t *ts, vec3_t pos, vec3_t vel,
-		vec2_t mov, vec3_t dir)
-{
-	struct object_log *log = &objects.log[slot];
-
-	*ts = log->ts[i];
-
-	vec3_cpy(pos, log->pos[i]);
-	vec3_cpy(vel, log->vel[i]);
-
-	vec2_cpy(mov, log->mov[i]);
-	vec3_cpy(dir, log->dir[i]);
-}
-
-/*
- * object-input-log
- */
-
-static void obj_inp_reset(short slot)
-{
-	objects.inp[slot].num = 0;
-	objects.inp[slot].start = 0;
-	objects.inp[slot].end = 0;
-}
-
-static short obj_inp_push(int slot, uint32_t ts, uint8_t type, void *data)
-{
-	short i;
-	short j;
-	short k;
-	short tmp;
-	short from;
-	short to;
-	short lim;
-	short ins = objects.inp[slot].start;
-
-
-	/* Find if the input has to be inserted between two entries */
-	for(i = 0; i < objects.inp[slot].num; i++) {
-		tmp = (objects.inp[slot].start + i) % OBJ_INP_SLOTS;
-		
-		/* If the right place has been found */
-		if(objects.inp[slot].ts[tmp] > ts) {
-			if(objects.inp[slot].num + 1 >= OBJ_INP_SLOTS) {
-				objects.inp[slot].start += 1;
-			}
-			else {
-				objects.inp[slot].num += 1;
-			}
-
-
-			objects.inp[slot].end = 0;
-
-			/* Move all entries one slot back */
-			for(j = 0; j < objects.inp[slot].num - i; j++) {
-				to = (objects.inp[slot].end - j - 1);
-				if(to < 0) to = OBJ_INP_SLOTS - to;
-
-				from = to - 1;
-				if(from < 0) from = OBJ_INP_SLOTS - from;
-
-				objects.inp[slot].ts[to] = objects.inp[slot].ts[from];
-				objects.inp[slot].type[to] = objects.inp[slot].type[from];
-
-				vec2_cpy(objects.inp[slot].mov[to], objects.inp[slot].mov[from]);
-				vec3_cpy(objects.inp[slot].dir[to], objects.inp[slot].dir[from]);
-			}
-		}
-
-		objects.inp[slot].ts[tmp] = ts;
-		objects.inp[slot].type[tmp] = type;
-
-		switch(type) {
-			case(INP_T_MOV):
-				vec2_cpy(objects.inp[slot].mov[tmp], data);
-				break;
-
-			case(INP_T_DIR):
-				vec3_cpy(objects.inp[slot].dir[tmp], data);
-				break;
-		}
-
-		return tmp;
-	}
-}
-
-
 
 extern void obj_sys_update(uint32_t now)
 {
@@ -894,21 +688,36 @@ extern void obj_sys_update(uint32_t now)
 
 	uint32_t tick_ts = floor(now / TICK_TIME) * TICK_TIME;
 
-	char     logi[OBJ_SLOTS];
+	char logi[OBJ_SLOTS];
 
 	float f;
 	vec3_t acl;
+	vec3_t acld;
 	vec3_t del;
 
 	float t_speed = 4.0;
 	vec3_t grav = {0, 0, -9.81};
 
 	struct input_entry inp;
-	char flg = 1;
 
-	/* Pull an entry from the input-pipe */
-	if(inp_pull(&inp)) {
-		inp_ts = inp->ts;
+
+	/* Save current timestamp, position and direction */
+	for(i = 0; i < OBJ_SLOTS; i++) {
+		if(objects.mask[i] == OBJ_M_NONE)
+			continue;
+
+		objects.prev_ts[i] = objects.ts[i];
+		vec3_cpy(objects.prev_pos[i], objects.pos[i]);
+		vec3_cpy(objects.prev_dir[i], objects.dir[i]);
+	}
+
+
+	/* Check if new inputs occurred */
+	if(inp_check_new()) {
+		/* Set iterator to latest input */
+		inp_begin();
+
+		inp_ts = inp_cur_ts();
 		run_ts = inp_ts;
 
 		obj_log_col(inp_ts, logi);
@@ -917,7 +726,7 @@ extern void obj_sys_update(uint32_t now)
 			if(objects.mask[i] == OBJ_M_NONE)
 				continue;
 
-			obj_log_cpy(obj_s, logi[i],
+			obj_log_cpy(i, logi[i],
 					&objects.ts[i],
 					objects.pos[i],
 					objects.vel[i],
@@ -966,25 +775,29 @@ extern void obj_sys_update(uint32_t now)
 				 * Skip if the object doesn't have to be updated
 				 * yet.
 				 */
-				if(run_ts < ts[o])
+				if(run_ts < objects.ts[o])
 					continue;
 
 				/* 
 				 * Process friction.
 				 */
 				f = 1.0 - TICK_TIME_S * t_speed;
-				vec3_scl(vel[o], f, vel[o]);
+				vec3_scl(objects.vel[o], f, objects.vel[o]);
 
 				/*
 				 * Process movement-acceleration.
 				 */
-				vec3_set(acl, mov[o][0], mov[o][1], 0.0);
-				vec3_scl(acl, 6, acl);
+				vec3_set(acld, objects.dir[o][0], objects.dir[o][1], 0.0);
+				vec3_nrm(acld, acld);
+				
+				vec3_set(acl, objects.mov[o][0], objects.mov[o][1], 0.0);
+				vec3_mult(acld, acl, acl);
+
 				f = TICK_TIME_S * t_speed;
 				vec3_scl(acl, f, acl);
 
 				/* Update velocity of the object */
-				vec3_add(vel[o], acl, vel[o]);
+				vec3_add(objects.vel[o], acl, objects.vel[o]);
 
 				/*
 				 * Process gravity.
@@ -994,57 +807,61 @@ extern void obj_sys_update(uint32_t now)
 					vec3_scl(grav, f, acl);
 
 					/* Update velocity of the object */
-					vec3_add(vel[o], acl, vel[o]);
+					vec3_add(objects.vel[o], acl, objects.vel[o]);
 				}
 
 				/* Scale velocity by tick-time */
-				vec3_scl(vel, TICK_TIME_S, del);
+				vec3_scl(objects.vel[o], TICK_TIME_S, del);
 				del[2] = 0.0;
 
 				/* Check collision */
 				if(objects.mask[o] & OBJ_M_SOLID) {
 					/* Collide and update position */
-					collideAndSlide(slot, pos[o], del, pos[o]);
+					collideAndSlide(o, objects.pos[o],
+							del, objects.pos[o]);
 				}
 				else {
 					/* Update position */
-					vec3_add(pos[o], del, pos[o]);
+					vec3_add(objects.pos[o], del,
+							objects.pos[o]);
 				}
 
 
 				if(objects.mask[o] & OBJ_M_GRAV) {
 					/* Scale velocity by tick-time */
-					vec3_scl(vel[o], TICK_TIME_S, del);
+					vec3_scl(objects.vel[o], TICK_TIME_S, del);
 					del[0] = 0.0;
 					del[1] = 0.0;
 
 					/* Check collision */
 					if(objects.mask[o] & OBJ_M_SOLID) {
 						/* Collide and update position */
-						if(collideAndSlide(slot, pos[o], del, pos[o])) {
-							vel[o][2] = 0;
+						if(collideAndSlide(o, objects.pos[o],
+									del, objects.pos[o])) {
+							objects.vel[o][2] = 0;
 						}
 					}
 					else {
 						/* Update position */
-						vec3_add(pos[0], del, pos[o]);
+						vec3_add(objects.pos[o], del,
+								objects.pos[o]);
 					}
 				}
 
 				/* Limit movement-space */
-				if(ABS(pos[o][0]) > 32.0) {
-					pos[o][0] = 32.0 * SIGN(pos[o][0]);
-					vel[o][0] = 0;
+				if(ABS(objects.pos[o][0]) > 32.0) {
+					objects.pos[o][0] = 32.0 * SIGN(objects.pos[o][0]);
+					objects.vel[o][0] = 0;
 				}
 
-				if(ABS(pos[o][1]) > 32.0) {
-					pos[1][o] = 32.0 * SIGN(pos[o][1]);
-					vel[1][o] = 0;
+				if(ABS(objects.pos[o][1]) > 32.0) {
+					objects.pos[o][1] = 32.0 * SIGN(objects.pos[o][1]);
+					objects.vel[o][1] = 0;
 				}
 
-				ts[o] += TICK_TIME;
+				objects.ts[o] += TICK_TIME;
 
-				if((ts[i] % 100) == 0) {
+				if((objects.ts[o] % 80) == 0) {
 
 				}
 			}
@@ -1055,35 +872,33 @@ extern void obj_sys_update(uint32_t now)
 			run_ts += TICK_TIME;
 		}
 
-		tmp = 0;
-		while(inp_next_ts() != 0) {
-			if(inp_next_ts() <= )	
-		}
+		if(inp_get(&inp)) {
+			short obj_slot = obj_sel_id(inp.obj_id);
 
-		/* Get the timestamp of the next input */
-		if() {
-			lim_ts = inp_next_ts(); 
-		}
+			switch(inp.type) {
+				case INP_T_MOV:
+					vec2_cpy(objects.mov[obj_slot],
+							inp.mov);
+					break;
 
-		if(!tmp) {
+				case INP_T_DIR:
+					vec3_cpy(objects.dir[obj_slot],
+							inp.dir);
+					break;
+			}
+
+			/* Jump to next input */
+			if(inp_next()) {
+				lim_ts = inp_cur_ts();
+			}
+			else {
+				lim_ts = now;
+			}
+
+		}
+		else {
 			lim_ts = now;
 		}
-	}
-
-
-	/* Set the latest update time of the objects */
-	for(i = 0; i < OBJ_SLOTS; i++) {
-		if(objects.mask[i] == OBJ_M_NONE)
-			continue;
-
-		/* Copy the new values to the objects */
-		vec3_cpy(objects.pos[i], pos[i]);
-		vec3_cpy(objects.vel[i], vel[i]);
-
-		vec2_cpy(objects.mov[i], mov[i]);
-		vec3_cpy(objects.dir[i], dir[i]);
-
-		objects.last_ts[i] = ts[i];
 	}
 }
 

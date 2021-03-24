@@ -1,5 +1,7 @@
 #include "input.h"
 #include "network.h"
+#include "core.h"
+#include "object.h"
 
 #include <stdlib.h>
 
@@ -158,7 +160,7 @@ extern int inp_pull(struct input_entry *ent)
 
 	i = pipe->order[pipe->num - 1];
 
-	ent->id = pipe->obj_id[i];
+	ent->obj_id = pipe->obj_id[i];
 	ent->type = pipe->type[i];
 	ent->ts = pipe->ts[i];
 	
@@ -179,14 +181,171 @@ extern int inp_pull(struct input_entry *ent)
 }
 
 
-extern uint32_t inp_next_ts(void)
+extern short inp_log_push(uint32_t id, enum input_type type, uint32_t ts,
+		void *in)
 {
-	struct input_pipe *pipe = &input.pipe_in;
+	short i;
+	short j;
+	short k;
+	short tmp;
+	short from;
+	short to;
+	short lim;
+	short ins = input.log.start;
 
-	if(pipe->num <= 0)
+	short islot = -1;
+
+	/* If the list is empty */
+	if(input.log.num == 0) {	
+		islot = 0;
+
+		input.log.num = 1;
+		goto insert;
+	}
+
+	/* Attach entry to the end if possible */
+	tmp = (input.log.start + input.log.num - 1) % INP_LOG_SLOTS;
+	if(ts > input.log.ts[tmp]) {
+		if(input.log.num + 1 > INP_LOG_SLOTS)
+			input.log.start = (input.log.start + 1) % INP_LOG_SLOTS;
+		else
+			input.log.num += 1;
+
+		islot = (tmp + 1) % INP_LOG_SLOTS;
+		goto insert;
+	}
+
+	/* Insert entry into the middle of the list */
+	for(i = input.log.num - 1; i >= 0; i--) {
+		tmp = (input.log.start + i) % INP_LOG_SLOTS;
+
+		if(input.log.ts[tmp] < ts) {
+			ins = 0;
+
+			if(input.log.num + 1 >= INP_LOG_SLOTS)
+				ins = 1;
+
+			/* Move all entries down one step */
+			for(k = ins; k <= i; k++) {
+				from = (input.log.start + k) % INP_LOG_SLOTS;
+
+				to = from - 1;
+				if(to < 0) to = INP_LOG_SLOTS + to;
+
+				input.log.ts[to] = input.log.ts[from];
+				input.log.type[to] = input.log.type[from];
+
+				vec2_cpy(input.log.mov[to], input.log.mov[from]);
+				vec3_cpy(input.log.dir[to], input.log.dir[from]);
+			}
+
+			if(input.log.num + 1 < INP_LOG_SLOTS) {
+				input.log.num += 1;
+
+				input.log.start -= 1;
+				if(input.log.start < 0)
+					input.log.start = INP_LOG_SLOTS +
+						input.log.start;
+			}
+
+			islot = tmp;
+			goto insert;
+		}
+	}
+
+	return -1;
+
+
+insert:
+	input.log.ts[islot] = ts;
+	input.log.type[islot] = type;
+
+	switch(type) {
+		case(INP_T_MOV):
+			vec2_cpy(input.log.mov[islot], in);
+			break;
+
+		case(INP_T_DIR):
+			vec3_cpy(input.log.dir[islot], in);
+			break;
+	}
+
+	return islot;
+}
+
+extern int inp_check_new(void)
+{
+	if()
+}
+
+
+extern void inp_reset(void)
+{
+	input.log.itr = 0;
+}
+
+
+extern void inp_begin(void)
+{
+	if(input.log.latest_slot < 0)
+		return;
+
+	if(input.log.latest_slot > input.log.start) {
+		input.log.itr = input.log.latest_slot - input.log.start;	
+	}
+	else {
+		input.log.itr = INP_LOG_SLOTS - (input.log.start -
+				input.log.latest_slot);
+	}
+}
+
+
+extern int inp_next(void)
+{
+	if(input.log.itr + 1 >= input.log.num)
 		return 0;
 
-	return pipe->ts[pipe->order[pipe->num - 1]];
+	input.log.itr += 1;
+	return 1;
+}
+
+
+extern uint32_t inp_next_ts(void)
+{
+	struct input_log *log = &input.log;
+
+	if(log->itr + 1 >= log->num)
+		return 0;
+
+	return log->ts[log->itr + 1];
+}
+
+
+extern int inp_get(struct input_entry *ent)
+{
+	int idx;
+	struct input_log *log = &input.log;
+
+	if(log.num < 1 || log.itr >= log.num)
+		return 0;
+
+	idx = (log.start + log.itr) % INP_LOG_SLOTS;
+
+	ent->id =    log->obj_id[idx];
+	ent->type =  log->type[idx];
+	ent->ts =    log->ts[idx];
+	
+	switch(log->type[idx]) {
+		case(INP_T_MOV):
+			vec2_cpy(ent->mov, log->mov[idx]);
+			break;
+
+		case(INP_T_DIR):
+			vec3_cpy(ent->dir, log->dir[idx]);
+			break;
+	}
+
+	return 1;
 }
 
 
@@ -374,7 +533,51 @@ static void inp_pipe_sort(enum input_pipe_mode m)
 
 extern void inp_update(uint32_t ts)
 {
+	struct input_entry inp;
+
 	/* Sort the entries in both pipes from lowest to hights */
 	inp_pipe_sort(INP_PIPE_IN);
 	inp_pipe_sort(INP_PIPE_OUT);
+
+	/*
+	 * TODO: Validate input.
+	 */
+
+	
+	input.log.latest_slot = -1;
+
+	/* Push all new entries from the in-pipe into the input-log */
+	while(inp_pull&inp) {
+		void *ptr;
+		short slot;
+
+		switch(inp.type) {
+			case INP_T_MOV:
+				ptr = &inp.mov;
+				break;
+
+			case INP_T_DIR:
+				ptr = &inp.dir;
+				break;
+		}
+
+		if((slot = inp_log_push(inp.obj_id, inp.type, inp.ts, ptr)) < 0)
+			continue;
+
+
+		/*
+		 * Update latest inputs.
+		 */
+
+		if(input.log.latest_slot < 0) {
+			input.log.latest_slot = slot;
+			input.log.latest_ts = inp.ts;
+		}
+		else {
+			if(inp.ts < input.log.latest_ts) {
+				input.log.latest_slot = slot;
+				input.log.latest_ts = inp.ts;
+			}
+		}
+	}
 }

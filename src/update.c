@@ -118,50 +118,6 @@ static void game_proc_input(void)
 	 * Control the camera.
 	 */
 
-	/* Rotate the camera */	
-	cam_rot(input.cam[0], input.cam[1]);
-
-	/* Adjust the direction of the camera to the input */
-	cam_proc_input();
-
-	/* Get direction of the camera */
-	vec2_cpy(right, camera.v_right);
-	vec2_nrm(right, right);
-
-	vec2_cpy(forw, camera.v_forward);
-	vec2_nrm(forw, forw);
-
-	/* Combine input-direction and camera-direction */
-	vec2_scl(right, -input.mov[0], right);
-	vec2_scl(forw, input.mov[1], forw);
-
-	vec2_add(forw, right, mov);
-	vec2_nrm(mov, mov);
-
-	/* If the movement direction has changed */
-	if(vec2_cmp(mov, input.mov_old) == 0) {
-		short num = input.share.num;
-		uint32_t ti = core.now_ts;
-
-		if(num < INPUT_SLOTS) {
-			input.share.obj = objects.id[obj];
-
-			/* Push new entry in share-buffer */	
-			input.share.mask[num] = INP_M_MOV;
-			input.share.ts[num] = ti;
-			vec2_cpy(input.share.mov[num], mov);
-
-			/* Increment share-buffer-number */
-			input.share.num++;
-
-			/* Remeber current state to check for changes */
-			vec2_cpy(input.mov_old, mov);
-
-			/* Add input to object input-buffer */
-			obj_add_input(obj, 1, ti, mov, 0);
-		}
-	}
-
 #if 0
 	/*
 	 * Reset cursor position.
@@ -184,7 +140,7 @@ void game_update(void)
 	 * Process the inputs, push the local ones into the pipe and sort the
 	 * entries.
 	 */
-	inp_update(now);
+	inp_update();
 
 
 	/*
@@ -195,6 +151,7 @@ void game_update(void)
 	obj_sys_update(now);
 
 
+#if 0
 	if(now >= core.last_shr_ts) {
 		uint8_t con_flg = 0;
 		char pck[512];
@@ -246,14 +203,11 @@ void game_update(void)
 			net_broadcast(HDR_OP_UPD, pck, len);
 		}
 	}
+#endif
 
 
 	/* Update the camera */
 	cam_update();
-
-	
-	/* Reset local input-log */
-	inp_reset_loc();
 
 	/* Clear both input-pipes */
 	inp_pipe_clear(INP_PIPE_IN);

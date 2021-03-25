@@ -115,7 +115,7 @@ extern int inp_retrieve(enum input_type type, void *out)
 extern int inp_push(enum input_pipe_mode m, uint32_t id, enum input_type type,
 		uint32_t ts, void *in)
 {
-	char num;	
+	short num;	
 	struct input_pipe *pipe;
 
 	/* Get a pointer to the associated pipe */
@@ -135,7 +135,7 @@ extern int inp_push(enum input_pipe_mode m, uint32_t id, enum input_type type,
 	pipe->type[num] = type;
 	pipe->ts[num] = ts;
 
-	switch(type) {
+	switch((uint8_t)type) {
 		case INP_T_MOV:
 			vec2_cpy(pipe->mov[num], (float *)in);
 			break;
@@ -185,12 +185,10 @@ extern short inp_log_push(uint32_t id, enum input_type type, uint32_t ts,
 		void *in)
 {
 	short i;
-	short j;
 	short k;
 	short tmp;
 	short from;
 	short to;
-	short lim;
 	short ins = input.log.start;
 
 	short islot = -1;
@@ -257,10 +255,11 @@ extern short inp_log_push(uint32_t id, enum input_type type, uint32_t ts,
 
 
 insert:
+	input.log.obj_id[islot] = id;
 	input.log.ts[islot] = ts;
 	input.log.type[islot] = type;
 
-	switch(type) {
+	switch((uint8_t)type) {
 		case(INP_T_MOV):
 			vec2_cpy(input.log.mov[islot], in);
 			break;
@@ -275,7 +274,10 @@ insert:
 
 extern int inp_check_new(void)
 {
-	if()
+	if(input.log.latest_slot > -1)
+		return 1;
+
+	return 0;
 }
 
 
@@ -302,13 +304,25 @@ extern void inp_begin(void)
 
 extern int inp_next(void)
 {
-	if(input.log.itr + 1 >= input.log.num)
+	if(input.log.itr + 1 > input.log.num)
 		return 0;
 
 	input.log.itr += 1;
 	return 1;
 }
 
+
+extern uint32_t inp_cur_ts(void)
+{
+	struct input_log *log = &input.log;
+
+	if(log->num > 0) {
+		short tmp = (log->start + log->itr) % INP_LOG_SLOTS;
+		return log->ts[tmp];
+	}
+
+	return 0;
+}
 
 extern uint32_t inp_next_ts(void)
 {
@@ -326,14 +340,14 @@ extern int inp_get(struct input_entry *ent)
 	int idx;
 	struct input_log *log = &input.log;
 
-	if(log.num < 1 || log.itr >= log.num)
+	if(log->num < 1 || log->itr >= log->num)
 		return 0;
 
-	idx = (log.start + log.itr) % INP_LOG_SLOTS;
+	idx = (log->start + log->itr) % INP_LOG_SLOTS;
 
-	ent->id =    log->obj_id[idx];
-	ent->type =  log->type[idx];
-	ent->ts =    log->ts[idx];
+	ent->obj_id =  log->obj_id[idx];
+	ent->type =    log->type[idx];
+	ent->ts =      log->ts[idx];
 	
 	switch(log->type[idx]) {
 		case(INP_T_MOV):
@@ -355,7 +369,6 @@ extern int inp_pack(char *out)
 	short s;
 	short num;
 	char *ptr = out;
-	enum input_type type;
 	int written = 0;
 	uint32_t base_ts = 0;
 	uint16_t del_ts;
@@ -414,18 +427,16 @@ extern int inp_pack(char *out)
 
 extern int inp_unpack(char *in)
 {
-	short slot;
 	char i;
 	char num;
 
 	uint32_t  id;
-	uint8_t   mask;
 	uint16_t  off;
 
 	vec2_t   mov;
 	vec3_t   cam;
 
-	uint16_t act = 0;
+	uint8_t type;
 	uint32_t ts;
 
 	char *ptr = in;
@@ -459,7 +470,7 @@ extern int inp_unpack(char *in)
 		ts += off;
 
 		switch(type) {
-			case MOD_T_MOV:
+			case INP_T_MOV:
 				vec2_cpy(mov, (float *)ptr);
 				ptr += VEC2_SIZE;
 
@@ -467,7 +478,7 @@ extern int inp_unpack(char *in)
 					return -1;
 				break;
 
-			case MOD_T_CAM:
+			case INP_T_DIR:
 				vec3_cpy(cam, (float *)ptr);
 				ptr += VEC3_SIZE;
 
@@ -488,7 +499,6 @@ static void inp_pipe_sort(enum input_pipe_mode m)
 	int i;
 	struct input_pipe *pipe;
 	char found;
-	short tmp;
 	short a;
 	short b;
 
@@ -531,7 +541,7 @@ static void inp_pipe_sort(enum input_pipe_mode m)
 	}
 }
 
-extern void inp_update(uint32_t ts)
+extern void inp_update(void)
 {
 	struct input_entry inp;
 
@@ -547,7 +557,7 @@ extern void inp_update(uint32_t ts)
 	input.log.latest_slot = -1;
 
 	/* Push all new entries from the in-pipe into the input-log */
-	while(inp_pull&inp) {
+	while(inp_pull(&inp)) {
 		void *ptr;
 		short slot;
 

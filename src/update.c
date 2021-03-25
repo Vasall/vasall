@@ -136,6 +136,7 @@ void game_update(void)
 	int count = 0;
 
 
+
 	/*
 	 * Process the inputs, push the local ones into the pipe and sort the
 	 * entries.
@@ -206,8 +207,10 @@ void game_update(void)
 #endif
 
 
+
 	/* Update the camera */
 	cam_update();
+
 
 	/* Clear both input-pipes */
 	inp_pipe_clear(INP_PIPE_IN);

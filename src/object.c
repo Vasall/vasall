@@ -431,7 +431,6 @@ extern int obj_update(void *in)
 {
 	char *ptr = in;
 	uint8_t flg;
-	int tmp;
 
 	memcpy(&flg, ptr, 1);
 	ptr += 1;
@@ -861,6 +860,9 @@ extern void obj_sys_update(uint32_t now)
 
 				objects.ts[o] += TICK_TIME;
 
+				/* TODO:
+				 * Insert checkpoints
+				 */
 				if((objects.ts[o] % 80) == 0) {
 
 				}
@@ -873,6 +875,9 @@ extern void obj_sys_update(uint32_t now)
 		}
 
 		if(inp_get(&inp)) {
+
+			static int c = 0;
+
 			short obj_slot = obj_sel_id(inp.obj_id);
 
 			switch(inp.type) {
@@ -897,6 +902,9 @@ extern void obj_sys_update(uint32_t now)
 
 		}
 		else {
+			if(run_ts >= now)
+				break;
+
 			lim_ts = now;
 		}
 	}

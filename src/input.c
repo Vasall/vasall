@@ -279,6 +279,19 @@ insert:
 			break;
 	}
 
+	if(input.log.latest_slot == -1) {
+		input.log.latest_slot = islot;
+		input.log.latest_ts = ts;
+	}
+	else {
+		if(input.log.latest_ts > ts) {
+			input.log.latest_slot = islot;
+			input.log.latest_ts = ts;
+		}
+	}
+
+	inp_log_print();
+
 	return islot;
 }
 
@@ -288,6 +301,25 @@ extern int inp_check_new(void)
 		return 1;
 
 	return 0;
+}
+
+
+extern void inp_log_print(void)
+{
+	short i;
+
+	printf("Num: %d, Start: %d\n", input.log.num, input.log.start);
+
+	for(i = 0; i < input.log.num; i++) {
+		short slot = (input.log.start + i) % INP_LOG_SLOTS;
+
+		printf("%2d(%2d): ", i, slot);
+
+		printf("%8x >> ", input.log.obj_id[slot]);
+		printf("type: %4d - ", input.log.type[slot]);
+		printf("ts: %6x - ", input.log.ts[slot]);
+		printf("\n");
+	}
 }
 
 
@@ -309,6 +341,13 @@ extern void inp_begin(void)
 		input.log.itr = INP_LOG_SLOTS - (input.log.start -
 				input.log.latest_slot);
 	}
+
+#if 0
+	/*
+	 * TODO: remove the following line
+	 */
+	input.log.itr = 0;
+#endif
 }
 
 

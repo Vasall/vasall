@@ -696,6 +696,8 @@ extern void obj_sys_update(uint32_t now)
 
 	struct input_entry inp;
 
+	int flg = 0;
+
 
 	/* Save current timestamp, position and direction */
 	for(i = 0; i < OBJ_SLOTS; i++) {
@@ -710,6 +712,8 @@ extern void obj_sys_update(uint32_t now)
 
 	/* Check if new inputs occurred */
 	if(inp_check_new()) {
+		printf("\n\n");
+
 		/* Set iterator to latest input */
 		inp_begin();
 
@@ -719,7 +723,7 @@ extern void obj_sys_update(uint32_t now)
 		obj_log_col(inp_ts, logi);
 
 		for(i = 0; i < OBJ_SLOTS; i++) {
-			if(objects.mask[i] == OBJ_M_NONE)
+			if((objects.mask[i] & OBJ_M_MOVE) == 0)
 				continue;
 
 			obj_log_cpy(i, logi[i],
@@ -737,10 +741,25 @@ extern void obj_sys_update(uint32_t now)
 
 		/* Set the run-limit */	
 		lim_ts = inp_ts;
+
+		printf("%x >> %x\n", run_ts, lim_ts);
+
+		printf("Objects 0: ts (");
+		printf("%x", objects.ts[0]);
+		printf(")  ");
+
+		printf("pos(");
+		vec3_print(objects.pos[0]);
+		printf(")  ");
+
+		printf("vel(");
+		vec3_print(objects.vel[0]);
+		printf(")  ");
+		printf("\n");
 	}
 	else {
 		for(i = 0; i < OBJ_SLOTS; i++) {
-			if(objects.mask[i] == OBJ_M_NONE)
+			if((objects.mask[i] & OBJ_M_MOVE) == 0)
 				continue;
 
 			/* Update run-ts to the oldest timestamp */
@@ -784,12 +803,9 @@ extern void obj_sys_update(uint32_t now)
 				 * Process movement-acceleration.
 				 */
 
-				vec3_print(objects.dir[o]);
-				printf("\n");
-
 				vec3_set(acld, objects.dir[o][0], objects.dir[o][1], 0.0);
 				vec3_nrm(acld, acld);
-				
+
 				vec3_set(acl, objects.mov[o][0], objects.mov[o][1], 0.0);
 				vec3_mult(acld, acl, acl);
 
@@ -866,6 +882,13 @@ extern void obj_sys_update(uint32_t now)
 				 * Insert checkpoints
 				 */
 				if((objects.ts[o] % 80) == 0) {
+					obj_log_set(o,
+							objects.ts[o],
+							objects.pos[o],
+							objects.vel[o],
+							objects.mov[o],
+							objects.dir[o]);
+
 
 				}
 			}
@@ -893,11 +916,30 @@ extern void obj_sys_update(uint32_t now)
 
 			/* Jump to next input */
 			if(inp_next()) {
-				lim_ts = inp_cur_ts();
+				printf("cur ts!!\n");
+				if((lim_ts = inp_cur_ts()) == 0)
+					lim_ts = now;
 			}
 			else {
+				printf("now!!\n");
 				lim_ts = now;
 			}
+
+
+			printf("%x >> %x\n", run_ts, lim_ts);
+
+			printf("Objects 0: ts (");
+			printf("%x", objects.ts[0]);
+			printf(")  ");
+
+			printf("pos(");
+			vec3_print(objects.pos[0]);
+			printf(")  ");
+
+			printf("vel(");
+			vec3_print(objects.vel[0]);
+			printf(")  ");
+			printf("\n");
 
 		}
 		else {
@@ -905,6 +947,21 @@ extern void obj_sys_update(uint32_t now)
 				break;
 
 			lim_ts = now;
+
+			printf("%x >> %x\n", run_ts, lim_ts);
+
+			printf("Objects 0: ts (");
+			printf("%x", objects.ts[0]);
+			printf(")  ");
+
+			printf("pos(");
+			vec3_print(objects.pos[0]);
+			printf(")  ");
+
+			printf("vel(");
+			vec3_print(objects.vel[0]);
+			printf(")  ");
+			printf("\n");
 		}
 	}
 }

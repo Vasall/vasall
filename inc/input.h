@@ -178,6 +178,12 @@ extern short inp_log_push(uint32_t id, enum input_type type, uint32_t ts,
 
 
 /*
+ * Print all entries from the input-log in the console.
+ */
+extern void inp_log_print(void);
+
+
+/*
  * Check if new inputs have been made.
  *
  * Returns: 1 if new inputs have been made, or 0 if not

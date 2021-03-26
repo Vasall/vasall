@@ -69,6 +69,8 @@ extern short obj_log_set(short slot, uint32_t ts, vec3_t pos, vec3_t vel,
 	else {
 		objects.log[slot].num += 1;
 	}
+
+	return islot;
 }
 
 /*
@@ -94,7 +96,6 @@ extern char obj_log_near(short slot, uint32_t ts)
 extern void obj_log_col(uint32_t ts, char *logi)
 {
 	int i;
-	uint32_t min = ts;
 
 	/* Collect log-entries closest to the timestamp */
 	for(i = 0; i < OBJ_SLOTS; i++) {
@@ -106,7 +107,7 @@ extern void obj_log_col(uint32_t ts, char *logi)
 	}
 }
 
-extern void obj_log_cpy(short slot, char i, uint32_t *ts, vec3_t pos, vec3_t vel,
+extern void obj_log_cpy(short slot, short i, uint32_t *ts, vec3_t pos, vec3_t vel,
 		vec2_t mov, vec3_t dir)
 {
 	struct object_log *log = &objects.log[slot];

@@ -23,13 +23,9 @@ void game_start(void)
 
 void game_proc_evt(event_t *evt)
 {
-	uint8_t axis;
-	float val;
 	float tmp;
-	vec3_t vtmp;
 
 	vec2_t mov;
-	vec3_t dir;
 
 	uint32_t ts = net_gettime();
 
@@ -109,11 +105,6 @@ void game_proc_evt(event_t *evt)
 
 static void game_proc_input(void)
 {
-	vec2_t forw;
-	vec2_t right;
-	vec2_t mov;
-	short obj = core.obj;
-
 	/*
 	 * Control the camera.
 	 */
@@ -133,7 +124,6 @@ void game_update(void)
 {
 	/* Get the current time */
 	uint32_t now = net_gettime();
-	int count = 0;
 
 
 

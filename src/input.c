@@ -12,8 +12,6 @@ struct input_wrapper input;
 
 extern int inp_init(void)
 {
-	int i;
-
 	/* Clear the input-pipes */
 	inp_pipe_clear(INP_PIPE_IN);
 	inp_pipe_clear(INP_PIPE_OUT);
@@ -61,7 +59,10 @@ extern void inp_change(enum input_type type, uint32_t ts, void *in)
 	ts = ceil(ts / TICK_TIME) * TICK_TIME;
 
 	switch(type) {
-		case(INP_T_MOV):
+		case INP_T_NONE:
+			break;
+
+		case INP_T_MOV:
 			vec2_cpy(input.mov, (float *)in);
 
 			/* Check if the value really has changed */
@@ -77,7 +78,7 @@ extern void inp_change(enum input_type type, uint32_t ts, void *in)
 			}
 			break;
 
-		case(INP_T_DIR):
+		case INP_T_DIR:
 			vec3_cpy(input.dir, (float *)in);
 
 			/* Check if the value really has changed */
@@ -99,11 +100,14 @@ extern void inp_change(enum input_type type, uint32_t ts, void *in)
 extern int inp_retrieve(enum input_type type, void *out)
 {
 	switch(type) {
-		case(INP_T_MOV):
+		case INP_T_NONE:
+			break;
+
+		case INP_T_MOV:
 			vec2_cpy(out, input.mov);
 			break;
 
-		case(INP_T_DIR):
+		case INP_T_DIR:
 			vec3_cpy(out, input.dir);
 			break;
 	}
@@ -135,7 +139,10 @@ extern int inp_push(enum input_pipe_mode m, uint32_t id, enum input_type type,
 	pipe->type[num] = type;
 	pipe->ts[num] = ts;
 
-	switch((uint8_t)type) {
+	switch(type) {
+		case INP_T_NONE:
+			break;
+
 		case INP_T_MOV:
 			vec2_cpy(pipe->mov[num], (float *)in);
 			break;
@@ -165,11 +172,11 @@ extern int inp_pull(struct input_entry *ent)
 	ent->ts = pipe->ts[i];
 	
 	switch(pipe->type[i]) {
-		case(INP_T_MOV):
+		case INP_T_MOV:
 			vec2_cpy(ent->mov, pipe->mov[i]);
 			break;
 
-		case(INP_T_DIR):
+		case INP_T_DIR:
 			vec3_cpy(ent->dir, pipe->dir[i]);
 			break;
 	}
@@ -259,12 +266,15 @@ insert:
 	input.log.ts[islot] = ts;
 	input.log.type[islot] = type;
 
-	switch((uint8_t)type) {
-		case(INP_T_MOV):
+	switch(type) {
+		case INP_T_NONE:
+			break;
+
+		case INP_T_MOV:
 			vec2_cpy(input.log.mov[islot], in);
 			break;
 
-		case(INP_T_DIR):
+		case INP_T_DIR:
 			vec3_cpy(input.log.dir[islot], in);
 			break;
 	}
@@ -350,11 +360,14 @@ extern int inp_get(struct input_entry *ent)
 	ent->ts =      log->ts[idx];
 	
 	switch(log->type[idx]) {
-		case(INP_T_MOV):
+		case INP_T_NONE:
+			break;
+
+		case INP_T_MOV:
 			vec2_cpy(ent->mov, log->mov[idx]);
 			break;
 
-		case(INP_T_DIR):
+		case INP_T_DIR:
 			vec3_cpy(ent->dir, log->dir[idx]);
 			break;
 	}

@@ -216,23 +216,23 @@ extern int obj_mod(short slot, short attr, void *data, int len)
 		return -1;
 
 	switch(attr) {
-		case(OBJ_A_MASK):
+		case OBJ_A_MASK:
 			objects.mask[slot] = *(uint32_t *)data;
 			break;
 
-		case(OBJ_A_POS):
+		case OBJ_A_POS:
 			vec3_cpy(objects.pos[slot], data);
 			break;
 
-		case(OBJ_A_VEL):
+		case OBJ_A_VEL:
 			vec3_cpy(objects.vel[slot], data);
 			break;
 
-		case(OBJ_A_DIR):
+		case OBJ_A_DIR:
 			vec3_cpy(objects.dir[slot], data);
 			break;
 
-		case(OBJ_A_BUF):
+		case OBJ_A_BUF:
 			objects.len[slot] = len;
 			memcpy(objects.data[slot], data, len);
 			break;
@@ -679,13 +679,10 @@ extern void obj_sys_update(uint32_t now)
 {
 	int i;
 	int o;
-	int tmp;
 
 	uint32_t lim_ts;
 	uint32_t run_ts;
 	uint32_t inp_ts;
-
-	uint32_t tick_ts = floor(now / TICK_TIME) * TICK_TIME;
 
 	char logi[OBJ_SLOTS];
 
@@ -786,6 +783,10 @@ extern void obj_sys_update(uint32_t now)
 				/*
 				 * Process movement-acceleration.
 				 */
+
+				vec3_print(objects.dir[o]);
+				printf("\n");
+
 				vec3_set(acld, objects.dir[o][0], objects.dir[o][1], 0.0);
 				vec3_nrm(acld, acld);
 				
@@ -860,7 +861,8 @@ extern void obj_sys_update(uint32_t now)
 
 				objects.ts[o] += TICK_TIME;
 
-				/* TODO:
+				/* 
+				 * TODO:
 				 * Insert checkpoints
 				 */
 				if((objects.ts[o] % 80) == 0) {
@@ -875,9 +877,6 @@ extern void obj_sys_update(uint32_t now)
 		}
 
 		if(inp_get(&inp)) {
-
-			static int c = 0;
-
 			short obj_slot = obj_sel_id(inp.obj_id);
 
 			switch(inp.type) {
@@ -953,7 +952,6 @@ extern void obj_sys_render(void)
 	int i;
 	vec3_t pos;
 	vec3_t dir;
-	float rot;
 
 	for(i = 0; i < OBJ_SLOTS; i++) {
 		if(objects.mask[i] & OBJ_M_MODEL) {

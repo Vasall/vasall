@@ -20,7 +20,7 @@ extern char obj_log_near(short slot, uint32_t ts);
 
 extern void obj_log_col(uint32_t ts, char *logi);
 
-extern void obj_log_cpy(short slot, char i, uint32_t *ts, vec3_t pos, vec3_t vel,
+extern void obj_log_cpy(short slot, short i, uint32_t *ts, vec3_t pos, vec3_t vel,
 		vec2_t mov, vec3_t dir);
 
 

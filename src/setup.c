@@ -88,8 +88,9 @@ extern void test1(char *buf, int len)
 	node = ui_get(window.root, "mns");
 	ui_set_flag(node, FLG_ACT, &zero);
 
+#if 0
 	SDL_SetRelativeMouseMode(SDL_TRUE);
-
+#endif
 
 	/* Start the game-loop */
 	game_start();

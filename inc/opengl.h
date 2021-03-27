@@ -67,6 +67,18 @@ extern void gl_destroy_texture(uint32_t hdl);
 
 
 /*
+ * Create a skybox texture.
+ * 
+ * @pths: Six paths to the skybox pngs
+ * @hdl: A pointer to the handle of the texture, which will be set by the
+ *       function
+ * 
+ * Returns: 0 on success or -1 if an error occured
+ */
+extern int gl_create_skybox(char *pths[6], uint32_t *hdl);
+
+
+/*
  * Create a vertex array object.
  * 
  * @vao: A pointer to the handle of the vao, which will be set by the

@@ -22,7 +22,7 @@ struct vk_buffer {
 	VkBuffer buffer;
 	VkDeviceMemory memory;
 	VkDeviceSize size;
-	void *data;
+	uint8_t *data;
 };
 
 struct vk_texture {
@@ -64,12 +64,13 @@ extern int vk_resize(void);
  * @vtx: The path to the SPIR-V vertex shader
  * @frg: The path to the SPIR-V fragment shader
  * @attr: Flags, which determine the input attributes to the vertex shader
+ * @skybox: 1 if the shader is for a skybox, 0 else
  * @pipeline: A pointer to the pipeline, which will be filled by the function
  * 
  * Returns: 0 on success or -1 if an error occured
  */
 extern int vk_create_pipeline(char *vtx, char *frg, enum vk_in_attr attr,
-                              struct vk_pipeline *pipeline);
+                              int skybox, struct vk_pipeline *pipeline);
 
 
 /*
@@ -153,6 +154,18 @@ extern int vk_create_texture(char *pth, struct vk_texture *texture);
  * @texture: The texture which will be destroyed
  */
 extern void vk_destroy_texture(struct vk_texture texture);
+
+
+/*
+ * Create a skybox texture.
+ *
+ * @pths: Six paths to the skybox pngs
+ * @skybox: A pointer to the skybox texture, which will be filled by the
+ *          function
+ * 
+ * Returns: 0 on success or -1 if an error occured
+ */
+extern int vk_create_skybox(char *pths[6], struct vk_texture *skybox);
 
 
 /*

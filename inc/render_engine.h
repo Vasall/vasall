@@ -101,6 +101,21 @@ extern void ren_destroy_texture(uint32_t hdl, struct vk_texture texture);
 
 
 /*
+ * Create a skybox texture.
+ *
+ * @pths: Six paths to the skybox pngs (right, left, top, bottom, front, back)
+ * @hdl: A pointer to the handle of the opengl texture, which will be set by
+ *       the function
+ * @skybox: A pointer to the vulkan texture, which will be filled by the
+ *          function
+ * 
+ * Returns: 0 on success or -1 if an error occured
+ */
+extern int ren_create_skybox(char *pths[6], uint32_t *hdl,
+			     struct vk_texture *skybox);
+
+
+/*
  * Create an opengl vertex array object or a vulkan decsriptor set and a vulkan
  * uniform buffer.
  * 

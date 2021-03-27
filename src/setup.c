@@ -7,6 +7,8 @@ int load_resources(void)
 {
 	char *vars1[3] = {"vtxPos\0", "vtxTex\0", "vtxNrm\0"};
 	char *vars2[5] = {"vtxPos\0", "vtxTex\0", "vtxNrm\0", "vtxJnt\0", "vtxWgt\0"};
+	char *vars3[1] = {"vtxPos\0"};
+	char *pths[6] = {"res/textures/px.png", "res/textures/nx.png", "res/textures/py.png", "res/textures/ny.png", "res/textures/pz.png", "res/textures/nz.png"};
 
 	printf("Start loading resources\n");
 
@@ -30,6 +32,9 @@ int load_resources(void)
 	if(shd_set("ani", "res/shaders/animated.vert", "res/shaders/animated.frag", 5, vars2) < 0)
 		return -1;
 
+	if(shd_set("skybox", "res/shaders/skybox.vert", "res/shaders/skybox.frag", 1, vars3) < 0)
+		return -1;
+
 	/* textures */
 	if(tex_set("ba0", "res/textures/red.png") < 0)
 		return -1;
@@ -41,6 +46,9 @@ int load_resources(void)
 		return -1;
 
 	if(tex_set("flr", "res/textures/floor.png") < 0)
+		return -1;
+
+	if(skybox_set("skybox", pths) < 0)
 		return -1;
 
 	/* models */
@@ -58,6 +66,9 @@ int load_resources(void)
 
 	if(mdl_load("sph", "res/models/sphere.obj", tex_get("ba0"), shd_get("mdl")) < 0)
 			return -1;
+
+	if(mdl_load("cube", "res/models/cube.obj", tex_get("skybox"), shd_get("skybox")) < 0)
+		abort();
 
 	printf("Finished loading resources\n");
 
@@ -81,6 +92,9 @@ extern void test1(char *buf, int len)
 	obj_set(id, OBJ_M_STATIC, pos, mdl_get("wld"), NULL, 0, 0);
 	obj_set(id + 100, OBJ_M_STATIC, pos, mdl_get("tst"), NULL, 0, 0);
 	/* obj_set(id + 101, OBJ_M_STATIC|OBJ_M_RIG, pos1, mdl_get("plr"), NULL, 0, 0); */
+
+	/* Set the skybox */
+	wld_set_skybox(mdl_get("cube"));
 
 	/* Setup camera */
 	cam_trg_obj(core.obj);

@@ -56,6 +56,9 @@ extern int ren_create_shader(char *vs, char *fs, uint32_t *prog,
 	enum vk_in_attr in_attr = 0;
 	char *vk_vs, *vk_fs;
 	size_t vs_len, fs_len;
+	int skybox;
+
+	skybox = num == 1 ? 1 : 0;
 
 	for(i = 0; i < num; i++) {
 		if(strcmp(vars[i], "vtxPos") == 0 || strcmp(vars[i], "pos")
@@ -95,7 +98,7 @@ extern int ren_create_shader(char *vs, char *fs, uint32_t *prog,
 	vk_fs[fs_len+4] = '\0';
 
 	if(renderer.mode == REN_MODE_VULKAN) {
-		res = vk_create_pipeline(vk_vs, vk_fs, in_attr, pipeline);
+		res = vk_create_pipeline(vk_vs, vk_fs, in_attr, skybox, pipeline);
 	}
 	else if(renderer.mode == REN_MODE_OPENGL) {
 		res = gl_create_program(vs, fs, prog, num, vars);
@@ -143,6 +146,22 @@ extern void ren_destroy_texture(uint32_t hdl, struct vk_texture texture)
 	else if(renderer.mode == REN_MODE_OPENGL) {
 		gl_destroy_texture(hdl);
 	}
+}
+
+
+extern int ren_create_skybox(char *pths[6], uint32_t *hdl,
+			     struct vk_texture *skybox)
+{
+	int res;
+
+	if(renderer.mode == REN_MODE_VULKAN) {
+		res = vk_create_skybox(pths, skybox);
+	}
+	else if(renderer.mode == REN_MODE_OPENGL) {
+		res = gl_create_skybox(pths, hdl);
+	}
+
+	return res;
 }
 
 

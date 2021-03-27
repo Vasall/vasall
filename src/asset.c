@@ -189,6 +189,25 @@ extern short tex_set(char *name, char *pth)
 }
 
 
+extern short skybox_set(char *name, char *pths[6])
+{
+	short slot;
+
+	if((slot = tex_get_slot()) < 0) {
+		ERR_LOG(("Texture-table already full"));
+		return -1;
+	}
+
+	if(ren_create_skybox(pths, &assets.tex.hdl[slot], &assets.tex.tex[slot])
+				< 0)
+		return -1;
+
+	assets.tex.mask[slot] = 1;
+	strcpy(assets.tex.name[slot], name);
+	return slot;
+}
+
+
 extern void tex_del(short slot)
 {
 	if(tex_check_slot(slot))

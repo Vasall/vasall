@@ -156,6 +156,17 @@ extern short tex_set(char *name, char *pth);
 
 
 /*
+ * Manually set a new skybox texture and add it to the texture-table.
+ *
+ * @name: The name of the skybox texture
+ * @pths: The paths of the skybox pngs (right, left, top, bottom, front, back)
+ *
+ * Returns: Either the slot the texture is on or -1 if an error occurred
+ */
+extern short skybox_set(char *name, char *pths[6]);
+
+
+/*
  * Delete a texture, remove it from the texture-table and free the allocated
  * memory.
  *

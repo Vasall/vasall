@@ -534,7 +534,11 @@ static int create_image(VkFormat format, uint32_t width, uint32_t height,
 
 	create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	create_info.pNext = NULL;
-	create_info.flags = 0;
+	if(arrayLayers > 1) {
+		create_info.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+	} else {
+		create_info.flags = 0;
+	}
 	create_info.imageType = VK_IMAGE_TYPE_2D;
 	create_info.format = format;
 	create_info.extent.width = width;
@@ -722,7 +726,7 @@ static int create_depth_buffer(void)
 {
 
 	if(create_image(vk.depth_format, vk.win_size.width, vk.win_size.height,
-			1, 2, VK_SAMPLE_COUNT_1_BIT,
+			1, 1, VK_SAMPLE_COUNT_1_BIT,
 			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 			&vk.depth_image, &vk.depth_memory) < 0) {
 		return -1;
@@ -1159,7 +1163,7 @@ static int save_cache(char *name, VkPipelineCache cache)
 }
 
 extern int vk_create_pipeline(char *vtx, char *frg, enum vk_in_attr attr,
-                              struct vk_pipeline *pipeline)
+                              int skybox, struct vk_pipeline *pipeline)
 {
 	int counter;
 	uint32_t bin_size;
@@ -1310,7 +1314,10 @@ extern int vk_create_pipeline(char *vtx, char *frg, enum vk_in_attr attr,
 	ras.depthClampEnable = VK_FALSE;
 	ras.rasterizerDiscardEnable = VK_FALSE;
 	ras.polygonMode = VK_POLYGON_MODE_FILL;
-	ras.cullMode = VK_CULL_MODE_BACK_BIT;
+	if(skybox)
+		ras.cullMode = VK_CULL_MODE_FRONT_BIT;
+	else
+		ras.cullMode = VK_CULL_MODE_BACK_BIT;
 	ras.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	ras.depthBiasEnable = VK_FALSE;
 	ras.depthBiasConstantFactor = 0.0f;
@@ -1334,8 +1341,13 @@ extern int vk_create_pipeline(char *vtx, char *frg, enum vk_in_attr attr,
 		VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 	depth.pNext = NULL;
 	depth.flags = 0;
-	depth.depthTestEnable = VK_TRUE;
-	depth.depthWriteEnable = VK_TRUE;
+	if(skybox) {
+		depth.depthTestEnable = VK_FALSE;
+		depth.depthWriteEnable = VK_FALSE;
+	} else {
+		depth.depthTestEnable = VK_TRUE;
+		depth.depthWriteEnable = VK_TRUE;
+	}
 	depth.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
 	depth.depthBoundsTestEnable = VK_FALSE;
 	depth.stencilTestEnable = VK_FALSE;
@@ -1537,7 +1549,7 @@ extern int vk_create_buffer(VkDeviceSize size, VkBufferUsageFlags usage,
 
 	if(staging) {
 		res = vkMapMemory(vk.device, buffer->memory, 0, size, 0,
-		                  &buffer->data);
+		                  (void **)&buffer->data);
 		vk_assert(res);
 	}
 
@@ -1783,6 +1795,164 @@ extern void vk_destroy_texture(struct vk_texture texture)
 	vkDestroyImageView(vk.device, texture.image_view, NULL);
 	vkFreeMemory(vk.device, texture.memory, NULL);
 	vkDestroyImage(vk.device, texture.image, NULL);
+}
+
+
+extern int vk_create_skybox(char *pths[6], struct vk_texture *skybox)
+{
+	uint32_t i;
+	uint8_t *buf[6];
+	int w;
+	int h;
+	VkResult res;
+	struct vk_buffer staging;
+	VkCommandBufferBeginInfo begin_info;
+	VkImageMemoryBarrier barrier;
+	VkBufferImageCopy copies[6];
+	VkSubmitInfo submit;
+	VkPhysicalDeviceProperties props;
+	VkSamplerCreateInfo sampler_info;
+
+	for(i = 0; i < 6; i++) {
+		if(fs_load_png(pths[i], &buf[i], &w, &h) < 0) {
+			ERR_LOG(("Failed to load texture: %s", pths[i]));
+			return -1;
+		}
+	}
+
+	if(vk_create_buffer(w*h*4*6, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 1,
+				&staging) < 0) {
+		ERR_LOG(("Failed to create staging buffer"));
+		return -1;
+	}
+
+	for(i = 0; i < 6; i++) {
+		memcpy(staging.data+(w*h*4*i), buf[i], w*h*4);
+		free(buf[i]);
+	}
+	vkUnmapMemory(vk.device, staging.memory);
+	
+	if(create_image(VK_FORMAT_R8G8B8A8_SRGB, w, h, 1, 6,
+			VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+			VK_IMAGE_USAGE_SAMPLED_BIT, &skybox->image,
+			&skybox->memory) < 0) {
+		return -1;
+	}
+
+	begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	begin_info.pNext = NULL;
+	begin_info.flags = 0;
+	begin_info.pInheritanceInfo = NULL;
+
+	res = vkBeginCommandBuffer(vk.command_buffer, &begin_info);
+	vk_assert(res);
+
+	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	barrier.pNext = NULL;
+	barrier.srcAccessMask = 0;
+	barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.image = skybox->image;
+	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	barrier.subresourceRange.baseMipLevel = 0;
+	barrier.subresourceRange.levelCount = 1;
+	barrier.subresourceRange.baseArrayLayer = 0;
+	barrier.subresourceRange.layerCount = 6;
+
+	vkCmdPipelineBarrier(vk.command_buffer, VK_PIPELINE_STAGE_HOST_BIT,
+				VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 0,
+				NULL, 1, &barrier);
+
+	for(i = 0; i < 6; i++) {
+		copies[i].bufferOffset = w*h*4*i;
+		copies[i].bufferRowLength = 0;
+		copies[i].bufferImageHeight = 0;
+		copies[i].imageSubresource.aspectMask = 
+						VK_IMAGE_ASPECT_COLOR_BIT;
+		copies[i].imageSubresource.mipLevel = 0;
+		copies[i].imageSubresource.baseArrayLayer = i;
+		copies[i].imageSubresource.layerCount = 1;
+		copies[i].imageOffset.x = 0;
+		copies[i].imageOffset.y = 0;
+		copies[i].imageOffset.z = 0;
+		copies[i].imageExtent.width = w;
+		copies[i].imageExtent.height = h;
+		copies[i].imageExtent.depth = 1;
+	}
+
+	vkCmdCopyBufferToImage(vk.command_buffer, staging.buffer, skybox->image,
+				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 6,
+				copies);
+
+	barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	vkCmdPipelineBarrier(vk.command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
+				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0,
+				NULL, 0, NULL, 1, &barrier);
+
+	res = vkEndCommandBuffer(vk.command_buffer);
+	vk_assert(res);
+
+	submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submit.pNext = NULL;
+	submit.waitSemaphoreCount = 0;
+	submit.pWaitSemaphores = NULL;
+	submit.pWaitDstStageMask = NULL;
+	submit.commandBufferCount = 1;
+	submit.pCommandBuffers = &vk.command_buffer;
+	submit.signalSemaphoreCount = 0;
+	submit.pSignalSemaphores = NULL;
+
+	res = vkQueueSubmit(vk.queue, 1, &submit, VK_NULL_HANDLE);
+	vk_assert(res);
+
+	res = vkQueueWaitIdle(vk.queue);
+	vk_assert(res);
+
+	res = vkResetCommandPool(vk.device, vk.command_pool, 0);
+	vk_assert(res);
+
+	vk_destroy_buffer(staging);
+
+	if(create_image_view(skybox->image, VK_IMAGE_VIEW_TYPE_CUBE,
+			VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, 1,
+			6, &skybox->image_view) < 0) {
+		return -1;
+	}
+
+	vkGetPhysicalDeviceProperties(vk.gpu, &props);
+	
+	/* Create the sampler */
+	sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	sampler_info.pNext = NULL;
+	sampler_info.flags = 0;
+	sampler_info.magFilter = VK_FILTER_LINEAR;
+	sampler_info.minFilter = VK_FILTER_LINEAR;
+	sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	sampler_info.mipLodBias = 0.0f;
+	sampler_info.anisotropyEnable = VK_FALSE;
+	sampler_info.maxAnisotropy = 1.0f;
+	sampler_info.compareEnable = VK_FALSE;
+	sampler_info.compareOp = VK_COMPARE_OP_NEVER;
+	sampler_info.minLod = 0.0f;
+	sampler_info.maxLod = 1.0f;
+	sampler_info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+	sampler_info.unnormalizedCoordinates = VK_FALSE;
+
+	res = vkCreateSampler(vk.device, &sampler_info, NULL,
+	                      &skybox->sampler);
+	vk_assert(res);
+
+	return 0;
 }
 
 

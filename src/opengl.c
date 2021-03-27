@@ -199,6 +199,41 @@ extern void gl_destroy_texture(uint32_t hdl)
 	glDeleteTextures(1, &hdl);
 }
 
+
+extern int gl_create_skybox(char *pths[6], uint32_t *hdl)
+{
+	int w, h;
+	uint32_t i;
+	uint8_t *px;
+
+	glGenTextures(1, hdl);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, *hdl);
+
+	for(i = 0; i < 6; i++) {
+		if(fs_load_png(pths[i], &px, &w, &h) < 0) {
+			ERR_LOG(("Failed to load texture: %s", pths[i]));
+			return -1;
+		}
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, w,
+				h, 0, GL_RGBA, GL_UNSIGNED_BYTE, px);
+
+		free(px);
+	}
+
+
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S,
+			GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T,
+			GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R,
+			GL_CLAMP_TO_EDGE);
+
+	return 0;
+}
+
+
 extern void gl_create_vao(uint32_t *vao)
 {
 	glGenVertexArrays(1, vao);

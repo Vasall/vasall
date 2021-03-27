@@ -223,9 +223,9 @@ void game_render(void)
 	/* Update the camera-position */
 	cam_update();
 
-	/* Render the world */
-	wld_render(interp);
-
 	/* Render the objects */
 	obj_sys_render();
+
+	/* Render the world */
+	wld_render(interp);
 }

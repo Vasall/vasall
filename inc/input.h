@@ -57,7 +57,7 @@ struct input_pipe {
  * from lowest timestamp to highest timestamp.
  */
 
-#define INP_LOG_SLOTS 32
+#define INP_LOG_LIM 64
 
 struct input_log {
 	short start;
@@ -67,12 +67,12 @@ struct input_log {
 	uint32_t latest_ts;
 	short itr;
 
-	uint32_t   obj_id[INP_LOG_SLOTS];
-	uint8_t    type[INP_LOG_SLOTS];
-	uint32_t   ts[INP_LOG_SLOTS];
+	uint32_t   obj_id[INP_LOG_LIM];
+	uint8_t    type[INP_LOG_LIM];
+	uint32_t   ts[INP_LOG_LIM];
 
-	vec2_t     mov[INP_LOG_SLOTS];
-	vec3_t     dir[INP_LOG_SLOTS];
+	vec2_t     mov[INP_LOG_LIM];
+	vec3_t     dir[INP_LOG_LIM];
 };
 
 

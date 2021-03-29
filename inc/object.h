@@ -13,7 +13,7 @@
 #include "controller.h"
 #include "core.h"
 
-#define OBJ_SLOTS      128
+#define OBJ_LIM      128
 #define OBJ_DATA_MAX   128
 
 /*
@@ -64,19 +64,20 @@
  * from lowest timestamp to highest timestamp.
  */
 
-#define OBJ_LOG_SLOTS 12
+#define OBJ_LOG_LIM 12
+#define OBJ_LOG_TIME 80
 
 struct object_log {
 	short start;
 	short num;
 
-	uint32_t  ts[OBJ_LOG_SLOTS];
+	uint32_t  ts[OBJ_LOG_LIM];
 
-	vec3_t    pos[OBJ_LOG_SLOTS];
-	vec3_t    vel[OBJ_LOG_SLOTS];
+	vec3_t    pos[OBJ_LOG_LIM];
+	vec3_t    vel[OBJ_LOG_LIM];
 
-	vec2_t    mov[OBJ_LOG_SLOTS];
-	vec3_t    dir[OBJ_LOG_SLOTS];
+	vec2_t    mov[OBJ_LOG_LIM];
+	vec3_t    dir[OBJ_LOG_LIM];
 };
 
 struct comp_marker {
@@ -96,50 +97,50 @@ struct object_collision {
 
 struct object_table {
 	short                    num;
-	short                    order[OBJ_SLOTS];
+	short                    order[OBJ_LIM];
 	uint32_t                 last_ts;
 	uint32_t                 rets;
 
 
 	/* The object-mask and identification-number */
-	uint32_t                 mask[OBJ_SLOTS];
-	uint32_t                 id[OBJ_SLOTS];
+	uint32_t                 mask[OBJ_LIM];
+	uint32_t                 id[OBJ_LIM];
 
 	/* The runtime-buffers */
-	uint32_t                 ts[OBJ_SLOTS];
-	vec3_t                   pos[OBJ_SLOTS];
-	vec3_t                   vel[OBJ_SLOTS];
-	vec2_t                   mov[OBJ_SLOTS];
-	vec3_t                   dir[OBJ_SLOTS];
+	uint32_t                 ts[OBJ_LIM];
+	vec3_t                   pos[OBJ_LIM];
+	vec3_t                   vel[OBJ_LIM];
+	vec2_t                   mov[OBJ_LIM];
+	vec3_t                   dir[OBJ_LIM];
 
 	/* The save-buffers for the previous state */
-	uint32_t                 prev_ts[OBJ_SLOTS];
-	vec3_t                   prev_pos[OBJ_SLOTS];
-	vec3_t                   prev_dir[OBJ_SLOTS];
+	uint32_t                 prev_ts[OBJ_LIM];
+	vec3_t                   prev_pos[OBJ_LIM];
+	vec3_t                   prev_dir[OBJ_LIM];
 
 	/* Buffer containing the runtime-log */
-	struct object_log        log[OBJ_SLOTS];
+	struct object_log        log[OBJ_LIM];
 
 	/* Variables used for rendering and animation */
-	vec3_t                   ren_pos[OBJ_SLOTS];
-	vec3_t                   ren_dir[OBJ_SLOTS];
+	vec3_t                   ren_pos[OBJ_LIM];
+	vec3_t                   ren_dir[OBJ_LIM];
 
 
 	/* The model and the rig */
-	short                    mdl[OBJ_SLOTS];
-	struct model_rig         *rig[OBJ_SLOTS];
+	short                    mdl[OBJ_LIM];
+	struct model_rig         *rig[OBJ_LIM];
 
 	/* The render-matrices */
-	mat4_t                   mat_pos[OBJ_SLOTS];
-	mat4_t                   mat_rot[OBJ_SLOTS];
-	float                    vagl[OBJ_SLOTS][2]; /* 0: z-axis, 1: x-axis */
+	mat4_t                   mat_pos[OBJ_LIM];
+	mat4_t                   mat_rot[OBJ_LIM];
+	float                    vagl[OBJ_LIM][2]; /* 0: z-axis, 1: x-axis */
 
 	/* Collision */
-	struct object_collision  col[OBJ_SLOTS]; 
+	struct object_collision  col[OBJ_LIM]; 
 
 	/* Object/Player-Data like Health and Mana */
-	int                      len[OBJ_SLOTS];
-	char                     data[OBJ_SLOTS][OBJ_DATA_MAX];
+	int                      len[OBJ_LIM];
+	char                     data[OBJ_LIM][OBJ_DATA_MAX];
 };
 
 

@@ -17,7 +17,7 @@ extern int obj_init(void)
 {
 	int i;
 
-	for(i = 0; i < OBJ_SLOTS; i++) {
+	for(i = 0; i < OBJ_LIM; i++) {
 		objects.order[i] = i;
 
 		objects.mask[i] = OBJ_M_NONE;
@@ -40,7 +40,7 @@ static short obj_get_slot(void)
 {
 	short i;
 
-	for(i = 0; i < OBJ_SLOTS; i++) {
+	for(i = 0; i < OBJ_LIM; i++) {
 		if(objects.mask[i] == OBJ_M_NONE)
 			return i;
 	}
@@ -51,7 +51,7 @@ static short obj_get_slot(void)
 
 static int obj_check_slot(short slot)
 {
-	if(slot < 0 || slot > OBJ_SLOTS)
+	if(slot < 0 || slot > OBJ_LIM)
 		return 1;
 
 	return 0;
@@ -65,19 +65,21 @@ static void obj_sort(void)
 	short a;
 	short b;
 
-	for(i = 0; i < OBJ_SLOTS; i++)
+	for(i = 0; i < OBJ_LIM; i++) {
 		objects.order[i] = i;
+	}
 
 	/*
 	 * TODO:
 	 * I did it again. uwu
+	 * Bubblesort owo, how could this happen...
 	 */
 
 	/* Sort object-order to ascending IDs. */
 	while(1) {
 		found = 0;
 
-		for(i = 0; i < OBJ_SLOTS - 1; i++) {
+		for(i = 0; i < OBJ_LIM - 1; i++) {
 			a = objects.order[i];
 			b = objects.order[i + 1];
 
@@ -173,6 +175,9 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 	/* Increment number of objects in the object-table */
 	objects.num++;
 
+	/* Sort the order of objects in the object-list */
+	obj_sort();
+
 	/* Sort the objects */
 	return slot;
 
@@ -249,7 +254,7 @@ extern short obj_sel_id(uint32_t id)
 {
 	short i;
 
-	for(i = 0; i < OBJ_SLOTS; i++) {
+	for(i = 0; i < OBJ_LIM; i++) {
 		if(objects.mask[i] == OBJ_M_NONE)
 			continue;
 
@@ -293,7 +298,7 @@ extern int obj_list(void *ptr, short *num, short max)
 
 	char *buf_ptr = (char *)ptr + 2;
 
-	for(i = 0; i < OBJ_SLOTS && obj_num < max; i++) {
+	for(i = 0; i < OBJ_LIM && obj_num < max; i++) {
 		if(objects.mask[i] == OBJ_M_NONE)
 			continue;
 
@@ -463,7 +468,7 @@ static void checkCollision(struct col_pck *pck)
 	struct model *mdl;
 
 	/* Go through all objects */
-	for(i = 0; i < OBJ_SLOTS; i++) {
+	for(i = 0; i < OBJ_LIM; i++) {
 		if(objects.mask[i] == OBJ_M_NONE)
 			continue;
 
@@ -684,23 +689,24 @@ extern void obj_sys_update(uint32_t now)
 	uint32_t run_ts;
 	uint32_t inp_ts;
 
-	char logi[OBJ_SLOTS];
+	char logi[OBJ_LIM];
 
 	float f;
 	vec3_t acl;
-	vec3_t acld;
 	vec3_t del;
+
+	vec3_t frw;
+	vec3_t rgt;
+	vec3_t up = {0, 0, 1};
 
 	float t_speed = 4.0;
 	vec3_t grav = {0, 0, -9.81};
 
 	struct input_entry inp;
 
-	int flg = 0;
-
 
 	/* Save current timestamp, position and direction */
-	for(i = 0; i < OBJ_SLOTS; i++) {
+	for(i = 0; i < OBJ_LIM; i++) {
 		if(objects.mask[i] == OBJ_M_NONE)
 			continue;
 
@@ -712,8 +718,6 @@ extern void obj_sys_update(uint32_t now)
 
 	/* Check if new inputs occurred */
 	if(inp_check_new()) {
-		printf("\n\n");
-
 		/* Set iterator to latest input */
 		inp_begin();
 
@@ -722,7 +726,7 @@ extern void obj_sys_update(uint32_t now)
 
 		obj_log_col(inp_ts, logi);
 
-		for(i = 0; i < OBJ_SLOTS; i++) {
+		for(i = 0; i < OBJ_LIM; i++) {
 			if((objects.mask[i] & OBJ_M_MOVE) == 0)
 				continue;
 
@@ -741,24 +745,9 @@ extern void obj_sys_update(uint32_t now)
 
 		/* Set the run-limit */	
 		lim_ts = inp_ts;
-
-		printf("%x >> %x\n", run_ts, lim_ts);
-
-		printf("Objects 0: ts (");
-		printf("%x", objects.ts[0]);
-		printf(")  ");
-
-		printf("pos(");
-		vec3_print(objects.pos[0]);
-		printf(")  ");
-
-		printf("vel(");
-		vec3_print(objects.vel[0]);
-		printf(")  ");
-		printf("\n");
 	}
 	else {
-		for(i = 0; i < OBJ_SLOTS; i++) {
+		for(i = 0; i < OBJ_LIM; i++) {
 			if((objects.mask[i] & OBJ_M_MOVE) == 0)
 				continue;
 
@@ -803,11 +792,19 @@ extern void obj_sys_update(uint32_t now)
 				 * Process movement-acceleration.
 				 */
 
-				vec3_set(acld, objects.dir[o][0], objects.dir[o][1], 0.0);
-				vec3_nrm(acld, acld);
+				vec3_set(frw, objects.dir[o][0], objects.dir[o][1], 0);
+				vec3_nrm(frw, frw);
 
-				vec3_set(acl, objects.mov[o][0], objects.mov[o][1], 0.0);
-				vec3_mult(acld, acl, acl);
+				vec3_cross(frw, up, rgt);
+				vec3_nrm(rgt, rgt);
+			
+				vec3_scl(frw, objects.mov[o][1], frw);
+				vec3_scl(rgt, objects.mov[o][0], rgt);
+
+				vec3_add(frw, rgt, acl);
+				vec3_nrm(acl, acl);
+
+				vec3_scl(acl, 6, acl);
 
 				f = TICK_TIME_S * t_speed;
 				vec3_scl(acl, f, acl);
@@ -877,11 +874,8 @@ extern void obj_sys_update(uint32_t now)
 
 				objects.ts[o] += TICK_TIME;
 
-				/* 
-				 * TODO:
-				 * Insert checkpoints
-				 */
-				if((objects.ts[o] % 80) == 0) {
+				/*   */
+				if((objects.ts[o] % OBJ_LOG_TIME) == 0) {
 					obj_log_set(o,
 							objects.ts[o],
 							objects.pos[o],
@@ -902,66 +896,37 @@ extern void obj_sys_update(uint32_t now)
 		if(inp_get(&inp)) {
 			short obj_slot = obj_sel_id(inp.obj_id);
 
-			switch(inp.type) {
-				case INP_T_MOV:
-					vec2_cpy(objects.mov[obj_slot],
-							inp.mov);
-					break;
+			if(inp.ts >= objects.ts[obj_slot]) {
+				switch(inp.type) {
+					case INP_T_NONE:
+						break;
 
-				case INP_T_DIR:
-					vec3_cpy(objects.dir[obj_slot],
-							inp.dir);
-					break;
-			}
+					case INP_T_MOV:
+						vec2_cpy(objects.mov[obj_slot],
+								inp.mov);
+						break;
 
-			/* Jump to next input */
-			if(inp_next()) {
-				printf("cur ts!!\n");
-				if((lim_ts = inp_cur_ts()) == 0)
+					case INP_T_DIR:
+						vec3_cpy(objects.dir[obj_slot],
+								inp.dir);
+						break;
+				}
+
+				/* Jump to next input */
+				if(inp_next()) {
+					if((lim_ts = inp_cur_ts()) == 0)
+						lim_ts = now;
+				}
+				else {
 					lim_ts = now;
+				}
 			}
-			else {
-				printf("now!!\n");
-				lim_ts = now;
-			}
-
-
-			printf("%x >> %x\n", run_ts, lim_ts);
-
-			printf("Objects 0: ts (");
-			printf("%x", objects.ts[0]);
-			printf(")  ");
-
-			printf("pos(");
-			vec3_print(objects.pos[0]);
-			printf(")  ");
-
-			printf("vel(");
-			vec3_print(objects.vel[0]);
-			printf(")  ");
-			printf("\n");
-
 		}
 		else {
 			if(run_ts >= now)
 				break;
 
 			lim_ts = now;
-
-			printf("%x >> %x\n", run_ts, lim_ts);
-
-			printf("Objects 0: ts (");
-			printf("%x", objects.ts[0]);
-			printf(")  ");
-
-			printf("pos(");
-			vec3_print(objects.pos[0]);
-			printf(")  ");
-
-			printf("vel(");
-			vec3_print(objects.vel[0]);
-			printf(")  ");
-			printf("\n");
 		}
 	}
 }
@@ -972,7 +937,7 @@ extern void obj_sys_prerender(float interp)
 	int i;
 	vec3_t del;
 
-	for(i = 0; i < OBJ_SLOTS; i++) {
+	for(i = 0; i < OBJ_LIM; i++) {
 		if(objects.mask[i] & OBJ_M_RIG) {
 			float agl;
 			vec3_t up = {0, 0, 1};
@@ -1010,7 +975,7 @@ extern void obj_sys_render(void)
 	vec3_t pos;
 	vec3_t dir;
 
-	for(i = 0; i < OBJ_SLOTS; i++) {
+	for(i = 0; i < OBJ_LIM; i++) {
 		if(objects.mask[i] & OBJ_M_MODEL) {
 			vec3_cpy(pos, objects.ren_pos[i]);
 			vec3_cpy(dir, objects.ren_dir[i]);

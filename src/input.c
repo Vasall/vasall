@@ -209,33 +209,33 @@ extern short inp_log_push(uint32_t id, enum input_type type, uint32_t ts,
 	}
 
 	/* Attach entry to the end if possible */
-	tmp = (input.log.start + input.log.num - 1) % INP_LOG_SLOTS;
+	tmp = (input.log.start + input.log.num - 1) % INP_LOG_LIM;
 	if(ts > input.log.ts[tmp]) {
-		if(input.log.num + 1 > INP_LOG_SLOTS)
-			input.log.start = (input.log.start + 1) % INP_LOG_SLOTS;
+		if(input.log.num + 1 > INP_LOG_LIM)
+			input.log.start = (input.log.start + 1) % INP_LOG_LIM;
 		else
 			input.log.num += 1;
 
-		islot = (tmp + 1) % INP_LOG_SLOTS;
+		islot = (tmp + 1) % INP_LOG_LIM;
 		goto insert;
 	}
 
 	/* Insert entry into the middle of the list */
 	for(i = input.log.num - 1; i >= 0; i--) {
-		tmp = (input.log.start + i) % INP_LOG_SLOTS;
+		tmp = (input.log.start + i) % INP_LOG_LIM;
 
 		if(input.log.ts[tmp] < ts) {
 			ins = 0;
 
-			if(input.log.num + 1 >= INP_LOG_SLOTS)
+			if(input.log.num + 1 >= INP_LOG_LIM)
 				ins = 1;
 
 			/* Move all entries down one step */
 			for(k = ins; k <= i; k++) {
-				from = (input.log.start + k) % INP_LOG_SLOTS;
+				from = (input.log.start + k) % INP_LOG_LIM;
 
 				to = from - 1;
-				if(to < 0) to = INP_LOG_SLOTS + to;
+				if(to < 0) to = INP_LOG_LIM + to;
 
 				input.log.ts[to] = input.log.ts[from];
 				input.log.type[to] = input.log.type[from];
@@ -244,12 +244,12 @@ extern short inp_log_push(uint32_t id, enum input_type type, uint32_t ts,
 				vec3_cpy(input.log.dir[to], input.log.dir[from]);
 			}
 
-			if(input.log.num + 1 < INP_LOG_SLOTS) {
+			if(input.log.num + 1 < INP_LOG_LIM) {
 				input.log.num += 1;
 
 				input.log.start -= 1;
 				if(input.log.start < 0)
-					input.log.start = INP_LOG_SLOTS +
+					input.log.start = INP_LOG_LIM +
 						input.log.start;
 			}
 
@@ -311,7 +311,7 @@ extern void inp_log_print(void)
 	printf("Num: %d, Start: %d\n", input.log.num, input.log.start);
 
 	for(i = 0; i < input.log.num; i++) {
-		short slot = (input.log.start + i) % INP_LOG_SLOTS;
+		short slot = (input.log.start + i) % INP_LOG_LIM;
 
 		printf("%2d(%2d): ", i, slot);
 
@@ -338,7 +338,7 @@ extern void inp_begin(void)
 		input.log.itr = input.log.latest_slot - input.log.start;	
 	}
 	else {
-		input.log.itr = INP_LOG_SLOTS - (input.log.start -
+		input.log.itr = INP_LOG_LIM - (input.log.start -
 				input.log.latest_slot);
 	}
 
@@ -366,7 +366,7 @@ extern uint32_t inp_cur_ts(void)
 	struct input_log *log = &input.log;
 
 	if(log->num > 0) {
-		short tmp = (log->start + log->itr) % INP_LOG_SLOTS;
+		short tmp = (log->start + log->itr) % INP_LOG_LIM;
 		return log->ts[tmp];
 	}
 
@@ -392,7 +392,7 @@ extern int inp_get(struct input_entry *ent)
 	if(log->num < 1 || log->itr >= log->num)
 		return 0;
 
-	idx = (log->start + log->itr) % INP_LOG_SLOTS;
+	idx = (log->start + log->itr) % INP_LOG_LIM;
 
 	ent->obj_id =  log->obj_id[idx];
 	ent->type =    log->type[idx];

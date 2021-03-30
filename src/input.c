@@ -290,7 +290,6 @@ insert:
 		}
 	}
 
-	inp_log_print();
 
 	return islot;
 }

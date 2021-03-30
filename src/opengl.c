@@ -358,10 +358,10 @@ extern void gl_print_info(void)
 	gpu = glGetString(GL_RENDERER);
 	glsl_ver = glGetString(GL_SHADING_LANGUAGE_VERSION);
 
-	printf("---OpenGL Info---\n");
+	printf("------------------ OpenGL Info -------------------\n");
 	printf("GL Version: %s\n", ver);
 	printf("Vendor: %s\n", vendor);
 	printf("GPU: %s\n", gpu);
 	printf("GLSL Version: %s\n", glsl_ver);
-	printf("---End---\n");
+	printf("--------------------------------------------------\n");
 }

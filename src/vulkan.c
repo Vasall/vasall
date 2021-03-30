@@ -2240,7 +2240,8 @@ extern int vk_print_info(void)
 	res = vkEnumerateDeviceExtensionProperties(vk.gpu, NULL, &dev_ext_count,
 	                                           dev_ext);
 
-	printf("---Vulkan Info---\n");
+
+	printf("------------------ Vulkan Info -------------------\n");
 
 	printf("Instance Version: %d.%d.%d\n\n", VK_VERSION_MAJOR(inst_ver),
 	       VK_VERSION_MINOR(inst_ver), VK_VERSION_PATCH(inst_ver));
@@ -2297,7 +2298,8 @@ extern int vk_print_info(void)
 			       dev_ext[i].specVersion);
 		}
 	}
-	printf("---End---\n");
+
+	printf("--------------------------------------------------\n");
 
 	free(dev_ext);
 	free(inst_ext);

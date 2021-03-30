@@ -705,17 +705,6 @@ extern void obj_sys_update(uint32_t now)
 	struct input_entry inp;
 
 
-	/* Save current timestamp, position and direction */
-	for(i = 0; i < OBJ_LIM; i++) {
-		if(objects.mask[i] == OBJ_M_NONE)
-			continue;
-
-		objects.prev_ts[i] = objects.ts[i];
-		vec3_cpy(objects.prev_pos[i], objects.pos[i]);
-		vec3_cpy(objects.prev_dir[i], objects.dir[i]);
-	}
-
-
 	/* Check if new inputs occurred */
 	if(inp_check_new()) {
 		/* Set iterator to latest input */
@@ -792,6 +781,7 @@ extern void obj_sys_update(uint32_t now)
 				 * Process movement-acceleration.
 				 */
 
+				/* Calculate the direction of acceleration */
 				vec3_set(frw, objects.dir[o][0], objects.dir[o][1], 0);
 				vec3_nrm(frw, frw);
 
@@ -804,6 +794,7 @@ extern void obj_sys_update(uint32_t now)
 				vec3_add(frw, rgt, acl);
 				vec3_nrm(acl, acl);
 
+				/* Scale acceleration */
 				vec3_scl(acl, 6, acl);
 
 				f = TICK_TIME_S * t_speed;
@@ -932,6 +923,16 @@ extern void obj_sys_update(uint32_t now)
 }
 
 
+static void obj_prerender_fpv(short slot, float interp)
+{
+
+}
+
+static void obj_prerender_tpv(short slot, float interp)
+{
+
+}
+
 extern void obj_sys_prerender(float interp)
 {
 	int i;
@@ -941,11 +942,26 @@ extern void obj_sys_prerender(float interp)
 		if(objects.mask[i] & OBJ_M_RIG) {
 			float agl;
 			vec3_t up = {0, 0, 1};
-
+			
 			agl = vec3_angle(up, objects.dir[i]);
 			agl = RAD_TO_DEG(agl) - 90.0;
-
+	
 			rig_update(objects.rig[i], -agl);
+
+			if(i == core.obj) {
+				if(camera.mode == CAM_MODE_FPV) {
+					rig_update(objects.rig[i], 0);
+
+					vec3_t off = {0, 0, 1.6};
+					vec3_t rev = {0, 0, 1.8};
+
+					rig_fpv_rot(objects.rig[i], off, rev,
+							camera.forw_m);
+				}
+				else {
+					rig_update(objects.rig[i], -agl);
+				}
+			}
 		}
 
 		if(objects.mask[i] & OBJ_M_MODEL) {

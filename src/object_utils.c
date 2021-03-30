@@ -24,7 +24,7 @@ extern short obj_log_set(short slot, uint32_t ts, vec3_t pos, vec3_t vel,
 	 * Check if an entry with the timestamp is already in the list. If that
 	 * is the case, update the value of the entry;
 	 */	
-	for(i = 0; i < OBJ_LOG_SLOTS; i++) {
+	for(i = 0; i < OBJ_LOG_LIM; i++) {
 		if(objects.log[slot].ts[i] == ts) {
 			/* Update values */
 			vec3_cpy(objects.log[slot].pos[i], pos);
@@ -41,14 +41,14 @@ extern short obj_log_set(short slot, uint32_t ts, vec3_t pos, vec3_t vel,
 	 * just return.
 	 */
 	tmp = (objects.log[slot].start + objects.log[slot].num - 1) %
-		OBJ_LOG_SLOTS;
+		OBJ_LOG_LIM;
 	if(objects.log[slot].ts[tmp] > ts) {
 		return -1;
 	}
 
 	/* Get the slot at the end of the list */
 	islot = (objects.log[slot].start + objects.log[slot].num) %
-		OBJ_LOG_SLOTS;
+		OBJ_LOG_LIM;
 
 	/* Copy data to the slot */
 	objects.log[slot].ts[islot] = ts;
@@ -62,9 +62,9 @@ extern short obj_log_set(short slot, uint32_t ts, vec3_t pos, vec3_t vel,
 	/* 
 	 * Move start of list to next slot so first one can be overwritten.
 	 */
-	if(objects.log[slot].num + 1 >= OBJ_LOG_SLOTS) {
+	if(objects.log[slot].num + 1 >= OBJ_LOG_LIM) {
 		objects.log[slot].start = (objects.log[slot].start + 1) %
-			OBJ_LOG_SLOTS;
+			OBJ_LOG_LIM;
 	}
 	else {
 		objects.log[slot].num += 1;
@@ -82,7 +82,7 @@ extern char obj_log_near(short slot, uint32_t ts)
 	char near = objects.log[slot].start;
 
 	for(i = 0; i < objects.log[slot].num; i++) {
-		char tmp = (objects.log[slot].start + i) % OBJ_LOG_SLOTS;
+		short tmp = (objects.log[slot].start + i) % OBJ_LOG_LIM;
 
 		if(objects.log[slot].ts[tmp] > ts)
 			break;
@@ -98,7 +98,7 @@ extern void obj_log_col(uint32_t ts, char *logi)
 	int i;
 
 	/* Collect log-entries closest to the timestamp */
-	for(i = 0; i < OBJ_SLOTS; i++) {
+	for(i = 0; i < OBJ_LIM; i++) {
 		logi[i] = -1;
 
 		if(objects.mask[i] != 0) {

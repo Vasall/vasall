@@ -29,11 +29,18 @@ int main(void)
 		goto err_close_net;
 	}
 
+	/* Print usefull information about the SDL-subsystem */
+	sdl_print_info();
+
 	/* Initialize the window and opengl-context */
 	if(win_init() < 0) {
 		ERR_LOG(("Failed to setup window"));
 		goto err_close_mdl;
 	}
+
+	/* Print usefull information about the used render-engine */
+	ren_print_info();
+
 
 	/* Initialize asset-table(shaders, textures, fonts) */
 	if(ast_init() < 0) {

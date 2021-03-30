@@ -57,7 +57,7 @@ struct input_pipe {
  * from lowest timestamp to highest timestamp.
  */
 
-#define INP_LOG_LIM 64
+#define INP_LOG_LIM 16
 
 struct input_log {
 	short start;

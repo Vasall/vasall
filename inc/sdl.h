@@ -44,6 +44,13 @@ extern int sdl_init(void);
 extern void sdl_close(void);
 
 
+/*
+ * Print usefull information about the SDL-subsystems in the console, which can
+ * then be used for debugging purposes.
+ */
+extern void sdl_print_info(void);
+
+
 enum sdl_mouse_mode {
 	SDL_MOUSE_LOCK,
 	SDL_MOUSE_FREE

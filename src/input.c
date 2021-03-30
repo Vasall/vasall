@@ -22,6 +22,9 @@ extern int inp_init(void)
 	vec2_clr(input.mov_old);
 	vec3_clr(input.dir_old);
 
+	/* Reset the log */
+	inp_reset();
+
 	return 0;
 }
 
@@ -290,6 +293,10 @@ insert:
 		}
 	}
 
+	/*
+	 * TODO: Remove unnecessary print
+	 */
+	inp_log_print();
 
 	return islot;
 }
@@ -324,6 +331,8 @@ extern void inp_log_print(void)
 
 extern void inp_reset(void)
 {
+	input.log.latest_slot = -1;
+	input.log.latest_ts = 0;
 	input.log.itr = 0;
 }
 
@@ -333,20 +342,13 @@ extern void inp_begin(void)
 	if(input.log.latest_slot < 0)
 		return;
 
-	if(input.log.latest_slot > input.log.start) {
+	if(input.log.latest_slot >= input.log.start) {
 		input.log.itr = input.log.latest_slot - input.log.start;	
 	}
 	else {
 		input.log.itr = INP_LOG_LIM - (input.log.start -
 				input.log.latest_slot);
 	}
-
-#if 0
-	/*
-	 * TODO: remove the following line
-	 */
-	input.log.itr = 0;
-#endif
 }
 
 

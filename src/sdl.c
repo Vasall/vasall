@@ -40,6 +40,34 @@ extern void sdl_close(void)
 }
 
 
+extern void sdl_print_info(void)
+{
+	SDL_version sdl_comp;
+	SDL_version sdl_link;
+	SDL_version ttf_comp;
+
+	/* Get the TTF version */
+	const SDL_version *ttf_link = TTF_Linked_Version();
+	SDL_TTF_VERSION(&ttf_comp);
+
+	/* Get the SDL version */
+	SDL_VERSION(&sdl_comp);
+	SDL_GetVersion(&sdl_link);
+
+	printf("-------------------- SDL Info --------------------\n");
+	printf("SDL comp. Version: %d.%d.%d\n", 
+			sdl_comp.major, sdl_comp.minor, sdl_comp.patch);
+	printf("SDL link. Version: %d.%d.%d\n", 
+			sdl_link.major, sdl_link.minor, sdl_link.patch);
+
+	printf("TTF comp. Version: %d.%d.%d\n", 
+			ttf_comp.major, ttf_comp.minor, ttf_comp.patch);
+	printf("TTF link. Version: %d.%d.%d\n", 
+			ttf_link->major, ttf_link->minor, ttf_link->patch);
+	printf("--------------------------------------------------\n");
+}
+
+
 extern void sdl_lock_mouse(enum sdl_mouse_mode mode)
 {
 	SDL_bool f;
@@ -51,6 +79,7 @@ extern void sdl_lock_mouse(enum sdl_mouse_mode mode)
 
 	SDL_SetRelativeMouseMode(f);
 }
+
 
 extern int sdl_fill_rounded(surf_t *surf, int xo, int yo, int w, int h,
 		color_t col, short *cor)

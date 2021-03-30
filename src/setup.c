@@ -68,7 +68,6 @@ extern void test1(char *buf, int len)
 	uint32_t id = 10000;
 
 	vec3_t pos = {0.0, 0.0, 0.0};
-	vec3_t pos1 = {12, 0, 0};
 
 	if(buf || len) {/* Prevent warning for not using parameters */}
 
@@ -89,8 +88,9 @@ extern void test1(char *buf, int len)
 	node = ui_get(window.root, "mns");
 	ui_set_flag(node, FLG_ACT, &zero);
 
+#if 0
 	SDL_SetRelativeMouseMode(SDL_TRUE);
-
+#endif
 
 	/* Start the game-loop */
 	game_start();

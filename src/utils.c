@@ -131,6 +131,17 @@ void join_paths(char *dst, char *pth1, char *pth2)
 	free(dst_buf);
 }
 
+
+extern void buf_flip(void *a, void *b, int size)
+{
+	char *buf[32];
+
+	memcpy(buf, a, size);
+	memcpy(b, a, size);
+	memcpy(a, buf, size);
+}
+
+
 extern surf_t *crop_surf(surf_t* in, rect_t *in_rect, SDL_Rect *out_rect)
 {
 	surf_t *out = SDL_CreateRGBSurface(in->flags,

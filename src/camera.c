@@ -9,9 +9,9 @@
 struct camera_wrapper camera;
 
 
-static vec3_t CAM_RIGHT = {1.0, 0.0, 0.0};
+static vec3_t CAM_RIGHT =    {1.0, 0.0, 0.0};
 static vec3_t CAM_FORWARD =  {0.0, 1.0, 0.0};
-static vec3_t CAM_UP =    {0.0, 0.0, 1.0};
+static vec3_t CAM_UP =       {0.0, 0.0, 1.0};
 
 extern int cam_init(float aov, float asp, float near, float far)
 {
@@ -307,7 +307,13 @@ extern void cam_trg_obj(short obj)
 }
 
 
-extern void cam_tgl_view(void)
+extern enum cam_mode cam_get_mode(void)
+{
+	return camera.mode;
+}
+
+
+extern void cam_tgl_mode(void)
 {
 	camera.mode = camera.mode == CAM_MODE_FPV ? CAM_MODE_TPV : CAM_MODE_FPV;
 }

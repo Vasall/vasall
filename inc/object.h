@@ -10,9 +10,10 @@
 #include "model.h"
 #include "rig.h"
 #include "input.h"
+#include "controller.h"
 #include "core.h"
 
-#define OBJ_SLOTS      128
+#define OBJ_LIM      128
 #define OBJ_DATA_MAX   128
 
 /*
@@ -47,16 +48,36 @@
 
 #define OBJ_A_ALL (OBJ_A_ID|OBJ_A_MASK|OBJ_A_POS|OBJ_A_VEL|OBJ_A_MOV|OBJ_A_BUF)
 
-#define OBJ_INPUT_SLOTS   6
 
-struct object_inputs {
+/*
+ * The object-movement-log used to periodically store the objects current
+ * position, velocity and input which will be used to correct a objects
+ * movement by using a log-entry as a startpoint to reenact the movement of the
+ * object.
+ *
+ * The movement-log allows new entries to be append at the end, but not inserted
+ * in between. It also allows entries with the same timestamp to be updated with
+ * new data after it has already been inserted.
+ *
+ * The used list is a rotating list which overwrites old data with new data if
+ * the entry-limit has been reached, while keeping the elements in sorted order
+ * from lowest timestamp to highest timestamp.
+ */
+
+#define OBJ_LOG_LIM 12
+#define OBJ_LOG_TIME 80
+
+struct object_log {
+	short start;
 	short num;
-	
-	uint32_t     mask[OBJ_INPUT_SLOTS];
-	uint32_t     ts[OBJ_INPUT_SLOTS];
 
-	vec2_t       mov[OBJ_INPUT_SLOTS];
-	uint16_t     act[OBJ_INPUT_SLOTS];
+	uint32_t  ts[OBJ_LOG_LIM];
+
+	vec3_t    pos[OBJ_LOG_LIM];
+	vec3_t    vel[OBJ_LOG_LIM];
+
+	vec2_t    mov[OBJ_LOG_LIM];
+	vec3_t    dir[OBJ_LOG_LIM];
 };
 
 struct comp_marker {
@@ -76,59 +97,58 @@ struct object_collision {
 
 struct object_table {
 	short                    num;
+	short                    order[OBJ_LIM];
+	uint32_t                 last_ts;
+	uint32_t                 rets;
 
-	/*
-	 * shareable object-attributes
-	 */
 
-	uint32_t                 mask[OBJ_SLOTS];
-	uint32_t                 id[OBJ_SLOTS];
-	
-	vec3_t                   pos[OBJ_SLOTS];
-	vec3_t                   vel[OBJ_SLOTS];
+	/* The object-mask and identification-number */
+	uint32_t                 mask[OBJ_LIM];
+	uint32_t                 id[OBJ_LIM];
+
+	/* The runtime-buffers */
+	uint32_t                 ts[OBJ_LIM];
+	vec3_t                   pos[OBJ_LIM];
+	vec3_t                   vel[OBJ_LIM];
+	vec2_t                   mov[OBJ_LIM];
+	vec3_t                   dir[OBJ_LIM];
+
+	/* The save-buffers for the previous state */
+	uint32_t                 prev_ts[OBJ_LIM];
+	vec3_t                   prev_pos[OBJ_LIM];
+	vec3_t                   prev_dir[OBJ_LIM];
+
+	/* Buffer containing the runtime-log */
+	struct object_log        log[OBJ_LIM];
 
 	/* Variables used for rendering and animation */
-	vec3_t                   ren_pos[OBJ_SLOTS];
-	vec3_t                   dir[OBJ_SLOTS];
-	vec3_t                   ren_dir[OBJ_SLOTS];
-	short                    mdl[OBJ_SLOTS];
-	struct model_rig         *rig[OBJ_SLOTS];
-	mat4_t                   mat_pos[OBJ_SLOTS];
-	mat4_t                   mat_rot[OBJ_SLOTS];
-	float                    vagl[OBJ_SLOTS][2]; /* 0: z-axis, 1: x-axis */
+	vec3_t                   ren_pos[OBJ_LIM];
+	vec3_t                   ren_dir[OBJ_LIM];
+
+
+	/* The model and the rig */
+	short                    mdl[OBJ_LIM];
+	struct model_rig         *rig[OBJ_LIM];
+
+	/* The render-matrices */
+	mat4_t                   mat_pos[OBJ_LIM];
+	mat4_t                   mat_rot[OBJ_LIM];
+	float                    vagl[OBJ_LIM][2]; /* 0: z-axis, 1: x-axis */
 
 	/* Collision */
-	struct object_collision  col[OBJ_SLOTS]; 
+	struct object_collision  col[OBJ_LIM]; 
 
 	/* Object/Player-Data like Health and Mana */
-	int                      len[OBJ_SLOTS];
-	char                     data[OBJ_SLOTS][OBJ_DATA_MAX];
-
-	/* Vars used for interpolation */
-	vec3_t                   prev_pos[OBJ_SLOTS];
-	vec3_t                   prev_dir[OBJ_SLOTS];
-
-	/* Vars used to store most recent input */
-	vec2_t                   mov[OBJ_SLOTS];
-	uint16_t                 act[OBJ_SLOTS];
-
-	/* Buffer containing all recent inputs */
-	struct object_inputs     inp[OBJ_SLOTS];
-
-	/* Next comparison-marker used for maintaing synchronicity */
-	char                     mark_flg[OBJ_SLOTS];
-	struct comp_marker       mark[OBJ_SLOTS];
-
-	uint32_t                 last_ack_ts[OBJ_SLOTS];
-	uint32_t                 last_upd_ts[OBJ_SLOTS];
-
-	vec3_t                   last_pos[OBJ_SLOTS];
-	vec3_t                   last_vel[OBJ_SLOTS];
+	int                      len[OBJ_LIM];
+	char                     data[OBJ_LIM][OBJ_DATA_MAX];
 };
 
 
 /* Define the global object-wrapper instance */
 extern struct object_table objects;
+
+/* TODO: This seems kinda shady tbh */
+#include "object_utils.h"
 
 
 /*
@@ -290,8 +310,10 @@ extern void obj_print(short slot);
 
 /*
  * A system-function to update all objects in the object-table.
+ *
+ * @now: The current network time (milliseconds)
  */
-extern void obj_sys_update(void);
+extern void obj_sys_update(uint32_t now);
 
 
 /*
@@ -306,4 +328,4 @@ extern void obj_sys_prerender(float interp);
  */
 extern void obj_sys_render(void);
 
-#endif
+#endif /* _OBJECT_H */

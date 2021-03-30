@@ -13,6 +13,9 @@ extern char *get_bin_dir(char *pth);
 void join_paths(char *dst, char *pth1, char *pth2);
 
 
+extern void buf_flip(void *a, void *b, int size);
+
+
 extern surf_t *crop_surf(surf_t* in, rect_t *in_rect, rect_t *out_rect);
 
 #endif

@@ -21,96 +21,55 @@ void game_start(void)
 }
 
 
-void game_proc_evt(SDL_Event *evt)
+void game_proc_evt(event_t *evt)
 {
-	uint8_t axis;
-	float val;
 	float tmp;
-	vec3_t vtmp;
 
-	switch(evt->type) {	
-		case SDL_CONTROLLERAXISMOTION:
-			axis = evt->caxis.axis;
-			val = evt->caxis.value;
+	vec2_t mov;
 
-			/* Convert range to [-1; 1]*/
-			if(val < 0.0) val = val / 32768.0;
-			else val = val / 32767.0;
+	uint32_t ts = net_gettime();
 
-			/*
-			 * Set the value of the dedicated input-buffer. Note
-			 * that the first element is for vertical data and the
-			 * second element for horizontal data.
-			 */
-			switch(axis) {
-				case 0: input.mov[0] = val; break;
-				case 1: input.mov[1] = val; break;
-				case 2: input.cam[0] = val; break;
-				case 3: input.cam[1] = val; break;
-			}
-			break;
-
-		case SDL_CONTROLLERBUTTONDOWN:
-			switch(evt->cbutton.button) {
-				case SDL_CONTROLLER_BUTTON_RIGHTSTICK:
-					vec3_flip(objects.dir[core.obj], vtmp);
-					cam_set_dir(vtmp);
-					break;
-			}
-			break;
-
+	switch(evt->type) {
 		case SDL_KEYDOWN:
-#if 0
-			printf("key: %d\n", evt->key.keysym.scancode);
-#endif
+			inp_retrieve(INP_T_MOV, mov);
 
 			switch((int)evt->key.keysym.scancode) {
-				case 4:  /* Pressed A */
-					input.mov[0] = -1.0;
+				case 4:  /* A-Key */
+					mov[0] = 1.0;
 					break;
-				case 7:  /* Pressed D */
-					input.mov[0] = 1.0;
+				case 7:  /* D-Key */
+					mov[0] = -1.0;
 					break;
-				case 22: /* Pressed S */
-					input.mov[1] = -1.0;
+				case 22: /* S-Key */
+					mov[1] = -1.0;
 					break;
-				case 26: /* Pressed W */
-					input.mov[1] = 1.0;
-					break;
-
-				case 8:
-					objects.pos[0][2] = 10.0;
+				case 26: /* W-Key */
+					mov[1] = 1.0;
 					break;
 
-				case 23:
-					cam_tgl_view();
-					break;
-
-				case 81: /* DOWN-ARROW */
-					objects.vagl[camera.trg_obj][1] -= 3.0;
-					if(objects.vagl[camera.trg_obj][1] < -90)
-						objects.vagl[camera.trg_obj][1] = -90;
-					break;
-
-				case 82: /* UP-ARROW */
-					objects.vagl[camera.trg_obj][1] += 3.0;
-					if(objects.vagl[camera.trg_obj][1] > 90)
-						objects.vagl[camera.trg_obj][1] = 90;
+				case 23: /* T-Key */
+					cam_tgl_mode();
 					break;
 			}
+
+			inp_change(INP_T_MOV, ts, mov);
 			break;
 
 		case SDL_KEYUP:
+			inp_retrieve(INP_T_MOV, mov);
+
 			switch((int)evt->key.keysym.scancode) {
-				case 4:  /* Released A or D*/
-				case 7:
-					input.mov[0] = 0.0;
+				case 4:  /* A-Key */
+				case 7:  /* D-Key */
+					mov[0] = 0.0;
 					break;
-				case 22: /* Released W or S */
-				case 26:
-					input.mov[1] = 0.0;
+				case 22: /* S-Key */
+				case 26: /* W-Key */
+					mov[1] = 0.0;
 					break;
 			}
+
+			inp_change(INP_T_MOV, ts, mov);
 			break;
 
 
@@ -126,6 +85,11 @@ void game_proc_evt(SDL_Event *evt)
 				
 				/* Rotate the camera */
 				cam_rot(x, y);
+
+				if(cam_get_mode() == CAM_MODE_FPV) {
+					inp_change(INP_T_DIR, ts,
+							camera.v_forward);
+				}
 			}
 			break;
 
@@ -141,58 +105,9 @@ void game_proc_evt(SDL_Event *evt)
 
 static void game_proc_input(void)
 {
-	vec2_t forw;
-	vec2_t right;
-	vec2_t mov;
-	short obj = core.obj;
-
 	/*
 	 * Control the camera.
 	 */
-
-	/* Rotate the camera */	
-	cam_rot(input.cam[0], input.cam[1]);
-
-	/* Adjust the direction of the camera to the input */
-	cam_proc_input();
-
-	/* Get direction of the camera */
-	vec2_cpy(right, camera.v_right);
-	vec2_nrm(right, right);
-
-	vec2_cpy(forw, camera.v_forward);
-	vec2_nrm(forw, forw);
-
-	/* Combine input-direction and camera-direction */
-	vec2_scl(right, -input.mov[0], right);
-	vec2_scl(forw, input.mov[1], forw);
-
-	vec2_add(forw, right, mov);
-	vec2_nrm(mov, mov);
-
-	/* If the movement direction has changed */
-	if(vec2_cmp(mov, input.mov_old) == 0) {
-		short num = input.share.num;
-		uint32_t ti = core.now_ts;
-
-		if(num < INPUT_SLOTS) {
-			input.share.obj = objects.id[obj];
-
-			/* Push new entry in share-buffer */	
-			input.share.mask[num] = INP_M_MOV;
-			input.share.ts[num] = ti;
-			vec2_cpy(input.share.mov[num], mov);
-
-			/* Increment share-buffer-number */
-			input.share.num++;
-
-			/* Remeber current state to check for changes */
-			vec2_cpy(input.mov_old, mov);
-
-			/* Add input to object input-buffer */
-			obj_add_input(obj, 1, ti, mov, 0);
-		}
-	}
 
 #if 0
 	/*
@@ -209,23 +124,25 @@ void game_update(void)
 {
 	/* Get the current time */
 	uint32_t now = net_gettime();
-	int count = 0;
 
-	while((now - core.last_upd_ts) > TICK_TIME && count < MAX_UPDATE_NUM) {
-		/* Update timer */
-		core.now_ts = core.last_upd_ts;
-		core.last_upd_ts += TICK_TIME;
 
-		/* Process the game-input and update objects */
-		game_proc_input();
 
-		/* Update the objects in the object-table */
-		obj_sys_update();
+	/*
+	 * Process the inputs, push the local ones into the pipe and sort the
+	 * entries.
+	 */
+	inp_update();
 
-		/* Increment counter */
-		count++;
-	}
 
+	/*
+	 * Update the objects using the latest inputs and use
+	 * movement-propagation to continue expected movement, until new inputs
+	 * arrive.
+	 */
+	obj_sys_update(now);
+
+
+#if 0
 	if(now >= core.last_shr_ts) {
 		uint8_t con_flg = 0;
 		char pck[512];
@@ -277,9 +194,17 @@ void game_update(void)
 			net_broadcast(HDR_OP_UPD, pck, len);
 		}
 	}
+#endif
+
+
 
 	/* Update the camera */
 	cam_update();
+
+
+	/* Clear both input-pipes */
+	inp_pipe_clear(INP_PIPE_IN);
+	inp_pipe_clear(INP_PIPE_OUT);
 }
 
 void game_render(void)

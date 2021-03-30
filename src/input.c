@@ -1,5 +1,7 @@
 #include "input.h"
 #include "network.h"
+#include "core.h"
+#include "object.h"
 
 #include <stdlib.h>
 
@@ -10,171 +12,634 @@ struct input_wrapper input;
 
 extern int inp_init(void)
 {
-	int i;
-
-	/* Clear the device-list */
-	for(i = 0; i < DEVICE_NUM; i++)
-		input.mask[i] = 0;
-
-	/* Load all available input-devices */
-	for(i = 0; i < SDL_NumJoysticks(); i++) {
-		if(inp_add_device(i) < 0)
-			goto err_close_input;
-	}
-
-	/* Initialize the share-buffer */
-	input.share.num = 0;
-	input.share.obj = 0;
-
-	/* Clear the share-buffer */
-	for(i = 0; i < INPUT_SLOTS; i++)
-		input.share.mask[i] = 0;
+	/* Clear the input-pipes */
+	inp_pipe_clear(INP_PIPE_IN);
+	inp_pipe_clear(INP_PIPE_OUT);
 
 	/* Clear the input-buffers */
 	vec2_clr(input.mov);
+	vec3_clr(input.dir);
 	vec2_clr(input.mov_old);
+	vec3_clr(input.dir_old);
 
 	return 0;
-
-err_close_input:
-	inp_close();
-	return -1;
 }
 
 
 extern void inp_close(void)
 {
+	/*  */
+}
+
+
+extern void inp_pipe_clear(enum input_pipe_mode m)
+{
+	struct input_pipe *pipe;
 	int i;
-	SDL_GameController *contr;
 
-	for(i = 0; i < DEVICE_NUM; i++) {
-		if(input.mask[i] == 0)
-			continue;
+	/* Get a pointer to the associated pipe */
+	if(m == INP_PIPE_IN) {
+		pipe = &input.pipe_in;
+	}
+	else if(m == INP_PIPE_OUT) {
+		pipe = &input.pipe_out;
+	}
 
-		if((contr = SDL_GameControllerFromInstanceID(input.id[i])))
-			SDL_GameControllerClose(contr);
+	/* Reset number of entries */
+	pipe->num = 0;
+
+	for(i = 0; i < INP_ENT_LIM; i++) {
+		pipe->type[i] = 0;
 	}
 }
 
 
-static short inp_get_slot(void)
+extern void inp_change(enum input_type type, uint32_t ts, void *in)
 {
-	short i;
+	ts = ceil(ts / TICK_TIME) * TICK_TIME;
 
-	for(i = 0; i < DEVICE_NUM; i++) {
-		if(input.mask[i] == 0)
-			return i;
+	switch(type) {
+		case INP_T_NONE:
+			break;
+
+		case INP_T_MOV:
+			vec2_cpy(input.mov, (float *)in);
+
+			/* Check if the value really has changed */
+			if(!vec2_cmp(input.mov, input.mov_old)) {
+				/* If yes, then save value and mark change */
+				vec2_cpy(input.mov_old, input.mov);
+
+				/* Push new entries into the in- and out-pipe */
+				inp_push(INP_PIPE_IN, objects.id[core.obj],
+						INP_T_MOV, ts, input.mov);
+				inp_push(INP_PIPE_OUT, objects.id[core.obj],
+						INP_T_MOV, ts, input.mov);
+			}
+			break;
+
+		case INP_T_DIR:
+			vec3_cpy(input.dir, (float *)in);
+
+			/* Check if the value really has changed */
+			if(!vec3_cmp(input.dir, input.dir_old)) {
+				/* If yes, then save value and mark change */
+				vec3_cpy(input.dir_old, input.dir);
+
+				/* Push new entries into the in- and out-pipe */
+				inp_push(INP_PIPE_IN, objects.id[core.obj],
+						INP_T_DIR, ts, input.dir);
+				inp_push(INP_PIPE_OUT, objects.id[core.obj],
+						INP_T_DIR, ts, input.dir);
+			}
+			break;
 	}
-
-	return -1;
 }
 
 
-extern int inp_add_device(int idx)
+extern int inp_retrieve(enum input_type type, void *out)
 {
-	int32_t id;
-	short slot;
-	SDL_Joystick *joy;
-	SDL_GameController *contr;
+	switch(type) {
+		case INP_T_NONE:
+			break;
 
-	if((slot = inp_get_slot()) < 0)
+		case INP_T_MOV:
+			vec2_cpy(out, input.mov);
+			break;
+
+		case INP_T_DIR:
+			vec3_cpy(out, input.dir);
+			break;
+	}
+
+	return 0;
+}
+
+
+extern int inp_push(enum input_pipe_mode m, uint32_t id, enum input_type type,
+		uint32_t ts, void *in)
+{
+	short num;	
+	struct input_pipe *pipe;
+
+	/* Get a pointer to the associated pipe */
+	if(m == INP_PIPE_IN) {
+		pipe = &input.pipe_in;
+	}
+	else if(m == INP_PIPE_OUT) {
+		pipe = &input.pipe_out;
+	}
+
+	/* If the input-pipe is already full */
+	num = pipe->num;
+	if(num + 1 >= INP_ENT_LIM)
 		return -1;
 
-	/* Only register if the device is controller */
-	if(SDL_IsGameController(idx)) {
-		if(!(contr = SDL_GameControllerOpen(idx)))
-			return -1;
+	pipe->obj_id[num] = id;
+	pipe->type[num] = type;
+	pipe->ts[num] = ts;
 
-		joy = SDL_GameControllerGetJoystick(contr);
-		id = SDL_JoystickInstanceID(joy);
+	switch(type) {
+		case INP_T_NONE:
+			break;
 
-		input.mask[slot] = 1;
-		input.id[slot] = id;
-		input.type[slot] = 0;
-		strcpy(input.name[slot], SDL_GameControllerName(contr));
-		input.ptr[slot] = contr;	
-		return 0;
+		case INP_T_MOV:
+			vec2_cpy(pipe->mov[num], (float *)in);
+			break;
+
+		case INP_T_DIR:
+			vec3_cpy(pipe->dir[num], (float *)in);
+			break;
 	}
 
-	return -1;
+	pipe->num++;
+	return 0;
 }
 
 
-static short inp_get_id(int id)
+extern int inp_pull(struct input_entry *ent)
+{
+	int i;
+	struct input_pipe *pipe = &input.pipe_in;
+
+	if(pipe->num <= 0)
+		return 0;
+
+	i = pipe->order[pipe->num - 1];
+
+	ent->obj_id = pipe->obj_id[i];
+	ent->type = pipe->type[i];
+	ent->ts = pipe->ts[i];
+	
+	switch(pipe->type[i]) {
+		case INP_T_MOV:
+			vec2_cpy(ent->mov, pipe->mov[i]);
+			break;
+
+		case INP_T_DIR:
+			vec3_cpy(ent->dir, pipe->dir[i]);
+			break;
+	}
+
+	/* Reduce number of entries */
+	pipe->num -= 1;
+
+	return 1;
+}
+
+
+extern short inp_log_push(uint32_t id, enum input_type type, uint32_t ts,
+		void *in)
+{
+	short i;
+	short k;
+	short tmp;
+	short from;
+	short to;
+	short ins = input.log.start;
+
+	short islot = -1;
+
+	/* If the list is empty */
+	if(input.log.num == 0) {	
+		islot = 0;
+
+		input.log.num = 1;
+		goto insert;
+	}
+
+	/* Attach entry to the end if possible */
+	tmp = (input.log.start + input.log.num - 1) % INP_LOG_LIM;
+	if(ts > input.log.ts[tmp]) {
+		if(input.log.num + 1 > INP_LOG_LIM)
+			input.log.start = (input.log.start + 1) % INP_LOG_LIM;
+		else
+			input.log.num += 1;
+
+		islot = (tmp + 1) % INP_LOG_LIM;
+		goto insert;
+	}
+
+	/* Insert entry into the middle of the list */
+	for(i = input.log.num - 1; i >= 0; i--) {
+		tmp = (input.log.start + i) % INP_LOG_LIM;
+
+		if(input.log.ts[tmp] < ts) {
+			ins = 0;
+
+			if(input.log.num + 1 >= INP_LOG_LIM)
+				ins = 1;
+
+			/* Move all entries down one step */
+			for(k = ins; k <= i; k++) {
+				from = (input.log.start + k) % INP_LOG_LIM;
+
+				to = from - 1;
+				if(to < 0) to = INP_LOG_LIM + to;
+
+				input.log.ts[to] = input.log.ts[from];
+				input.log.type[to] = input.log.type[from];
+
+				vec2_cpy(input.log.mov[to], input.log.mov[from]);
+				vec3_cpy(input.log.dir[to], input.log.dir[from]);
+			}
+
+			if(input.log.num + 1 < INP_LOG_LIM) {
+				input.log.num += 1;
+
+				input.log.start -= 1;
+				if(input.log.start < 0)
+					input.log.start = INP_LOG_LIM +
+						input.log.start;
+			}
+
+			islot = tmp;
+			goto insert;
+		}
+	}
+
+	return -1;
+
+
+insert:
+	input.log.obj_id[islot] = id;
+	input.log.ts[islot] = ts;
+	input.log.type[islot] = type;
+
+	switch(type) {
+		case INP_T_NONE:
+			break;
+
+		case INP_T_MOV:
+			vec2_cpy(input.log.mov[islot], in);
+			break;
+
+		case INP_T_DIR:
+			vec3_cpy(input.log.dir[islot], in);
+			break;
+	}
+
+	if(input.log.latest_slot == -1) {
+		input.log.latest_slot = islot;
+		input.log.latest_ts = ts;
+	}
+	else {
+		if(input.log.latest_ts > ts) {
+			input.log.latest_slot = islot;
+			input.log.latest_ts = ts;
+		}
+	}
+
+	inp_log_print();
+
+	return islot;
+}
+
+extern int inp_check_new(void)
+{
+	if(input.log.latest_slot > -1)
+		return 1;
+
+	return 0;
+}
+
+
+extern void inp_log_print(void)
 {
 	short i;
 
-	for(i = 0; i < DEVICE_NUM; i++) {
-		if(input.mask[i] == 0)
-			continue;
+	printf("Num: %d, Start: %d\n", input.log.num, input.log.start);
 
-		if(input.id[i] == id)
-			return i;
+	for(i = 0; i < input.log.num; i++) {
+		short slot = (input.log.start + i) % INP_LOG_LIM;
+
+		printf("%2d(%2d): ", i, slot);
+
+		printf("%8x >> ", input.log.obj_id[slot]);
+		printf("type: %4d - ", input.log.type[slot]);
+		printf("ts: %6x - ", input.log.ts[slot]);
+		printf("\n");
 	}
-
-	return -1;
 }
 
 
-extern void inp_remv_device(int id)
+extern void inp_reset(void)
 {
-	short slot;
+	input.log.itr = 0;
+}
 
-	if((slot = inp_get_id(id)) < 0)
+
+extern void inp_begin(void)
+{
+	if(input.log.latest_slot < 0)
 		return;
 
-	SDL_GameControllerClose(input.ptr[slot]);
-	input.mask[slot] = 0;
+	if(input.log.latest_slot > input.log.start) {
+		input.log.itr = input.log.latest_slot - input.log.start;	
+	}
+	else {
+		input.log.itr = INP_LOG_LIM - (input.log.start -
+				input.log.latest_slot);
+	}
+
+#if 0
+	/*
+	 * TODO: remove the following line
+	 */
+	input.log.itr = 0;
+#endif
 }
 
 
-extern int inp_col_share(char *buf)
+extern int inp_next(void)
 {
-	short i;
-	short num;
-	char *ptr;
-	uint32_t mask;
-	int written = 0;
-	uint32_t base_ts = 0;
-	uint8_t del_ts;
-	uint32_t tmp_ts;
-
-	if((num = input.share.num) < 1)
+	if(input.log.itr + 1 > input.log.num)
 		return 0;
 
-	tmp_ts = base_ts = input.share.ts[0];
+	input.log.itr += 1;
+	return 1;
+}
 
-	memcpy(buf, &base_ts, 4);
-	memcpy(buf + 4, &input.share.obj, 4);
-	memcpy(buf + 8, &num, 2);
 
-	written += 10;
-	ptr = buf + 10;
+extern uint32_t inp_cur_ts(void)
+{
+	struct input_log *log = &input.log;
+
+	if(log->num > 0) {
+		short tmp = (log->start + log->itr) % INP_LOG_LIM;
+		return log->ts[tmp];
+	}
+
+	return 0;
+}
+
+extern uint32_t inp_next_ts(void)
+{
+	struct input_log *log = &input.log;
+
+	if(log->itr + 1 >= log->num)
+		return 0;
+
+	return log->ts[log->itr + 1];
+}
+
+
+extern int inp_get(struct input_entry *ent)
+{
+	int idx;
+	struct input_log *log = &input.log;
+
+	if(log->num < 1 || log->itr >= log->num)
+		return 0;
+
+	idx = (log->start + log->itr) % INP_LOG_LIM;
+
+	ent->obj_id =  log->obj_id[idx];
+	ent->type =    log->type[idx];
+	ent->ts =      log->ts[idx];
+	
+	switch(log->type[idx]) {
+		case INP_T_NONE:
+			break;
+
+		case INP_T_MOV:
+			vec2_cpy(ent->mov, log->mov[idx]);
+			break;
+
+		case INP_T_DIR:
+			vec3_cpy(ent->dir, log->dir[idx]);
+			break;
+	}
+
+	return 1;
+}
+
+
+extern int inp_pack(char *out)
+{
+	short i;
+	short s;
+	short num;
+	char *ptr = out;
+	int written = 0;
+	uint32_t base_ts = 0;
+	uint16_t del_ts;
+	uint32_t tmp_ts;
+
+	struct input_pipe *pipe = &input.pipe_out; 
+
+	if((num = pipe->num) < 1) {
+		return 0;
+	}
+
+	tmp_ts = base_ts = pipe->ts[0];
+
+	memcpy(ptr, &base_ts, 4);
+	memcpy(ptr + 4, &num, 1);
+
+	ptr += 5;
+	written += 5;
 
 	for(i = 0; i < num; i++) {
-		mask = input.share.mask[i];
-		memcpy(ptr, &mask, 4);
+		s = pipe->order[i];
+
+		memcpy(ptr, &pipe->obj_id[s], 4);
 		ptr += 4;
 		written += 4;
 
-		del_ts = ((input.share.ts[i] - base_ts) - (tmp_ts - base_ts));
-		tmp_ts = input.share.ts[i];
-
-		memcpy(ptr, &del_ts, 1);
+		memcpy(ptr, &pipe->type[s], 1);
 		ptr += 1;
 		written += 1;
 
-		if(mask & INP_M_MOV) {
-			vec2_cpy((float *)ptr, input.share.mov[i]);
-			ptr += VEC2_SIZE;
-			written += VEC2_SIZE;
-		}
+		del_ts = ((pipe->ts[s] - base_ts) - (tmp_ts - base_ts));
+		tmp_ts = pipe->ts[s];
 
-		input.share.mask[i] = 0;
-		memset(input.share.mov[i], 0, VEC2_SIZE);
+		memcpy(ptr, &del_ts, 2);
+		ptr += 2;
+		written += 2;
+
+		switch(pipe->type[s]) {
+			case INP_T_MOV:
+				vec2_cpy((float *)ptr, pipe->mov[s]);
+				ptr += VEC2_SIZE;
+				written += VEC2_SIZE;
+				break;
+
+			case INP_T_DIR:
+				vec3_cpy((float *)ptr, pipe->dir[s]);
+				ptr += VEC3_SIZE;
+				written += VEC3_SIZE;
+				break;
+		}
 	}
 
-	input.share.num = 0;
-	input.share.obj = 0;
 	return written;
+}
+
+
+extern int inp_unpack(char *in)
+{
+	char i;
+	char num;
+
+	uint32_t  id;
+	uint16_t  off;
+
+	vec2_t   mov;
+	vec3_t   cam;
+
+	uint8_t type;
+	uint32_t ts;
+
+	char *ptr = in;
+	int read = 0;
+
+	/* Extract timestamp */
+	memcpy(&ts, ptr, 4);
+
+	/* Extract the number of new inputs */
+	memcpy(&num,  ptr + 4,  1);
+
+	/* Check if the number of given entries is valid */
+	if(num <= 0)
+		return -1;
+
+	/* Update pointer-position */
+	ptr += 5;
+	read += 5;
+
+	for(i = 0; i < num; i++) {
+		memcpy(&id, ptr, 4);
+		ptr += 4;
+
+		memcpy(&type, ptr, 1);
+		ptr += 1;
+
+		memcpy(&off, ptr, 2);
+		ptr += 2;
+
+		/* Update timestamp */
+		ts += off;
+
+		switch(type) {
+			case INP_T_MOV:
+				vec2_cpy(mov, (float *)ptr);
+				ptr += VEC2_SIZE;
+
+				if(inp_push(INP_PIPE_IN, id, ts, type, mov) < 0)
+					return -1;
+				break;
+
+			case INP_T_DIR:
+				vec3_cpy(cam, (float *)ptr);
+				ptr += VEC3_SIZE;
+
+				if(inp_push(INP_PIPE_IN, id, ts, type, cam) < 0)
+					return -1;
+				break;
+		}
+
+		read += 13;
+	}
+
+	return read;
+}
+
+
+static void inp_pipe_sort(enum input_pipe_mode m)
+{
+	int i;
+	struct input_pipe *pipe;
+	char found;
+	short a;
+	short b;
+
+	if(m == INP_PIPE_IN)
+		pipe = &input.pipe_in;
+	else if(m == INP_PIPE_OUT)
+		pipe = &input.pipe_out;
+
+
+	/* Reset order-list */
+	for(i = 0; i < INP_ENT_LIM; i++)
+		pipe->order[i] = i;
+
+
+	/*
+	 * TODO:
+	 * It's 2am, I'm tired and hungry. Bubble-Sort will have to do now, but
+	 * please rewrite this to something better that hasn't a runtime
+	 * complexity of O(n^2). Thanks <3
+	 */
+
+	/* Sort entry-order to decending time. */
+	while(1) {
+		found = 0;
+
+		for(i = 0; i < pipe->num - 1; i++) {
+			a = pipe->order[i];
+			b = pipe->order[i + 1];
+
+			if(pipe->ts[a] < pipe->ts[b]) {
+				found = 1;
+
+				pipe->order[i] = b;
+				pipe->order[i + 1] = a;
+			}
+		}
+
+		if(!found)
+			break;
+	}
+}
+
+extern void inp_update(void)
+{
+	struct input_entry inp;
+
+	/* Sort the entries in both pipes from lowest to hights */
+	inp_pipe_sort(INP_PIPE_IN);
+	inp_pipe_sort(INP_PIPE_OUT);
+
+	/*
+	 * TODO: Validate input.
+	 */
+
+	
+	input.log.latest_slot = -1;
+
+	/* Push all new entries from the in-pipe into the input-log */
+	while(inp_pull(&inp)) {
+		void *ptr;
+		short slot;
+
+		switch(inp.type) {
+			case INP_T_MOV:
+				ptr = &inp.mov;
+				break;
+
+			case INP_T_DIR:
+				ptr = &inp.dir;
+				break;
+		}
+
+		if((slot = inp_log_push(inp.obj_id, inp.type, inp.ts, ptr)) < 0)
+			continue;
+
+
+		/*
+		 * Update latest inputs.
+		 */
+
+		if(input.log.latest_slot < 0) {
+			input.log.latest_slot = slot;
+			input.log.latest_ts = inp.ts;
+		}
+		else {
+			if(inp.ts < input.log.latest_ts) {
+				input.log.latest_slot = slot;
+				input.log.latest_ts = inp.ts;
+			}
+		}
+	}
 }

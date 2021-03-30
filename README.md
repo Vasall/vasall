@@ -1,10 +1,10 @@
-# VASALL DOCUMENTATION
+# README
 
 Vasall is a free-to-play MMO-RPG which focuses mainly on combat and 
 teamplay. Note that this project is still in the early stages of
 developement.
 
-## TECHNICAL DESCRIPTION
+## Technical Description
 
 The whole game is written in C89 and only relies on the SDL-frameworks for
 creating the window and handeling IO, aswell as OpenGL and Vulkan for
@@ -12,13 +12,13 @@ rendering.  The game will most likely only run on Linux as the core system
 hasn't been ported to Windows and macOS yet. A port will come in the near
 future.
   
-## NOTICE
+## Notice
 
 This is only the client-application which requires a server to run. For several
 reasons the server-application will stay private.
 THE SERVER IS CURRENTLY UNAVAILABLE!
 
-## INSTALLATION
+## Installation
 
 ### Install on Ubuntu and Debian
 
@@ -52,7 +52,7 @@ Now that everything is done, we can finally start the client and start
 playing the game using this command:<br/>
 > $ ./bin/client
  
-## CONTACT
+## Contact
    
  - Email: admin@vasall.net
  - Discord: [https://discord.gg/ahnbSfB](https://discord.gg/ahnbSfB)

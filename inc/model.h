@@ -14,14 +14,6 @@
 #define MDL_NAME_MAX            8
 #define MDL_SLOTS             256
 
-struct uni_buffer {
-	mat4_t pos_mat;
-	mat4_t rot_mat;
-	mat4_t view;
-	mat4_t proj;
-	mat4_t tran_mat[JOINT_MAX_NUM];
-};
-
 enum mdl_status {
 	MDL_OK =                0,
 	MDL_ERR_CREATING =      1,
@@ -98,6 +90,7 @@ struct model {
 	short             slot;
 	char              name[9];
 	uint32_t          attr_m;
+	enum mdl_type     type;
 	unsigned int      vao;
 	VkDescriptorSet   set;
 	
@@ -217,7 +210,8 @@ extern void mdl_set_shader(short slot, short shd);
 /*
  * 
  */
-extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot);
+extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot,
+			enum mdl_type type);
 
 /*
  * Render a model with a model-matrix.

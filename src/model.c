@@ -1,4 +1,3 @@
-#include "render_engine.h"
 #include "model.h"
 
 #include "error.h"
@@ -118,6 +117,9 @@ extern short mdl_set(char *name, short shd_slot)
 
 	/* Set attribute-mask of the model */
 	mdl->attr_m = MDL_M_NONE;
+
+	/* Set the type of the model */
+	mdl->type = MDL_TYPE_DEFAULT;
 
 	/* Initialize model-attributes */
 	mdl->vao = 0;
@@ -419,7 +421,8 @@ static void mdl_calc_joint(struct model *mdl, short slot)
 		mdl_calc_joint(mdl, jnt->child_buf[i]);
 }
 
-extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
+extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot,
+			enum mdl_type type)
 {
 	struct amo_model *data;
 	struct model *mdl;
@@ -462,6 +465,9 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 
 	/* Copy the attribute-mask of the model */
 	mdl->attr_m = data->attr_m;
+
+	/* Copy th type of the model */
+	mdl->type = type;
 
 	/* 
 	 * Get an OpenGL-mesh from the returned data-struct. This is required as
@@ -791,10 +797,10 @@ extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
 	
 	/* Set uniform buffer and textures */
 	ren_set_render_model_data(mdl->uni_buf, uni, assets.tex.hdl[mdl->tex],
-			assets.shd.pipeline[mdl->shd], mdl->uni_bo, mdl->set);
+			assets.shd.pipeline[mdl->shd], mdl->uni_bo, mdl->set, mdl->type);
 
 	/* Draw the vertices */
-	ren_draw(mdl->idx_num);
+	ren_draw(mdl->idx_num, mdl->type);
 
 	/* Unuse the texture, shader and VAO */
 	/* tex_unuse();

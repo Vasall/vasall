@@ -2,7 +2,6 @@
 
 #include "error.h"
 #include "filesystem.h"
-#include "model.h"
 
 struct opengl_wrapper {
 	SDL_GLContext context;
@@ -350,10 +349,15 @@ extern void gl_render_set_vao(uint32_t vao)
 }
 
 
-extern void gl_render_set_texture(uint32_t hdl)
+extern void gl_render_set_texture(uint32_t hdl, enum mdl_type type)
 {
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, hdl);
+	if(type == MDL_TYPE_SKYBOX) {
+		glBindTexture(GL_TEXTURE_CUBE_MAP, hdl);
+		glDepthMask(GL_FALSE);
+	} else {
+		glBindTexture(GL_TEXTURE_2D, hdl);
+	}
 }
 
 
@@ -369,9 +373,12 @@ extern void gl_render_set_uniform_buffer(unsigned int buf,
 }
 
 
-extern void gl_render_draw(size_t indices)
+extern void gl_render_draw(size_t indices, enum mdl_type type)
 {
 	glDrawElements(GL_TRIANGLES, indices, GL_UNSIGNED_INT, NULL);
+	if(type == MDL_TYPE_SKYBOX) {
+		glDepthMask(GL_TRUE);
+	}
 }
 
 

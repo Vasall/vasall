@@ -14,5 +14,8 @@ layout(location=0) out vec3 uvw;
 void main()
 {
 	uvw = vtxPos;
-	gl_Position = proj * view * vec4(vtxPos, 1.0);
+
+	mat4 tmp = view;
+	tmp[3] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	gl_Position = proj * tmp * vec4(vtxPos, 1.0);
 }

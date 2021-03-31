@@ -7,7 +7,6 @@ int load_resources(void)
 {
 	char *vars1[3] = {"vtxPos\0", "vtxTex\0", "vtxNrm\0"};
 	char *vars2[5] = {"vtxPos\0", "vtxTex\0", "vtxNrm\0", "vtxJnt\0", "vtxWgt\0"};
-	char *vars3[1] = {"vtxPos\0"};
 	char *pths[6] = {"res/textures/px.png", "res/textures/nx.png", "res/textures/py.png", "res/textures/ny.png", "res/textures/pz.png", "res/textures/nz.png"};
 
 	printf("Start loading resources\n");
@@ -26,13 +25,13 @@ int load_resources(void)
 		return -1;
 
 	/* shaders */
-	if(shd_set("mdl", "res/shaders/model.vert", "res/shaders/model.frag", 3, vars1) < 0)
+	if(shd_set("mdl", "res/shaders/model.vert", "res/shaders/model.frag", 3, vars1, MDL_TYPE_DEFAULT) < 0)
 		return -1;
 
-	if(shd_set("ani", "res/shaders/animated.vert", "res/shaders/animated.frag", 5, vars2) < 0)
+	if(shd_set("ani", "res/shaders/animated.vert", "res/shaders/animated.frag", 5, vars2, MDL_TYPE_DEFAULT) < 0)
 		return -1;
 
-	if(shd_set("skybox", "res/shaders/skybox.vert", "res/shaders/skybox.frag", 1, vars3) < 0)
+	if(shd_set("skybox", "res/shaders/skybox.vert", "res/shaders/skybox.frag", 3, vars1, MDL_TYPE_SKYBOX) < 0)
 		return -1;
 
 	/* textures */
@@ -52,22 +51,22 @@ int load_resources(void)
 		return -1;
 
 	/* models */
-	if(mdl_load("wld", "res/models/plane.amo", tex_get("flr"), shd_get("mdl")) < 0)
+	if(mdl_load("wld", "res/models/plane.amo", tex_get("flr"), shd_get("mdl"), MDL_TYPE_DEFAULT) < 0)
 		return -1;
 
-	if(mdl_load("plr", "res/models/base.amo", tex_get("ba0"), shd_get("ani")) < 0)
+	if(mdl_load("plr", "res/models/base.amo", tex_get("ba0"), shd_get("ani"), MDL_TYPE_DEFAULT) < 0)
 		return -1;
 
-	if(mdl_load("tst", "res/models/test.amo", tex_get("ba1"), shd_get("mdl")) < 0)
+	if(mdl_load("tst", "res/models/test.amo", tex_get("ba1"), shd_get("mdl"), MDL_TYPE_DEFAULT) < 0)
 			return -1;
 
-	if(mdl_load("gun", "res/models/pistol.obj", tex_get("ba1"), shd_get("mdl")) < 0)
+	if(mdl_load("gun", "res/models/pistol.obj", tex_get("ba1"), shd_get("mdl"), MDL_TYPE_DEFAULT) < 0)
 			return -1;
 
-	if(mdl_load("sph", "res/models/sphere.obj", tex_get("ba0"), shd_get("mdl")) < 0)
+	if(mdl_load("sph", "res/models/sphere.obj", tex_get("ba0"), shd_get("mdl"), MDL_TYPE_DEFAULT) < 0)
 			return -1;
 
-	if(mdl_load("cube", "res/models/cube.obj", tex_get("skybox"), shd_get("skybox")) < 0)
+	if(mdl_load("cube", "res/models/cube.obj", tex_get("skybox"), shd_get("skybox"), MDL_TYPE_SKYBOX) < 0)
 		abort();
 
 	printf("Finished loading resources\n");

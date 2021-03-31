@@ -99,10 +99,12 @@ extern void ast_close(void);
  * @num: The number of variables
  * @vars: An array of variable-names which will be bound to the corresponding
  *        position in the array
+ * @type: the type of the models this shader is for
  *
  * Returns: The slot of the shader in the table or -1 if an error occurred
  */
-extern short shd_set(char *name, char *vs, char *fs, int num, char **vars);
+extern short shd_set(char *name, char *vs, char *fs, int num, char **vars,
+			enum mdl_type type);
 
 
 /*

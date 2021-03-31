@@ -1,9 +1,7 @@
 #ifndef _OPENGL_H
 #define _OPENGL_H
 
-#include "matrix.h"
-#include "model.h"
-#include "rig.h"
+#include "render_types.h"
 #include "sdl.h"
 
 /*
@@ -169,8 +167,9 @@ extern void gl_render_set_vao(uint32_t vao);
  * Set the texture during rendering.
  * 
  * @hdl: the handle of the texture
+ * @type: the type of model this texture is for
  */
-extern void gl_render_set_texture(uint32_t hdl);
+extern void gl_render_set_texture(uint32_t hdl, enum mdl_type type);
 
 
 /*
@@ -187,8 +186,9 @@ extern void gl_render_set_uniform_buffer(unsigned int buf,
  * Draw the model.
  * 
  * @indices: The amount of indices
+ * @type: the type of model that should be rendered
  */
-extern void gl_render_draw(size_t indices);
+extern void gl_render_draw(size_t indices, enum mdl_type type);
 
 
 /*

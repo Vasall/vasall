@@ -1163,7 +1163,7 @@ static int save_cache(char *name, VkPipelineCache cache)
 }
 
 extern int vk_create_pipeline(char *vtx, char *frg, enum vk_in_attr attr,
-                              int skybox, struct vk_pipeline *pipeline)
+                              enum mdl_type type, struct vk_pipeline *pipeline)
 {
 	int counter;
 	uint32_t bin_size;
@@ -1314,7 +1314,7 @@ extern int vk_create_pipeline(char *vtx, char *frg, enum vk_in_attr attr,
 	ras.depthClampEnable = VK_FALSE;
 	ras.rasterizerDiscardEnable = VK_FALSE;
 	ras.polygonMode = VK_POLYGON_MODE_FILL;
-	if(skybox)
+	if(type == MDL_TYPE_SKYBOX)
 		ras.cullMode = VK_CULL_MODE_FRONT_BIT;
 	else
 		ras.cullMode = VK_CULL_MODE_BACK_BIT;
@@ -1341,7 +1341,7 @@ extern int vk_create_pipeline(char *vtx, char *frg, enum vk_in_attr attr,
 		VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 	depth.pNext = NULL;
 	depth.flags = 0;
-	if(skybox) {
+	if(type == MDL_TYPE_SKYBOX) {
 		depth.depthTestEnable = VK_FALSE;
 		depth.depthWriteEnable = VK_FALSE;
 	} else {

@@ -4,6 +4,8 @@
 #include <vulkan/vulkan.h>
 #include <SDL2/SDL_vulkan.h>
 
+#include "render_types.h"
+
 enum vk_in_attr {
 	IN_ATTR_POS = 1 << 0,
 	IN_ATTR_TEX = 1 << 1,
@@ -64,13 +66,13 @@ extern int vk_resize(void);
  * @vtx: The path to the SPIR-V vertex shader
  * @frg: The path to the SPIR-V fragment shader
  * @attr: Flags, which determine the input attributes to the vertex shader
- * @skybox: 1 if the shader is for a skybox, 0 else
+ * @type: The type of the model this pipeline renders
  * @pipeline: A pointer to the pipeline, which will be filled by the function
  * 
  * Returns: 0 on success or -1 if an error occured
  */
 extern int vk_create_pipeline(char *vtx, char *frg, enum vk_in_attr attr,
-                              int skybox, struct vk_pipeline *pipeline);
+                              enum mdl_type type, struct vk_pipeline *pipeline);
 
 
 /*

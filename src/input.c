@@ -377,11 +377,6 @@ latest_update:
 		}
 	}
 
-	/*
-	 * TODO: Remove unnecessary print
-	 */
-	inp_log_print();
-
 	return islot;
 }
 

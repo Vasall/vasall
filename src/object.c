@@ -704,29 +704,13 @@ extern void obj_sys_update(uint32_t now)
 
 	struct input_entry inp;
 
-	static c = 0;
-
-
 	/* Check if new inputs occurred */
 	if(inp_check_new()) {
 		/* Set iterator to latest input */
 		inp_begin();
 
-		printf("\n");
-
 		inp_ts = inp_cur_ts();
 		run_ts = inp_ts;
-
-		printf("Input Time: %x ", inp_ts);
-
-		inp_get(&inp);
-		printf("Type: %d  ", inp.type);
-
-		if(inp.type == 1) {
-			vec2_print(inp.mov);
-		}
-
-		printf("\n");
 
 		obj_log_col(inp_ts, logi);
 
@@ -804,13 +788,6 @@ extern void obj_sys_update(uint32_t now)
 
 				vec3_cross(frw, up, rgt);
 				vec3_nrm(rgt, rgt);
-		
-				if(c) {
-					printf("Current Movement: ");
-					vec2_print(objects.mov[o]);
-					printf("\n");
-					c = 0;
-				}
 
 				vec3_scl(frw, objects.mov[o][1], frw);
 				vec3_scl(rgt, objects.mov[o][0], rgt);
@@ -910,8 +887,6 @@ extern void obj_sys_update(uint32_t now)
 
 		if(inp_get(&inp)) {
 			short obj_slot = obj_sel_id(inp.obj_id);
-
-			printf("%x: %d\n", inp.ts, inp.type);
 			
 			if(inp.ts >= objects.ts[obj_slot]) {
 				switch(inp.type) {
@@ -921,11 +896,6 @@ extern void obj_sys_update(uint32_t now)
 					case INP_T_MOV:
 						vec2_cpy(objects.mov[obj_slot],
 								inp.mov);
-
-						printf("%8x: %d - ", inp.ts, inp.type);
-						vec2_print(inp.mov);
-						printf("\n");
-						c = 1;
 						break;
 
 					case INP_T_DIR:

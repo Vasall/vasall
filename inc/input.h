@@ -57,13 +57,14 @@ struct input_pipe {
  * from lowest timestamp to highest timestamp.
  */
 
-#define INP_LOG_LIM 16
+#define INP_LOG_LIM 32
 
 struct input_log {
 	short start;
 	short num;
 
 	short latest_slot;
+	short latest_itr;
 	uint32_t latest_ts;
 	short itr;
 
@@ -81,7 +82,12 @@ struct input_wrapper {
 	vec2_t mov;
 	vec3_t dir;
 
+	uint8_t mask;
+
+	uint32_t mov_ts;
 	vec2_t mov_old;
+
+	uint32_t dir_ts;
 	vec3_t dir_old;
 
 	/* The share-buffer to share with peers */
@@ -158,6 +164,14 @@ extern int inp_push(enum input_pipe_mode m, uint32_t id, enum input_type type,
  *          error has occurred
  */
 extern int inp_pull(struct input_entry *ent);
+
+
+/*
+ * Print all entries from a pipe in the console.
+ *
+ * @m: The pipe to dump in the terminal
+ */
+extern void inp_pipe_print(enum input_pipe_mode m);
 
 
 /*
@@ -268,9 +282,12 @@ extern int inp_pack(char *out);
 extern int inp_unpack(char *in);
 
 
+extern void inp_proc(void);
+
+
 /*
  * Sort the entries in the pipes and process them. 
  */
-extern void inp_update(void);
+extern void inp_update(uint32_t ts);
 
 #endif

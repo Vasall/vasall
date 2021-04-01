@@ -12,6 +12,8 @@ struct input_wrapper input;
 
 extern int inp_init(void)
 {
+	input.mask = 0;
+
 	/* Clear the input-pipes */
 	inp_pipe_clear(INP_PIPE_IN);
 	inp_pipe_clear(INP_PIPE_OUT);
@@ -21,6 +23,8 @@ extern int inp_init(void)
 	vec3_clr(input.dir);
 	vec2_clr(input.mov_old);
 	vec3_clr(input.dir_old);
+
+	input.log.start = 0;
 
 	/* Reset the log */
 	inp_reset();
@@ -59,42 +63,20 @@ extern void inp_pipe_clear(enum input_pipe_mode m)
 
 extern void inp_change(enum input_type type, uint32_t ts, void *in)
 {
-	ts = ceil(ts / TICK_TIME) * TICK_TIME;
-
 	switch(type) {
 		case INP_T_NONE:
 			break;
 
 		case INP_T_MOV:
+			input.mask |= 1;
+			input.mov_ts = ts; 
 			vec2_cpy(input.mov, (float *)in);
-
-			/* Check if the value really has changed */
-			if(!vec2_cmp(input.mov, input.mov_old)) {
-				/* If yes, then save value and mark change */
-				vec2_cpy(input.mov_old, input.mov);
-
-				/* Push new entries into the in- and out-pipe */
-				inp_push(INP_PIPE_IN, objects.id[core.obj],
-						INP_T_MOV, ts, input.mov);
-				inp_push(INP_PIPE_OUT, objects.id[core.obj],
-						INP_T_MOV, ts, input.mov);
-			}
 			break;
 
 		case INP_T_DIR:
+			input.mask |= 2;
+			input.dir_ts = ts;
 			vec3_cpy(input.dir, (float *)in);
-
-			/* Check if the value really has changed */
-			if(!vec3_cmp(input.dir, input.dir_old)) {
-				/* If yes, then save value and mark change */
-				vec3_cpy(input.dir_old, input.dir);
-
-				/* Push new entries into the in- and out-pipe */
-				inp_push(INP_PIPE_IN, objects.id[core.obj],
-						INP_T_DIR, ts, input.dir);
-				inp_push(INP_PIPE_OUT, objects.id[core.obj],
-						INP_T_DIR, ts, input.dir);
-			}
 			break;
 	}
 }
@@ -122,6 +104,7 @@ extern int inp_retrieve(enum input_type type, void *out)
 extern int inp_push(enum input_pipe_mode m, uint32_t id, enum input_type type,
 		uint32_t ts, void *in)
 {
+	short i;
 	short num;	
 	struct input_pipe *pipe;
 
@@ -132,6 +115,32 @@ extern int inp_push(enum input_pipe_mode m, uint32_t id, enum input_type type,
 	else if(m == INP_PIPE_OUT) {
 		pipe = &input.pipe_out;
 	}
+
+	/* 
+	 * Check if an entry for an object with the same timestamp and type is
+	 * already in list and overwrite it.
+	 */
+	for(i = 0; i < pipe->num; i++) {
+		if(pipe->ts[i] == ts && pipe->obj_id[i] == id) {
+			if(pipe->type[i] == type) {
+				switch(type) {
+					case INP_T_NONE:
+						break;
+
+					case INP_T_MOV:
+						vec2_cpy(pipe->mov[i], (float *)in);
+						break;
+
+					case INP_T_DIR:
+						vec3_cpy(pipe->dir[i], (float *)in);
+						break;
+				}
+
+				return 0;
+			}
+		}
+	}
+
 
 	/* If the input-pipe is already full */
 	num = pipe->num;
@@ -165,7 +174,7 @@ extern int inp_pull(struct input_entry *ent)
 	int i;
 	struct input_pipe *pipe = &input.pipe_in;
 
-	if(pipe->num <= 0)
+	if(pipe->num < 1)
 		return 0;
 
 	i = pipe->order[pipe->num - 1];
@@ -173,7 +182,7 @@ extern int inp_pull(struct input_entry *ent)
 	ent->obj_id = pipe->obj_id[i];
 	ent->type = pipe->type[i];
 	ent->ts = pipe->ts[i];
-	
+
 	switch(pipe->type[i]) {
 		case INP_T_MOV:
 			vec2_cpy(ent->mov, pipe->mov[i]);
@@ -191,6 +200,44 @@ extern int inp_pull(struct input_entry *ent)
 }
 
 
+extern void inp_pipe_print(enum input_pipe_mode m)
+{
+	int i;
+	struct input_pipe *pipe;
+
+	printf("-\n");
+
+	/* Get a pointer to the associated pipe */
+	if(m == INP_PIPE_IN) {
+		pipe = &input.pipe_in;
+	}
+	else if(m == INP_PIPE_OUT) {
+		pipe = &input.pipe_out;
+	}
+
+	for(i = 0; i < pipe->num; i++) {
+		printf("%d: %8x >> type: %2d - ts: %6x - ", i, pipe->obj_id[i],
+				pipe->type[i], pipe->ts[i]);
+
+		switch(pipe->type[i]) {
+			case INP_T_NONE:
+				break;
+
+			case INP_T_MOV:
+				vec2_print(pipe->mov[i]);
+				break;
+
+			case INP_T_DIR:
+				vec3_print(pipe->dir[i]);
+				break;
+		}
+
+		printf("\n");
+	}
+
+}
+
+
 extern short inp_log_push(uint32_t id, enum input_type type, uint32_t ts,
 		void *in)
 {
@@ -202,13 +249,44 @@ extern short inp_log_push(uint32_t id, enum input_type type, uint32_t ts,
 	short ins = input.log.start;
 
 	short islot = -1;
+	short itr = -1;
 
 	/* If the list is empty */
 	if(input.log.num == 0) {	
 		islot = 0;
+		itr = 0;
 
 		input.log.num = 1;
 		goto insert;
+	}
+
+	/*
+	 * Check if an input for an object with the same timestamp and type has
+	 * already been made and overwrite it.
+	 */
+	for(i = 0; i < input.log.num; i++) {
+		tmp = (input.log.start + i) % INP_LOG_LIM;
+
+		if(input.log.ts[tmp] == ts && input.log.obj_id[tmp] == id) {
+			if(input.log.type[tmp] == type) {
+				switch(type) {
+					case INP_T_NONE:
+						break;
+
+					case INP_T_MOV:
+						vec2_cpy(input.log.mov[tmp], in);
+						break;
+
+					case INP_T_DIR:
+						vec3_cpy(input.log.dir[tmp], in);
+						break;
+				}
+
+				islot = tmp;
+				itr = i;
+				goto latest_update;
+			}
+		}
 	}
 
 	/* Attach entry to the end if possible */
@@ -220,6 +298,7 @@ extern short inp_log_push(uint32_t id, enum input_type type, uint32_t ts,
 			input.log.num += 1;
 
 		islot = (tmp + 1) % INP_LOG_LIM;
+		itr = input.log.num;
 		goto insert;
 	}
 
@@ -227,7 +306,7 @@ extern short inp_log_push(uint32_t id, enum input_type type, uint32_t ts,
 	for(i = input.log.num - 1; i >= 0; i--) {
 		tmp = (input.log.start + i) % INP_LOG_LIM;
 
-		if(input.log.ts[tmp] < ts) {
+		if(input.log.ts[tmp] <= ts) {
 			ins = 0;
 
 			if(input.log.num + 1 >= INP_LOG_LIM)
@@ -242,6 +321,7 @@ extern short inp_log_push(uint32_t id, enum input_type type, uint32_t ts,
 
 				input.log.ts[to] = input.log.ts[from];
 				input.log.type[to] = input.log.type[from];
+				input.log.obj_id[to] = input.log.obj_id[from];
 
 				vec2_cpy(input.log.mov[to], input.log.mov[from]);
 				vec3_cpy(input.log.dir[to], input.log.dir[from]);
@@ -257,6 +337,7 @@ extern short inp_log_push(uint32_t id, enum input_type type, uint32_t ts,
 			}
 
 			islot = tmp;
+			itr = i + 1;
 			goto insert;
 		}
 	}
@@ -282,13 +363,16 @@ insert:
 			break;
 	}
 
-	if(input.log.latest_slot == -1) {
+latest_update:
+	if(input.log.latest_itr == -1) {
 		input.log.latest_slot = islot;
+		input.log.latest_itr = itr;
 		input.log.latest_ts = ts;
 	}
 	else {
-		if(input.log.latest_ts > ts) {
+		if(input.log.latest_ts > ts && input.log.latest_itr > itr) {
 			input.log.latest_slot = islot;
+			input.log.latest_itr = itr;
 			input.log.latest_ts = ts;
 		}
 	}
@@ -324,6 +408,27 @@ extern void inp_log_print(void)
 		printf("%8x >> ", input.log.obj_id[slot]);
 		printf("type: %4d - ", input.log.type[slot]);
 		printf("ts: %6x - ", input.log.ts[slot]);
+
+		switch(input.log.type[slot]) {
+			case INP_T_NONE:
+				break;
+
+			case INP_T_MOV:
+				vec2_print(input.log.mov[slot]);
+				break;
+
+			case INP_T_DIR:
+				vec3_print(input.log.dir[slot]);
+				break;
+		}
+
+
+		if(slot == input.log.start)
+			printf("  \t Start  ");
+
+		if(slot == input.log.latest_slot)
+			printf("  \t  !!");
+
 		printf("\n");
 	}
 }
@@ -398,7 +503,7 @@ extern int inp_get(struct input_entry *ent)
 	ent->obj_id =  log->obj_id[idx];
 	ent->type =    log->type[idx];
 	ent->ts =      log->ts[idx];
-	
+
 	switch(log->type[idx]) {
 		case INP_T_NONE:
 			break;
@@ -594,7 +699,43 @@ static void inp_pipe_sort(enum input_pipe_mode m)
 	}
 }
 
-extern void inp_update(void)
+extern void inp_proc(void)
+{
+	uint32_t ts;
+
+	/* Check if the value really has changed */
+	if((input.mask & 1) && !vec2_cmp(input.mov, input.mov_old)) {
+		/* If yes, then save value and mark change */
+		vec2_cpy(input.mov_old, input.mov);
+
+		ts = ceil(input.mov_ts / TICK_TIME) * TICK_TIME;
+
+		/* Push new entries into the in- and out-pipe */
+		inp_push(INP_PIPE_IN, objects.id[core.obj],
+				INP_T_MOV, ts, input.mov);
+		inp_push(INP_PIPE_OUT, objects.id[core.obj],
+				INP_T_MOV, ts, input.mov);
+	}
+
+
+	/* Check if the value really has changed */
+	if((input.mask & 2) && !vec3_cmp(input.dir, input.dir_old)) {
+		/* If yes, then save value and mark change */
+		vec3_cpy(input.dir_old, input.dir);
+
+		ts = ceil(input.dir_ts / TICK_TIME) * TICK_TIME;
+
+		/* Push new entries into the in- and out-pipe */
+		inp_push(INP_PIPE_IN, objects.id[core.obj],
+				INP_T_DIR, ts, input.dir);
+		inp_push(INP_PIPE_OUT, objects.id[core.obj],
+				INP_T_DIR, ts, input.dir);
+	}
+
+	input.mask = 0;
+}
+
+extern void inp_update(uint32_t ts)
 {
 	struct input_entry inp;
 
@@ -606,7 +747,7 @@ extern void inp_update(void)
 	 * TODO: Validate input.
 	 */
 
-	
+
 	input.log.latest_slot = -1;
 
 	/* Push all new entries from the in-pipe into the input-log */

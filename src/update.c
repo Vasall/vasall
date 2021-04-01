@@ -125,13 +125,13 @@ void game_update(void)
 	/* Get the current time */
 	uint32_t now = net_gettime();
 
-
+	inp_proc();
 
 	/*
 	 * Process the inputs, push the local ones into the pipe and sort the
 	 * entries.
 	 */
-	inp_update();
+	inp_update(now);
 
 
 	/*
@@ -205,6 +205,9 @@ void game_update(void)
 	/* Clear both input-pipes */
 	inp_pipe_clear(INP_PIPE_IN);
 	inp_pipe_clear(INP_PIPE_OUT);
+
+	input.log.latest_slot = -1;
+	input.log.latest_itr = -1;
 }
 
 void game_render(void)

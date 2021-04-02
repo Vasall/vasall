@@ -704,6 +704,8 @@ extern void obj_sys_update(uint32_t now)
 
 	struct input_entry inp;
 
+	now = floor(now / TICK_TIME) * TICK_TIME;
+
 	/* Check if new inputs occurred */
 	if(inp_check_new()) {
 		/* Set iterator to latest input */

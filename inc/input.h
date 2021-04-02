@@ -15,15 +15,15 @@ enum input_pipe_mode {
 	INP_PIPE_OUT
 };
 
-enum input_type {
-	INP_T_NONE = 0,
-	INP_T_MOV =  1,
-	INP_T_DIR =  2
-};
+
+#define INP_M_NONE  0
+#define INP_M_MOV   (1<<0)
+#define INP_M_DIR   (1<<2)
+
 
 struct input_entry {
 	uint32_t  obj_id;
-	uint8_t   type;
+	uint8_t   mask;
 	uint32_t  ts;
 
 	vec2_t    mov;
@@ -36,7 +36,7 @@ struct input_pipe {
 	short       order[INP_ENT_LIM];
 
 	uint32_t    obj_id[INP_ENT_LIM];
-	uint8_t     type[INP_ENT_LIM];
+	uint8_t     mask[INP_ENT_LIM];
 	uint32_t    ts[INP_ENT_LIM];
 
 	vec2_t      mov[INP_ENT_LIM];
@@ -69,7 +69,7 @@ struct input_log {
 	short itr;
 
 	uint32_t   obj_id[INP_LOG_LIM];
-	uint8_t    type[INP_LOG_LIM];
+	uint8_t    mask[INP_LOG_LIM];
 	uint32_t   ts[INP_LOG_LIM];
 
 	vec2_t     mov[INP_LOG_LIM];
@@ -129,28 +129,31 @@ extern void inp_pipe_clear(enum input_pipe_mode m);
 /*
  *  
  */
-extern void inp_change(enum input_type type, uint32_t ts, void *in);
+extern void inp_change(uint8_t mask, uint32_t ts, void *in);
 
 
 /*
  * 
  */
-extern int inp_retrieve(enum input_type type, void *out);
+extern int inp_retrieve(uint8_t mask, void *out);
 
 
 /*
- * Push a new entry to the specified pipe.
+ * Push a new entry to the specified pipe with the given data. If an attribute
+ * is not passed, set the according bit in the mask to 0 and pass NULL for the
+ * parameter.
  *
- * @m: The pipe to push the entry to
+ * @pm: The pipe to add the input to
  * @id: The ID of the affiliated object
- * @type: The type of input
+ * @mask: The input-mask
  * @ts: The timestamp at which the input occurred in network time(milliseconds)
- * @in: A buffer with the input-data
+ * @mov: A 2d-vector containing movement data or NULL
+ * @dir: A 3d-vector containing direction data or NULL
  * 
  * Returns: Either 0 on success or -1 if an error occurred
  */
-extern int inp_push(enum input_pipe_mode m, uint32_t id, enum input_type type,
-		uint32_t ts, void *in);
+extern int inp_push(enum input_pipe_mode pm, uint32_t id, uint8_t mask,
+		uint32_t ts, float *mov, float *dir);
 
 
 /*
@@ -178,17 +181,18 @@ extern void inp_pipe_print(enum input_pipe_mode m);
  * Insert a new input-entry into the input-log. Either push it to the end or
  * insert it in between. The entries are sorted in ascending order of
  * timestamp.
- * 
+ *
  * @id: The id of the object the input affects
- * @type: The type of input
+ * @mask: The input-mask
  * @ts: The timestamp of the input
- * @in: A buffer with the input-data
+ * @mov: A 2d-vector containing movement data or NULL
+ * @dir: A 3d-vector containing direction data or NULL
  *
  * Returns: Either the slot the input has been put on in the log or -1 if an
  *          error occurred
  */
-extern short inp_log_push(uint32_t id, enum input_type type, uint32_t ts,
-		void *in);
+extern short inp_log_push(uint32_t id, uint8_t mask, uint32_t ts, float *mov,
+		float *dir);
 
 
 /*
@@ -203,11 +207,6 @@ extern void inp_log_print(void);
  * Returns: 1 if new inputs have been made, or 0 if not
  */
 extern int inp_check_new(void);
-
-/*
- * Reset the iterator of the input-log to the start.
- */
-extern void inp_reset(void);
 
 
 /*
@@ -224,6 +223,7 @@ extern void inp_begin(void);
  * Returns: 0 if the end has been reached, or 1 if the iterator has been moved
  */
 extern int inp_next(void);
+
 
 /*
  * Get the timestamp of the current input-entry in the input-log with the
@@ -282,6 +282,9 @@ extern int inp_pack(char *out);
 extern int inp_unpack(char *in);
 
 
+/*
+ * 
+ */
 extern void inp_proc(void);
 
 

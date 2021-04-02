@@ -891,20 +891,11 @@ extern void obj_sys_update(uint32_t now)
 			short obj_slot = obj_sel_id(inp.obj_id);
 			
 			if(inp.ts >= objects.ts[obj_slot]) {
-				switch(inp.type) {
-					case INP_T_NONE:
-						break;
+				if(inp.mask & INP_M_MOV)
+					vec2_cpy(objects.mov[obj_slot], inp.mov);
 
-					case INP_T_MOV:
-						vec2_cpy(objects.mov[obj_slot],
-								inp.mov);
-						break;
-
-					case INP_T_DIR:
-						vec3_cpy(objects.dir[obj_slot],
-								inp.dir);
-						break;
-				}
+				if(inp.mask & INP_M_DIR)
+					vec3_cpy(objects.dir[obj_slot], inp.dir);
 			}
 
 			/* Jump to next input */

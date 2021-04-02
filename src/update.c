@@ -31,7 +31,7 @@ void game_proc_evt(event_t *evt)
 
 	switch(evt->type) {
 		case SDL_KEYDOWN:
-			inp_retrieve(INP_T_MOV, mov);
+			inp_retrieve(INP_M_MOV, mov);
 
 			switch((int)evt->key.keysym.scancode) {
 				case 4:  /* A-Key */
@@ -52,11 +52,11 @@ void game_proc_evt(event_t *evt)
 					break;
 			}
 
-			inp_change(INP_T_MOV, ts, mov);
+			inp_change(INP_M_MOV, ts, mov);
 			break;
 
 		case SDL_KEYUP:
-			inp_retrieve(INP_T_MOV, mov);
+			inp_retrieve(INP_M_MOV, mov);
 
 			switch((int)evt->key.keysym.scancode) {
 				case 4:  /* A-Key */
@@ -69,7 +69,7 @@ void game_proc_evt(event_t *evt)
 					break;
 			}
 
-			inp_change(INP_T_MOV, ts, mov);
+			inp_change(INP_M_MOV, ts, mov);
 			break;
 
 
@@ -86,10 +86,10 @@ void game_proc_evt(event_t *evt)
 				/* Rotate the camera */
 				cam_rot(x, y);
 
-				if(cam_get_mode() == CAM_MODE_FPV) {
-					inp_change(INP_T_DIR, ts,
-							camera.v_forward);
-				}
+				if(cam_get_mode() != CAM_MODE_FPV)
+					break;
+				
+				inp_change(INP_M_DIR, ts, camera.v_forward);
 			}
 			break;
 

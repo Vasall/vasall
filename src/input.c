@@ -24,10 +24,11 @@ extern int inp_init(void)
 	vec2_clr(input.mov_old);
 	vec3_clr(input.dir_old);
 
-	input.log.start = 0;
-
 	/* Reset the log */
-	inp_reset();
+	input.log.start = 0;
+	input.log.latest_slot = -1;
+	input.log.latest_ts = 0;
+	input.log.itr = 0;
 
 	return 0;
 }
@@ -45,76 +46,57 @@ extern void inp_pipe_clear(enum input_pipe_mode m)
 	int i;
 
 	/* Get a pointer to the associated pipe */
-	if(m == INP_PIPE_IN) {
+	if(m == INP_PIPE_IN)
 		pipe = &input.pipe_in;
-	}
-	else if(m == INP_PIPE_OUT) {
+	else if(m == INP_PIPE_OUT)
 		pipe = &input.pipe_out;
-	}
 
 	/* Reset number of entries */
 	pipe->num = 0;
 
-	for(i = 0; i < INP_ENT_LIM; i++) {
-		pipe->type[i] = 0;
+	for(i = 0; i < INP_ENT_LIM; i++)
+		pipe->mask[i] = INP_M_NONE;
+}
+
+
+extern void inp_change(uint8_t mask, uint32_t ts, void *in)
+{
+	if(mask == INP_M_MOV) {
+		input.mask |= INP_M_MOV;
+		input.mov_ts = ts; 
+		vec2_cpy(input.mov, (float *)in);
+	}
+	else if(mask == INP_M_DIR) {
+		input.mask |= INP_M_DIR;
+		input.dir_ts = ts;
+		vec3_cpy(input.dir, (float *)in);
 	}
 }
 
 
-extern void inp_change(enum input_type type, uint32_t ts, void *in)
+extern int inp_retrieve(uint8_t mask, void *out)
 {
-	switch(type) {
-		case INP_T_NONE:
-			break;
-
-		case INP_T_MOV:
-			input.mask |= 1;
-			input.mov_ts = ts; 
-			vec2_cpy(input.mov, (float *)in);
-			break;
-
-		case INP_T_DIR:
-			input.mask |= 2;
-			input.dir_ts = ts;
-			vec3_cpy(input.dir, (float *)in);
-			break;
-	}
-}
-
-
-extern int inp_retrieve(enum input_type type, void *out)
-{
-	switch(type) {
-		case INP_T_NONE:
-			break;
-
-		case INP_T_MOV:
-			vec2_cpy(out, input.mov);
-			break;
-
-		case INP_T_DIR:
-			vec3_cpy(out, input.dir);
-			break;
-	}
+	if(mask & INP_M_MOV)
+		vec2_cpy(out, input.mov);
+	else if(mask & INP_M_DIR)
+		vec3_cpy(out, input.dir);
 
 	return 0;
 }
 
 
-extern int inp_push(enum input_pipe_mode m, uint32_t id, enum input_type type,
-		uint32_t ts, void *in)
+extern int inp_push(enum input_pipe_mode pm, uint32_t id, uint8_t mask,
+		uint32_t ts, float *mov, float *dir)
 {
 	short i;
 	short num;	
 	struct input_pipe *pipe;
 
 	/* Get a pointer to the associated pipe */
-	if(m == INP_PIPE_IN) {
+	if(pm == INP_PIPE_IN)
 		pipe = &input.pipe_in;
-	}
-	else if(m == INP_PIPE_OUT) {
+	else if(pm == INP_PIPE_OUT)
 		pipe = &input.pipe_out;
-	}
 
 	/* 
 	 * Check if an entry for an object with the same timestamp and type is
@@ -122,22 +104,15 @@ extern int inp_push(enum input_pipe_mode m, uint32_t id, enum input_type type,
 	 */
 	for(i = 0; i < pipe->num; i++) {
 		if(pipe->ts[i] == ts && pipe->obj_id[i] == id) {
-			if(pipe->type[i] == type) {
-				switch(type) {
-					case INP_T_NONE:
-						break;
-
-					case INP_T_MOV:
-						vec2_cpy(pipe->mov[i], (float *)in);
-						break;
-
-					case INP_T_DIR:
-						vec3_cpy(pipe->dir[i], (float *)in);
-						break;
-				}
-
-				return 0;
+			if(mask == INP_M_MOV && mov != NULL) {
+				vec2_cpy(pipe->mov[i], mov);
+				pipe->mask[i] |= INP_M_MOV;
 			}
+			if(mask == INP_M_DIR && dir != NULL) {
+				vec3_cpy(pipe->dir[i], dir);
+				pipe->mask[i] |= INP_M_DIR;
+			}
+			return 0;
 		}
 	}
 
@@ -148,20 +123,16 @@ extern int inp_push(enum input_pipe_mode m, uint32_t id, enum input_type type,
 		return -1;
 
 	pipe->obj_id[num] = id;
-	pipe->type[num] = type;
+	pipe->mask[num] = INP_M_NONE;
 	pipe->ts[num] = ts;
 
-	switch(type) {
-		case INP_T_NONE:
-			break;
-
-		case INP_T_MOV:
-			vec2_cpy(pipe->mov[num], (float *)in);
-			break;
-
-		case INP_T_DIR:
-			vec3_cpy(pipe->dir[num], (float *)in);
-			break;
+	if(mask == INP_M_MOV && mov != NULL) {
+		vec2_cpy(pipe->mov[num], mov);
+		pipe->mask[num] |= INP_M_MOV;
+	}
+	if(mask == INP_M_DIR && dir != NULL) {
+		vec3_cpy(pipe->dir[num], dir);
+		pipe->mask[num] |= INP_M_DIR;
 	}
 
 	pipe->num++;
@@ -180,18 +151,13 @@ extern int inp_pull(struct input_entry *ent)
 	i = pipe->order[pipe->num - 1];
 
 	ent->obj_id = pipe->obj_id[i];
-	ent->type = pipe->type[i];
+	ent->mask = pipe->mask[i];
 	ent->ts = pipe->ts[i];
 
-	switch(pipe->type[i]) {
-		case INP_T_MOV:
-			vec2_cpy(ent->mov, pipe->mov[i]);
-			break;
-
-		case INP_T_DIR:
-			vec3_cpy(ent->dir, pipe->dir[i]);
-			break;
-	}
+	if(pipe->mask[i] & INP_M_MOV)
+		vec2_cpy(ent->mov, pipe->mov[i]);
+	if(pipe->mask[i] & INP_M_DIR)
+		vec3_cpy(ent->dir, pipe->dir[i]);
 
 	/* Reduce number of entries */
 	pipe->num -= 1;
@@ -208,28 +174,23 @@ extern void inp_pipe_print(enum input_pipe_mode m)
 	printf("-\n");
 
 	/* Get a pointer to the associated pipe */
-	if(m == INP_PIPE_IN) {
+	if(m == INP_PIPE_IN)
 		pipe = &input.pipe_in;
-	}
-	else if(m == INP_PIPE_OUT) {
+	else if(m == INP_PIPE_OUT)
 		pipe = &input.pipe_out;
-	}
 
 	for(i = 0; i < pipe->num; i++) {
-		printf("%d: %8x >> type: %2d - ts: %6x - ", i, pipe->obj_id[i],
-				pipe->type[i], pipe->ts[i]);
+		printf("%d: %8x >> mask: %2d - ts: %6x", i, pipe->obj_id[i],
+				pipe->mask[i], pipe->ts[i]);
 
-		switch(pipe->type[i]) {
-			case INP_T_NONE:
-				break;
+		if(pipe->mask[i] & INP_M_MOV) {
+			printf(" - mov: ");
+			vec2_print(pipe->mov[i]);
+		}
 
-			case INP_T_MOV:
-				vec2_print(pipe->mov[i]);
-				break;
-
-			case INP_T_DIR:
-				vec3_print(pipe->dir[i]);
-				break;
+		if(pipe->mask[i] & INP_M_DIR) {
+			printf(" - dir: ");
+			vec3_print(pipe->dir[i]);
 		}
 
 		printf("\n");
@@ -238,8 +199,8 @@ extern void inp_pipe_print(enum input_pipe_mode m)
 }
 
 
-extern short inp_log_push(uint32_t id, enum input_type type, uint32_t ts,
-		void *in)
+extern short inp_log_push(uint32_t id, uint8_t mask, uint32_t ts, float *mov,
+		float *dir)
 {
 	short i;
 	short k;
@@ -268,24 +229,18 @@ extern short inp_log_push(uint32_t id, enum input_type type, uint32_t ts,
 		tmp = (input.log.start + i) % INP_LOG_LIM;
 
 		if(input.log.ts[tmp] == ts && input.log.obj_id[tmp] == id) {
-			if(input.log.type[tmp] == type) {
-				switch(type) {
-					case INP_T_NONE:
-						break;
-
-					case INP_T_MOV:
-						vec2_cpy(input.log.mov[tmp], in);
-						break;
-
-					case INP_T_DIR:
-						vec3_cpy(input.log.dir[tmp], in);
-						break;
-				}
-
-				islot = tmp;
-				itr = i;
-				goto latest_update;
+			if(mask == INP_M_MOV && mov != NULL) { 
+				vec2_cpy(input.log.mov[tmp], mov);
+				input.log.mask[tmp] |= INP_M_MOV;
 			}
+			if(mask == INP_M_DIR && dir != NULL) {
+				vec3_cpy(input.log.dir[tmp], dir);
+				input.log.mask[tmp] |= INP_M_DIR;
+			}
+				
+			islot = tmp;
+			itr = i;
+			goto latest_update;
 		}
 	}
 
@@ -320,7 +275,7 @@ extern short inp_log_push(uint32_t id, enum input_type type, uint32_t ts,
 				if(to < 0) to = INP_LOG_LIM + to;
 
 				input.log.ts[to] = input.log.ts[from];
-				input.log.type[to] = input.log.type[from];
+				input.log.mask[to] = input.log.mask[from];
 				input.log.obj_id[to] = input.log.obj_id[from];
 
 				vec2_cpy(input.log.mov[to], input.log.mov[from]);
@@ -348,19 +303,15 @@ extern short inp_log_push(uint32_t id, enum input_type type, uint32_t ts,
 insert:
 	input.log.obj_id[islot] = id;
 	input.log.ts[islot] = ts;
-	input.log.type[islot] = type;
+	input.log.mask[islot] = INP_M_NONE;
 
-	switch(type) {
-		case INP_T_NONE:
-			break;
-
-		case INP_T_MOV:
-			vec2_cpy(input.log.mov[islot], in);
-			break;
-
-		case INP_T_DIR:
-			vec3_cpy(input.log.dir[islot], in);
-			break;
+	if(mask == INP_M_MOV && mov != NULL) {
+		vec2_cpy(input.log.mov[islot], mov);
+		input.log.mask[islot] |= INP_M_MOV;
+	}
+	if(mask == INP_M_DIR && dir != NULL) {
+		vec3_cpy(input.log.dir[islot], dir);
+		input.log.mask[islot] |= INP_M_DIR;
 	}
 
 latest_update:
@@ -401,22 +352,17 @@ extern void inp_log_print(void)
 		printf("%2d(%2d): ", i, slot);
 
 		printf("%8x >> ", input.log.obj_id[slot]);
-		printf("type: %4d - ", input.log.type[slot]);
-		printf("ts: %6x - ", input.log.ts[slot]);
+		printf("mask: %4d - ", input.log.mask[slot]);
+		printf("ts: %6x", input.log.ts[slot]);
 
-		switch(input.log.type[slot]) {
-			case INP_T_NONE:
-				break;
-
-			case INP_T_MOV:
-				vec2_print(input.log.mov[slot]);
-				break;
-
-			case INP_T_DIR:
-				vec3_print(input.log.dir[slot]);
-				break;
+		if(input.log.mask[slot] & INP_M_MOV) {
+			printf(" - mov: ");
+			vec2_print(input.log.mov[slot]);
 		}
-
+		if(input.log.mask[slot] & INP_M_DIR) {
+			printf(" - dir: ");
+			vec3_print(input.log.dir[slot]);
+		}
 
 		if(slot == input.log.start)
 			printf("  \t Start  ");
@@ -426,14 +372,6 @@ extern void inp_log_print(void)
 
 		printf("\n");
 	}
-}
-
-
-extern void inp_reset(void)
-{
-	input.log.latest_slot = -1;
-	input.log.latest_ts = 0;
-	input.log.itr = 0;
 }
 
 
@@ -496,21 +434,13 @@ extern int inp_get(struct input_entry *ent)
 	idx = (log->start + log->itr) % INP_LOG_LIM;
 
 	ent->obj_id =  log->obj_id[idx];
-	ent->type =    log->type[idx];
+	ent->mask =    log->mask[idx];
 	ent->ts =      log->ts[idx];
 
-	switch(log->type[idx]) {
-		case INP_T_NONE:
-			break;
-
-		case INP_T_MOV:
-			vec2_cpy(ent->mov, log->mov[idx]);
-			break;
-
-		case INP_T_DIR:
-			vec3_cpy(ent->dir, log->dir[idx]);
-			break;
-	}
+	if(ent->mask & INP_M_MOV)
+		vec2_cpy(ent->mov, log->mov[idx]);
+	if(ent->mask & INP_M_DIR)
+		vec3_cpy(ent->dir, log->dir[idx]);
 
 	return 1;
 }
@@ -548,7 +478,7 @@ extern int inp_pack(char *out)
 		ptr += 4;
 		written += 4;
 
-		memcpy(ptr, &pipe->type[s], 1);
+		memcpy(ptr, &pipe->mask[s], 1);
 		ptr += 1;
 		written += 1;
 
@@ -559,18 +489,15 @@ extern int inp_pack(char *out)
 		ptr += 2;
 		written += 2;
 
-		switch(pipe->type[s]) {
-			case INP_T_MOV:
-				vec2_cpy((float *)ptr, pipe->mov[s]);
-				ptr += VEC2_SIZE;
-				written += VEC2_SIZE;
-				break;
-
-			case INP_T_DIR:
-				vec3_cpy((float *)ptr, pipe->dir[s]);
-				ptr += VEC3_SIZE;
-				written += VEC3_SIZE;
-				break;
+		if(pipe->mask[s] & INP_M_MOV) {
+			vec2_cpy((float *)ptr, pipe->mov[s]);
+			ptr += VEC2_SIZE;
+			written += VEC2_SIZE;
+		}
+		if(pipe->mask[s] & INP_M_DIR) {
+			vec3_cpy((float *)ptr, pipe->dir[s]);
+			ptr += VEC3_SIZE;
+			written += VEC3_SIZE;
 		}
 	}
 
@@ -586,11 +513,11 @@ extern int inp_unpack(char *in)
 	uint32_t  id;
 	uint16_t  off;
 
-	vec2_t   mov;
-	vec3_t   cam;
-
-	uint8_t type;
+	uint8_t mask;
 	uint32_t ts;
+
+	vec2_t   mov;
+	vec3_t   dir;
 
 	char *ptr = in;
 	int read = 0;
@@ -612,35 +539,34 @@ extern int inp_unpack(char *in)
 	for(i = 0; i < num; i++) {
 		memcpy(&id, ptr, 4);
 		ptr += 4;
+		read += 4;
 
-		memcpy(&type, ptr, 1);
+		memcpy(&mask, ptr, 1);
 		ptr += 1;
+		read += 1;
 
 		memcpy(&off, ptr, 2);
 		ptr += 2;
+		read += 2;
 
 		/* Update timestamp */
 		ts += off;
 
-		switch(type) {
-			case INP_T_MOV:
-				vec2_cpy(mov, (float *)ptr);
-				ptr += VEC2_SIZE;
-
-				if(inp_push(INP_PIPE_IN, id, ts, type, mov) < 0)
-					return -1;
-				break;
-
-			case INP_T_DIR:
-				vec3_cpy(cam, (float *)ptr);
-				ptr += VEC3_SIZE;
-
-				if(inp_push(INP_PIPE_IN, id, ts, type, cam) < 0)
-					return -1;
-				break;
+		/* Copy input-data */
+		if(mask & INP_M_MOV) {
+			vec2_cpy(mov, (float *)ptr);
+			ptr += VEC2_SIZE;
+			read += VEC2_SIZE;
+		}
+		if(mask & INP_M_DIR) {
+			vec3_cpy(dir, (float *)ptr);
+			ptr += VEC3_SIZE;
+			read += VEC3_SIZE;
 		}
 
-		read += 13;
+		/* Push new input to in-pipe */
+		if(inp_push(INP_PIPE_IN, id, ts, mask, mov, dir) < 0)
+			return -1;
 	}
 
 	return read;
@@ -698,8 +624,15 @@ extern void inp_proc(void)
 {
 	uint32_t ts;
 
+	/*
+	 * Note here that the movement-input and direction-input are seperated
+	 * as each can occur at a different time, and for accuracy they are
+	 * therefore handled seperately. And if they both have the same
+	 * timestamp, they will be written on the same slot.
+	 */
+
 	/* Check if the value really has changed */
-	if((input.mask & 1) && !vec2_cmp(input.mov, input.mov_old)) {
+	if((input.mask & INP_M_MOV) && !vec2_cmp(input.mov, input.mov_old)) {
 		/* If yes, then save value and mark change */
 		vec2_cpy(input.mov_old, input.mov);
 
@@ -707,14 +640,14 @@ extern void inp_proc(void)
 
 		/* Push new entries into the in- and out-pipe */
 		inp_push(INP_PIPE_IN, objects.id[core.obj],
-				INP_T_MOV, ts, input.mov);
+				INP_M_MOV, ts, input.mov, NULL);
 		inp_push(INP_PIPE_OUT, objects.id[core.obj],
-				INP_T_MOV, ts, input.mov);
+				INP_M_MOV, ts, input.mov, NULL);
 	}
 
 
 	/* Check if the value really has changed */
-	if((input.mask & 2) && !vec3_cmp(input.dir, input.dir_old)) {
+	if((input.mask & INP_M_DIR) && !vec3_cmp(input.dir, input.dir_old)) {
 		/* If yes, then save value and mark change */
 		vec3_cpy(input.dir_old, input.dir);
 
@@ -722,17 +655,18 @@ extern void inp_proc(void)
 
 		/* Push new entries into the in- and out-pipe */
 		inp_push(INP_PIPE_IN, objects.id[core.obj],
-				INP_T_DIR, ts, input.dir);
+				INP_M_DIR, ts, NULL, input.dir);
 		inp_push(INP_PIPE_OUT, objects.id[core.obj],
-				INP_T_DIR, ts, input.dir);
+				INP_M_DIR, ts, NULL, input.dir);
 	}
 
-	input.mask = 0;
+	input.mask = INP_M_NONE;
 }
 
 extern void inp_update(uint32_t ts)
 {
 	struct input_entry inp;
+	short slot;
 
 	/* Sort the entries in both pipes from lowest to hights */
 	inp_pipe_sort(INP_PIPE_IN);
@@ -746,21 +680,9 @@ extern void inp_update(uint32_t ts)
 	input.log.latest_slot = -1;
 
 	/* Push all new entries from the in-pipe into the input-log */
-	while(inp_pull(&inp)) {
-		void *ptr;
-		short slot;
-
-		switch(inp.type) {
-			case INP_T_MOV:
-				ptr = &inp.mov;
-				break;
-
-			case INP_T_DIR:
-				ptr = &inp.dir;
-				break;
-		}
-
-		if((slot = inp_log_push(inp.obj_id, inp.type, inp.ts, ptr)) < 0)
+	while(inp_pull(&inp)){
+		if((slot = inp_log_push(inp.obj_id, inp.mask, inp.ts, inp.mov,
+						inp.dir)) < 0)
 			continue;
 
 

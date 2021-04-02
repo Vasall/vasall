@@ -229,11 +229,11 @@ extern short inp_log_push(uint32_t id, uint8_t mask, uint32_t ts, float *mov,
 		tmp = (input.log.start + i) % INP_LOG_LIM;
 
 		if(input.log.ts[tmp] == ts && input.log.obj_id[tmp] == id) {
-			if(mask == INP_M_MOV && mov != NULL) { 
+			if(mask & INP_M_MOV && mov != NULL) { 
 				vec2_cpy(input.log.mov[tmp], mov);
 				input.log.mask[tmp] |= INP_M_MOV;
 			}
-			if(mask == INP_M_DIR && dir != NULL) {
+			if(mask & INP_M_DIR && dir != NULL) {
 				vec3_cpy(input.log.dir[tmp], dir);
 				input.log.mask[tmp] |= INP_M_DIR;
 			}
@@ -305,11 +305,11 @@ insert:
 	input.log.ts[islot] = ts;
 	input.log.mask[islot] = INP_M_NONE;
 
-	if(mask == INP_M_MOV && mov != NULL) {
+	if(mask & INP_M_MOV && mov != NULL) {
 		vec2_cpy(input.log.mov[islot], mov);
 		input.log.mask[islot] |= INP_M_MOV;
 	}
-	if(mask == INP_M_DIR && dir != NULL) {
+	if(mask & INP_M_DIR && dir != NULL) {
 		vec3_cpy(input.log.dir[islot], dir);
 		input.log.mask[islot] |= INP_M_DIR;
 	}
@@ -327,6 +327,8 @@ latest_update:
 			input.log.latest_ts = ts;
 		}
 	}
+
+	inp_log_print();
 
 	return islot;
 }

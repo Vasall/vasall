@@ -18,7 +18,7 @@ enum input_pipe_mode {
 
 #define INP_M_NONE  0
 #define INP_M_MOV   (1<<0)
-#define INP_M_DIR   (1<<2)
+#define INP_M_DIR   (1<<1)
 
 
 struct input_entry {

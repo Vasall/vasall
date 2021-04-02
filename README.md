@@ -39,7 +39,7 @@ Optional for vulkan debugging:<br/>
 After installing the external libraries, we can now clone the reposity:<br/>
 > $ git clone https://github.com/clusterwerk/vasall.git
 
-Change into the created folder:<br/>
+Change into the new folder:<br/>
 > $ cd vasall
 
 For the automatic installation of a few libraries not in Debian/Ubuntu:<br/>

@@ -61,7 +61,7 @@ extern int col_pln_facing(struct col_pln *pln, vec3_t dir);
  *
  * Returns: The closest distance between the point and the plane
  */
-extern float col_dist(struct col_pln *pln, vec3_t p);
+extern float col_pln_dist(struct col_pln *pln, vec3_t p);
 
 
 /*
@@ -124,7 +124,7 @@ extern int col_init_pck(struct col_pck *pck, vec3_t pos, vec3_t vel, vec3_t e);
  *
  * Returns: 1 if the boxes overlap and 0 if not
  */
-extern int col_aabb_check(vec3_t min1, vec3_t max1, vec3_t min2, vec3_t max2);
+extern int col_box_check(vec3_t min1, vec3_t max1, vec3_t min2, vec3_t max2);
 
 
 /*
@@ -138,7 +138,7 @@ extern int col_aabb_check(vec3_t min1, vec3_t max1, vec3_t min2, vec3_t max2);
  * @p1: The second corner of the triangle
  * @p2: The third corner of the triangle
  */
-extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2);
+extern void col_trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2);
 
 
 /*
@@ -154,6 +154,6 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2);
  * @num: The number of triiangles
  * @trig: The corner-points for all triangles
  */
-extern void check_trigs(struct col_pck *pck, short num, vec3_t *trig);
+extern void col_trigs_check(struct col_pck *pck, short num, vec3_t *trig);
 
 #endif

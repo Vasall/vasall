@@ -506,7 +506,7 @@ static void checkCollision(struct col_pck *pck)
 				vec3_div(vtx[k], pck->eRadius, vtx[k]);
 			}
 
-			trig_check(pck, vtx[0], vtx[1], vtx[2]);
+			col_trig_check(pck, vtx[0], vtx[1], vtx[2]);
 		}
 	}
 }
@@ -573,11 +573,11 @@ static void collideWithWorld(struct col_pck *pck, vec3_t pos, vec3_t del, int re
 	vec3_cpy(slidePlaneOrigin, pck->colPnt);
 	vec3_sub(newBasePoint, pck->colPnt, slidePlaneNormal);
 	vec3_nrm(slidePlaneNormal, slidePlaneNormal);
-	col_create_nrm(&slidingPlane, slidePlaneOrigin, slidePlaneNormal);
+	col_pln_fnrm(&slidingPlane, slidePlaneOrigin, slidePlaneNormal);
 
 
 	/* Calculate the new destination point */
-	tmpDist = col_dist(&slidingPlane, destPoint);	
+	tmpDist = col_pln_dist(&slidingPlane, destPoint);	
 	vec3_scl(slidePlaneNormal, tmpDist, slidePlaneNormal);
 	vec3_sub(destPoint, slidePlaneNormal, newDestinationPoint);
 

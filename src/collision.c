@@ -87,7 +87,7 @@ extern int col_init_pck(struct col_pck *pck, vec3_t pos, vec3_t vel, vec3_t e)
 }
 
 
-extern int col_overlap(vec3_t min1, vec3_t max1, vec3_t min2, vec3_t max2)
+extern int col_box_check(vec3_t min1, vec3_t max1, vec3_t min2, vec3_t max2)
 {
 	return (min1[0] <= max2[0] && max1[0] >= min2[0]) &&
 		(min1[1] <= max2[1] && max1[1] >= min2[1]) &&
@@ -124,7 +124,7 @@ static int pnt_in_trig(vec3_t point, vec3_t p1, vec3_t p2, vec3_t p3)
 	return ((r + t) <= 1);
 }
 
-static int _min_root(float a, float b, float c, float maxR, float *root)
+static int min_root(float a, float b, float c, float maxR, float *root)
 {
 	/* Check if a solution exists */
 	float determinant = b * b - 4.0f * a * c;
@@ -163,7 +163,7 @@ static int _min_root(float a, float b, float c, float maxR, float *root)
 }
 
 /* Check if a collision between the sphere and triangle occurrs */
-extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
+extern void col_trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 {
 	struct col_pln pln;
 
@@ -171,15 +171,15 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 	vec3_t tmp1;
 
 	/* Construct plane */
-	col_create_pnt(&pln, p0, p1, p2);
+	col_pln_fpnt(&pln, p0, p1, p2);
 
 	/* Is triangle front-facing to the velocity vector? */
-	if(col_facing(&pln, pck->normalizedVelocity)) {
+	if(col_pln_facing(&pln, pck->normalizedVelocity)) {
 		double t0, t1;
 		char embeddedInPlane = 0;
 
 		/* Calculate the signed distance */
-		double signedDistToTrianglePlane = col_dist(&pln, pck->basePoint);
+		double signedDistToTrianglePlane = col_pln_dist(&pln, pck->basePoint);
 
 		/* Calculate denominator */
 		float normalDotVelocity = vec3_dot(pln.normal, pck->velocity);
@@ -306,7 +306,7 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 			vec3_sub(p0, base, tmp0);
 			c = vec3_sqrlen(tmp0) - 1.0;
 
-			if(_min_root(a, b, c, t, &newT)) {
+			if(min_root(a, b, c, t, &newT)) {
 				t = newT;
 				foundCollision = 1;
 				vec3_cpy(collisionPoint, p0);
@@ -318,7 +318,7 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 			vec3_sub(p1, base, tmp0);
 			c = vec3_sqrlen(tmp0) - 1.0;
 
-			if(_min_root(a, b, c, t, &newT)) {
+			if(min_root(a, b, c, t, &newT)) {
 				t = newT;
 				foundCollision = 1;
 				vec3_cpy(collisionPoint, p1);
@@ -330,7 +330,7 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 			vec3_sub(p2, base, tmp0);
 			c = vec3_sqrlen(tmp0) - 1.0;
 
-			if(_min_root(a, b, c, t, &newT)) {
+			if(min_root(a, b, c, t, &newT)) {
 				t = newT;
 				foundCollision = 1;
 				vec3_cpy(collisionPoint, p2);
@@ -351,7 +351,7 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 			b = edgeSqrLen * (2 * vec3_dot(velocity, baseToVtx)) - 2.0 * edgeDotVel * edgeDotBaseToVtx;
 			c = edgeSqrLen * (1 - vec3_sqrlen(baseToVtx)) + edgeDotBaseToVtx * edgeDotBaseToVtx;
 
-			if(_min_root(a, b, c, t, &newT)) {
+			if(min_root(a, b, c, t, &newT)) {
 				/* Check if intersection within line segment */
 				float f = (edgeDotVel * newT - edgeDotBaseToVtx) / edgeSqrLen;
 
@@ -376,7 +376,7 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 			b = edgeSqrLen * (2 * vec3_dot(velocity, baseToVtx)) - 2.0 * edgeDotVel * edgeDotBaseToVtx;
 			c = edgeSqrLen * (1 - vec3_sqrlen(baseToVtx)) + edgeDotBaseToVtx * edgeDotBaseToVtx;
 
-			if(_min_root(a, b, c, t, &newT)) {
+			if(min_root(a, b, c, t, &newT)) {
 				/* Check if intersection within line segment */
 				float f = (edgeDotVel * newT - edgeDotBaseToVtx) / edgeSqrLen;
 
@@ -401,7 +401,7 @@ extern void trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 			b = edgeSqrLen * (2 * vec3_dot(velocity, baseToVtx)) - 2.0 * edgeDotVel * edgeDotBaseToVtx;
 			c = edgeSqrLen * (1 - vec3_sqrlen(baseToVtx)) + edgeDotBaseToVtx * edgeDotBaseToVtx;
 
-			if(_min_root(a, b, c, t, &newT)) {
+			if(min_root(a, b, c, t, &newT)) {
 				/* Check if intersection within line segment */
 				float f = (edgeDotVel * newT - edgeDotBaseToVtx) / edgeSqrLen;
 

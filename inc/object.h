@@ -125,6 +125,10 @@ struct object_table {
 	vec3_t                   ren_pos[OBJ_LIM];
 	vec3_t                   ren_dir[OBJ_LIM];
 
+	/* The point the object is currently aiming at */
+	vec3_t                   aim_origin[OBJ_LIM];
+	vec3_t                   aim_pos[OBJ_LIM];
+
 
 	/* The model and the rig */
 	short                    mdl[OBJ_LIM];

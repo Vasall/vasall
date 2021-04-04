@@ -109,14 +109,12 @@ static void game_proc_input(void)
 	 * Control the camera.
 	 */
 
-#if 0
 	/*
 	 * Reset cursor position.
 	 * This will reset the cursor-position to the center to the screen. But
 	 * this always bugs around. 
 	 */
 	SDL_WarpMouseInWindow(window.win, window.win_w / 2, window.win_h / 2);	
-#endif
 }
 
 
@@ -131,7 +129,7 @@ void game_update(void)
 	 * Process the inputs, push the local ones into the pipe and sort the
 	 * entries.
 	 */
-	inp_update(now);
+	inp_update();
 
 
 	/*
@@ -206,6 +204,7 @@ void game_update(void)
 	inp_pipe_clear(INP_PIPE_IN);
 	inp_pipe_clear(INP_PIPE_OUT);
 
+	/* Reset the input-log */
 	input.log.latest_slot = -1;
 	input.log.latest_itr = -1;
 }

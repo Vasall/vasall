@@ -291,6 +291,6 @@ extern void inp_proc(void);
 /*
  * Sort the entries in the pipes and process them. 
  */
-extern void inp_update(uint32_t ts);
+extern void inp_update(void);
 
 #endif

@@ -916,15 +916,24 @@ extern void obj_sys_update(uint32_t now)
 	}
 }
 
-
-static void obj_prerender_fpv(short slot, float interp)
+static void obj_calc_aim(short slot)
 {
+	vec3_t pos;
+	vec3_t off = {0, 0, 1.8};
+	
+	vec3_t dir;
+		
 
-}
+	vec3_cpy(pos, objects.pos[slot]);
+	vec3_add(pos, off, pos);
 
-static void obj_prerender_tpv(short slot, float interp)
-{
+	vec3_cpy(dir, objects.dir[slot]);
+	vec3_nrm(dir, dir);
 
+	vec3_scl(dir, 10, dir);
+	vec3_add(pos, dir, pos);
+
+	vec3_cpy(objects.aim_pos[slot], pos);
 }
 
 extern void obj_sys_prerender(float interp)
@@ -944,10 +953,10 @@ extern void obj_sys_prerender(float interp)
 
 			if(i == core.obj) {
 				if(camera.mode == CAM_MODE_FPV) {
-					rig_update(objects.rig[i], 0);
-
 					vec3_t off = {0, 0, 1.6};
 					vec3_t rev = {0, 0, 1.8};
+
+					rig_update(objects.rig[i], 0);
 
 					rig_fpv_rot(objects.rig[i], off, rev,
 							camera.forw_m);
@@ -975,6 +984,10 @@ extern void obj_sys_prerender(float interp)
 			/* Store last direction */
 			vec3_cpy(objects.prev_dir[i], objects.dir[i]);
 		}
+
+		if(objects.mask[i] & OBJ_M_MOVE) {
+			obj_calc_aim(i);
+		}
 	}
 }
 
@@ -999,6 +1012,17 @@ extern void obj_sys_render(void)
 
 			mdl_render(objects.mdl[i], objects.mat_pos[i],
 					objects.mat_rot[i], objects.rig[i]);
+
+			if(objects.mask[i] & OBJ_M_MOVE) {
+				mat4_t mat;
+				mat4_t idt;
+
+				mat4_idt(mat);
+				mat4_pfpos(mat, objects.aim_pos[i]);
+				mat4_idt(idt);
+
+				mdl_render(mdl_get("sph"), mat, idt, NULL);
+			}
 		}
 	}
 }

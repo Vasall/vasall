@@ -7,11 +7,14 @@
 #include <stdint.h>
 
 
-extern int col_create_pnt(struct col_pln *pln, vec3_t p0, vec3_t p1, vec3_t p2)
+extern int col_pln_fpnt(struct col_pln *pln, vec3_t p0, vec3_t p1, vec3_t p2)
 {
 	vec3_t tmp0;
 	vec3_t tmp1;
 	vec3_t nrm;
+
+	if(!pln)
+		return -1;
 
 	/* Calculate normal */
 	vec3_sub(p1, p0, tmp0);
@@ -33,9 +36,12 @@ extern int col_create_pnt(struct col_pln *pln, vec3_t p0, vec3_t p1, vec3_t p2)
 }
 
 
-extern int col_create_nrm(struct col_pln *pln, vec3_t p, vec3_t nrm)
+extern int col_pln_fnrm(struct col_pln *pln, vec3_t p, vec3_t nrm)
 {
 	vec3_t pnrm;
+
+	if(!pln)
+		return -1;
 
 	/* Copy normal vector */
 	vec3_nrm(nrm, pnrm);
@@ -53,17 +59,16 @@ extern int col_create_nrm(struct col_pln *pln, vec3_t p, vec3_t nrm)
 }
 
 
-extern int col_facing(struct col_pln *pln, vec3_t dir)
+extern int col_pln_facing(struct col_pln *pln, vec3_t dir)
 {
 	return (vec3_dot(pln->normal, dir) <= 0);
 }
 
 
-extern float col_dist(struct col_pln *pln, vec3_t p)
+extern float col_pln_dist(struct col_pln *pln, vec3_t p)
 {
 	return vec3_dot(p, pln->normal) + pln->equation[3];
 }
-
 
 
 extern int col_init_pck(struct col_pck *pck, vec3_t pos, vec3_t vel, vec3_t e)

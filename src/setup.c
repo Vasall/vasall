@@ -31,10 +31,13 @@ int load_resources(void)
 		return -1;
 
 	/* textures */
-	if(tex_set("ba0", "res/textures/base00.png") < 0)
+	if(tex_set("ba0", "res/textures/red.png") < 0)
 		return -1;
 
-	if(tex_set("ba1", "res/textures/col_blue.png") < 0)
+	if(tex_set("ba1", "res/textures/blue.png") < 0)
+		return -1;
+
+	if(tex_set("ba2", "res/textures/green.png") < 0)
 		return -1;
 
 	if(tex_set("flr", "res/textures/floor.png") < 0)

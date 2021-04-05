@@ -71,7 +71,7 @@ extern float col_pln_dist(struct col_pln *pln, vec3_t p)
 }
 
 
-extern int col_init_pck(struct col_pck *pck, vec3_t pos, vec3_t vel, vec3_t e)
+extern int col_init_pck_sphere(struct col_pck_sphere *pck, vec3_t pos, vec3_t vel, vec3_t e)
 {
 	vec3_cpy(pck->eRadius, e);
 
@@ -87,7 +87,17 @@ extern int col_init_pck(struct col_pck *pck, vec3_t pos, vec3_t vel, vec3_t e)
 }
 
 
-extern int col_box_check(vec3_t min1, vec3_t max1, vec3_t min2, vec3_t max2)
+extern int col_init_pck_ray(struct col_pck_ray *pck, vec3_t pos, vec3_t dir)
+{
+	vec3_cpy(pck->pos, pos);
+	vec3_cpy(pck->dir, dir);
+
+	pck->found = 0;
+	return 0;
+}
+
+
+extern int col_b2b_check(vec3_t min1, vec3_t max1, vec3_t min2, vec3_t max2)
 {
 	return (min1[0] <= max2[0] && max1[0] >= min2[0]) &&
 		(min1[1] <= max2[1] && max1[1] >= min2[1]) &&
@@ -163,7 +173,7 @@ static int min_root(float a, float b, float c, float maxR, float *root)
 }
 
 /* Check if a collision between the sphere and triangle occurrs */
-extern void col_trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
+extern void col_s2t_check(struct col_pck_sphere *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 {
 	struct col_pln pln;
 
@@ -428,6 +438,107 @@ extern void col_trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
 				vec3_cpy(pck->colPnt, collisionPoint);
 				pck->pln = pln;
 			}
+		}
+	}
+}
+
+
+extern void col_r2b_check(struct col_pck_ray *pck, vec3_t min, vec3_t max)
+{
+	vec3_t dirfrac;
+	float t[6];
+	float tmin;
+	float tmax;
+
+	vec3_set(dirfrac, 
+			1.0 / pck->dir[0],
+			1.0 / pck->dir[1],
+			1.0 / pck->dir[2]);
+
+	t[0] = (min[0] - pck->pos[0]) * dirfrac[0];
+	t[1] = (max[0] - pck->pos[0]) * dirfrac[0];
+
+	t[2] = (min[1] - pck->pos[1]) * dirfrac[1];
+	t[3] = (max[1] - pck->pos[1]) * dirfrac[1];
+
+	t[4] = (min[2] - pck->pos[2]) * dirfrac[2];
+	t[5] = (min[2] - pck->pos[2]) * dirfrac[2];
+
+	tmin = MAX(MAX(MIN(t[0], t[1]), MIN(t[2], t[3])), MIN(t[4], t[5]));
+	tmax = MIN(MIN(MAX(t[0], t[1]), MAX(t[2], t[3])), MAX(t[4], t[5]));
+
+	/* 
+	 * If tmax < 0, ray (line) is intersecting AABB, but the whole AABB is
+	 * behind us. Therefore, no collision can occurr.
+	 */
+	if(tmax < 0)
+		return;
+
+	/* 
+	 * If tmin > tmax, ray doesn't intersect AABB. Therefore no collision
+	 * can occurr.
+	 */
+	if(tmin > tmax)
+		return;
+
+	if(pck->found == 0 || pck->col_t > tmin) {
+		pck->col_t = tmin;
+		pck->found = 1;
+	}
+}
+
+
+extern void col_r2t_check(struct col_pck_ray *pck, vec3_t p0, vec3_t p1,
+		vec3_t p2)
+{
+	const float EPSILON = 0.0000001;
+		
+	vec3_t edge0;
+	vec3_t edge1;
+	vec3_t h;
+	vec3_t s;
+	vec3_t q;
+
+	float a;
+	float f;
+	float u;
+	float v;
+	float t;
+
+	vec3_sub(p1, p0, edge0);
+	vec3_sub(p2, p0, edge1);
+
+	vec3_cross(pck->dir, edge1, h);
+	
+	a = vec3_dot(edge0, h);
+
+	/* This ray is parallel to this triangle */
+	if(a > -EPSILON && a < EPSILON)
+		return;
+
+
+	f = 1.0 / a;
+
+	vec3_sub(pck->pos, p0, s);
+
+	u = f * vec3_dot(s, h);
+	if(u < 0.0 || u > 1.0)
+		return;
+
+	vec3_cross(s, edge0, q);
+	v = f * vec3_dot(pck->dir, q);
+	if (v < 0.0 || u + v > 1.0)
+		return;
+
+	/*
+	 * At this stage we can compute t to find out where the intersection
+	 * point is on the line.
+	 */
+	t = f * vec3_dot(edge1, q);
+	if(t > EPSILON) {
+		if(pck->found == 0 || pck->col_t > t) {
+			pck->col_t = t;
+			pck->found = 1;
 		}
 	}
 }

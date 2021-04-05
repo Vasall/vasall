@@ -66,11 +66,16 @@ extern float col_pln_dist(struct col_pln *pln, vec3_t p);
 
 /*
  * 
- * COLLISION-PACKAGE
+ * COLLISION-PACKAGES
  *
  */
 
-struct col_pck {
+
+/*
+ * Sphere-Collision-Package
+ */
+
+struct col_pck_sphere {
 	short objSlot;
 		
 	/* Ellipsoid radius */
@@ -105,7 +110,33 @@ struct col_pck {
  *
  * Returns: 0 on success or -1 if an error occurred
  */
-extern int col_init_pck(struct col_pck *pck, vec3_t pos, vec3_t vel, vec3_t e);
+extern int col_init_pck_sphere(struct col_pck_sphere *pck, vec3_t pos, vec3_t vel, vec3_t e);
+
+
+/*
+ * Ray-Collision-Package
+ */
+
+struct col_pck_ray {
+	vec3_t pos;
+	vec3_t dir;
+
+	char found;
+	float col_t;
+	vec3_t col_pnt;
+};
+
+/*
+ * Initialize a collision-package used when checking collision between a ray and
+ * multiple bounding-boxes.
+ *
+ * @pck: Pointer to the package to initialize
+ * @pos: The origin of the ray
+ * @dir: The direction-vector of the ray
+ *
+ * Returns: 0 on success or -1 if an error occurred
+ */
+extern int col_init_pck_ray(struct col_pck_ray *pck, vec3_t pos, vec3_t dir);
 
 
 /*
@@ -115,6 +146,7 @@ extern int col_init_pck(struct col_pck *pck, vec3_t pos, vec3_t vel, vec3_t e);
  */
 
 /*
+ * Box-to-Box-Check
  * Check if two axis-aligned-bounding-boxes overlap.
  *
  * @min1: The lower corner of the first box
@@ -124,10 +156,11 @@ extern int col_init_pck(struct col_pck *pck, vec3_t pos, vec3_t vel, vec3_t e);
  *
  * Returns: 1 if the boxes overlap and 0 if not
  */
-extern int col_box_check(vec3_t min1, vec3_t max1, vec3_t min2, vec3_t max2);
+extern int col_b2b_check(vec3_t min1, vec3_t max1, vec3_t min2, vec3_t max2);
 
 
 /*
+ * Sphere-to-Triangle-Check
  * Check if the sphere, as set in the given collision-package, intersets with
  * the triangled defined by the 3 given points, which have to be converted into
  * eSpace already. This function doesn't directly return anything, as the
@@ -138,7 +171,7 @@ extern int col_box_check(vec3_t min1, vec3_t max1, vec3_t min2, vec3_t max2);
  * @p1: The second corner of the triangle
  * @p2: The third corner of the triangle
  */
-extern void col_trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2);
+extern void col_s2t_check(struct col_pck_sphere *pck, vec3_t p0, vec3_t p1, vec3_t p2);
 
 
 /*
@@ -154,6 +187,32 @@ extern void col_trig_check(struct col_pck *pck, vec3_t p0, vec3_t p1, vec3_t p2)
  * @num: The number of triiangles
  * @trig: The corner-points for all triangles
  */
-extern void col_trigs_check(struct col_pck *pck, short num, vec3_t *trig);
+extern void col_trigs_check(struct col_pck_sphere *pck, short num, vec3_t *trig);
+
+
+/*
+ * Ray-to-Box-Check
+ * Check for collision between an outgoing ray and a bounding-box and write the
+ * results to the given collision-package.
+ *
+ * @pck: A collision-package containing the ray-data and to write the result to
+ * @min: The lower corner of the bounding-box
+ * @max: The higher corner of the bounding-box
+ */
+extern void col_r2b_check(struct col_pck_ray *pck, vec3_t min, vec3_t max);
+
+
+/*
+ * Ray-to-Triangle-Check
+ * Check if a ray intersects with a triangle and write the results to the given
+ * package.
+ *
+ * @pck: The package containing the ray-data and to write the result to
+ * @p0: The first corner of the triangle
+ * @p1: The second corner of the triangle
+ * @p2: The third corner of the triangle
+ */
+extern void col_r2t_check(struct col_pck_ray *pck, vec3_t p0, vec3_t p1,
+		vec3_t p2);
 
 #endif

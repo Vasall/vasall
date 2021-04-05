@@ -440,20 +440,6 @@ extern int obj_update(void *in)
 	memcpy(&flg, ptr, 1);
 	ptr += 1;
 
-	/*
-	 * TODO: Move network-inputs directly to the input-module.
-	 */
-
-#if 0
-	/* Add inputs */
-	if(flg & (1<<0)) {
-		if((tmp = obj_add_inputs(ptr)) < 1)
-			return -1;
-
-		ptr += tmp;
-	}
-#endif
-
 	return 0;
 }
 
@@ -661,6 +647,84 @@ static int collideAndSlide(short slot, vec3_t pos, vec3_t del, vec3_t opos)
 }
 
 
+extern void obj_calc_aim(short slot)
+{
+	int i;
+	int j;
+	int k;
+
+	vec3_t pos;
+	vec3_t dir;
+	vec3_t off = {0, 0, 1.8};
+	struct col_pck_ray pck;	
+
+	struct model *mdl;
+
+	/* Calculate the origin of the aiming-ray */
+	vec3_cpy(pos, objects.pos[slot]);
+	vec3_add(pos, off, pos);
+
+	/* Calculate the direction of the aiming-ray */
+	vec3_cpy(dir, objects.dir[slot]);
+	vec3_nrm(dir, dir);
+
+	/* Initialize the collision-package */
+	col_init_pck_ray(&pck, pos, dir);
+
+	/* Go through all objects */
+	for(i = 0; i < OBJ_LIM; i++) {
+		if(objects.mask[i] == OBJ_M_NONE)
+			continue;
+
+		/* Don't check collision with the same object */
+		if(i == slot)
+			continue;
+
+		if((objects.mask[i] & OBJ_M_SOLID) == 0)
+			continue;
+
+		/* Get pointer to the model */
+		mdl = models[objects.mdl[i]];
+
+		/* TODO: Check collision with other player-objects */
+		if((mdl->attr_m & MDL_M_CCM) == 0)
+			continue;
+
+		/* Go through all triangles */
+		for(j = 0; j < mdl->col.cm_tri_c; j++) {
+			vec3_t vtx[3];
+			int3_t idx;
+
+			/* Get indices of triangles */
+			memcpy(idx, mdl->col.cm_idx[j], INT3_SIZE);
+
+			/* Copy corner-points */
+			for(k = 0; k < 3; k++)
+				vec3_cpy(vtx[k], mdl->col.cm_vtx[idx[k]]);
+
+			col_r2t_check(&pck, vtx[0], vtx[1], vtx[2]);
+		}
+	}
+
+
+	/* Limit aiming-range */
+	if(pck.found) {
+		if(pck.col_t > 10) {
+			pck.col_t = 10;
+		}
+	}
+	else {
+		pck.col_t = 10;
+	}
+
+
+	/* Calculate the point the object is currently aiming at */
+	vec3_scl(dir, pck.col_t, dir);
+	vec3_add(pos, dir, pos);
+	vec3_cpy(objects.aim_pos[slot], pos);
+}
+
+
 extern void obj_print(short slot)
 {
 	if(obj_check_slot(slot))
@@ -703,6 +767,8 @@ extern void obj_sys_update(uint32_t now)
 	vec3_t grav = {0, 0, -9.81};
 
 	struct input_entry inp;
+
+	int c = 0;
 
 	now = floor(now / TICK_TIME) * TICK_TIME;
 
@@ -756,6 +822,8 @@ extern void obj_sys_update(uint32_t now)
 
 	while(1) {
 		while(run_ts < lim_ts) {
+			c++;
+
 			/*
 			 * Update the velocity and position of every object in
 			 * ascending order of the object-ID so collisions will
@@ -889,7 +957,7 @@ extern void obj_sys_update(uint32_t now)
 
 		if(inp_get(&inp)) {
 			short obj_slot = obj_sel_id(inp.obj_id);
-			
+
 			if(inp.ts >= objects.ts[obj_slot]) {
 				if(inp.mask & INP_M_MOV)
 					vec2_cpy(objects.mov[obj_slot], inp.mov);
@@ -914,84 +982,10 @@ extern void obj_sys_update(uint32_t now)
 			lim_ts = now;
 		}
 	}
+
+	printf("%d\n", c);
 }
 
-static void obj_calc_aim(short slot)
-{
-	int i;
-	int j;
-	int k;
-
-	vec3_t pos;
-	vec3_t dir;
-	vec3_t off = {0, 0, 1.8};
-	struct col_pck_ray pck;	
-
-	struct model *mdl;
-
-	/* Calculate the origin of the aiming-ray */
-	vec3_cpy(pos, objects.pos[slot]);
-	vec3_add(pos, off, pos);
-
-	/* Calculate the direction of the aiming-ray */
-	vec3_cpy(dir, objects.dir[slot]);
-	vec3_nrm(dir, dir);
-
-	/* Initialize the collision-package */
-	col_init_pck_ray(&pck, pos, dir);
-	
-	/* Go through all objects */
-	for(i = 0; i < OBJ_LIM; i++) {
-		if(objects.mask[i] == OBJ_M_NONE)
-			continue;
-
-		/* Don't check collision with the same object */
-		if(i == slot)
-			continue;
-
-		if((objects.mask[i] & OBJ_M_SOLID) == 0)
-			continue;
-
-		/* Get pointer to the model */
-		mdl = models[objects.mdl[i]];
-
-		/* TODO: Check collision with other player-objects */
-		if((mdl->attr_m & MDL_M_CCM) == 0)
-			continue;
-
-		/* Go through all triangles */
-		for(j = 0; j < mdl->col.cm_tri_c; j++) {
-			vec3_t vtx[3];
-			int3_t idx;
-
-			/* Get indices of triangles */
-			memcpy(idx, mdl->col.cm_idx[j], INT3_SIZE);
-
-			/* Copy corner-points */
-			for(k = 0; k < 3; k++)
-				vec3_cpy(vtx[k], mdl->col.cm_vtx[idx[k]]);
-
-			col_r2t_check(&pck, vtx[0], vtx[1], vtx[2]);
-		}
-	}
-
-
-	/* Limit aiming-range */
-	if(pck.found) {
-		if(pck.col_t > 10) {
-			pck.col_t = 10;
-		}
-	}
-	else {
-		pck.col_t = 10;
-	}
-		
-
-	/* Calculate the point the object is currently aiming at */
-	vec3_scl(dir, pck.col_t, dir);
-	vec3_add(pos, dir, pos);
-	vec3_cpy(objects.aim_pos[slot], pos);
-}
 
 extern void obj_sys_prerender(float interp)
 {
@@ -1002,10 +996,10 @@ extern void obj_sys_prerender(float interp)
 		if(objects.mask[i] & OBJ_M_RIG) {
 			float agl;
 			vec3_t up = {0, 0, 1};
-			
+
 			agl = vec3_angle(up, objects.dir[i]);
 			agl = RAD_TO_DEG(agl) - 90.0;
-	
+
 			rig_update(objects.rig[i], -agl);
 
 			if(i == core.obj) {
@@ -1061,6 +1055,22 @@ extern void obj_sys_render(void)
 			vec3_cpy(dir, objects.ren_dir[i]);
 
 			mat4_idt(objects.mat_rot[i]);
+
+
+			if(camera.mode != CAM_MODE_FPV) {
+				float rot;
+
+				vec2_cpy(dir, objects.dir[i]);
+				vec2_nrm(dir, dir);
+
+				/* Set the rotation of the model */
+				rot = atan2(-dir[0], dir[1]);
+
+				objects.mat_rot[i][0x0] =  cos(rot);
+				objects.mat_rot[i][0x1] =  sin(rot);
+				objects.mat_rot[i][0x4] =  -sin(rot);
+				objects.mat_rot[i][0x5] =  cos(rot);
+			}
 
 			/* Set the position of the model */
 			objects.mat_pos[i][0xc] = pos[0];

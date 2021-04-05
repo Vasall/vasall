@@ -17,7 +17,6 @@ struct camera_wrapper {
 	enum cam_mode mode;
 
 	vec3_t pos;
-	vec3_t dir;
 
 	vec3_t v_forward;
 	vec3_t v_right;

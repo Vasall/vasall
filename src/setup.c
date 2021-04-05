@@ -53,7 +53,7 @@ int load_resources(void)
 	if(mdl_load("gun", "res/models/pistol.obj", tex_get("ba1"), shd_get("mdl")) < 0)
 			return -1;
 
-	if(mdl_load("sph", "res/models/sphere.obj", tex_get("ba1"), shd_get("mdl")) < 0)
+	if(mdl_load("sph", "res/models/sphere.obj", tex_get("ba0"), shd_get("mdl")) < 0)
 			return -1;
 
 	printf("Finished loading resources\n");
@@ -91,9 +91,7 @@ extern void test1(char *buf, int len)
 	node = ui_get(window.root, "mns");
 	ui_set_flag(node, FLG_ACT, &zero);
 
-#if 0
 	SDL_SetRelativeMouseMode(SDL_TRUE);
-#endif
 
 	/* Start the game-loop */
 	game_start();

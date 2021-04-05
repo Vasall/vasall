@@ -459,7 +459,7 @@ extern int obj_update(void *in)
 
 
 /* Collect all triangles the object collides with */
-static void checkCollision(struct col_pck *pck)
+static void checkCollision(struct col_pck_sphere *pck)
 {
 	int i;
 	int j;
@@ -506,12 +506,12 @@ static void checkCollision(struct col_pck *pck)
 				vec3_div(vtx[k], pck->eRadius, vtx[k]);
 			}
 
-			trig_check(pck, vtx[0], vtx[1], vtx[2]);
+			col_s2t_check(pck, vtx[0], vtx[1], vtx[2]);
 		}
 	}
 }
 
-static void collideWithWorld(struct col_pck *pck, vec3_t pos, vec3_t del, int recDepth, vec3_t *opos)
+static void collideWithWorld(struct col_pck_sphere *pck, vec3_t pos, vec3_t del, int recDepth, vec3_t *opos)
 {
 	float unitsPerMeter = 100.0;
 	float unitScale = unitsPerMeter / 100.0;
@@ -573,11 +573,11 @@ static void collideWithWorld(struct col_pck *pck, vec3_t pos, vec3_t del, int re
 	vec3_cpy(slidePlaneOrigin, pck->colPnt);
 	vec3_sub(newBasePoint, pck->colPnt, slidePlaneNormal);
 	vec3_nrm(slidePlaneNormal, slidePlaneNormal);
-	col_create_nrm(&slidingPlane, slidePlaneOrigin, slidePlaneNormal);
+	col_pln_fnrm(&slidingPlane, slidePlaneOrigin, slidePlaneNormal);
 
 
 	/* Calculate the new destination point */
-	tmpDist = col_dist(&slidingPlane, destPoint);	
+	tmpDist = col_pln_dist(&slidingPlane, destPoint);	
 	vec3_scl(slidePlaneNormal, tmpDist, slidePlaneNormal);
 	vec3_sub(destPoint, slidePlaneNormal, newDestinationPoint);
 
@@ -601,7 +601,7 @@ static void collideWithWorld(struct col_pck *pck, vec3_t pos, vec3_t del, int re
 
 static int collideAndSlide(short slot, vec3_t pos, vec3_t del, vec3_t opos)
 {		
-	struct col_pck pck;
+	struct col_pck_sphere pck;
 
 	vec3_t relpos;
 	vec3_t epos;
@@ -916,15 +916,81 @@ extern void obj_sys_update(uint32_t now)
 	}
 }
 
-
-static void obj_prerender_fpv(short slot, float interp)
+static void obj_calc_aim(short slot)
 {
+	int i;
+	int j;
+	int k;
 
-}
+	vec3_t pos;
+	vec3_t dir;
+	vec3_t off = {0, 0, 1.8};
+	struct col_pck_ray pck;	
 
-static void obj_prerender_tpv(short slot, float interp)
-{
+	struct model *mdl;
 
+	/* Calculate the origin of the aiming-ray */
+	vec3_cpy(pos, objects.pos[slot]);
+	vec3_add(pos, off, pos);
+
+	/* Calculate the direction of the aiming-ray */
+	vec3_cpy(dir, objects.dir[slot]);
+	vec3_nrm(dir, dir);
+
+	/* Initialize the collision-package */
+	col_init_pck_ray(&pck, pos, dir);
+	
+	/* Go through all objects */
+	for(i = 0; i < OBJ_LIM; i++) {
+		if(objects.mask[i] == OBJ_M_NONE)
+			continue;
+
+		/* Don't check collision with the same object */
+		if(i == slot)
+			continue;
+
+		if((objects.mask[i] & OBJ_M_SOLID) == 0)
+			continue;
+
+		/* Get pointer to the model */
+		mdl = models[objects.mdl[i]];
+
+		/* TODO: Check collision with other player-objects */
+		if((mdl->attr_m & MDL_M_CCM) == 0)
+			continue;
+
+		/* Go through all triangles */
+		for(j = 0; j < mdl->col.cm_tri_c; j++) {
+			vec3_t vtx[3];
+			int3_t idx;
+
+			/* Get indices of triangles */
+			memcpy(idx, mdl->col.cm_idx[j], INT3_SIZE);
+
+			/* Copy corner-points */
+			for(k = 0; k < 3; k++)
+				vec3_cpy(vtx[k], mdl->col.cm_vtx[idx[k]]);
+
+			col_r2t_check(&pck, vtx[0], vtx[1], vtx[2]);
+		}
+	}
+
+
+	/* Limit aiming-range */
+	if(pck.found) {
+		if(pck.col_t > 10) {
+			pck.col_t = 10;
+		}
+	}
+	else {
+		pck.col_t = 10;
+	}
+		
+
+	/* Calculate the point the object is currently aiming at */
+	vec3_scl(dir, pck.col_t, dir);
+	vec3_add(pos, dir, pos);
+	vec3_cpy(objects.aim_pos[slot], pos);
 }
 
 extern void obj_sys_prerender(float interp)
@@ -944,10 +1010,10 @@ extern void obj_sys_prerender(float interp)
 
 			if(i == core.obj) {
 				if(camera.mode == CAM_MODE_FPV) {
-					rig_update(objects.rig[i], 0);
-
 					vec3_t off = {0, 0, 1.6};
 					vec3_t rev = {0, 0, 1.8};
+
+					rig_update(objects.rig[i], 0);
 
 					rig_fpv_rot(objects.rig[i], off, rev,
 							camera.forw_m);
@@ -975,6 +1041,10 @@ extern void obj_sys_prerender(float interp)
 			/* Store last direction */
 			vec3_cpy(objects.prev_dir[i], objects.dir[i]);
 		}
+
+		if(objects.mask[i] & OBJ_M_MOVE) {
+			obj_calc_aim(i);
+		}
 	}
 }
 
@@ -999,6 +1069,17 @@ extern void obj_sys_render(void)
 
 			mdl_render(objects.mdl[i], objects.mat_pos[i],
 					objects.mat_rot[i], objects.rig[i]);
+
+			if(objects.mask[i] & OBJ_M_MOVE) {
+				mat4_t mat;
+				mat4_t idt;
+
+				mat4_idt(mat);
+				mat4_pfpos(mat, objects.aim_pos[i]);
+				mat4_idt(idt);
+
+				mdl_render(mdl_get("sph"), mat, idt, NULL);
+			}
 		}
 	}
 }

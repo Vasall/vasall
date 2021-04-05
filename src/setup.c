@@ -53,6 +53,9 @@ int load_resources(void)
 	if(mdl_load("gun", "res/models/pistol.obj", tex_get("ba1"), shd_get("mdl")) < 0)
 			return -1;
 
+	if(mdl_load("sph", "res/models/sphere.obj", tex_get("ba1"), shd_get("mdl")) < 0)
+			return -1;
+
 	printf("Finished loading resources\n");
 
 	return 0;

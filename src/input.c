@@ -328,8 +328,6 @@ latest_update:
 		}
 	}
 
-	inp_log_print();
-
 	return islot;
 }
 
@@ -665,7 +663,7 @@ extern void inp_proc(void)
 	input.mask = INP_M_NONE;
 }
 
-extern void inp_update(uint32_t ts)
+extern void inp_update(void)
 {
 	struct input_entry inp;
 	short slot;

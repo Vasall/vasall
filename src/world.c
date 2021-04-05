@@ -20,6 +20,7 @@ extern int wld_init(void)
 {
 	int i;
 	float tmp;
+	struct light_buffer light;
 
 	/* Set the position and size of the world */
 	tmp = _CHUNK_SIZE / 2.0; 
@@ -39,13 +40,22 @@ extern int wld_init(void)
 		world.col_point[2][i].data = 0;
 	}
 
+	light.sun[0] = 0.259;
+	light.sun[1] = 0.432;
+	light.sun[2] = -0.864;
+
+	if(ren_create_buffer(0, GL_UNIFORM_BUFFER, sizeof(struct light_buffer),
+			     (char*)&light, &world.light_bo, &world.light_buf) < 0) {
+		return -1;
+	}
+
 	return 0;
 }
 
 
 extern void wld_close(void)
 {
-
+	ren_destroy_buffer(world.light_bo, world.light_buf);
 }
 
 

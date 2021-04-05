@@ -882,7 +882,7 @@ static int create_descriptor_pool(void)
 
 	/* Set the types and amounts of the descriptors */
 	sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	sizes[0].descriptorCount = 10;
+	sizes[0].descriptorCount = 11;
 	sizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	sizes[1].descriptorCount = 10;
 
@@ -985,7 +985,7 @@ static int create_shader(char *path, VkShaderModule *shd)
 static int create_set_layout(VkDescriptorSetLayout *set_layout)
 {
 	VkResult res;
-	VkDescriptorSetLayoutBinding bindings[2];
+	VkDescriptorSetLayoutBinding bindings[3];
 	VkDescriptorSetLayoutCreateInfo create_info;
 
 	/* Determine, where each descriptor should be in the shaders */
@@ -999,12 +999,17 @@ static int create_set_layout(VkDescriptorSetLayout *set_layout)
 	bindings[1].descriptorCount = 1;
 	bindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	bindings[1].pImmutableSamplers = NULL;
+	bindings[2].binding = 2;
+	bindings[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	bindings[2].descriptorCount = 1;
+	bindings[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	bindings[2].pImmutableSamplers = NULL;
 
 	/* Create the descriptor set layout */
 	create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 	create_info.pNext = NULL;
 	create_info.flags = 0;
-	create_info.bindingCount = 2;
+	create_info.bindingCount = 3;
 	create_info.pBindings = bindings;
 
 	res = vkCreateDescriptorSetLayout(vk.device, &create_info, NULL,
@@ -1987,27 +1992,41 @@ err:
 }
 
 
-extern int vk_set_uniform_buffer(struct vk_buffer buffer, VkDescriptorSet set)
+extern int vk_set_uniform_buffer(struct vk_buffer buffer,
+				 struct vk_buffer light, VkDescriptorSet set)
 {
-	VkDescriptorBufferInfo buffer_info;
-	VkWriteDescriptorSet write;
+	VkDescriptorBufferInfo buffer_info[2];
+	VkWriteDescriptorSet write[2];
 
-	buffer_info.buffer = buffer.buffer;
-	buffer_info.offset = 0;
-	buffer_info.range = buffer.size;
+	buffer_info[0].buffer = buffer.buffer;
+	buffer_info[0].offset = 0;
+	buffer_info[0].range = buffer.size;
+	buffer_info[1].buffer = light.buffer;
+	buffer_info[1].offset = 0;
+	buffer_info[1].range = light.size;
 
-	write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	write.pNext = NULL;
-	write.dstSet = set;
-	write.dstBinding = 0;
-	write.dstArrayElement = 0;
-	write.descriptorCount = 1;
-	write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	write.pImageInfo = NULL;
-	write.pBufferInfo = &buffer_info;
-	write.pTexelBufferView = NULL;
+	write[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	write[0].pNext = NULL;
+	write[0].dstSet = set;
+	write[0].dstBinding = 0;
+	write[0].dstArrayElement = 0;
+	write[0].descriptorCount = 1;
+	write[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	write[0].pImageInfo = NULL;
+	write[0].pBufferInfo = &buffer_info[0];
+	write[0].pTexelBufferView = NULL;
+	write[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	write[1].pNext = NULL;
+	write[1].dstSet = set;
+	write[1].dstBinding = 2;
+	write[1].dstArrayElement = 0;
+	write[1].descriptorCount = 1;
+	write[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	write[1].pImageInfo = NULL;
+	write[1].pBufferInfo = &buffer_info[1];
+	write[1].pTexelBufferView = NULL;
 
-	vkUpdateDescriptorSets(vk.device, 1, &write, 0, NULL);
+	vkUpdateDescriptorSets(vk.device, 2, write, 0, NULL);
 	return 0;
 }
 

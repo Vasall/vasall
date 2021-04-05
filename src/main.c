@@ -60,28 +60,28 @@ int main(void)
 		goto err_close_window;
 	}
 
+	/* Initialize the world and world-objects */
+	if(wld_init() < 0) {
+		ERR_LOG(("Failed to initialize the world"));
+		goto err_close_input;
+	}
+
 	/* Load the basic resources (fonts, shaders, textures, models) */
 	if(load_resources() < 0) {
 		ERR_LOG(("Failed to load resources"));
-		goto err_close_input;
+		goto err_close_world;
 	}
 
 	/* Initialize the camera */
 	if(cam_init(60.0, 800.0 / 600.0, 0.24, 1000.0) < 0) {
 		ERR_LOG(("Failed to setup camera"));
-		goto err_close_input;
-	}
-
-	/* Initialize the world and world-objects */
-	if(wld_init() < 0) {
-		ERR_LOG(("Failed to initialize the world"));
-		goto err_close_camera;
+		goto err_close_world;
 	}
 
 	/* Initialize the object-table */
 	if(obj_init() < 0) {
 		ERR_LOG(("Failed to initialize the object-table"));
-		goto err_close_world;
+		goto err_close_camera;
 	}
 
 	/* Load the user-interface-nodes */
@@ -112,11 +112,11 @@ int main(void)
 err_close_obj:
 	obj_close();
 
-err_close_world:
-	wld_close();
-
 err_close_camera:
 	cam_close();
+
+err_close_world:
+	wld_close();
 
 err_close_input:
 	inp_close();

@@ -50,7 +50,7 @@ extern int ren_resize(int w, int h)
 
 
 extern int ren_create_shader(char *vs, char *fs, uint32_t *prog,
-                             struct vk_pipeline *pipeline, int num, char **vars)
+			     struct vk_pipeline *pipeline, int num, char **vars)
 {
 	int i, res;
 	enum vk_in_attr in_attr = 0;
@@ -120,7 +120,7 @@ extern void ren_destroy_shader(uint32_t prog, struct vk_pipeline pipeline)
 
 
 extern int ren_create_texture(char *pth, uint32_t *hdl,
-                              struct vk_texture *texture)
+			      struct vk_texture *texture)
 {
 	int res;
 
@@ -147,7 +147,7 @@ extern void ren_destroy_texture(uint32_t hdl, struct vk_texture texture)
 
 
 extern int ren_create_model_data(struct vk_pipeline pipeline, uint32_t *vao,
-                                 VkDescriptorSet *set)
+				 VkDescriptorSet *set)
 {
 	int res;
 
@@ -180,7 +180,7 @@ extern int ren_destroy_model_data(uint32_t vao, VkDescriptorSet set)
 
 
 extern int ren_create_buffer(uint32_t vao, int type, size_t size, char *buf,
-                             uint32_t *bo, struct vk_buffer *buffer)
+			     uint32_t *bo, struct vk_buffer *buffer)
 {
 	VkBufferUsageFlags usage;
 	int res = 0;
@@ -215,6 +215,18 @@ extern int ren_create_buffer(uint32_t vao, int type, size_t size, char *buf,
 }
 
 
+extern void ren_update_buffer(unsigned int bo, struct vk_buffer buffer,
+			      int size, void* data)
+{
+	if(renderer.mode == REN_MODE_VULKAN) {
+		vk_copy_data_to_buffer(data, buffer);
+	}
+	else if(renderer.mode == REN_MODE_OPENGL) {
+		gl_set_buffer_data(GL_UNIFORM_BUFFER, bo, size, data);
+	}
+}
+
+
 extern void ren_destroy_buffer(uint32_t bo, struct vk_buffer buffer)
 {
 	if(renderer.mode == REN_MODE_VULKAN) {
@@ -227,14 +239,15 @@ extern void ren_destroy_buffer(uint32_t bo, struct vk_buffer buffer)
 
 
 extern int ren_set_model_data(uint32_t vao, uint32_t vbo, int stride, int rig,
-                              VkDescriptorSet set,
-                              struct vk_buffer uniform_buffer,
-                              struct vk_texture texture)
+			      VkDescriptorSet set,
+			      struct vk_buffer uniform_buffer,
+			      struct vk_buffer light_buffer,
+			      struct vk_texture texture)
 {
 	int res;
 
 	if(renderer.mode == REN_MODE_VULKAN) {
-		if(vk_set_uniform_buffer(uniform_buffer, set) < 0)
+		if(vk_set_uniform_buffer(uniform_buffer, light_buffer, set) < 0)
 			return -1;
 		
 		res = vk_set_texture(texture, set);
@@ -281,7 +294,7 @@ extern int ren_set_shader(uint32_t prog, int attr, struct vk_pipeline pipeline)
 
 
 extern void ren_set_vertices(uint32_t vao, struct vk_buffer vtx_buffer,
-                            struct vk_buffer idx_buffer)
+			    struct vk_buffer idx_buffer)
 {
 	if(renderer.mode == REN_MODE_VULKAN) {
 		vk_render_set_vertex_buffer(vtx_buffer);
@@ -294,17 +307,18 @@ extern void ren_set_vertices(uint32_t vao, struct vk_buffer vtx_buffer,
 
 
 extern void ren_set_render_model_data(unsigned int uni_buf,
-                                     struct uni_buffer uni, uint32_t hdl,
-                                     struct vk_pipeline pipeline,
-                                     struct vk_buffer vk_uni_buf,
-                                     VkDescriptorSet set)
+				     struct uni_buffer uni, uint32_t hdl,
+				     unsigned int light_buf,
+				     struct vk_pipeline pipeline,
+				     struct vk_buffer vk_uni_buf,
+				     VkDescriptorSet set)
 {
 	if(renderer.mode == REN_MODE_VULKAN) {
 		vk_copy_data_to_buffer(&uni, vk_uni_buf);
 		vk_render_set_constant_data(pipeline, set);
 	}
 	else if(renderer.mode == REN_MODE_OPENGL) {
-		gl_render_set_uniform_buffer(uni_buf, uni);
+		gl_render_set_uniform_buffer(uni_buf, light_buf, uni);
 		gl_render_set_texture(hdl);
 	}
 }

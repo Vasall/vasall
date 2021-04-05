@@ -101,6 +101,18 @@ extern int gl_create_buffer(uint32_t vao, int type, size_t size, char *buf,
 
 
 /*
+ * Set the content of a buffer.
+ *
+ * @type: The type of the buffer (GL_UNIFORM_BUFFER, GL_ARRAY_BUFFER, etc.)
+ * @buffer: The handle of the buffer
+ * @size: The size of the content
+ * @data: The new content of the buffer
+ */
+extern void gl_set_buffer_data(int type, unsigned int buffer, int size,
+			       void* data);
+
+
+/*
  * Destroy a buffer.
  * 
  * @bo: The handle of the buffer object
@@ -165,9 +177,10 @@ extern void gl_render_set_texture(uint32_t hdl);
  * Set the values of the uniform variables during rendering.
  * 
  * @buf: The handle of the uniform buffer
+ * @light: The light buffer of the world
  * @uni: The uniform buffer data
  */
-extern void gl_render_set_uniform_buffer(unsigned int buf,
+extern void gl_render_set_uniform_buffer(unsigned int buf, unsigned int light,
                                          struct uni_buffer uni);
 
 

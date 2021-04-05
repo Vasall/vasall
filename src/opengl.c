@@ -121,6 +121,10 @@ extern int gl_create_program(char *vs, char *fs, uint32_t *prog, int num,
 	if(loc != GL_INVALID_INDEX)
 		glUniformBlockBinding(*prog, loc, 0);
 
+	loc = glGetUniformBlockIndex(*prog, "light");
+	if(loc != GL_INVALID_INDEX)
+		glUniformBlockBinding(*prog, loc, 2);
+
 	/* Detach and destroy assets.shd */
 	glDetachShader(*prog, vshd);
 	glDeleteShader(vshd);
@@ -234,6 +238,15 @@ extern int gl_create_buffer(uint32_t vao, int type, size_t size, char *buf,
 }
 
 
+extern void gl_set_buffer_data(int type, unsigned int buffer, int size,
+			       void* data)
+{
+	glBindBuffer(type, buffer);
+	glBufferData(type, size, data, GL_STATIC_DRAW);
+	glBindBuffer(type, 0);
+}
+
+
 extern void gl_destroy_buffer(uint32_t bo)
 {
 	glDeleteBuffers(1, &bo);
@@ -322,7 +335,7 @@ extern void gl_render_set_texture(uint32_t hdl)
 }
 
 
-extern void gl_render_set_uniform_buffer(unsigned int buf,
+extern void gl_render_set_uniform_buffer(unsigned int buf, unsigned int light,
                                          struct uni_buffer uni)
 {
 
@@ -331,6 +344,7 @@ extern void gl_render_set_uniform_buffer(unsigned int buf,
 				GL_STATIC_DRAW);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 0, buf);
+	glBindBufferBase(GL_UNIFORM_BUFFER, 2, light);
 }
 
 

@@ -9,6 +9,10 @@ vec2 LIGHT_BIAS = vec2(0.2, 0.8);
 
 layout(binding=1) uniform sampler2D tex;
 
+layout(binding=2) uniform light {
+	vec3 sun;
+};
+
 layout(location=0) out vec4 FragColor;
 
 vec3 calculateLighting(){

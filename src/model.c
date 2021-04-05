@@ -312,7 +312,8 @@ extern void mdl_set_data(short slot, int vtxnum, float *vtx, float *tex,
 		goto err_set_failed;
 
 	if(ren_set_model_data(mdl->vao, mdl->vtx_bao, vtx_size, jnt && wgt ? 1 : 0,
-			mdl->set, mdl->uni_bo, assets.tex.tex[mdl->tex]) < 0)
+			      mdl->set, mdl->uni_bo, world.light_buf,
+			      assets.tex.tex[mdl->tex]) < 0)
 		goto err_set_failed;
 
 	return;
@@ -791,7 +792,8 @@ extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
 	
 	/* Set uniform buffer and textures */
 	ren_set_render_model_data(mdl->uni_buf, uni, assets.tex.hdl[mdl->tex],
-			assets.shd.pipeline[mdl->shd], mdl->uni_bo, mdl->set);
+				  world.light_bo, assets.shd.pipeline[mdl->shd],
+				  mdl->uni_bo, mdl->set);
 
 	/* Draw the vertices */
 	ren_draw(mdl->idx_num);

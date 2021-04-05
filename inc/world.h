@@ -42,6 +42,10 @@ struct world_col_box {
 	short    colobj[5];
 };
 
+struct light_buffer {
+	vec3_t sun;
+};
+
 
 /*
  * The world-chunk-wrapper responsible for loading and managing the current
@@ -57,6 +61,10 @@ struct world_wrapper {
 
 	/* Temporary world-model TODO */
 	short mdl;
+
+	/* Light buffer */
+	unsigned int light_bo;
+	struct vk_buffer light_buf;
 };
 
 

@@ -160,11 +160,13 @@ extern void vk_destroy_texture(struct vk_texture texture);
  * Doesn't have to be between start_render() and end_render().
  * 
  * @buffer: The uniform buffer with usage VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
+ * @light: The light buffer of the world
  * @set: The constant data for the model
  * 
  * Returns: 0 on success or -1 if an error occured
  */
-extern int vk_set_uniform_buffer(struct vk_buffer buffer, VkDescriptorSet set);
+extern int vk_set_uniform_buffer(struct vk_buffer buffer,
+				 struct vk_buffer light, VkDescriptorSet set);
 
 
 /*

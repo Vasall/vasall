@@ -63,8 +63,8 @@ extern int ren_resize(int w, int h);
  * Returns: 0 on success or -1 if an error occured
  */
 extern int ren_create_shader(char *vs, char *fs, uint32_t *prog,
-                             struct vk_pipeline *pipeline, int num,
-                             char **vars);
+			     struct vk_pipeline *pipeline, int num,
+			     char **vars);
 
 
 /*
@@ -88,7 +88,7 @@ extern void ren_destroy_shader(uint32_t prog, struct vk_pipeline pipeline);
  * Returns: 0 on success or -1 if an error occured
  */
 extern int ren_create_texture(char *pth, uint32_t *hdl,
-                              struct vk_texture *texture);
+			      struct vk_texture *texture);
 
 
 /*
@@ -113,7 +113,7 @@ extern void ren_destroy_texture(uint32_t hdl, struct vk_texture texture);
  * Returns: 0 on success or -1 if an error occured
  */
 extern int ren_create_model_data(struct vk_pipeline pipeline, uint32_t *vao,
-                                 VkDescriptorSet *set);
+				 VkDescriptorSet *set);
 
 
 /*
@@ -143,7 +143,19 @@ extern int ren_destroy_model_data(uint32_t vao, VkDescriptorSet set);
  * Returns: 0 on success or -1 if an error occured
  */
 extern int ren_create_buffer(uint32_t vao, int type, size_t size, char *buf,
-                             uint32_t *bo, struct vk_buffer *buffer);
+			     uint32_t *bo, struct vk_buffer *buffer);
+
+
+/*
+ * Update the content of a buffer (Currently only uniform buffer).
+ *
+ * @bo: The handle of the opengl buffer
+ * @buffer: The vulkan buffer
+ * @size: The size of the content (must be same as initial size)
+ * @data: The new content for the buffer
+ */
+extern void ren_update_buffer(unsigned int bo, struct vk_buffer buffer,
+				  int size, void* data);
 
 
 /*
@@ -165,14 +177,16 @@ extern void ren_destroy_buffer(uint32_t bo, struct vk_buffer buffer);
  * @rig: A boolean to tell if the model is animated
  * @set: The vulkan descriptor set
  * @uniform_buffer: The vulkan uniform buffer
+ * @light: The light buffer of the world
  * @texture: The vulkan texture
  * 
  * Returns: 0 on success or -1 if an error occured
  */
 extern int ren_set_model_data(uint32_t vao, uint32_t vbo, int stride, int rig,
-                              VkDescriptorSet set,
-                              struct vk_buffer uniform_buffer,
-                              struct vk_texture texture);
+			      VkDescriptorSet set,
+			      struct vk_buffer uniform_buffer,
+			      struct vk_buffer light_buffer,
+			      struct vk_texture texture);
 
 
 /*
@@ -203,7 +217,7 @@ extern int ren_set_shader(uint32_t prog, int attr, struct vk_pipeline pipeline);
  * @idx_buffer: The vulkan index buffer
  */
 extern void ren_set_vertices(uint32_t vao, struct vk_buffer vtx_buffer,
-                             struct vk_buffer idx_buffer);
+			     struct vk_buffer idx_buffer);
 
 
 /*
@@ -212,15 +226,17 @@ extern void ren_set_vertices(uint32_t vao, struct vk_buffer vtx_buffer,
  * @uni_buf: The opengl handle of the uniform buffer
  * @uni: The uniform buffer data
  * @hdl: The opengl handle of the texture
+ * @light: The light buffer of the world
  * @pipeline: The vulkan pipeline
  * @vk_uni_buf: The vulkan uniform buffer
  * @set: The vulkan descriptor set
  */
 extern void ren_set_render_model_data(unsigned int uni_buf,
-                                      struct uni_buffer uni, uint32_t hdl,
-                                      struct vk_pipeline pipeline,
-                                      struct vk_buffer vk_uni_buf,
-                                      VkDescriptorSet set);
+				     struct uni_buffer uni, uint32_t hdl,
+				     unsigned int light_buf,
+				     struct vk_pipeline pipeline,
+				     struct vk_buffer vk_uni_buf,
+				     VkDescriptorSet set);
 
 
 /*

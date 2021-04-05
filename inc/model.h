@@ -33,7 +33,7 @@ enum mdl_status {
 };
 
 struct mdl_col {
-	cube_t         bp_col;
+	cube_t         bb_col;
 
 	sphere_t       ne_col;
 	mat3_t         ne_cbs;

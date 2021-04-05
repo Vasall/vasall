@@ -644,8 +644,8 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 		printf("Load CBP\n");
 
 		/* Copy the position and size of collision-box */
-		vec3_cpy(mdl->col.bp_col.pos, data->bp_col.pos);
-		vec3_cpy(mdl->col.bp_col.scl, data->bp_col.scl);
+		vec3_cpy(mdl->col.bb_col.pos, data->bb_col.pos);
+		vec3_cpy(mdl->col.bb_col.scl, data->bb_col.scl);
 	}
 	/* 
 	 * If a near-elipsoid is defined.

@@ -982,8 +982,6 @@ extern void obj_sys_update(uint32_t now)
 			lim_ts = now;
 		}
 	}
-
-	printf("%d\n", c);
 }
 
 

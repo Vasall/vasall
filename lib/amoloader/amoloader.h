@@ -1,7 +1,7 @@
 /*
  * zlib License
  * 
- * (C) 2021 clusterwerk
+ * (C) 2020 VasallSoftware
  * 
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
@@ -177,7 +177,7 @@ struct amo_model {
 	 * collision-buffers 
 	 */
 
-	struct amo_shape3d  bp_col;
+	struct amo_shape3d  bb_col;
 	struct amo_shape3d  ne_col;
 
 	int                 cm_vtx_c;

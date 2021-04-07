@@ -476,8 +476,7 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 	amo_getdata(data, &vtxnum, (void **)&vtx, (void **)&tex, (void **)&nrm,
 			(void **)&jnt, (void **)&wgt, &idxnum, &idx);
 
-	printf("Name: %s\n", name);
-	printf("Mask: %u\n", mdl->attr_m);
+	printf("Load model %s from %s...", name, pth);
 
 	/* Attach data to the model */
 	mdl_set_data(slot, vtxnum, vtx, tex, nrm, jnt, wgt, idxnum, idx);
@@ -641,8 +640,6 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 	 * If a broadphase-collision-box is defined.
 	 */
 	if(data->attr_m & AMO_M_CBP) {
-		printf("Load CBP\n");
-
 		/* Copy the position and size of collision-box */
 		vec3_cpy(mdl->col.bb_col.pos, data->bb_col.pos);
 		vec3_cpy(mdl->col.bb_col.scl, data->bb_col.scl);
@@ -651,7 +648,6 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 	 * If a near-elipsoid is defined.
 	 */
 	if(data->attr_m & AMO_M_CNE) {
-		printf("Load CNE\n");
 		/* Copy the position and size of collision-box */
 		vec3_cpy(mdl->col.ne_col.pos, data->ne_col.pos);
 		vec3_cpy(mdl->col.ne_col.scl, data->ne_col.scl);
@@ -667,8 +663,6 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 	 * If a collision-mesh is defined.
 	 */
 	if(data->attr_m & AMO_M_CCM) {
-		printf("Load CCM\n");
-
 		/* Copy number of vertices and faces */
 		mdl->col.cm_vtx_c = data->cm_vtx_c;
 		mdl->col.cm_tri_c = data->cm_idx_c;
@@ -741,6 +735,8 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot)
 	/* Return the returned data-struct */
 	amo_destroy(data);
 
+	printf("done\n");
+
 	/* Return the slot the model is on */
 	return slot;
 
@@ -749,6 +745,8 @@ err_free_data:
 
 err_del_mdl:
 	mdl_del(slot);
+
+	printf("failed\n");
 	return -1;
 }
 

@@ -257,8 +257,7 @@ static int get_gpu(void)
 	uint32_t gpu_count;
 	VkResult res;
 	VkPhysicalDevice *gpus;
-	unsigned int *priorities;
-	int best_gpu;
+	int best_priority;
 
 	/* Get all available gpus */
 	res = vkEnumeratePhysicalDevices(vk.instance, &gpu_count, NULL);
@@ -267,34 +266,31 @@ static int get_gpu(void)
 	res = vkEnumeratePhysicalDevices(vk.instance, &gpu_count, gpus);
 	vk_assert(res);
 
-	priorities = calloc(1, sizeof(unsigned int)*gpu_count);
-
 	/* Prioritize a discrete gpu, more checks may follow */
+	best_priority = 0;
+	vk.gpu = gpus[0];
 	for(i = 0; i < gpu_count; i++) {
+		int priority;
 		VkPhysicalDeviceProperties props;
 		VkPhysicalDeviceFeatures features;
 		vkGetPhysicalDeviceProperties(gpus[i], &props);
 		vkGetPhysicalDeviceFeatures(gpus[i], &features);
 		if(props.apiVersion >= VK_API_VERSION_1_1)
-			priorities[i]++;
+			priority++;
 		if(props.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
-			priorities[i]+=2;
+			priority+=2;
 		if(props.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
-			priorities[i]++;
+			priority++;
 		if(features.samplerAnisotropy)
-			priorities[i]++;
-		printf("%s: %d\n", props.deviceName, priorities[i]);
-	}
+			priority++;
 
-	best_gpu = 0;
-	for(i = 0; i < gpu_count; i++) {
-		if(priorities[i] > priorities[best_gpu])
-			best_gpu = i;
+		if(priority > best_priority) {
+			best_priority = priority;
+			vk.gpu = gpus[i];
+		}	
 	}
-	vk.gpu = gpus[best_gpu];
 
 	free(gpus);
-	free(priorities);
 
 	return 0;
 }
@@ -1826,8 +1822,8 @@ extern void vk_destroy_texture(struct vk_texture texture)
 {
 	vkDestroySampler(vk.device, texture.sampler, NULL);
 	vkDestroyImageView(vk.device, texture.image_view, NULL);
-	vkFreeMemory(vk.device, texture.memory, NULL);
 	vkDestroyImage(vk.device, texture.image, NULL);
+	vkFreeMemory(vk.device, texture.memory, NULL);
 }
 
 
@@ -2062,8 +2058,8 @@ err_render_pass:
 	vkDestroyRenderPass(vk.device, vk.render_pass, NULL);
 err_depth_buffer:
 	vkDestroyImageView(vk.device, vk.depth_view, NULL);
-	vkFreeMemory(vk.device, vk.depth_memory, NULL);
 	vkDestroyImage(vk.device, vk.depth_image, NULL);
+	vkFreeMemory(vk.device, vk.depth_memory, NULL);
 err_swapchain_images:
 	for(i = 0; i < vk.image_count; i++)
 		vkDestroyImageView(vk.device, vk.image_views[i], NULL);
@@ -2092,8 +2088,8 @@ extern void vk_destroy(void)
 	vkDestroyCommandPool(vk.device, vk.command_pool, NULL);
 	vkDestroyRenderPass(vk.device, vk.render_pass, NULL);
 	vkDestroyImageView(vk.device, vk.depth_view, NULL);
-	vkFreeMemory(vk.device, vk.depth_memory, NULL);
 	vkDestroyImage(vk.device, vk.depth_image, NULL);
+	vkFreeMemory(vk.device, vk.depth_memory, NULL);
 	for(i = 0; i < vk.image_count; i++) {
 		vkDestroyFramebuffer(vk.device, vk.frame_buffers[i], NULL);
 		vkDestroyImageView(vk.device, vk.image_views[i], NULL);
@@ -2113,8 +2109,8 @@ extern int vk_resize(void)
 	uint32_t i;
 
 	vkDestroyImageView(vk.device, vk.depth_view, NULL);
-	vkFreeMemory(vk.device, vk.depth_memory, NULL);
 	vkDestroyImage(vk.device, vk.depth_image, NULL);
+	vkFreeMemory(vk.device, vk.depth_memory, NULL);
 	for(i = 0; i < vk.image_count; i++) {
 		vkDestroyFramebuffer(vk.device, vk.frame_buffers[i], NULL);
 		vkDestroyImageView(vk.device, vk.image_views[i], NULL);
@@ -2140,8 +2136,8 @@ extern int vk_resize(void)
 
 err_depth_buffer:
 	vkDestroyImageView(vk.device, vk.depth_view, NULL);
-	vkFreeMemory(vk.device, vk.depth_memory, NULL);
 	vkDestroyImage(vk.device, vk.depth_image, NULL);
+	vkFreeMemory(vk.device, vk.depth_memory, NULL);
 err_swapchain_images:
 	for(i = 0; i < vk.image_count; i++)
 		vkDestroyImageView(vk.device, vk.image_views[i], NULL);

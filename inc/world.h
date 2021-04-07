@@ -57,6 +57,9 @@ struct world_wrapper {
 
 	/* Temporary world-model TODO */
 	short mdl;
+
+	/* Skybox */
+	short skybox;
 };
 
 
@@ -103,6 +106,15 @@ extern void wld_del_chunk(uint32_t id);
  * @interp: The interpolation-factor
  */
 extern void wld_render(float interp);
+
+
+/*
+ * Set the skybox of the world.
+ *
+ * @mdl: The model of the skybox
+ */
+extern void wld_set_skybox(short mdl);
+
 
 #if 0
 /*

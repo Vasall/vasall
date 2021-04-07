@@ -74,7 +74,8 @@ extern void mat4_idt(mat4_t m)
 
 extern void mat4_cpy(mat4_t out, mat4_t in)
 {
-	memcpy(out, in, MAT4_SIZE);
+	if(in)
+		memcpy(out, in, MAT4_SIZE);
 }
 
 extern void mat4_mult(mat4_t m1, mat4_t m2, mat4_t out)

@@ -39,6 +39,8 @@ extern int wld_init(void)
 		world.col_point[2][i].data = 0;
 	}
 
+	world.skybox = -1;
+
 	return 0;
 }
 
@@ -52,8 +54,17 @@ extern void wld_close(void)
 extern void wld_render(float interp) 
 {
 	if(interp) {}
+	if(world.skybox)
+		mdl_render(world.skybox, NULL, NULL, NULL);
 	return;
 }
+
+
+extern void wld_set_skybox(short mdl)
+{
+	world.skybox = mdl;
+}
+
 
 #if 0
 static short wld_col_pnt_add(char axis, int flg, short box, float value)

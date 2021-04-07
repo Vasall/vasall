@@ -1,6 +1,7 @@
 #ifndef _RENDER_ENGINE_H
 #define _RENDER_ENGINE_H
 
+#include "render_types.h"
 #include "vulkan.h"
 #include "opengl.h"
 
@@ -59,12 +60,13 @@ extern int ren_resize(int w, int h);
  *            function
  * @num: The number of elements in the vars array
  * @vars: An array with the names of the input attributes
+ * @type: the type of model this shader is for
  * 
  * Returns: 0 on success or -1 if an error occured
  */
 extern int ren_create_shader(char *vs, char *fs, uint32_t *prog,
-                             struct vk_pipeline *pipeline, int num,
-                             char **vars);
+			    struct vk_pipeline *pipeline, int num, char **vars,
+							 enum mdl_type type);
 
 
 /*
@@ -88,7 +90,7 @@ extern void ren_destroy_shader(uint32_t prog, struct vk_pipeline pipeline);
  * Returns: 0 on success or -1 if an error occured
  */
 extern int ren_create_texture(char *pth, uint32_t *hdl,
-                              struct vk_texture *texture);
+			      struct vk_texture *texture);
 
 
 /*
@@ -98,6 +100,21 @@ extern int ren_create_texture(char *pth, uint32_t *hdl,
  * @texture: The vulkan texture
  */
 extern void ren_destroy_texture(uint32_t hdl, struct vk_texture texture);
+
+
+/*
+ * Create a skybox texture.
+ *
+ * @pths: Six paths to the skybox pngs (right, left, top, bottom, front, back)
+ * @hdl: A pointer to the handle of the opengl texture, which will be set by
+ *       the function
+ * @skybox: A pointer to the vulkan texture, which will be filled by the
+ *          function
+ * 
+ * Returns: 0 on success or -1 if an error occured
+ */
+extern int ren_create_skybox(char *pths[6], uint32_t *hdl,
+			     struct vk_texture *skybox);
 
 
 /*
@@ -113,7 +130,7 @@ extern void ren_destroy_texture(uint32_t hdl, struct vk_texture texture);
  * Returns: 0 on success or -1 if an error occured
  */
 extern int ren_create_model_data(struct vk_pipeline pipeline, uint32_t *vao,
-                                 VkDescriptorSet *set);
+				 VkDescriptorSet *set);
 
 
 /*
@@ -143,7 +160,7 @@ extern int ren_destroy_model_data(uint32_t vao, VkDescriptorSet set);
  * Returns: 0 on success or -1 if an error occured
  */
 extern int ren_create_buffer(uint32_t vao, int type, size_t size, char *buf,
-                             uint32_t *bo, struct vk_buffer *buffer);
+			     uint32_t *bo, struct vk_buffer *buffer);
 
 
 /*
@@ -170,9 +187,9 @@ extern void ren_destroy_buffer(uint32_t bo, struct vk_buffer buffer);
  * Returns: 0 on success or -1 if an error occured
  */
 extern int ren_set_model_data(uint32_t vao, uint32_t vbo, int stride, int rig,
-                              VkDescriptorSet set,
-                              struct vk_buffer uniform_buffer,
-                              struct vk_texture texture);
+			      VkDescriptorSet set,
+			      struct vk_buffer uniform_buffer,
+			      struct vk_texture texture);
 
 
 /*
@@ -203,7 +220,7 @@ extern int ren_set_shader(uint32_t prog, int attr, struct vk_pipeline pipeline);
  * @idx_buffer: The vulkan index buffer
  */
 extern void ren_set_vertices(uint32_t vao, struct vk_buffer vtx_buffer,
-                             struct vk_buffer idx_buffer);
+			     struct vk_buffer idx_buffer);
 
 
 /*
@@ -215,20 +232,22 @@ extern void ren_set_vertices(uint32_t vao, struct vk_buffer vtx_buffer,
  * @pipeline: The vulkan pipeline
  * @vk_uni_buf: The vulkan uniform buffer
  * @set: The vulkan descriptor set
+ * @type: The type of the model
  */
 extern void ren_set_render_model_data(unsigned int uni_buf,
-                                      struct uni_buffer uni, uint32_t hdl,
-                                      struct vk_pipeline pipeline,
-                                      struct vk_buffer vk_uni_buf,
-                                      VkDescriptorSet set);
+				     struct uni_buffer uni, uint32_t hdl,
+				     struct vk_pipeline pipeline,
+				     struct vk_buffer vk_uni_buf,
+				     VkDescriptorSet set, enum mdl_type type);
 
 
 /*
  * Draw the model.
  * 
  * @indices: The amount of indices
+ * @type: The type of the model
  */
-extern void ren_draw(uint32_t indices);
+extern void ren_draw(uint32_t indices, enum mdl_type type);
 
 
 /*

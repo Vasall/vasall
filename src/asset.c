@@ -80,7 +80,7 @@ static int shd_check_slot(short slot)
 }
 
 
-extern short shd_set(char *name, char *vs, char *fs, int num, char **vars)
+extern short shd_set(char *name, char *vs, char *fs, int num, char **vars, enum mdl_type type)
 {
 	short slot;
 
@@ -93,7 +93,7 @@ extern short shd_set(char *name, char *vs, char *fs, int num, char **vars)
 		return -1;
 
 	if(ren_create_shader(vs, fs, &assets.shd.prog[slot],
-					&assets.shd.pipeline[slot], num, vars) < 0)
+					&assets.shd.pipeline[slot], num, vars, type) < 0)
 		return -1;
 
 	assets.shd.mask[slot] = 1;
@@ -181,6 +181,25 @@ extern short tex_set(char *name, char *pth)
 
 	if(ren_create_texture(pth, &assets.tex.hdl[slot], &assets.tex.tex[slot])
 					< 0)
+		return -1;
+
+	assets.tex.mask[slot] = 1;
+	strcpy(assets.tex.name[slot], name);
+	return slot;
+}
+
+
+extern short skybox_set(char *name, char *pths[6])
+{
+	short slot;
+
+	if((slot = tex_get_slot()) < 0) {
+		ERR_LOG(("Texture-table already full"));
+		return -1;
+	}
+
+	if(ren_create_skybox(pths, &assets.tex.hdl[slot], &assets.tex.tex[slot])
+				< 0)
 		return -1;
 
 	assets.tex.mask[slot] = 1;

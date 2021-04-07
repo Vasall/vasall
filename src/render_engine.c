@@ -50,7 +50,8 @@ extern int ren_resize(int w, int h)
 
 
 extern int ren_create_shader(char *vs, char *fs, uint32_t *prog,
-                             struct vk_pipeline *pipeline, int num, char **vars)
+                             struct vk_pipeline *pipeline, int num, char **vars,
+							 enum mdl_type type)
 {
 	int i, res;
 	enum vk_in_attr in_attr = 0;
@@ -95,7 +96,7 @@ extern int ren_create_shader(char *vs, char *fs, uint32_t *prog,
 	vk_fs[fs_len+4] = '\0';
 
 	if(renderer.mode == REN_MODE_VULKAN) {
-		res = vk_create_pipeline(vk_vs, vk_fs, in_attr, pipeline);
+		res = vk_create_pipeline(vk_vs, vk_fs, in_attr, type, pipeline);
 	}
 	else if(renderer.mode == REN_MODE_OPENGL) {
 		res = gl_create_program(vs, fs, prog, num, vars);
@@ -143,6 +144,22 @@ extern void ren_destroy_texture(uint32_t hdl, struct vk_texture texture)
 	else if(renderer.mode == REN_MODE_OPENGL) {
 		gl_destroy_texture(hdl);
 	}
+}
+
+
+extern int ren_create_skybox(char *pths[6], uint32_t *hdl,
+			     struct vk_texture *skybox)
+{
+	int res;
+
+	if(renderer.mode == REN_MODE_VULKAN) {
+		res = vk_create_skybox(pths, skybox);
+	}
+	else if(renderer.mode == REN_MODE_OPENGL) {
+		res = gl_create_skybox(pths, hdl);
+	}
+
+	return res;
 }
 
 
@@ -297,7 +314,7 @@ extern void ren_set_render_model_data(unsigned int uni_buf,
                                      struct uni_buffer uni, uint32_t hdl,
                                      struct vk_pipeline pipeline,
                                      struct vk_buffer vk_uni_buf,
-                                     VkDescriptorSet set)
+                                     VkDescriptorSet set, enum mdl_type type)
 {
 	if(renderer.mode == REN_MODE_VULKAN) {
 		vk_copy_data_to_buffer(&uni, vk_uni_buf);
@@ -305,18 +322,18 @@ extern void ren_set_render_model_data(unsigned int uni_buf,
 	}
 	else if(renderer.mode == REN_MODE_OPENGL) {
 		gl_render_set_uniform_buffer(uni_buf, uni);
-		gl_render_set_texture(hdl);
+		gl_render_set_texture(hdl, type);
 	}
 }
 
 
-extern void ren_draw(uint32_t indices)
+extern void ren_draw(uint32_t indices, enum mdl_type type)
 {
 	if(renderer.mode == REN_MODE_VULKAN) {
 		vk_render_draw(indices);
 	}
 	else if(renderer.mode == REN_MODE_OPENGL) {
-		gl_render_draw(indices);
+		gl_render_draw(indices, type);
 	}
 }
 

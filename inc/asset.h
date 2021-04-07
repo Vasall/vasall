@@ -99,10 +99,12 @@ extern void ast_close(void);
  * @num: The number of variables
  * @vars: An array of variable-names which will be bound to the corresponding
  *        position in the array
+ * @type: the type of the models this shader is for
  *
  * Returns: The slot of the shader in the table or -1 if an error occurred
  */
-extern short shd_set(char *name, char *vs, char *fs, int num, char **vars);
+extern short shd_set(char *name, char *vs, char *fs, int num, char **vars,
+			enum mdl_type type);
 
 
 /*
@@ -153,6 +155,17 @@ extern void shd_unuse(void);
  * Returns: Either the slot the texture is on or -1 if an error occurred
  */
 extern short tex_set(char *name, char *pth);
+
+
+/*
+ * Manually set a new skybox texture and add it to the texture-table.
+ *
+ * @name: The name of the skybox texture
+ * @pths: The paths of the skybox pngs (right, left, top, bottom, front, back)
+ *
+ * Returns: Either the slot the texture is on or -1 if an error occurred
+ */
+extern short skybox_set(char *name, char *pths[6]);
 
 
 /*

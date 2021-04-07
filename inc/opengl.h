@@ -1,9 +1,7 @@
 #ifndef _OPENGL_H
 #define _OPENGL_H
 
-#include "matrix.h"
-#include "model.h"
-#include "rig.h"
+#include "render_types.h"
 #include "sdl.h"
 
 /*
@@ -64,6 +62,18 @@ extern int gl_create_texture(char *pth, uint32_t *hdl);
  * @hdl: The handle of the texture
  */
 extern void gl_destroy_texture(uint32_t hdl);
+
+
+/*
+ * Create a skybox texture.
+ * 
+ * @pths: Six paths to the skybox pngs
+ * @hdl: A pointer to the handle of the texture, which will be set by the
+ *       function
+ * 
+ * Returns: 0 on success or -1 if an error occured
+ */
+extern int gl_create_skybox(char *pths[6], uint32_t *hdl);
 
 
 /*
@@ -157,8 +167,9 @@ extern void gl_render_set_vao(uint32_t vao);
  * Set the texture during rendering.
  * 
  * @hdl: the handle of the texture
+ * @type: the type of model this texture is for
  */
-extern void gl_render_set_texture(uint32_t hdl);
+extern void gl_render_set_texture(uint32_t hdl, enum mdl_type type);
 
 
 /*
@@ -175,8 +186,9 @@ extern void gl_render_set_uniform_buffer(unsigned int buf,
  * Draw the model.
  * 
  * @indices: The amount of indices
+ * @type: the type of model that should be rendered
  */
-extern void gl_render_draw(size_t indices);
+extern void gl_render_draw(size_t indices, enum mdl_type type);
 
 
 /*

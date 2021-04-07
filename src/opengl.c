@@ -10,6 +10,79 @@ struct opengl_wrapper {
 static struct opengl_wrapper ogl;
 
 
+static void GLAPIENTRY gl_callback(GLenum source,
+				GLenum type,
+				GLuint id,
+				GLenum severity,
+				GLsizei length,
+				const GLchar *message,
+				const void *userParam)
+{
+	char *type_string;
+	char *severity_string;
+
+	(void) source;
+	(void) id;
+	(void) length;
+	(void) userParam;
+
+	switch (type)
+	{
+	case GL_DEBUG_TYPE_ERROR:
+		type_string = "GL ERROR"; 
+		break;
+	case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+		type_string = "GL DEPRECATED"; 
+		break;
+	case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+		type_string = "GL UNDEFINED"; 
+		break;
+	case GL_DEBUG_TYPE_PORTABILITY:
+		type_string = "GL PORTABILITY"; 
+		break;
+	case GL_DEBUG_TYPE_PERFORMANCE:
+		type_string = "GL PERFORMANCE"; 
+		break;
+	case GL_DEBUG_TYPE_OTHER:
+		type_string = "GL MESSAGE"; 
+		break;
+	case GL_DEBUG_TYPE_MARKER:
+		type_string = "GL MARKER"; 
+		break;
+	case GL_DEBUG_TYPE_PUSH_GROUP:
+		type_string = "GL PUSH"; 
+		break;
+	case GL_DEBUG_TYPE_POP_GROUP:
+		type_string = "GL POP"; 
+		break;
+	default:
+		type_string = "";
+		break;
+	}
+
+	switch (severity)
+	{
+	case GL_DEBUG_SEVERITY_HIGH:
+		severity_string = "\033[31mHIGH SEVERITY";
+		break;
+	case GL_DEBUG_SEVERITY_MEDIUM:
+		severity_string = "\033[33mMEDIUM SEVERITY";
+		break;
+	case GL_DEBUG_SEVERITY_LOW:
+		severity_string = "\033[36mLOW SEVERITY";
+		break;
+	case GL_DEBUG_SEVERITY_NOTIFICATION:
+		severity_string = "\033[35mNOTIFICATION";
+		break;
+	default:
+		severity_string = "";
+		break;
+	}
+
+	fprintf(stderr, "%s: %s %s\033[0m\n", severity_string, type_string,
+						message);
+}
+
 extern int gl_init(SDL_Window *window)
 {
 	ogl.context = SDL_GL_CreateContext(window);
@@ -25,6 +98,9 @@ extern int gl_init(SDL_Window *window)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_DEPTH_TEST);
 
+	glEnable(GL_DEBUG_OUTPUT);
+	glDebugMessageCallback(gl_callback, 0);
+
 	return 0;
 }
 
@@ -36,7 +112,7 @@ extern void gl_destroy(void)
 
 
 extern int gl_create_program(char *vs, char *fs, uint32_t *prog, int num,
-                             char **vars)
+			     char **vars)
 {
 	int i;
 	int success;
@@ -101,9 +177,6 @@ extern int gl_create_program(char *vs, char *fs, uint32_t *prog, int num,
 	for(i = 0; i < num; i++)
 		glBindAttribLocation(*prog, i, vars[i]);
 
-	if(glGetError() != GL_NO_ERROR)
-		ERR_LOG(("Failed to bind attribute-location"));
-
 	/* Link the shader-program */
 	glLinkProgram(*prog);
 
@@ -111,8 +184,8 @@ extern int gl_create_program(char *vs, char *fs, uint32_t *prog, int num,
 	glGetProgramiv(*prog, GL_LINK_STATUS, (int *)&isLinked);
 	if(isLinked == GL_FALSE) {
 		GLchar infoLog[512];
-        	GLint size;
-        	glGetProgramInfoLog(*prog, 512, &size, infoLog);
+		GLint size;
+		glGetProgramInfoLog(*prog, 512, &size, infoLog);
 		ERR_LOG(("Failed to link shader: %s", infoLog));
 	}
 
@@ -246,10 +319,8 @@ extern void gl_destroy_vao(uint32_t vao)
 
 
 extern int gl_create_buffer(uint32_t vao, int type, size_t size, char *buf,
-                            uint32_t *bo)
+			    uint32_t *bo)
 {
-	int err;
-
 	/* Bind vertex-array-object */
 	glBindVertexArray(vao);
 
@@ -260,10 +331,6 @@ extern int gl_create_buffer(uint32_t vao, int type, size_t size, char *buf,
 	/* Unbind the vertex-array-object */
 	glBindVertexArray(0);
 
-	if((err = glGetError()) != GL_NO_ERROR) {
-		ERR_LOG(("Failed to create buffer"));
-		return -1;
-	}
 	return 0;
 }
 
@@ -329,16 +396,6 @@ extern int gl_render_set_program(uint32_t prog, int attr)
 	for(i = 0; i < attr; i++)
 		glEnableVertexAttribArray(i);
 
-	if(glGetError() != GL_NO_ERROR) {
-		ERR_LOG(("Failed to enable attribute"));
-		return -1;
-	}
-
-	if(glGetError() != GL_NO_ERROR) {
-		ERR_LOG(("Failed to get locations"));
-		return -1;
-	}
-
 	return 0;
 }
 
@@ -362,7 +419,7 @@ extern void gl_render_set_texture(uint32_t hdl, enum mdl_type type)
 
 
 extern void gl_render_set_uniform_buffer(unsigned int buf,
-                                         struct uni_buffer uni)
+					 struct uni_buffer uni)
 {
 
 	glBindBuffer(GL_UNIFORM_BUFFER, buf);

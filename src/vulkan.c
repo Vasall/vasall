@@ -257,6 +257,8 @@ static int get_gpu(void)
 	uint32_t gpu_count;
 	VkResult res;
 	VkPhysicalDevice *gpus;
+	unsigned int *priorities;
+	int best_gpu;
 
 	/* Get all available gpus */
 	res = vkEnumeratePhysicalDevices(vk.instance, &gpu_count, NULL);
@@ -265,15 +267,34 @@ static int get_gpu(void)
 	res = vkEnumeratePhysicalDevices(vk.instance, &gpu_count, gpus);
 	vk_assert(res);
 
+	priorities = calloc(1, sizeof(unsigned int)*gpu_count);
+
 	/* Prioritize a discrete gpu, more checks may follow */
-	vk.gpu = gpus[0];
 	for(i = 0; i < gpu_count; i++) {
 		VkPhysicalDeviceProperties props;
+		VkPhysicalDeviceFeatures features;
 		vkGetPhysicalDeviceProperties(gpus[i], &props);
+		vkGetPhysicalDeviceFeatures(gpus[i], &features);
+		if(props.apiVersion >= VK_API_VERSION_1_1)
+			priorities[i]++;
 		if(props.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
-			vk.gpu = gpus[i];
+			priorities[i]+=2;
+		if(props.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
+			priorities[i]++;
+		if(features.samplerAnisotropy)
+			priorities[i]++;
+		printf("%s: %d\n", props.deviceName, priorities[i]);
 	}
+
+	best_gpu = 0;
+	for(i = 0; i < gpu_count; i++) {
+		if(priorities[i] > priorities[best_gpu])
+			best_gpu = i;
+	}
+	vk.gpu = gpus[best_gpu];
+
 	free(gpus);
+	free(priorities);
 
 	return 0;
 }
@@ -625,12 +646,14 @@ static int create_image_view(VkImage image, VkImageViewType viewType,
  */
 static int create_swapchain(void)
 {
-	int i;
+	uint32_t i;
 	VkResult res;
 	VkSurfaceCapabilitiesKHR caps;
 	VkCompositeAlphaFlagBitsKHR composites[4];
 	VkCompositeAlphaFlagBitsKHR composite;
 	VkSwapchainCreateInfoKHR create_info;
+	uint32_t present_mode_count;
+	VkPresentModeKHR *present_modes;
 
 	res = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vk.gpu, vk.surface,
 	                                                &caps);
@@ -657,6 +680,16 @@ static int create_swapchain(void)
 	} else {
 		vk.win_size = caps.currentExtent;
 	}
+
+	/* Currently not relevant. Will be used to determine *no vsync*
+	 * availability */
+	res = vkGetPhysicalDeviceSurfacePresentModesKHR(vk.gpu, vk.surface,
+						&present_mode_count, NULL);
+	vk_assert(res);
+	present_modes = malloc(sizeof(VkPresentModeKHR)*present_mode_count);
+	res = vkGetPhysicalDeviceSurfacePresentModesKHR(vk.gpu, vk.surface,
+					&present_mode_count, present_modes);
+	free(present_modes);
 
 	/* Create the swapchain */
 	create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -870,7 +903,7 @@ static int create_command_pool(void)
 
 	create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	create_info.pNext = NULL;
-	create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	create_info.flags = 0;
 	create_info.queueFamilyIndex = vk.family;
 
 	res = vkCreateCommandPool(vk.device, &create_info, NULL,
@@ -1565,8 +1598,8 @@ extern void vk_copy_data_to_buffer(void* data, struct vk_buffer buffer)
 
 extern void vk_destroy_buffer(struct vk_buffer buffer)
 {
-	vkFreeMemory(vk.device, buffer.memory, NULL);
 	vkDestroyBuffer(vk.device, buffer.buffer, NULL);
+	vkFreeMemory(vk.device, buffer.memory, NULL);
 }
 
 

@@ -1,6 +1,7 @@
 # I'm using vim, therefore ignore swap-files used by vim
 *.swp
 *.swo
+*.swn
 *.vim
 
 # Ignore the follwing directories

@@ -67,7 +67,6 @@ struct amo_joint {
 	int               index;
 	struct amo_joint  *par;
 	float             mat[16];
-	float             tail_vec[3];
 };
 
 /*

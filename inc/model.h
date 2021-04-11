@@ -25,17 +25,35 @@ enum mdl_status {
 };
 
 struct mdl_col {
+	/*
+	 * collision-bounding-box
+	 */
 	cube_t         bb_col;
 
+	/*
+	 * near-elipsoid-collision
+	 */
 	sphere_t       ne_col;
 	mat3_t         ne_cbs;
 
+	/*
+	 * collision-mesh
+	 */
 	int            cm_vtx_c;
 	int            cm_tri_c;
 	vec3_t         *cm_vtx;
 	int3_t         *cm_idx;
 	vec3_t         *cm_nrm;
 	vec4_t         *cm_equ;
+
+	/*
+	 * rig-collision-boxes
+	 */
+	int            rb_c;
+	int            *rb_jnt;
+	vec3_t         *rb_pos;
+	vec3_t         *rb_scl;
+	mat4_t         *rb_mat;
 };
 
 struct mdl_joint {
@@ -117,7 +135,6 @@ struct model {
 	int               anim_num;
 	struct mdl_anim   *anim_buf;
 
-	int               col_mask;
 	struct mdl_col    col;
 
 	uint8_t           status;
@@ -195,7 +212,7 @@ extern void mdl_set_data(short slot, int vtxnum, float *vtx, float *tex,
  * @slot: The slot of the model
  * @tex: The slot of the texture
  */
-extern void mdl_set_texture(short slot, short tex);
+extern void mdl_set_tex(short slot, short tex);
 
 
 /*
@@ -204,7 +221,7 @@ extern void mdl_set_texture(short slot, short tex);
  * @slot: The slot of the model
  * @shd: The slot of the shader
  */
-extern void mdl_set_shader(short slot, short shd);
+extern void mdl_set_shd(short slot, short shd);
 
 
 /*
@@ -212,6 +229,7 @@ extern void mdl_set_shader(short slot, short shd);
  */
 extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot,
 			enum mdl_type type);
+
 
 /*
  * Render a model with a model-matrix.

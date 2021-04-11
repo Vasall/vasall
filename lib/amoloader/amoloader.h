@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 
 #define AMO_API extern
 #define AMO_INTERN static
@@ -113,11 +114,12 @@ struct amo_anim {
 #define AMO_M_MDL (1<<0)
 #define AMO_M_RIG (1<<1)
 #define AMO_M_ANI (1<<2)
+#define AMO_M_ITH (1<<3)
 
-#define AMO_M_CBP (1<<3)
-#define AMO_M_CNE (1<<4)
-#define AMO_M_CCM (1<<5)
-
+#define AMO_M_CBP (1<<10)
+#define AMO_M_CNE (1<<11)
+#define AMO_M_CCM (1<<12)
+#define AMO_M_CRB (1<<13)
 
 /*
  * A struct containing the parsed mdl of the amo file
@@ -139,7 +141,7 @@ struct amo_anim {
 struct amo_model {
 	char                name[100];
 	enum amo_format     format;
-	unsigned int        attr_m;
+	uint32_t            attr_m;
 
 	int                 vtx_c;
 	float               *vtx_buf;
@@ -177,25 +179,37 @@ struct amo_model {
 	 * collision-buffers 
 	 */
 
+	/* bounding-box */
 	struct amo_shape3d  bb_col;
+
+	/* near-elipsoid */
 	struct amo_shape3d  ne_col;
 
+	/* collision-mesh */
 	int                 cm_vtx_c;
 	float               *cm_vtx_buf;
 	int                 cm_idx_c;
 	int                 *cm_idx_buf;
 	float               *cm_nrm_buf;
+
+	/* rig-box */
+	int                 rb_c;
+	int                 *rb_jnt;
+	float               *rb_pos;
+	float               *rb_scl;
+	float               *rb_mat;
 };
 
+
 /*
- * Loads the dot-amo file and parses its values into amo_model.
- * 
- * @pth: The file path to the dot-amo file
+ * Read a AMO-model from the given file-descriptor until either the end of the
+ * file is reached or until the end-statement is registered and then return the
+ * model-struct containing the data.
  * 
  * Returns: Returns a buffer containing the model-data read from the given
- *          dot-amo file
+ *          dot-amo file or NULL if an error occurred
  */
-AMO_API struct amo_model *amo_load(const char *pth);
+AMO_API struct amo_model *amo_load(FILE *fd);
 
 
 /*

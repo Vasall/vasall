@@ -8,25 +8,27 @@
 #include <stdint.h>
 
 
-#define SHD_NAME_MAX            8
+#define SHD_NAME_MAX            32
+#define SHD_NAME_MAX_NT         (SHD_NAME_MAX+1)
 #define SHD_SLOTS               8
 
 struct shader_wrapper {
-	uint8_t    mask[SHD_SLOTS];
-	char       name[SHD_SLOTS][SHD_NAME_MAX+1];
-	uint32_t   prog[SHD_SLOTS];
-	struct vk_pipeline pipeline[SHD_SLOTS];
+	uint8_t              mask[SHD_SLOTS];
+	char                 name[SHD_SLOTS][SHD_NAME_MAX_NT];
+	uint32_t             prog[SHD_SLOTS];
+	struct vk_pipeline   pipeline[SHD_SLOTS];
 };
 
 
-#define TEX_NAME_MAX            8
+#define TEX_NAME_MAX            32
+#define TEX_NAME_MAX_NT         (TEX_NAME_MAX+1)
 #define TEX_SLOTS               8
 
 struct texture_wrapper {
-	uint8_t    mask[TEX_SLOTS];
-	char       name[TEX_SLOTS][TEX_NAME_MAX+1];
-	uint32_t   hdl[TEX_SLOTS];
-	struct vk_texture tex[TEX_SLOTS];
+	uint8_t              mask[TEX_SLOTS];
+	char                 name[TEX_SLOTS][TEX_NAME_MAX_NT];
+	uint32_t             hdl[TEX_SLOTS];
+	struct vk_texture    tex[TEX_SLOTS];
 };
 
 
@@ -53,15 +55,16 @@ struct texture_wrapper {
 #define TXT_UNDERLINE         0x40
 
 struct text_wrapper {
-	short font_num;
-	TTF_Font *fonts[TXT_FONT_SLOTS];
+	short                font_num;
+	TTF_Font             *fonts[TXT_FONT_SLOTS];
 };
 
 
+
 struct asset_wrapper {
-	struct shader_wrapper shd;
-	struct texture_wrapper tex;
-	struct text_wrapper txt;
+	struct shader_wrapper   shd;
+	struct texture_wrapper  tex;
+	struct text_wrapper     txt;
 };
 
 
@@ -203,7 +206,7 @@ extern void tex_unuse(void);
 
 /* ----------------------------------------------- */
 /*                                                 */
-/*                     TEXT                        */
+/*                FONT AND TEXT                    */
 /*                                                 */
 /* ------------------------------------------------*/
 

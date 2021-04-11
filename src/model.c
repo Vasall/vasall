@@ -324,7 +324,7 @@ err_set_failed:
 }
 
 
-extern void mdl_set_texture(short slot, short tex)
+extern void mdl_set_tex(short slot, short tex)
 {
 	struct model *mdl;
 
@@ -343,7 +343,7 @@ err_set_failed:
 }
 
 
-extern void mdl_set_shader(short slot, short shd)
+extern void mdl_set_shd(short slot, short shd)
 {
 	struct model *mdl;
 
@@ -424,6 +424,7 @@ static void mdl_calc_joint(struct model *mdl, short slot)
 extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot,
 			enum mdl_type type)
 {
+	FILE *fd;
 	struct amo_model *data;
 	struct model *mdl;
 	short slot;
@@ -455,13 +456,20 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot,
 	/* Get pointer to model */
 	mdl = models[slot]; 
 
-	/* Load a model from a file and write it to the data-struct */
-	if(!(data = amo_load(pth)))
+	/* Open the file */
+	if(!(fd = fopen(pth, "r")))
 		goto err_del_mdl;
 
+	/* Load a model from a file and write it to the data-struct */
+	if(!(data = amo_load(fd)))
+		goto err_del_mdl;
+
+	/* Close the file */
+	fclose(fd);
+
 	/* Attach both the texture and shader to the model */
-	mdl_set_texture(slot, tex_slot);
-	mdl_set_shader(slot, shd_slot);
+	mdl_set_tex(slot, tex_slot);
+	mdl_set_shd(slot, shd_slot);
 
 	/* Copy the attribute-mask of the model */
 	mdl->attr_m = data->attr_m;
@@ -643,7 +651,7 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot,
 	}
 
 	/*
-	 * If a broadphase-collision-box is defined.
+	 * If a bounding-box is defined.
 	 */
 	if(data->attr_m & AMO_M_CBP) {
 		/* Copy the position and size of collision-box */
@@ -735,6 +743,50 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot,
 		}
 	}
 
+	/*
+	 * If rig-collision-boxes are defined.
+	 */
+	if(data->attr_m & AMO_M_CRB) {
+		/* Get the number of rig-collision-boxes */
+		mdl->col.rb_c = data->rb_c;
+
+		/* Allocate memory for the parent-joints */
+		tmp = mdl->col.rb_c * sizeof(int);
+		if(!(mdl->col.rb_jnt = malloc(tmp)))
+			goto err_free_data;
+
+		/* Allocate memory for the position-vectors */
+		tmp = mdl->col.rb_c * VEC3_SIZE;
+		if(!(mdl->col.rb_pos = malloc(tmp)))
+			goto err_free_data;
+
+		/* Allocate memory for the box-scales */
+		tmp = mdl->col.rb_c * VEC3_SIZE;
+		if(!(mdl->col.rb_scl = malloc(tmp)))
+			goto err_free_data;
+
+		/* Allocate memory for the box-matrices */
+		tmp = mdl->col.rb_c * MAT4_SIZE;
+		if(!(mdl->col.rb_mat = malloc(tmp)))
+			goto err_free_data;
+
+		/* Copy parent-joint-indices */
+		tmp = mdl->col.rb_c * sizeof(int);
+		memcpy(mdl->col.rb_jnt, data->rb_jnt, tmp);
+
+		/* Copy box-position-vectors  */
+		tmp = mdl->col.rb_c * VEC3_SIZE;
+		memcpy(mdl->col.rb_pos, data->rb_pos, tmp);
+
+		/* Copy box-scales */
+		tmp = mdl->col.rb_c * VEC3_SIZE;
+		memcpy(mdl->col.rb_scl, data->rb_scl, tmp);
+
+		/* Copy box-matrices */
+		tmp = mdl->col.rb_c * MAT4_SIZE;
+		memcpy(mdl->col.rb_mat, data->rb_mat, tmp);
+	}
+
 	/* Set the status of the model */
 	mdl_set_status(slot, MDL_OK);
 
@@ -794,8 +846,9 @@ extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
 		memcpy(uni.tran_mat, rig->tran_mat, mdl->jnt_num * MAT4_SIZE);
 	
 	/* Set uniform buffer and textures */
-	ren_set_render_model_data(mdl->uni_buf, uni, assets.tex.hdl[mdl->tex],
-			assets.shd.pipeline[mdl->shd], mdl->uni_bo, mdl->set, mdl->type);
+	ren_set_render_model_data(mdl->uni_buf, uni,
+			assets.tex.hdl[mdl->tex], assets.shd.pipeline[mdl->shd],
+			mdl->uni_bo, mdl->set, mdl->type);
 
 	/* Draw the vertices */
 	ren_draw(mdl->idx_num, mdl->type);

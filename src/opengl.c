@@ -26,6 +26,9 @@ static void GLAPIENTRY gl_callback(GLenum source,
 	(void) length;
 	(void) userParam;
 
+	if(severity == GL_DEBUG_SEVERITY_NOTIFICATION)
+		return;
+
 	switch (type)
 	{
 	case GL_DEBUG_TYPE_ERROR:
@@ -70,9 +73,6 @@ static void GLAPIENTRY gl_callback(GLenum source,
 		break;
 	case GL_DEBUG_SEVERITY_LOW:
 		severity_string = "\033[36mLOW SEVERITY";
-		break;
-	case GL_DEBUG_SEVERITY_NOTIFICATION:
-		severity_string = "\033[35mNOTIFICATION";
 		break;
 	default:
 		severity_string = "";

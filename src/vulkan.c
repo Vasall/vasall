@@ -899,7 +899,7 @@ static int create_command_pool(void)
 
 	create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	create_info.pNext = NULL;
-	create_info.flags = 0;
+	create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 	create_info.queueFamilyIndex = vk.family;
 
 	res = vkCreateCommandPool(vk.device, &create_info, NULL,
@@ -951,7 +951,7 @@ static int create_descriptor_pool(void)
 	create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	create_info.pNext = NULL;
 	create_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-	create_info.maxSets = 5;
+	create_info.maxSets = 128;
 	create_info.poolSizeCount = 2;
 	create_info.pPoolSizes = sizes;
 

@@ -44,11 +44,17 @@ extern void sdl_print_info(void)
 {
 	SDL_version sdl_comp;
 	SDL_version sdl_link;
+	SDL_version img_comp;
+	const SDL_version *img_link;
 	SDL_version ttf_comp;
 
 	/* Get the TTF version */
 	const SDL_version *ttf_link = TTF_Linked_Version();
 	SDL_TTF_VERSION(&ttf_comp);
+
+	/* Get the Image version */
+	img_link = IMG_Linked_Version();
+	SDL_IMAGE_VERSION(&img_comp);
 
 	/* Get the SDL version */
 	SDL_VERSION(&sdl_comp);
@@ -59,6 +65,11 @@ extern void sdl_print_info(void)
 			sdl_comp.major, sdl_comp.minor, sdl_comp.patch);
 	printf("SDL link. Version: %d.%d.%d\n", 
 			sdl_link.major, sdl_link.minor, sdl_link.patch);
+
+	printf("IMG comp. Version: %d.%d.%d\n",
+			img_comp.major, img_comp.minor, img_comp.patch);
+	printf("IMG link. Version: %d.%d.%d\n",
+			img_link->major, img_link->minor, img_link->patch);
 
 	printf("TTF comp. Version: %d.%d.%d\n", 
 			ttf_comp.major, ttf_comp.minor, ttf_comp.patch);

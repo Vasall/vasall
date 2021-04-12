@@ -62,19 +62,24 @@ extern int ren_create_shader(char *vs, char *fs, uint32_t *prog,
 		if(strcmp(vars[i], "vtxPos") == 0 || strcmp(vars[i], "pos")
 		   == 0 ) {
 			in_attr |= IN_ATTR_POS;
+			continue;
 		}
 		if(strcmp(vars[i], "vtxTex") == 0 || strcmp(vars[i], "tex")
 		   == 0 ) {
 			in_attr |= IN_ATTR_TEX;
+			continue;
 		}
 		if(strcmp(vars[i], "vtxNrm") == 0) {
 			in_attr |= IN_ATTR_NRM;
+			continue;
 		}
 		if(strcmp(vars[i], "vtxJnt") == 0) {
 			in_attr |= IN_ATTR_JNT;
+			continue;
 		}
 		if(strcmp(vars[i], "vtxWgt") == 0) {
 			in_attr |= IN_ATTR_WGT;
+			continue;
 		}
 	}
 

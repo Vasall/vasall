@@ -212,33 +212,16 @@ extern void rig_update(struct model_rig *rig, float p)
 	}
 }
 
-extern void rig_fpv_rot(struct model_rig *rig, vec3_t off_v, vec3_t rev_v,
-		mat4_t rot_m)
+extern void rig_mult_mat(struct model_rig *rig, mat4_t m)
 {
 	int i;
-	mat4_t off_mov;
-	mat4_t off_rev;
-	mat4_t conv;
-
-	mat4_idt(off_mov);
-	off_mov[0xc] = -off_v[0];
-	off_mov[0xd] = -off_v[1];
-	off_mov[0xe] = -off_v[2];
-	
-	mat4_idt(off_rev);
-	off_rev[0xc] = rev_v[0];
-	off_rev[0xd] = rev_v[1];
-	off_rev[0xe] = rev_v[2];	
+	mat4_t conv_m;
 
 	for(i = 0; i < rig->jnt_num; i++) {
-		mat4_cpy(conv, rig->tran_mat[i]);
+		mat4_cpy(conv_m, rig->tran_mat[i]);
 
-		mat4_mult(off_mov, conv, conv);
+		mat4_mult(m, conv_m, conv_m);
 
-		mat4_mult(rot_m, conv, conv);
-
-		mat4_mult(off_rev, conv, conv);
-
-		mat4_cpy(rig->tran_mat[i], conv);
+		mat4_cpy(rig->tran_mat[i], conv_m);
 	}
 }

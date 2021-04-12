@@ -107,6 +107,13 @@ struct amo_anim {
 	struct amo_keyfr      *keyfr_lst;
 };
 
+struct amo_hook {
+	short idx;
+	short par_jnt;
+	float pos[3];
+};
+
+
 /*
  * The mask for the different data-attributes.
  */
@@ -114,7 +121,7 @@ struct amo_anim {
 #define AMO_M_MDL (1<<0)
 #define AMO_M_RIG (1<<1)
 #define AMO_M_ANI (1<<2)
-#define AMO_M_ITH (1<<3)
+#define AMO_M_HOK (1<<3)
 
 #define AMO_M_CBP (1<<10)
 #define AMO_M_CNE (1<<11)
@@ -174,6 +181,12 @@ struct amo_model {
 
 	int                 ani_c;
 	struct amo_anim     *ani_lst;
+
+	/*
+	 * Hooks
+	 */
+	int                 hh_c;
+	struct amo_hook     *hh_lst;
 
 	/*
 	 * collision-buffers 

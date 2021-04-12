@@ -8,6 +8,7 @@
 #include "stdnode.h"
 #include "asset.h"
 #include "model.h"
+#include "handheld.h"
 #include "object.h"
 #include "camera.h"
 #include "world.h"

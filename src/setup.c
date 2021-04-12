@@ -24,6 +24,7 @@ int load_resources(void)
 	if(txt_load_ttf("res/fonts/roboto_bold.ttf", 28) < 0)
 		return -1;
 
+
 	/* shaders */
 	if(shd_set("mdl", "res/shaders/model.vert", "res/shaders/model.frag", 3, vars1, MDL_TYPE_DEFAULT) < 0)
 		return -1;
@@ -33,6 +34,7 @@ int load_resources(void)
 
 	if(shd_set("skybox", "res/shaders/skybox.vert", "res/shaders/skybox.frag", 3, vars1, MDL_TYPE_SKYBOX) < 0)
 		return -1;
+
 
 	/* textures */
 	if(tex_set("ba0", "res/textures/red.png") < 0)
@@ -47,6 +49,9 @@ int load_resources(void)
 	if(tex_set("flr", "res/textures/floor.png") < 0)
 		return -1;
 
+	if(tex_set("pal", "res/textures/palette.png") < 0)
+		return -1;
+
 	if(skybox_set("skybox", pths) < 0)
 		return -1;
 
@@ -54,7 +59,7 @@ int load_resources(void)
 	if(mdl_load("wld", "res/models/plane.amo", tex_get("flr"), shd_get("mdl"), MDL_TYPE_DEFAULT) < 0)
 		return -1;
 
-	if(mdl_load("plr", "res/models/base.amo", tex_get("ba0"), shd_get("ani"), MDL_TYPE_DEFAULT) < 0)
+	if(mdl_load("plr", "res/models/player.amo", tex_get("ba0"), shd_get("ani"), MDL_TYPE_DEFAULT) < 0)
 		return -1;
 
 	if(mdl_load("tst", "res/models/test.amo", tex_get("ba1"), shd_get("mdl"), MDL_TYPE_DEFAULT) < 0)
@@ -66,11 +71,16 @@ int load_resources(void)
 	if(mdl_load("sph", "res/models/sphere.obj", tex_get("ba0"), shd_get("mdl"), MDL_TYPE_DEFAULT) < 0)
 			return -1;
 
+
 	if(mdl_load("cube", "res/models/cube.obj", tex_get("skybox"), shd_get("skybox"), MDL_TYPE_SKYBOX) < 0)
 		abort();
 
-	printf("Finished loading resources\n");
 
+	/* handhelds */
+	if(hnd_load("res/models/pistol.hnd", tex_get("pal"), shd_get("mdl")) < 0)
+		return -1;
+
+	printf("Finished loading resources\n");
 	return 0;
 }
 

@@ -985,53 +985,110 @@ extern void obj_sys_update(uint32_t now)
 }
 
 
+static void obj_interp(short slot, float interp)
+{
+	vec3_t del;
+
+	/* Update render-position of the object */
+	vec3_sub(objects.pos[slot], objects.prev_pos[slot], del);
+	vec3_scl(del, interp, del);
+	vec3_add(objects.prev_pos[slot], del, objects.ren_pos[slot]);
+
+	/* Store last position */
+	vec3_cpy(objects.prev_pos[slot], objects.pos[slot]);
+
+	/* Update the direction of the object */
+	vec3_sub(objects.dir[slot], objects.prev_dir[slot], del);
+	vec3_scl(del, interp, del);
+	vec3_add(objects.prev_dir[slot], del, objects.ren_dir[slot]);
+
+	/* Store last direction */
+	vec3_cpy(objects.prev_dir[slot], objects.dir[slot]);
+}
+
+static void obj_proc_rig_fpv(short slot)
+{
+	vec3_t off_v = {0, 0, -1.6};
+	vec3_t rev_v = {0, 0, 1.8};
+
+	mat4_t off_m;
+	mat4_t rev_m;
+	mat4_t trans_m;
+
+	/* Calculate rig without aiming */
+	rig_update(objects.rig[slot], 0);
+
+	/* 
+	 * Calculate transformation-matrix for
+	 * first-person-view.
+	 */
+	mat4_idt(off_m);
+	mat4_idt(rev_m);
+	mat4_pfpos(off_m, off_v);
+	mat4_pfpos(rev_m, rev_v);
+
+	mat4_cpy(trans_m, camera.forw_m);
+	mat4_mult(trans_m, off_m, trans_m);
+	mat4_mult(rev_m, trans_m, trans_m);
+
+	/*
+	 * Multiply transformation-matrix with
+	 * joint-matrices.
+	 */
+	rig_mult_mat(objects.rig[slot], trans_m);
+}
+
+static void obj_proc_rig_tpv(short slot)
+{
+	float agl;
+	vec3_t up = {0, 0, 1};
+	vec3_t dir;
+	float rot;
+	mat4_t trans_m;
+
+	agl = vec3_angle(up, objects.dir[slot]);
+	agl = 90.0 - RAD_TO_DEG(agl);
+
+	/* Calculate rig with aiming */
+	rig_update(objects.rig[slot], agl);
+
+	vec2_cpy(dir, objects.dir[slot]);
+	vec2_nrm(dir, dir);
+
+	/* Set the rotation of the model */
+	rot = atan2(-dir[0], dir[1]);
+
+	mat4_idt(trans_m);
+	mat4_rfagl_s(trans_m, 0, 0, rot);
+
+	rig_mult_mat(objects.rig[slot], trans_m);
+}
+
 extern void obj_sys_prerender(float interp)
 {
 	int i;
 	vec3_t del;
+	mat4_t trans_m;
 
 	for(i = 0; i < OBJ_LIM; i++) {
-		if(objects.mask[i] & OBJ_M_RIG) {
-			float agl;
-			vec3_t up = {0, 0, 1};
-
-			agl = vec3_angle(up, objects.dir[i]);
-			agl = RAD_TO_DEG(agl) - 90.0;
-
-			rig_update(objects.rig[i], -agl);
-
-			if(i == core.obj) {
-				if(camera.mode == CAM_MODE_FPV) {
-					vec3_t off = {0, 0, 1.6};
-					vec3_t rev = {0, 0, 1.8};
-
-					rig_update(objects.rig[i], 0);
-
-					rig_fpv_rot(objects.rig[i], off, rev,
-							camera.forw_m);
-				}
-				else {
-					rig_update(objects.rig[i], -agl);
-				}
-			}
+		if(objects.mask[i] & OBJ_M_MODEL) {
+			obj_interp(i, interp);
 		}
 
-		if(objects.mask[i] & OBJ_M_MODEL) {
-			/* Update render-position of the object */
-			vec3_sub(objects.pos[i], objects.prev_pos[i], del);
-			vec3_scl(del, interp, del);
-			vec3_add(objects.prev_pos[i], del, objects.ren_pos[i]);
+		if(objects.mask[i] & OBJ_M_RIG) {
+			if(i == core.obj && camera.mode == CAM_MODE_FPV) {
+				obj_proc_rig_fpv(i);
+			}	
+			else {
+				obj_proc_rig_tpv(i);
+			}
 
-			/* Store last position */
-			vec3_cpy(objects.prev_pos[i], objects.pos[i]);
-
-			/* Update the direction of the object */
-			vec3_sub(objects.dir[i], objects.prev_dir[i], del);
-			vec3_scl(del, interp, del);
-			vec3_add(objects.prev_dir[i], del, objects.ren_dir[i]);
-
-			/* Store last direction */
-			vec3_cpy(objects.prev_dir[i], objects.dir[i]);
+			/*
+			 * Apply position-matrix to the rig.
+			 */
+			mat4_idt(trans_m);
+			mat4_pfpos(trans_m, objects.ren_pos[i]);
+			rig_mult_mat(objects.rig[i], trans_m);
 		}
 
 		if(objects.mask[i] & OBJ_M_MOVE) {
@@ -1044,49 +1101,42 @@ extern void obj_sys_prerender(float interp)
 extern void obj_sys_render(void)
 {
 	int i;
-	vec3_t pos;
-	vec3_t dir;
+
+	mat4_t m;
+	mat4_idt(m);
 
 	for(i = 0; i < OBJ_LIM; i++) {
 		if(objects.mask[i] & OBJ_M_MODEL) {
-			vec3_cpy(pos, objects.ren_pos[i]);
-			vec3_cpy(dir, objects.ren_dir[i]);
-
-			mat4_idt(objects.mat_rot[i]);
-
-
-			if(camera.mode != CAM_MODE_FPV) {
-				float rot;
-
-				vec2_cpy(dir, objects.dir[i]);
-				vec2_nrm(dir, dir);
-
-				/* Set the rotation of the model */
-				rot = atan2(-dir[0], dir[1]);
-
-				objects.mat_rot[i][0x0] =  cos(rot);
-				objects.mat_rot[i][0x1] =  sin(rot);
-				objects.mat_rot[i][0x4] =  -sin(rot);
-				objects.mat_rot[i][0x5] =  cos(rot);
-			}
-
-			/* Set the position of the model */
-			objects.mat_pos[i][0xc] = pos[0];
-			objects.mat_pos[i][0xd] = pos[1];
-			objects.mat_pos[i][0xe] = pos[2];
-
-			mdl_render(objects.mdl[i], objects.mat_pos[i],
-					objects.mat_rot[i], objects.rig[i]);
+			/* Render the model */
+			mdl_render(objects.mdl[i], m, m, objects.rig[i]);
 
 			if(objects.mask[i] & OBJ_M_MOVE) {
 				mat4_t mat;
-				mat4_t idt;
 
+				/*
+				 * Render a sphere at the aiming-point.
+				 */
 				mat4_idt(mat);
 				mat4_pfpos(mat, objects.aim_pos[i]);
-				mat4_idt(idt);
+				mdl_render(mdl_get("sph"), mat, m, NULL);
+			}
 
-				mdl_render(mdl_get("sph"), mat, idt, NULL);
+			if(objects.mask[i] & OBJ_M_MOVE) {
+				mat4_t mat;
+				short hook;
+				short jnt;
+
+				/* 
+				 * Render the weapon.
+				 */
+			
+				hook = handhelds.hook[0];
+				jnt = models[objects.mdl[i]]->hok_buf[hook].par_jnt;
+
+				mat4_cpy(mat, objects.rig[i]->tran_mat[jnt]);	
+				mat4_idt(m);
+
+				mdl_render(handhelds.mdl[0], mat, m, NULL);
 			}
 		}
 	}

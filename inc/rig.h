@@ -63,7 +63,12 @@ extern void rig_free(struct model_rig *rig);
 extern void rig_update(struct model_rig *rig, float p);
 
 
-extern void rig_fpv_rot(struct model_rig *rig, vec3_t off_v, vec3_t rev_v,
-		mat4_t rot_m);
+/*
+ * Multiply the current joint-matrices with the given transformation-matrix.
+ *
+ * @rig: Pointer to the rig, to modify
+ * @m: The transformation-matrix
+ */
+extern void rig_mult_mat(struct model_rig *rig, mat4_t m);
 
 #endif

@@ -94,15 +94,23 @@ struct mdl_anim {
 	struct mdl_keyfr  *keyfr_buf;
 };
 
+struct mdl_hook {
+	short idx;
+	short par_jnt;
+	vec3_t pos;
+};
+
 #define MDL_M_NONE 0
 #define MDL_M_MDL AMO_M_MDL
 #define MDL_M_RIG AMO_M_RIG
 #define MDL_M_ANI AMO_M_ANI
+#define MDL_M_HOK AMO_M_HOK
 
 #define MDL_M_CBP AMO_M_CBP
 #define MDL_M_CNE AMO_M_CNE
 #define MDL_M_CCM AMO_M_CCM
-#define MDL_M_COL (MDL_M_CBP|AMO_M_CNE|AMO_M_CCM)
+#define MDL_M_CRB AMO_M_CRB
+#define MDL_M_COL (MDL_M_CBP|MDL_M_CNE|MDL_M_CCM|MDL_M_CRB)
 
 struct model {
 	short             slot;
@@ -134,6 +142,9 @@ struct model {
 
 	int               anim_num;
 	struct mdl_anim   *anim_buf;
+
+	int               hok_num;
+	struct mdl_hook   *hok_buf;
 
 	struct mdl_col    col;
 
@@ -229,6 +240,13 @@ extern void mdl_set_shd(short slot, short shd);
  */
 extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot,
 			enum mdl_type type);
+
+
+/*
+ * 
+ */
+extern short mdl_load_ffd(char *name, FILE *fd, short tex_slot, short shd_slot,
+		enum mdl_type type);
 
 
 /*

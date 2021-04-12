@@ -130,6 +130,7 @@ struct object_table {
 	vec3_t                   aim_pos[OBJ_LIM];
 
 
+
 	/* The model and the rig */
 	short                    mdl[OBJ_LIM];
 	struct model_rig         *rig[OBJ_LIM];
@@ -151,7 +152,7 @@ struct object_table {
 /* Define the global object-wrapper instance */
 extern struct object_table objects;
 
-/* TODO: This seems kinda shady tbh */
+/* TODO: This seems kinda funky tbh */
 #include "object_utils.h"
 
 

@@ -421,10 +421,28 @@ static void mdl_calc_joint(struct model *mdl, short slot)
 		mdl_calc_joint(mdl, jnt->child_buf[i]);
 }
 
+
 extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot,
 			enum mdl_type type)
 {
 	FILE *fd;
+	short slot;
+
+	if(!(fd = fopen(pth, "r"))) {
+		ERR_LOG(("File %s doesn't exist.", pth));
+		return -1;
+	}
+
+	slot = mdl_load_ffd(name, fd, tex_slot, shd_slot, type);
+
+	fclose(fd);
+	return slot;
+}
+
+
+extern short mdl_load_ffd(char *name, FILE *fd, short tex_slot, short shd_slot,
+			enum mdl_type type)
+{
 	struct amo_model *data;
 	struct model *mdl;
 	short slot;
@@ -456,16 +474,9 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot,
 	/* Get pointer to model */
 	mdl = models[slot]; 
 
-	/* Open the file */
-	if(!(fd = fopen(pth, "r")))
-		goto err_del_mdl;
-
 	/* Load a model from a file and write it to the data-struct */
 	if(!(data = amo_load(fd)))
 		goto err_del_mdl;
-
-	/* Close the file */
-	fclose(fd);
 
 	/* Attach both the texture and shader to the model */
 	mdl_set_tex(slot, tex_slot);
@@ -489,8 +500,6 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot,
 	 */
 	amo_getdata(data, &vtxnum, (void **)&vtx, (void **)&tex, (void **)&nrm,
 			(void **)&jnt, (void **)&wgt, &idxnum, &idx);
-
-	printf("Load model %s from %s...", name, pth);
 
 	/* Attach data to the model */
 	mdl_set_data(slot, vtxnum, vtx, tex, nrm, jnt, wgt, idxnum, idx);
@@ -651,6 +660,23 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot,
 	}
 
 	/*
+	 * If handheld-hooks are defined.
+	 */
+	if(data->attr_m & AMO_M_HOK) {
+		mdl->hok_num = data->hh_c;
+
+		tmp = sizeof(struct amo_hook) * mdl->hok_num;
+		if(!(mdl->hok_buf = malloc(tmp)))
+			goto err_free_data;
+
+		for(i = 0; i < mdl->hok_num; i++) {
+			mdl->hok_buf[i].idx = data->hh_lst[i].idx;
+			mdl->hok_buf[i].par_jnt = data->hh_lst[i].par_jnt;
+			vec3_cpy(mdl->hok_buf[i].pos, data->hh_lst[i].pos);
+		}
+	}
+
+	/*
 	 * If a bounding-box is defined.
 	 */
 	if(data->attr_m & AMO_M_CBP) {
@@ -658,6 +684,7 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot,
 		vec3_cpy(mdl->col.bb_col.pos, data->bb_col.pos);
 		vec3_cpy(mdl->col.bb_col.scl, data->bb_col.scl);
 	}
+	
 	/* 
 	 * If a near-elipsoid is defined.
 	 */
@@ -793,8 +820,6 @@ extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot,
 	/* Return the returned data-struct */
 	amo_destroy(data);
 
-	printf("done\n");
-
 	/* Return the slot the model is on */
 	return slot;
 
@@ -803,8 +828,6 @@ err_free_data:
 
 err_del_mdl:
 	mdl_del(slot);
-
-	printf("failed\n");
 	return -1;
 }
 

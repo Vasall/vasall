@@ -129,6 +129,8 @@ struct object_table {
 	vec3_t                   aim_origin[OBJ_LIM];
 	vec3_t                   aim_pos[OBJ_LIM];
 
+	vec3_t                   aim_off[OBJ_LIM];
+	vec3_t                   aim_dir[OBJ_LIM];
 
 
 	/* The model and the rig */

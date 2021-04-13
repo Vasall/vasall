@@ -79,7 +79,7 @@ void game_proc_evt(event_t *evt)
 
 		case SDL_MOUSEMOTION:
 			/* If left mouse button pressed */
-			if(evt->motion.state == SDL_BUTTON_LMASK) {
+			if(evt->motion.state == SDL_BUTTON_LMASK || 1) {
 				int x = evt->motion.xrel;
 				int y = evt->motion.yrel;
 				

@@ -743,6 +743,116 @@ extern void obj_print(short slot)
  * ============================================
  */
 
+static void obj_interp(short slot, float interp)
+{
+	vec3_t del;
+
+	/* Update render-position of the object */
+	vec3_sub(objects.pos[slot], objects.prev_pos[slot], del);
+	vec3_scl(del, interp, del);
+	vec3_add(objects.prev_pos[slot], del, objects.ren_pos[slot]);
+
+	/* Store last position */
+	vec3_cpy(objects.prev_pos[slot], objects.pos[slot]);
+
+	/* Update the direction of the object */
+	vec3_sub(objects.dir[slot], objects.prev_dir[slot], del);
+	vec3_scl(del, interp, del);
+	vec3_add(objects.prev_dir[slot], del, objects.ren_dir[slot]);
+
+	/* Store last direction */
+	vec3_cpy(objects.prev_dir[slot], objects.dir[slot]);
+}
+
+static void obj_proc_rig_fpv(short slot)
+{
+	vec3_t off_v = {0, 0, -1.6};
+	vec3_t rev_v = {0, 0, 1.8};
+
+	mat4_t off_m;
+	mat4_t rev_m;
+	mat4_t trans_m;
+
+	/* Calculate rig without aiming */
+	rig_update(objects.rig[slot], 0);
+
+	/* 
+	 * Calculate transformation-matrix for
+	 * first-person-view.
+	 */
+	mat4_idt(off_m);
+	mat4_idt(rev_m);
+	mat4_pfpos(off_m, off_v);
+	mat4_pfpos(rev_m, rev_v);
+
+	mat4_cpy(trans_m, camera.forw_m);
+	mat4_mult(trans_m, off_m, trans_m);
+	mat4_mult(rev_m, trans_m, trans_m);
+
+	/*
+	 * Multiply transformation-matrix with
+	 * joint-matrices.
+	 */
+	rig_mult_mat(objects.rig[slot], trans_m);
+}
+
+static void obj_proc_rig_tpv(short slot)
+{
+	float agl;
+	vec3_t up = {0, 0, 1};
+	vec3_t dir;
+	float rot;
+	mat4_t trans_m;
+
+	agl = vec3_angle(up, objects.dir[slot]);
+	agl = 90.0 - RAD_TO_DEG(agl);
+
+	/* Calculate rig with aiming */
+	rig_update(objects.rig[slot], agl);
+
+	vec2_cpy(dir, objects.dir[slot]);
+	vec2_nrm(dir, dir);
+
+	/* Set the rotation of the model */
+	rot = atan2(-dir[0], dir[1]);
+
+	mat4_idt(trans_m);
+	mat4_rfagl_s(trans_m, 0, 0, rot);
+
+	rig_mult_mat(objects.rig[slot], trans_m);
+}
+
+static void obj_update_aim(short slot)
+{
+	mat4_t mat;
+	short hook;
+	short jnt;
+	vec4_t pos;
+	vec4_t dir;
+
+
+	/* 
+	 * Render the weapon.
+	 */		
+	hook = handhelds.hook[0];
+	jnt = models[objects.mdl[slot]]->hok_buf[hook].par_jnt;
+
+	mat4_cpy(mat, objects.rig[slot]->tran_mat[jnt]);
+
+	vec4_clr(pos);
+	pos[3] = 1.0;
+	vec3_cpy(pos, handhelds.aim_pos[0]);
+
+	vec4_clr(dir);
+	vec3_cpy(dir, handhelds.aim_dir[0]);
+
+	vec4_trans(pos, mat, pos);
+	vec4_trans(dir, mat, dir);
+	vec3_nrm(dir, dir);
+
+	vec3_cpy(objects.aim_off[slot], pos);
+	vec3_cpy(objects.aim_dir[slot], dir);
+}
 
 extern void obj_sys_update(uint32_t now)
 {
@@ -985,85 +1095,6 @@ extern void obj_sys_update(uint32_t now)
 }
 
 
-static void obj_interp(short slot, float interp)
-{
-	vec3_t del;
-
-	/* Update render-position of the object */
-	vec3_sub(objects.pos[slot], objects.prev_pos[slot], del);
-	vec3_scl(del, interp, del);
-	vec3_add(objects.prev_pos[slot], del, objects.ren_pos[slot]);
-
-	/* Store last position */
-	vec3_cpy(objects.prev_pos[slot], objects.pos[slot]);
-
-	/* Update the direction of the object */
-	vec3_sub(objects.dir[slot], objects.prev_dir[slot], del);
-	vec3_scl(del, interp, del);
-	vec3_add(objects.prev_dir[slot], del, objects.ren_dir[slot]);
-
-	/* Store last direction */
-	vec3_cpy(objects.prev_dir[slot], objects.dir[slot]);
-}
-
-static void obj_proc_rig_fpv(short slot)
-{
-	vec3_t off_v = {0, 0, -1.6};
-	vec3_t rev_v = {0, 0, 1.8};
-
-	mat4_t off_m;
-	mat4_t rev_m;
-	mat4_t trans_m;
-
-	/* Calculate rig without aiming */
-	rig_update(objects.rig[slot], 0);
-
-	/* 
-	 * Calculate transformation-matrix for
-	 * first-person-view.
-	 */
-	mat4_idt(off_m);
-	mat4_idt(rev_m);
-	mat4_pfpos(off_m, off_v);
-	mat4_pfpos(rev_m, rev_v);
-
-	mat4_cpy(trans_m, camera.forw_m);
-	mat4_mult(trans_m, off_m, trans_m);
-	mat4_mult(rev_m, trans_m, trans_m);
-
-	/*
-	 * Multiply transformation-matrix with
-	 * joint-matrices.
-	 */
-	rig_mult_mat(objects.rig[slot], trans_m);
-}
-
-static void obj_proc_rig_tpv(short slot)
-{
-	float agl;
-	vec3_t up = {0, 0, 1};
-	vec3_t dir;
-	float rot;
-	mat4_t trans_m;
-
-	agl = vec3_angle(up, objects.dir[slot]);
-	agl = 90.0 - RAD_TO_DEG(agl);
-
-	/* Calculate rig with aiming */
-	rig_update(objects.rig[slot], agl);
-
-	vec2_cpy(dir, objects.dir[slot]);
-	vec2_nrm(dir, dir);
-
-	/* Set the rotation of the model */
-	rot = atan2(-dir[0], dir[1]);
-
-	mat4_idt(trans_m);
-	mat4_rfagl_s(trans_m, 0, 0, rot);
-
-	rig_mult_mat(objects.rig[slot], trans_m);
-}
-
 extern void obj_sys_prerender(float interp)
 {
 	int i;
@@ -1093,6 +1124,11 @@ extern void obj_sys_prerender(float interp)
 
 		if(objects.mask[i] & OBJ_M_MOVE) {
 			obj_calc_aim(i);
+
+			obj_update_aim(i);
+
+			printf("Position: "); vec3_print(objects.aim_off[i]); printf("\n");
+			printf("Direction: "); vec3_print(objects.aim_dir[i]); printf("\n");
 		}
 	}
 }
@@ -1112,12 +1148,19 @@ extern void obj_sys_render(void)
 
 			if(objects.mask[i] & OBJ_M_MOVE) {
 				mat4_t mat;
+				vec3_t pos;
+				vec3_t dir;
+
+				vec3_cpy(pos, objects.aim_off[i]);
+				vec3_scl(objects.aim_dir[i], 4, dir);
+
+				vec3_add(pos, dir, pos);
 
 				/*
 				 * Render a sphere at the aiming-point.
 				 */
 				mat4_idt(mat);
-				mat4_pfpos(mat, objects.aim_pos[i]);
+				mat4_pfpos(mat, pos);
 				mdl_render(mdl_get("sph"), mat, m, NULL);
 			}
 

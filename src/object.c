@@ -1127,8 +1127,10 @@ extern void obj_sys_prerender(float interp)
 
 			obj_update_aim(i);
 
+#if 0
 			printf("Position: "); vec3_print(objects.aim_off[i]); printf("\n");
 			printf("Direction: "); vec3_print(objects.aim_dir[i]); printf("\n");
+#endif
 		}
 	}
 }

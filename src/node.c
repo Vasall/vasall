@@ -281,8 +281,9 @@ static void ui_prerender_node(ui_node *n, ui_node *rel, char flg)
 	style = &n->style;
 
 	/* Ignore if the node should not be visible */
-	if(style->vis == 0)
+	if(style->vis == 0) {
 		goto next;
+	}
 
 	/* Render border if enabled */
 	if(style->bor > 0) {
@@ -309,8 +310,9 @@ static void ui_prerender_node(ui_node *n, ui_node *rel, char flg)
 	}
 
 	/* Run custum render-function */
-	if(n->render != NULL)
+	if(n->render != NULL) {
 		n->render(n, rel);
+	}
 
 next:
 	for(i = 0; i < n->child_num; i++)
@@ -350,6 +352,8 @@ extern void ui_update(ui_node *n)
 
 extern void ui_render(ui_node *n)
 {
+	GLenum err;
+
 	if(n->vao != 0 && n->tex != 0 && n->surf != NULL) {
 		glBindVertexArray(n->vao);
 		glUseProgram(window.shader);
@@ -363,6 +367,13 @@ extern void ui_render(ui_node *n)
 
 		glUseProgram(0);
 		glBindVertexArray(0);
+
+		while((err = glGetError()) != GL_NO_ERROR) {
+			printf("Error: %d\n", err);
+		}
+
+
+
 	}
 }
 

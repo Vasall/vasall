@@ -10,7 +10,10 @@ static int win_setup_shader(void)
 	char *vars[2] = {"pos", "tex"};
 
 	ren_create_shader("res/shaders/ui.vert", "res/shaders/ui.frag",
-				&window.shader, &window.pipeline, 2, vars, MDL_TYPE_DEFAULT);
+				&window.shader, 
+				&window.pipeline,
+				2, vars, 
+				MDL_TYPE_DEFAULT);
 
 	return 0;
 }

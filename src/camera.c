@@ -105,7 +105,7 @@ extern void cam_zoom(int val)
 
 extern void cam_rot(float d_yaw, float d_pitch)
 {
-	d_yaw *= -camera.sens;
+	d_yaw *= camera.sens;
 	d_pitch *= camera.sens;
 
 	if(d_yaw != 0.0) {

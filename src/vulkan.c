@@ -201,8 +201,7 @@ static int create_instance(void)
 	layer = NULL;
 
 	for(i = 0; i < layer_count; i++) {
-		if(strcmp(layers[i].layerName, "VK_LAYER_KHRONOS_validation")
-		   == 0) {
+		if(!strcmp(layers[i].layerName, "VK_LAYER_KHRONOS_validation")) {
 			layer = "VK_LAYER_KHRONOS_validation";
 			break;
 		}

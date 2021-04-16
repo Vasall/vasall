@@ -35,10 +35,10 @@ void game_proc_evt(event_t *evt)
 
 			switch((int)evt->key.keysym.scancode) {
 				case 4:  /* A-Key */
-					mov[0] = 1.0;
+					mov[0] = -1.0;
 					break;
 				case 7:  /* D-Key */
-					mov[0] = -1.0;
+					mov[0] = 1.0;
 					break;
 				case 22: /* S-Key */
 					mov[1] = -1.0;

@@ -810,11 +810,11 @@ static void obj_proc_rig_tpv(short slot)
 	/* Calculate rig with aiming */
 	rig_update(objects.rig[slot], agl);
 
-	vec2_cpy(dir, objects.dir[slot]);
+	vec2_set(dir, objects.dir[slot][0], objects.dir[slot][1]);
 	vec2_nrm(dir, dir);
 
 	/* Set the rotation of the model */
-	rot = atan2(-dir[0], dir[1]);
+	rot = RAD_TO_DEG(atan2(-dir[0], dir[1]));
 
 	mat4_idt(trans_m);
 	mat4_rfagl_s(trans_m, 0, 0, rot);
@@ -1140,13 +1140,22 @@ extern void obj_sys_render(void)
 {
 	int i;
 
+	mat4_t idt;
 	mat4_t m;
+
+	mat4_idt(idt);
 	mat4_idt(m);
 
 	for(i = 0; i < OBJ_LIM; i++) {
 		if(objects.mask[i] & OBJ_M_MODEL) {
+			mat4_idt(m);
+
+			if((objects.mask[i] & OBJ_M_RIG) == 0) {
+				mat4_pfpos(m, objects.ren_pos[i]);
+			}
+
 			/* Render the model */
-			mdl_render(objects.mdl[i], m, m, objects.rig[i]);
+			mdl_render(objects.mdl[i], m, idt, objects.rig[i]);
 
 			if(objects.mask[i] & OBJ_M_MOVE) {
 				mat4_t mat;

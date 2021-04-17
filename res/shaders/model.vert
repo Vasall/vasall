@@ -19,6 +19,7 @@ void main()
 	vec4 rotnrm;
 
 	gl_Position = proj * view * mpos * mrot * vec4(vtxPos, 1.0);
+	gl_Position[0] *= -1;
 
 	uv = vtxTex;
 	

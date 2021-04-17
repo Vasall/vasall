@@ -106,8 +106,9 @@ extern void win_render(void)
 {
 	short i;
 
-	for(i = 0; i < window.pipe_num; i++)
+	for(i = 0; i < window.pipe_num; i++) {
 		ui_render(window.pipe[i]);
+	}
 }
 
 static int win_onmousemotion(event_t *evt)

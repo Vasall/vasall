@@ -357,7 +357,7 @@ extern void ui_render(ui_node *n)
 	if(n->vao != 0 && n->tex != 0 && n->surf != NULL) {
 		glBindVertexArray(n->vao);
 		glUseProgram(window.shader);
-
+		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, n->tex);
 
 		glEnableVertexAttribArray(0);

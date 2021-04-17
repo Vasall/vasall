@@ -368,12 +368,6 @@ extern void ui_render(ui_node *n)
 		glUseProgram(0);
 		glBindVertexArray(0);
 
-		while((err = glGetError()) != GL_NO_ERROR) {
-			printf("Error: %d\n", err);
-		}
-
-
-
 	}
 }
 

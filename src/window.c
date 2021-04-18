@@ -28,18 +28,36 @@ static int win_load_cursors(void)
 
 extern int win_init(void)
 {
-	int win_flgs = SDL_WINDOW_VULKAN;
+	int win_flgs;
 	struct ui_node *root = NULL;
+	char mode;
+
+#if USE_OPENGL
+	win_flgs = SDL_WINDOW_OPENGL;
+	mode = 1;
 
 	if(!(window.win = SDL_CreateWindow("Vasall",
 					SDL_WINDOWPOS_UNDEFINED,
 					SDL_WINDOWPOS_UNDEFINED,
 					WIN_W, WIN_H, win_flgs)))
 		return -1;
+#else
+	win_flgs = SDL_WINDOW_VULKAN;
+	mode = 0;
 
-	if(ren_init(window.win) < 0) {
+	if(!(window.win = SDL_CreateWindow("Vasall",
+					SDL_WINDOWPOS_UNDEFINED,
+					SDL_WINDOWPOS_UNDEFINED,
+					WIN_W, WIN_H, win_flgs)))
+		return -1;
+#endif
+
+	if(ren_init(window.win, mode) < 0) {
+		printf("Fallback to OpenGL\n");
+
 		SDL_DestroyWindow(window.win);
 		win_flgs = SDL_WINDOW_OPENGL;
+		mode = 1;
 
 		if(!(window.win = SDL_CreateWindow("Vasall",
 					SDL_WINDOWPOS_UNDEFINED,
@@ -47,7 +65,7 @@ extern int win_init(void)
 					WIN_W, WIN_H, win_flgs)))
 			return -1;
 		
-		if(ren_init(window.win) < 0)
+		if(ren_init(window.win, mode) < 0)
 			goto err_close_window;
 	}
 

@@ -273,11 +273,7 @@ int load_ui(void)
 	/* Chain elements so tab can be used to iterate throught elements */
 	ui_chain(3, "mns_user", "mns_pswd", "mns_login_btn");
 
-	ui_show(root, 0);
-
 	win_build_pipe();
-
-	win_dump_pipe();
 
 	/* Auto-focus the username-input */
 	win_focus_node(ui_get(root, "mns_user"));

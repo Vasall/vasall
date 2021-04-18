@@ -5,19 +5,23 @@
 struct render_wrapper renderer;
 
 
-extern int ren_init(SDL_Window *window)
+extern int ren_init(SDL_Window *window, char mode)
 {
-	if(vk_init(window) < 0) {
+	if(mode == 0) {
+		renderer.mode = REN_MODE_VULKAN;
+		if(vk_init(window) < 0) {
+			return -1;
+		}
+
+	}
+	else if(mode == 1) {
 		renderer.mode = REN_MODE_OPENGL;
 		
 		if(gl_init(window) < 0) {
 			return -1;
 		}
-		
-		return 0;
 	}
 	
-	renderer.mode = REN_MODE_VULKAN;
 	return 0;
 }
 

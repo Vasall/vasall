@@ -32,7 +32,7 @@ extern struct render_wrapper renderer;
  * 
  * Returns: 0 on success or -1 if an error occured
  */
-extern int ren_init(SDL_Window *window);
+extern int ren_init(SDL_Window *window, char mode);
 
 
 /*

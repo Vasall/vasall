@@ -96,7 +96,6 @@ extern int net_init(void)
 	network.count = 0;
 
 	addr = &network.main_addr;
-	printf("Connect to server: %s\n", lcp_str_addr6(addr));
 
 	/* Connect to server */
 	if(!(lcp_connect(network.ctx, -1, addr, LCP_CON_F_DIRECT, LCP_F_ENC)))
@@ -1028,4 +1027,15 @@ extern uint32_t net_gettime(void)
 extern uint32_t net_getstep(void)
 {
 	return (net_gettime() / TICK_TIME) * TICK_TIME;
+}
+
+
+extern void net_print_info(void)
+{
+	printf("------------------ Network Info ------------------\n");
+	printf("Client IPv6 Intern.: %s\n",
+			lcp_str_ip(AF_INET6, &network.ctx->int_addr));
+	printf("Client IPv6 Extern.: %s\n",
+			lcp_str_ip(AF_INET6, &network.ctx->ext_addr));
+	printf("--------------------------------------------------\n");	
 }

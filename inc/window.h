@@ -13,6 +13,8 @@
 #define WIN_W 800
 #define WIN_H 600
 
+#define USE_OPENGL 1
+
 enum cursors {
 	CURSOR_ARROW = 0,
 	CURSOR_IBEAM = 1,

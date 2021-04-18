@@ -236,8 +236,21 @@ extern void cam_update_view(void)
 	vec3_t f;
 	vec3_t r;
 	vec3_t u;
-	
+	vec3_t p;	
 
+	mat4_t m;
+
+	mat4_t conv = {
+		1.0,  0.0,  0.0,  0.0,
+   		0.0,  1.0,  0.0,  0.0,
+   		0.0,  0.0, -1.0,  0.0,
+		0.0,  0.0,  0.0,  1.0
+	};
+
+	/* Copy the current position of the camera */
+	vec3_cpy(p, camera.pos);
+
+	/* Calculate the forward, right and up vector for the camera */
 	if(camera.mode == CAM_MODE_FPV) {
 		vec4_t tmp = {0, 1, 0};
 		vec4_trans(tmp, camera.forw_m, tmp);
@@ -253,37 +266,44 @@ extern void cam_update_view(void)
 		vec3_cpy(r, camera.v_right);
 	}
 
-	vec3_flip(f, f);
-	vec3_flip(r, r);
-
 	vec3_cross(r, f, u);
 	vec3_nrm(u, u);
 
+
 #if 0
 	printf("VIEW\n");
-	printf("forward: "); vec3_print(forward); printf("\n");
-	printf("right: ");   vec3_print(right);   printf("\n");
-	printf("up: ");      vec3_print(up);      printf("\n");
+	printf("forward: "); vec3_print(f); printf("\n");
+	printf("right: ");   vec3_print(r); printf("\n");
+	printf("up: ");      vec3_print(u); printf("\n");
+	printf("pos: ");     vec3_print(p); printf("\n");
 #endif
 
-	camera.view_m[0x0] = r[0];
-	camera.view_m[0x4] = r[1];
-	camera.view_m[0x8] = r[2];
+	/*
+	 * Calculate the view-matrix.
+	 */
 
-	camera.view_m[0x1] = u[0];
-	camera.view_m[0x5] = u[1];
-	camera.view_m[0x9] = u[2];
+	mat4_idt(m);
 
-	camera.view_m[0x2] = f[0];
-	camera.view_m[0x6] = f[1];
-	camera.view_m[0xa] = f[2];
+	m[0x0] = r[0];
+	m[0x4] = r[1];
+	m[0x8] = r[2];
 
-	camera.view_m[0xc] = (-r[0] * camera.pos[0]) - (r[1] * camera.pos[1]) -
-		(r[2] * camera.pos[2]);
-	camera.view_m[0xd] = (-u[0] * camera.pos[0]) - (u[1] * camera.pos[1]) -
-		(u[2] * camera.pos[2]);
-	camera.view_m[0xe] = (-f[0] * camera.pos[0]) - (f[1] * camera.pos[1]) -
-		(f[2] * camera.pos[2]);
+	m[0x1] = u[0];
+	m[0x5] = u[1];
+	m[0x9] = u[2];
+
+	m[0x2] = f[0];
+	m[0x6] = f[1];
+	m[0xa] = f[2];
+
+	mat4_mult(conv, m, m);
+
+	mat4_idt(camera.view_m);
+	camera.view_m[0xc] = -p[0];
+	camera.view_m[0xd] = -p[1];
+	camera.view_m[0xe] = -p[2];
+
+	mat4_mult(m, camera.view_m, camera.view_m);
 }
 
 

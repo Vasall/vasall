@@ -20,8 +20,7 @@ int main(void)
 		return 0;
 	}
 
-	printf("Internal: %s\n", lcp_str_ip(AF_INET6, &network.ctx->int_addr));
-	printf("External: %s\n", lcp_str_ip(AF_INET6, &network.ctx->ext_addr));
+	net_print_info();
 
 	/* Initialize the sdl-subsystem */
 	if(sdl_init() < 0) {
@@ -40,7 +39,6 @@ int main(void)
 
 	/* Print usefull information about the used render-engine */
 	ren_print_info();
-
 
 	/* Initialize asset-table(shaders, textures, fonts) */
 	if(ast_init() < 0) {
@@ -99,7 +97,7 @@ int main(void)
 	/*
 	 * TODO: Automatically login
 	 */
-	/* net_insert("unrealguthrie\0", "CAT12345\0", &test1, &test2); */
+	net_insert("unrealguthrie\0", "CAT12345\0", &test1, &test2);
 
 	while(core.running) {
 		core_proc_evt();

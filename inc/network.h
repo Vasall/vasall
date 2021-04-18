@@ -59,24 +59,24 @@ struct cache_entry {
  */
 #define USE_LOCAL 1
 
-#if !USE_LOCAL
-#define MAIN_IP        "0:0:0:0:0:ffff:4e2e:bbb1"
-#else
+#if USE_LOCAL
 #define MAIN_IP        "::1"
+#else
+#define MAIN_IP        "0:0:0:0:0:ffff:4e2e:bbb1"
 #endif
 #define MAIN_PORT      4242
 
-#if !USE_LOCAL
-#define DISCO_IP       "0:0:0:0:0:ffff:4e2f:27b2"
-#else
+#if USE_LOCAL
 #define DISCO_IP       "::1"
+#else
+#define DISCO_IP       "0:0:0:0:0:ffff:4e2f:27b2"
 #endif
 #define DISCO_PORT     4243
 
-#if !USE_LOCAL
-#define PROXY_IP       "0:0:0:0:0:ffff:4e2f:27b2"
-#else
+#if USE_LOCAL
 #define PROXY_IP       "::1"
+#else
+#define PROXY_IP       "0:0:0:0:0:ffff:4e2f:27b2"
 #endif
 #define PROXY_PORT     4244 
 
@@ -331,5 +331,11 @@ extern uint32_t net_gettime(void);
  * Returns: The rounded time
  */
 extern uint32_t net_getstep(void);
+
+
+/*
+ * Display information about this client in the console.
+ */
+extern void net_print_info(void);
 
 #endif

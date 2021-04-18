@@ -280,6 +280,8 @@ extern void cam_update_view(void)
 
 	/*
 	 * Calculate the view-matrix.
+	 * See the link for how this works:
+	 * https://gamedev.stackexchange.com/a/181826
 	 */
 
 	mat4_idt(m);

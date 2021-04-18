@@ -207,7 +207,7 @@ static int create_instance(void)
 		}
 	}
 	free(layers);
-#if 0
+
 	/* Get the instance extensions */
 	if(SDL_Vulkan_GetInstanceExtensions(NULL, &ext_count, NULL) < 0)
 		return -1;
@@ -216,13 +216,6 @@ static int create_instance(void)
 
 	if(SDL_Vulkan_GetInstanceExtensions(NULL, &ext_count, ext) < 0)
 		return -1;
-#else
-	ext_count = 3;
-	ext = malloc(sizeof(char*) * ext_count);
-	ext[0] = "VK_KHR_surface";
-	ext[1] = "VK_KHR_xcb_surface";
-	ext[2] = "VK_KHR_xlib_surface";
-#endif
 
 	/* Create the vulkan instance */
 	create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;

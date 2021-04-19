@@ -1346,7 +1346,7 @@ extern int vk_create_pipeline(char *vtx, char *frg, enum vk_in_attr attr,
 		ras.cullMode = VK_CULL_MODE_FRONT_BIT;
 	else
 		ras.cullMode = VK_CULL_MODE_BACK_BIT;
-	ras.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	ras.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	ras.depthBiasEnable = VK_FALSE;
 	ras.depthBiasConstantFactor = 0.0f;
 	ras.depthBiasClamp = 0.0f;

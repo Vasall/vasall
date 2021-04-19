@@ -1,5 +1,5 @@
-#ifndef _NODE_H
-#define _NODE_H
+#ifndef _UI_NODE_H
+#define _UI_NODE_H
 
 #include "sdl.h"
 
@@ -374,4 +374,4 @@ extern int ui_chain(int num, ...);
  */
 extern void ui_show(ui_node *n, uint8_t flg);
 
-#endif
+#endif /* _UI_NODE_H */

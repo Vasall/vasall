@@ -1,5 +1,5 @@
 #include "setup.h"
-#include "stdnode.h"
+#include "ui_stdnode.h"
 
 #include <stdlib.h>
 

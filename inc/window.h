@@ -2,7 +2,7 @@
 #define _WINDOW_H
 
 #include "sdl.h"
-#include "node.h"
+#include "ui_node.h"
 #include "vector.h"
 #include "controller.h"
 #include "input.h"

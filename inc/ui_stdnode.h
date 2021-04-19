@@ -1,9 +1,9 @@
-#ifndef _STDNODE_H
-#define _STDNODE_H
+#ifndef _UI_STDNODE_H
+#define _UI_STDNODE_H
 
 #include "sdl.h"
 #include "asset.h"
-#include "node.h"
+#include "ui_node.h"
 #include "window.h"
 
 extern color_t WHITE;
@@ -88,4 +88,4 @@ void INPUT_DELETE(ui_node *n, void *data);
 extern void *ui_new_input(color_t txt_col, short *ins);
 extern int ui_init_input(ui_node *n);
 
-#endif
+#endif /* _UI_STDNODE_H */

@@ -331,6 +331,7 @@ latest_update:
 	return islot;
 }
 
+
 extern int inp_check_new(void)
 {
 	if(input.log.latest_slot > -1)

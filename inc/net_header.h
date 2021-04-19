@@ -1,5 +1,5 @@
-#ifndef _HEADER_H
-#define _HEADER_H
+#ifndef _NET_HEADER_H
+#define _NET_HEADER_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,10 +44,10 @@ struct req_hdr {
 	uint32_t ti_mod;
 
 	/*
-	 * Optional peer-key which is practiacally the hashed valued of the
-	 * peer-key-buffer combined with the mod-attribute(time % 4086) using 
-	 * djb2 by Dan Bernstein. This attribute should only be used if mod 
-	 * is bigger than 0 and the according bit is set in flg.
+	 * Optional peer-key which is the hashed valued of the peer-key-buffer
+	 * combined with the mod-attribute(time % 4086) using djb2 by Dan
+	 * Bernstein. This attribute should only be used if mod is bigger than
+	 * 0 and the according bit is set in flg.
 	 */
 	uint32_t src_key;
 } __attribute__((__packed__));

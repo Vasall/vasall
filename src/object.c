@@ -125,10 +125,6 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 	/* Set the timestamp of the object */
 	objects.ts[slot] = ts;
 
-	printf("Position %d: ", id);
-	vec3_print(pos);
-	printf("\n");
-
 	/* Setup position and velocity */
 	vec3_cpy(objects.pos[slot], pos);
 	vec3_clr(objects.vel[slot]);

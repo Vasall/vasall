@@ -107,7 +107,6 @@ extern void test1(char *buf, int len)
 	obj_set(id, OBJ_M_STATIC, pos0, mdl_get("wld"), NULL, 0, 0);
 	obj_set(id + 100, OBJ_M_STATIC, pos0, mdl_get("slp"), NULL, 0, 0);
 	obj_set(id + 101, OBJ_M_STATIC, pos1, mdl_get("tst"), NULL, 0, 0);
-	obj_set(id + 101, OBJ_M_STATIC|OBJ_M_RIG, pos2, mdl_get("plr"), NULL, 0, 0);
 
 	/* Set the skybox */
 	wld_set_skybox(mdl_get("cube"));
@@ -118,7 +117,7 @@ extern void test1(char *buf, int len)
 
 	/* Update projection-matrix */
 	asp = (float)window.win_w / (float)window.win_h;
-	cam_proj_mat(45.0, asp, 0.18, 1000.0);
+	cam_proj_mat(45.0, asp, 0.1, 1000.0);
 
 	/* Switch from menuscreen to gamescreen */
 	node = ui_get(window.root, "mns");

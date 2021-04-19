@@ -3,7 +3,7 @@
 
 #include "core.h"
 #define DEF_HEADER
-#include "header.h"
+#include "net_header.h"
 
 #include <stdio.h>
 #include <stdlib.h>

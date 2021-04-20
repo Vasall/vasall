@@ -1,6 +1,5 @@
 #!/bin/sh
 
-
 check_lib() {
 	if [ -f "/usr/include/$1" ] || [ -f "/usr/local/include/$1" ]; then
 		echo "Library $2 found on system"

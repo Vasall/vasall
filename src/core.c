@@ -7,23 +7,23 @@
 
 
 /* Redefine the global core-wrapper */
-struct core_wrapper core; 
+struct core_wrapper g_core; 
 
 
 extern int core_init(void)
 {
-	core.running = 1;
+	g_core.running = 1;
 
-	core.proc_evt = NULL;
-	core.update = NULL;
-	core.render = NULL;
+	g_core.proc_evt = NULL;
+	g_core.update = NULL;
+	g_core.render = NULL;
 
-	core.obj = -1;
+	g_core.obj = -1;
 
-	core.last_upd_ts = 0;
-	core.last_ren_ts = 0;
-	core.last_shr_ts = 0;
-	core.last_syn_ts = 0;
+	g_core.last_upd_ts = 0;
+	g_core.last_ren_ts = 0;
+	g_core.last_shr_ts = 0;
+	g_core.last_syn_ts = 0;
 
 	return 0;
 }
@@ -42,12 +42,12 @@ extern void core_proc_evt(void)
 		key = evt.key.keysym.sym;
 		
 		if(type == SDL_QUIT) {
-			core.running = 0;
+			g_core.running = 0;
 			return;
 		}
 
 		if(type == SDL_KEYDOWN && key == SDLK_q && (mod & KMOD_CTRL)) {
-			core.running = 0;
+			g_core.running = 0;
 			return;
 		}
 
@@ -55,8 +55,8 @@ extern void core_proc_evt(void)
 			continue;
 		}
 
-		if(core.proc_evt) {
-			core.proc_evt(&evt);
+		if(g_core.proc_evt) {
+			g_core.proc_evt(&evt);
 		}
 	}
 }
@@ -68,8 +68,8 @@ extern void core_update(void)
 
 	win_update();
 
-	if(core.update) {
-		core.update();
+	if(g_core.update) {
+		g_core.update();
 	}
 }
 
@@ -78,10 +78,10 @@ extern void core_render(void)
 {
 	ren_start();
 
-	if(core.render)
-		core.render();
+	if(g_core.render)
+		g_core.render();
 
 	win_render();
 
-	ren_end(window.win);
+	ren_end(g_win.win);
 }

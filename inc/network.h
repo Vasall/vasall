@@ -24,7 +24,7 @@
 #define PEER_S_7           0x40
 #define PEER_S_8           0x80
 
-struct peer_table {
+struct net_peer_table {
 	int num;
 	int con_num;
 	int pen_num;
@@ -43,10 +43,10 @@ struct peer_table {
 	unsigned short         obj[PEER_SLOTS][1]; 
 };
 
-struct cache_entry;
-struct cache_entry {
-	struct cache_entry *next;
-	struct cache_entry *prev;
+struct net_cache_entry;
+struct net_cache_entry {
+	struct net_cache_entry *next;
+	struct net_cache_entry *prev;
 	uint32_t id;
 	uint32_t src;
 
@@ -83,12 +83,12 @@ struct cache_entry {
 /* Callback-function for network-events */
 typedef void (*net_fnc)(char *buf, int len);
 
-struct network_wrapper {
+struct net_wrapper {
 	struct lcp_ctx *ctx;
 
 	struct sockaddr_in6 main_addr;
 
-	struct peer_table peers;
+	struct net_peer_table peers;
 
 	short con_num;
 	short con[PEER_CON_NUM];
@@ -105,7 +105,7 @@ struct network_wrapper {
 	uint8_t   key[16];
 
 	/* A buffer uninitialized objects of different peers */
-	struct cache_entry *obj_lst;
+	struct net_cache_entry *obj_lst;
 
 	/* Time difference to the universal server-timer */
 	uint32_t time_del;
@@ -116,7 +116,7 @@ struct network_wrapper {
 
 
 /* Define the global network-wrapper instance */
-extern struct network_wrapper network;
+extern struct net_wrapper g_net;
 
 
 /*
@@ -290,7 +290,7 @@ extern int net_obj_insert(void *in, short in_num, uint32_t src, char **out,
  *
  * Returns: Either a pointer to the cache-object or NULL if an error occurred
  */
-extern struct cache_entry *net_obj_find(uint32_t id);
+extern struct net_cache_entry *net_obj_find(uint32_t id);
 
 
 /*

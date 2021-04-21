@@ -67,7 +67,7 @@
 #define OBJ_LOG_LIM 12
 #define OBJ_LOG_TIME 80
 
-struct object_log {
+struct obj_log {
 	short start;
 	short num;
 
@@ -87,7 +87,7 @@ struct comp_marker {
 	vec2_t       mov;
 };
 
-struct object_collision {
+struct obj_collision {
 	int mask;
 
 	cube_t box;
@@ -95,7 +95,7 @@ struct object_collision {
 	vec3_t max;
 };
 
-struct object_table {
+struct obj_wrapper {
 	short                    num;
 	short                    order[OBJ_LIM];
 	uint32_t                 last_ts;
@@ -119,16 +119,17 @@ struct object_table {
 	vec3_t                   prev_dir[OBJ_LIM];
 
 	/* Buffer containing the runtime-log */
-	struct object_log        log[OBJ_LIM];
+	struct obj_log           log[OBJ_LIM];
 
 	/* Variables used for rendering and animation */
 	vec3_t                   ren_pos[OBJ_LIM];
 	vec3_t                   ren_dir[OBJ_LIM];
 
-	/* The point the object is currently aiming at */
+	/* The point the object is currently aiming at in world-space */
 	vec3_t                   aim_origin[OBJ_LIM];
 	vec3_t                   aim_pos[OBJ_LIM];
 
+	/* The position and direction of the barrelt in world-space */
 	vec3_t                   aim_off[OBJ_LIM];
 	vec3_t                   aim_dir[OBJ_LIM];
 
@@ -143,7 +144,7 @@ struct object_table {
 	float                    vagl[OBJ_LIM][2]; /* 0: z-axis, 1: x-axis */
 
 	/* Collision */
-	struct object_collision  col[OBJ_LIM]; 
+	struct obj_collision     col[OBJ_LIM]; 
 
 	/* Object/Player-Data like Health and Mana */
 	int                      len[OBJ_LIM];
@@ -152,7 +153,7 @@ struct object_table {
 
 
 /* Define the global object-wrapper instance */
-extern struct object_table objects;
+extern struct obj_wrapper g_obj;
 
 /* TODO: This seems kinda funky tbh */
 #include "object_utils.h"

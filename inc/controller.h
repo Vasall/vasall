@@ -7,7 +7,7 @@
 
 #define CTR_DEVICE_LIM 4
 
-struct controller_wrapper {
+struct ctr_wrapper {
 	uint32_t   mask[CTR_DEVICE_LIM];
 	int        id[CTR_DEVICE_LIM];
 	uint8_t    type[CTR_DEVICE_LIM];
@@ -16,7 +16,7 @@ struct controller_wrapper {
 };
 
 
-extern struct controller_wrapper controllers;
+extern struct ctr_wrapper g_ctr;
 
 
 extern int ctr_init(void);

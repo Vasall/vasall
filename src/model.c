@@ -159,7 +159,7 @@ extern short mdl_set(char *name, short shd_slot)
 	mdl->status = MDL_OK;
 
 	/* Generate a new vao */
-	if(ren_create_model_data(assets.shd.pipeline[shd_slot], &mdl->vao,
+	if(ren_create_model_data(g_ast.shd.pipeline[shd_slot], &mdl->vao,
 					&mdl->set) < 0)
 		return -1;
 
@@ -314,7 +314,7 @@ extern void mdl_set_data(short slot, int vtxnum, float *vtx, float *tex,
 		goto err_set_failed;
 
 	if(ren_set_model_data(mdl->vao, mdl->vtx_bao, vtx_size, jnt && wgt ? 1 : 0,
-			mdl->set, mdl->uni_bo, assets.tex.tex[mdl->tex]) < 0)
+			mdl->set, mdl->uni_bo, g_ast.tex.tex[mdl->tex]) < 0)
 		goto err_set_failed;
 
 	return;
@@ -465,7 +465,6 @@ extern short mdl_load_ffd(char *name, FILE *fd, short tex_slot, short shd_slot,
 	struct mdl_anim *anim;
 	struct mdl_keyfr *keyfr;
 	struct amo_keyfr *amo_keyfr;
-
 
 	/* Allocate memory for the model-struct */
 	if((slot = mdl_set(name, shd_slot)) < 0)
@@ -870,7 +869,7 @@ extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
 	
 	/* Set uniform buffer and textures */
 	ren_set_render_model_data(mdl->uni_buf, uni,
-			assets.tex.hdl[mdl->tex], assets.shd.pipeline[mdl->shd],
+			g_ast.tex.hdl[mdl->tex], g_ast.shd.pipeline[mdl->shd],
 			mdl->uni_bo, mdl->set, mdl->type);
 
 	/* Draw the vertices */

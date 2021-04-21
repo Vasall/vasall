@@ -5,7 +5,9 @@
 
 #include <stdlib.h>
 
-struct asset_wrapper assets;
+
+/* Redefine global asset-wrapper */
+struct ast_wrapper g_ast;
 
 
 extern int ast_init(void)
@@ -14,16 +16,16 @@ extern int ast_init(void)
 
 	/* Initialize shader-table */
 	for(i = 0; i < SHD_SLOTS; i++)
-		assets.shd.mask[i] = 0;
+		g_ast.shd.mask[i] = 0;
 
 	/* Initialize texture-table */
 	for(i = 0; i < TEX_SLOTS; i++)
-		assets.tex.mask[i] = 0;
+		g_ast.tex.mask[i] = 0;
 
 	/* Initialize the font-table */
-	assets.txt.font_num = 0;
+	g_ast.txt.font_num = 0;
 	for(i = 0; i < TXT_FONT_SLOTS; i++)
-		assets.txt.fonts[i] = NULL;
+		g_ast.txt.fonts[i] = NULL;
 
 	return 0;
 }
@@ -36,24 +38,24 @@ extern void ast_close(void)
 
 	/* Close the font-table */
 	for(i = 0; i < TXT_FONT_SLOTS; i++) {
-		if(assets.txt.fonts[i] != NULL)
-			TTF_CloseFont(assets.txt.fonts[i]);
+		if(g_ast.txt.fonts[i] != NULL)
+			TTF_CloseFont(g_ast.txt.fonts[i]);
 	}
 
 	/* Close the texture-table */
 	for(i = 0; i < TEX_SLOTS; i++) {
-		if(assets.tex.mask[i] == 0)
+		if(g_ast.tex.mask[i] == 0)
 			continue;
 		
-		ren_destroy_texture(assets.tex.hdl[i], assets.tex.tex[i]);
+		ren_destroy_texture(g_ast.tex.hdl[i], g_ast.tex.tex[i]);
 	}
 
 	/* Close the shader-table */
 	for(i = 0; i < SHD_SLOTS; i++) {
-		if(assets.shd.mask[i] == 0)
+		if(g_ast.shd.mask[i] == 0)
 			continue;
 
-		ren_destroy_shader(assets.shd.prog[i], assets.shd.pipeline[i]);
+		ren_destroy_shader(g_ast.shd.prog[i], g_ast.shd.pipeline[i]);
 	}
 }
 
@@ -63,7 +65,7 @@ static short shd_get_slot(void)
 	short i;
 
 	for(i = 0; i < SHD_SLOTS; i++) {
-		if(assets.shd.mask[i] == 0)
+		if(g_ast.shd.mask[i] == 0)
 			return i;
 	}
 
@@ -92,12 +94,12 @@ extern short shd_set(char *name, char *vs, char *fs, int num, char **vars, enum 
 	if(!vs || !fs)
 		return -1;
 
-	if(ren_create_shader(vs, fs, &assets.shd.prog[slot],
-					&assets.shd.pipeline[slot], num, vars, type) < 0)
+	if(ren_create_shader(vs, fs, &g_ast.shd.prog[slot],
+					&g_ast.shd.pipeline[slot], num, vars, type) < 0)
 		return -1;
 
-	assets.shd.mask[slot] = 1;
-	strcpy(assets.shd.name[slot], name);
+	g_ast.shd.mask[slot] = 1;
+	strcpy(g_ast.shd.name[slot], name);
 	return slot;
 }
 
@@ -107,11 +109,11 @@ extern void shd_del(short slot)
 	if(shd_check_slot(slot))
 		return;
 
-	if(assets.shd.mask[slot] == 0)
+	if(g_ast.shd.mask[slot] == 0)
 		return;
 
-	ren_destroy_shader(assets.shd.prog[slot], assets.shd.pipeline[slot]);
-	assets.shd.mask[slot] = 0;
+	ren_destroy_shader(g_ast.shd.prog[slot], g_ast.shd.pipeline[slot]);
+	g_ast.shd.mask[slot] = 0;
 }
 
 
@@ -120,10 +122,10 @@ extern short shd_get(char *name)
 	int i;
 
 	for(i = 0; i < SHD_SLOTS; i++) {
-		if(assets.shd.mask[i] == 0)
+		if(g_ast.shd.mask[i] == 0)
 			continue;
 
-		if(!strcmp(assets.shd.name[i], name))
+		if(!strcmp(g_ast.shd.name[i], name))
 			return i;
 	}
 
@@ -137,7 +139,7 @@ extern void shd_use(short slot, int attr)
 	if(shd_check_slot(slot))
 		return;
 
-	ren_set_shader(assets.shd.prog[slot], attr, assets.shd.pipeline[slot]);
+	ren_set_shader(g_ast.shd.prog[slot], attr, g_ast.shd.pipeline[slot]);
 }
 
 
@@ -153,7 +155,7 @@ static short tex_get_slot(void)
 	short i;
 
 	for(i = 0; i < TEX_SLOTS; i++) {
-		if(assets.tex.mask[i] == 0)
+		if(g_ast.tex.mask[i] == 0)
 			return i;
 	}
 
@@ -179,12 +181,12 @@ extern short tex_set(char *name, char *pth)
 		return -1;
 	}
 
-	if(ren_create_texture(pth, &assets.tex.hdl[slot], &assets.tex.tex[slot])
+	if(ren_create_texture(pth, &g_ast.tex.hdl[slot], &g_ast.tex.tex[slot])
 					< 0)
 		return -1;
 
-	assets.tex.mask[slot] = 1;
-	strcpy(assets.tex.name[slot], name);
+	g_ast.tex.mask[slot] = 1;
+	strcpy(g_ast.tex.name[slot], name);
 	return slot;
 }
 
@@ -198,12 +200,12 @@ extern short skybox_set(char *name, char *pths[6])
 		return -1;
 	}
 
-	if(ren_create_skybox(pths, &assets.tex.hdl[slot], &assets.tex.tex[slot])
+	if(ren_create_skybox(pths, &g_ast.tex.hdl[slot], &g_ast.tex.tex[slot])
 				< 0)
 		return -1;
 
-	assets.tex.mask[slot] = 1;
-	strcpy(assets.tex.name[slot], name);
+	g_ast.tex.mask[slot] = 1;
+	strcpy(g_ast.tex.name[slot], name);
 	return slot;
 }
 
@@ -213,11 +215,11 @@ extern void tex_del(short slot)
 	if(tex_check_slot(slot))
 		return;
 
-	if(assets.tex.mask[slot] == 0)
+	if(g_ast.tex.mask[slot] == 0)
 		return;
 
-	ren_destroy_texture(assets.tex.hdl[slot], assets.tex.tex[slot]);
-	assets.tex.mask[slot] = 0;
+	ren_destroy_texture(g_ast.tex.hdl[slot], g_ast.tex.tex[slot]);
+	g_ast.tex.mask[slot] = 0;
 }
 
 
@@ -226,10 +228,10 @@ extern short tex_get(char *name)
 	int i;
 
 	for(i = 0; i < TEX_SLOTS; i++) {
-		if(assets.tex.mask[i] == 0)
+		if(g_ast.tex.mask[i] == 0)
 			continue;
 
-		if(!strcmp(assets.tex.name[i], name))
+		if(!strcmp(g_ast.tex.name[i], name))
 			return i;
 	}
 
@@ -243,7 +245,7 @@ extern void tex_use(short slot)
 		return;
 
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, assets.tex.hdl[slot]);
+	glBindTexture(GL_TEXTURE_2D, g_ast.tex.hdl[slot]);
 }
 
 
@@ -258,7 +260,7 @@ extern short txt_load_ttf(char *pth, int size)
 {
 	font_t *font;
 
-	if(assets.txt.font_num >= (TXT_FONT_SLOTS - 1)) {
+	if(g_ast.txt.font_num >= (TXT_FONT_SLOTS - 1)) {
 		ERR_LOG(("Font-table is already full"));
 		return -1;
 	}
@@ -268,9 +270,9 @@ extern short txt_load_ttf(char *pth, int size)
 		return -1;
 	}
 
-	assets.txt.fonts[assets.txt.font_num] = font;
-	assets.txt.font_num++;
-	return assets.txt.font_num - 1;
+	g_ast.txt.fonts[g_ast.txt.font_num] = font;
+	g_ast.txt.font_num++;
+	return g_ast.txt.font_num - 1;
 }
 
 
@@ -290,16 +292,16 @@ extern void txt_render_rel(surf_t *surf, rect_t *rect, color_t *col, short font,
 	if(strlen(text) < 1)
 		return;
 
-	TTF_SetFontKerning(assets.txt.fonts[font], 0);
-	TTF_SetFontHinting(assets.txt.fonts[font], TTF_HINTING_NORMAL);
+	TTF_SetFontKerning(g_ast.txt.fonts[font], 0);
+	TTF_SetFontHinting(g_ast.txt.fonts[font], TTF_HINTING_NORMAL);
 
-	if(!(rend = TTF_RenderUTF8_Blended(assets.txt.fonts[font], text, *col)))
+	if(!(rend = TTF_RenderUTF8_Blended(g_ast.txt.fonts[font], text, *col)))
 		return;
 
 	reloff = u8_offset(text, rel);
 	memcpy(subs, text, reloff);
 	subs[reloff] = '\0';
-	TTF_SizeUTF8(assets.txt.fonts[font], subs, &relw, &relh);
+	TTF_SizeUTF8(g_ast.txt.fonts[font], subs, &relw, &relh);
 
 	/* Clip the surface to fit into the specified rect */
 	clip.x = 0;
@@ -349,7 +351,7 @@ extern void txt_render(surf_t *surf, rect_t *rect, color_t *col, short font,
 
 	text[strlen(text)] = 0;
 
-	if(!(f_ptr = assets.txt.fonts[font]))
+	if(!(f_ptr = g_ast.txt.fonts[font]))
 		return;
 
 	TTF_SetFontKerning(f_ptr, 0);

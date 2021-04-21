@@ -10,7 +10,7 @@
 #define INP_CHG_DIR (1<<1)
 
 
-enum input_pipe_mode {
+enum inp_pipe_mode {
 	INP_PIPE_IN,
 	INP_PIPE_OUT
 };
@@ -21,7 +21,7 @@ enum input_pipe_mode {
 #define INP_M_DIR   (1<<1)
 
 
-struct input_entry {
+struct inp_entry {
 	uint32_t  obj_id;
 	uint8_t   mask;
 	uint32_t  ts;
@@ -31,7 +31,7 @@ struct input_entry {
 };
 
 
-struct input_pipe {
+struct inp_pipe {
 	char        num;
 	short       order[INP_ENT_LIM];
 
@@ -59,7 +59,7 @@ struct input_pipe {
 
 #define INP_LOG_LIM 32
 
-struct input_log {
+struct inp_log {
 	short start;
 	short num;
 
@@ -77,7 +77,7 @@ struct input_log {
 };
 
 
-struct input_wrapper {
+struct inp_wrapper {
 	/* The current input-buffer with the different input-values */
 	vec2_t mov;
 	vec3_t dir;
@@ -91,16 +91,16 @@ struct input_wrapper {
 	vec3_t dir_old;
 
 	/* The share-buffer to share with peers */
-	struct input_pipe pipe_in;
-	struct input_pipe pipe_out;
+	struct inp_pipe pipe_in;
+	struct inp_pipe pipe_out;
 
 	/* The log with all recent inputs in ascending order of timestamp */
-	struct input_log log;
+	struct inp_log log;
 };
 
 
 /* The global input-wrapper */
-extern struct input_wrapper input;
+extern struct inp_wrapper g_inp;
 
 
 /*
@@ -123,7 +123,7 @@ extern void inp_close(void);
  *
  * @m: The pipe to clear
  */
-extern void inp_pipe_clear(enum input_pipe_mode m);
+extern void inp_pipe_clear(enum inp_pipe_mode m);
 
 
 /*
@@ -152,7 +152,7 @@ extern int inp_retrieve(uint8_t mask, void *out);
  * 
  * Returns: Either 0 on success or -1 if an error occurred
  */
-extern int inp_push(enum input_pipe_mode pm, uint32_t id, uint8_t mask,
+extern int inp_push(enum inp_pipe_mode pm, uint32_t id, uint8_t mask,
 		uint32_t ts, float *mov, float *dir);
 
 
@@ -166,7 +166,7 @@ extern int inp_push(enum input_pipe_mode pm, uint32_t id, uint8_t mask,
  * Returns: 1 if an entry has been returned, or 0 if the list is empty or an
  *          error has occurred
  */
-extern int inp_pull(struct input_entry *ent);
+extern int inp_pull(struct inp_entry *ent);
 
 
 /*
@@ -174,7 +174,7 @@ extern int inp_pull(struct input_entry *ent);
  *
  * @m: The pipe to dump in the terminal
  */
-extern void inp_pipe_print(enum input_pipe_mode m);
+extern void inp_pipe_print(enum inp_pipe_mode m);
 
 
 /*
@@ -253,7 +253,7 @@ extern uint32_t inp_next_ts(void);
  *
  * Returns: 1 if an entry has been returned, or 0 if nothing could be returned
  */
-extern int inp_get(struct input_entry *ent);
+extern int inp_get(struct inp_entry *ent);
 
 
 /*

@@ -9,31 +9,45 @@
 #define HND_NAME_MAX      32
 #define HND_NAME_MAX_NT   (HND_NAME_MAX+1)
 
+#define HND_HOOK_LIM      5
+
 
 /* TODO */
-struct handheld_handle {
+struct hnd_handle {
 	int i;
 };
 
 
 #define HND_M_NONE 0
 
-struct handheld_wrapper {
+struct hnd_wrapper {
 	short num;
 
 	uint16_t  mask[HND_LIM];
 	char      name[HND_LIM][HND_NAME_MAX_NT];
 	short     mdl[HND_LIM];
 
-	short     hook[HND_LIM];
+	/* The index of the parent-hook */
+	short     par_hook[HND_LIM];
 
+	/* 
+	 * The position relative to the object and the barrel-direction in the
+	 * resting-position.
+	 */
 	vec3_t    aim_pos[HND_LIM];
 	vec3_t    aim_dir[HND_LIM];
+
+	/* The vector and the matrix from the hook to the handheld */
+	short     hook_c[HND_LIM];
+	short     hook_idx[HND_LIM][HND_HOOK_LIM];
+	vec3_t    hook_vec[HND_LIM][HND_HOOK_LIM];
+	mat4_t    hook_mat[HND_LIM][HND_HOOK_LIM];
+	mat4_t    hook_mat_inv[HND_LIM][HND_HOOK_LIM];
 };
 
 
 /* Define global handheld-wrapper */
-extern struct handheld_wrapper handhelds;
+extern struct hnd_wrapper g_hnd;
 
 
 /*

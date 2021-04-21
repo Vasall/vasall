@@ -79,7 +79,6 @@ int load_resources(void)
 	if(mdl_load("cube", "res/models/cube.obj", tex_get("skybox"), shd_get("skybox"), MDL_TYPE_SKYBOX) < 0)
 		abort();
 
-
 	/* handhelds */
 	if(hnd_load("res/models/pistol.hnd", tex_get("pal"), shd_get("mdl")) < 0)
 		return -1;
@@ -112,15 +111,15 @@ extern void test1(char *buf, int len)
 	wld_set_skybox(mdl_get("cube"));
 
 	/* Setup camera */
-	cam_trg_obj(core.obj);
-	camera.dist = 3.0;
+	cam_trg_obj(g_core.obj);
+	g_cam.dist = 3.0;
 
 	/* Update projection-matrix */
-	asp = (float)window.win_w / (float)window.win_h;
+	asp = (float)g_win.win_w / (float)g_win.win_h;
 	cam_proj_mat(45.0, asp, 0.1, 1000.0);
 
 	/* Switch from menuscreen to gamescreen */
-	node = ui_get(window.root, "mns");
+	node = ui_get(g_win.root, "mns");
 	ui_set_flag(node, FLG_ACT, &zero);
 
 	SDL_SetRelativeMouseMode(SDL_TRUE);
@@ -144,7 +143,7 @@ extern void login(ui_node *n, event_t *e)
 	ui_node *node;
 	ui_input *inp;
 
-	node = ui_get(window.root, "mns_user");
+	node = ui_get(g_win.root, "mns_user");
 	inp = node->element;
 	strcpy(uname, inp->buffer);
 
@@ -153,7 +152,7 @@ extern void login(ui_node *n, event_t *e)
 		return;
 	}
 
-	node = ui_get(window.root, "mns_pswd");
+	node = ui_get(g_win.root, "mns_pswd");
 	inp = node->element;
 	strcpy(pswd, inp->buffer);
 
@@ -183,7 +182,7 @@ static short *short4(short a, short b, short c, short d)
 
 int load_ui(void)
 {
-	ui_node *root = window.root;
+	ui_node *root = g_win.root;
 	ui_node *tmp;
 	char one = 1;
 	short val;

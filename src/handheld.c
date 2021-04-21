@@ -6,7 +6,7 @@
 
 
 /* Redefine global handheld-wrapper */
-struct handheld_wrapper handhelds;
+struct hnd_wrapper g_hnd;
 
 
 extern int hnd_init(void)
@@ -14,7 +14,7 @@ extern int hnd_init(void)
 	int i;
 
 	for(i = 0; HND_LIM; i++) {
-		handhelds.mask[i] = HND_M_NONE;
+		g_hnd.mask[i] = HND_M_NONE;
 	}
 
 	return 0;
@@ -26,7 +26,7 @@ static short hnd_get_slot(void)
 	short i;
 
 	for(i = 0; i < HND_LIM; i++) {
-		if(handhelds.mask[i] == HND_M_NONE)
+		if(g_hnd.mask[i] == HND_M_NONE)
 			return i;
 	}
 
@@ -38,7 +38,7 @@ extern short hnd_load(char *pth, short tex_slot, short shd_slot)
 	FILE *fd;
 	char cmd_buf[48];
 	short slot;
-
+	int i;
 
 	/* Get a slot for the new handheld */
 	if((slot = hnd_get_slot()) < 0)
@@ -47,20 +47,31 @@ extern short hnd_load(char *pth, short tex_slot, short shd_slot)
 	if(!(fd = fopen(pth, "r")))
 		return -1;
 
+	/*
+	 * Reset the values of the slot.
+	 */
+	g_hnd.hook_c[slot] = 0;
+
+	/*
+	 * Read the handheld-data.
+	 */
 	while(fscanf(fd, "%s", cmd_buf) != EOF) {
 		if(strcmp(cmd_buf, "end") == 0)
 			break;
 
+		/* hnd <name> */
 		if(strcmp(cmd_buf, "hnd") == 0) {
 			/* Read the name of the handheld */
 			fscanf(fd, "%s",
-					handhelds.name[slot]);
+					g_hnd.name[slot]);
 		}
+		/* phk <hook-index> */
 		if(strcmp(cmd_buf, "phk") == 0) {
 			/* Read the hook the handheld is attached to */
 			fscanf(fd, "%hd",
-					&handhelds.hook[slot]);
+					&g_hnd.par_hook[slot]);
 		}
+		/* apo <x> <y> <z> */
 		if(strcmp(cmd_buf, "apo") == 0) {
 			vec3_t tmp;
 
@@ -70,8 +81,9 @@ extern short hnd_load(char *pth, short tex_slot, short shd_slot)
 					&tmp[1],
 					&tmp[2]);
 
-			vec3_cpy(handhelds.aim_pos[slot], tmp);
+			vec3_cpy(g_hnd.aim_pos[slot], tmp);
 		}
+		/* adi <x> <y> <z> */
 		if(strcmp(cmd_buf, "adi") == 0) {
 			vec3_t tmp;
 
@@ -81,15 +93,44 @@ extern short hnd_load(char *pth, short tex_slot, short shd_slot)
 					&tmp[1],
 					&tmp[2]);
 
-			vec3_cpy(handhelds.aim_dir[slot], tmp);
+			vec3_cpy(g_hnd.aim_dir[slot], tmp);
+		}
+		/* hok <index> <x> <y> z<> */
+		if(strcmp(cmd_buf, "hok") == 0) {
+			short tmp;
+
+			tmp = g_hnd.hook_c[slot];
+
+			/* Read the index of the hook */
+			fscanf(fd, "%hd", 
+					&g_hnd.hook_idx[slot][tmp]);
+
+			/* Read the vector */
+			fscanf(fd, "%f %f %f",
+					&g_hnd.hook_vec[slot][tmp][0],
+					&g_hnd.hook_vec[slot][tmp][1],
+					&g_hnd.hook_vec[slot][tmp][2]);
+
+			/* Increment the number of hooks */
+			g_hnd.hook_c[slot] += 1;
 		}
 	}
-					
-	if((handhelds.mdl[slot] = mdl_load_ffd(handhelds.name[slot], fd,
+
+	/*
+	 * Read the model-data and add it to the model-table.
+	 */
+	if((g_hnd.mdl[slot] = mdl_load_ffd(g_hnd.name[slot], fd,
 					tex_slot, shd_slot, MDL_TYPE_DEFAULT)) < 0)
 		goto err_remv_hnd;
 
-	printf("New slot %d\n", handhelds.mdl[slot]);
+	/*
+	 * Go through the list of hooks and calculate the matrices from the
+	 * vectors.
+	 */
+	for(i = 0; i < g_hnd.hook_c[slot]; i++) {
+		mat4_pfpos(g_hnd.hook_mat[slot][i], g_hnd.hook_vec[slot][i]);
+		mat4_inv(g_hnd.hook_mat_inv[slot][i], g_hnd.hook_mat[slot][i]);
+	}
 
 	fclose(fd);
 	return slot;
@@ -105,5 +146,5 @@ err_remv_hnd:
 extern void hnd_remv(short slot)
 {
 	/* Reset the mask */
-	handhelds.mask[slot] = HND_M_NONE;
+	g_hnd.mask[slot] = HND_M_NONE;
 }

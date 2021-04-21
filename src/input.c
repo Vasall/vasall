@@ -7,28 +7,28 @@
 
 
 /* Redefine the external input-wrapper */
-struct input_wrapper input;
+struct inp_wrapper g_inp;
 
 
 extern int inp_init(void)
 {
-	input.mask = 0;
+	g_inp.mask = 0;
 
 	/* Clear the input-pipes */
 	inp_pipe_clear(INP_PIPE_IN);
 	inp_pipe_clear(INP_PIPE_OUT);
 
 	/* Clear the input-buffers */
-	vec2_clr(input.mov);
-	vec3_clr(input.dir);
-	vec2_clr(input.mov_old);
-	vec3_clr(input.dir_old);
+	vec2_clr(g_inp.mov);
+	vec3_clr(g_inp.dir);
+	vec2_clr(g_inp.mov_old);
+	vec3_clr(g_inp.dir_old);
 
 	/* Reset the log */
-	input.log.start = 0;
-	input.log.latest_slot = -1;
-	input.log.latest_ts = 0;
-	input.log.itr = 0;
+	g_inp.log.start = 0;
+	g_inp.log.latest_slot = -1;
+	g_inp.log.latest_ts = 0;
+	g_inp.log.itr = 0;
 
 	return 0;
 }
@@ -40,16 +40,16 @@ extern void inp_close(void)
 }
 
 
-extern void inp_pipe_clear(enum input_pipe_mode m)
+extern void inp_pipe_clear(enum inp_pipe_mode m)
 {
-	struct input_pipe *pipe;
+	struct inp_pipe *pipe;
 	int i;
 
 	/* Get a pointer to the associated pipe */
 	if(m == INP_PIPE_IN)
-		pipe = &input.pipe_in;
+		pipe = &g_inp.pipe_in;
 	else if(m == INP_PIPE_OUT)
-		pipe = &input.pipe_out;
+		pipe = &g_inp.pipe_out;
 
 	/* Reset number of entries */
 	pipe->num = 0;
@@ -62,14 +62,14 @@ extern void inp_pipe_clear(enum input_pipe_mode m)
 extern void inp_change(uint8_t mask, uint32_t ts, void *in)
 {
 	if(mask == INP_M_MOV) {
-		input.mask |= INP_M_MOV;
-		input.mov_ts = ts; 
-		vec2_cpy(input.mov, (float *)in);
+		g_inp.mask |= INP_M_MOV;
+		g_inp.mov_ts = ts; 
+		vec2_cpy(g_inp.mov, (float *)in);
 	}
 	else if(mask == INP_M_DIR) {
-		input.mask |= INP_M_DIR;
-		input.dir_ts = ts;
-		vec3_cpy(input.dir, (float *)in);
+		g_inp.mask |= INP_M_DIR;
+		g_inp.dir_ts = ts;
+		vec3_cpy(g_inp.dir, (float *)in);
 	}
 }
 
@@ -77,26 +77,26 @@ extern void inp_change(uint8_t mask, uint32_t ts, void *in)
 extern int inp_retrieve(uint8_t mask, void *out)
 {
 	if(mask & INP_M_MOV)
-		vec2_cpy(out, input.mov);
+		vec2_cpy(out, g_inp.mov);
 	else if(mask & INP_M_DIR)
-		vec3_cpy(out, input.dir);
+		vec3_cpy(out, g_inp.dir);
 
 	return 0;
 }
 
 
-extern int inp_push(enum input_pipe_mode pm, uint32_t id, uint8_t mask,
+extern int inp_push(enum inp_pipe_mode pm, uint32_t id, uint8_t mask,
 		uint32_t ts, float *mov, float *dir)
 {
 	short i;
 	short num;	
-	struct input_pipe *pipe;
+	struct inp_pipe *pipe;
 
 	/* Get a pointer to the associated pipe */
 	if(pm == INP_PIPE_IN)
-		pipe = &input.pipe_in;
+		pipe = &g_inp.pipe_in;
 	else if(pm == INP_PIPE_OUT)
-		pipe = &input.pipe_out;
+		pipe = &g_inp.pipe_out;
 
 	/* 
 	 * Check if an entry for an object with the same timestamp and type is
@@ -140,10 +140,10 @@ extern int inp_push(enum input_pipe_mode pm, uint32_t id, uint8_t mask,
 }
 
 
-extern int inp_pull(struct input_entry *ent)
+extern int inp_pull(struct inp_entry *ent)
 {
 	int i;
-	struct input_pipe *pipe = &input.pipe_in;
+	struct inp_pipe *pipe = &g_inp.pipe_in;
 
 	if(pipe->num < 1)
 		return 0;
@@ -166,18 +166,18 @@ extern int inp_pull(struct input_entry *ent)
 }
 
 
-extern void inp_pipe_print(enum input_pipe_mode m)
+extern void inp_pipe_print(enum inp_pipe_mode m)
 {
 	int i;
-	struct input_pipe *pipe;
+	struct inp_pipe *pipe;
 
 	printf("-\n");
 
 	/* Get a pointer to the associated pipe */
 	if(m == INP_PIPE_IN)
-		pipe = &input.pipe_in;
+		pipe = &g_inp.pipe_in;
 	else if(m == INP_PIPE_OUT)
-		pipe = &input.pipe_out;
+		pipe = &g_inp.pipe_out;
 
 	for(i = 0; i < pipe->num; i++) {
 		printf("%d: %8x >> mask: %2d - ts: %6x", i, pipe->obj_id[i],
@@ -207,17 +207,17 @@ extern short inp_log_push(uint32_t id, uint8_t mask, uint32_t ts, float *mov,
 	short tmp;
 	short from;
 	short to;
-	short ins = input.log.start;
+	short ins = g_inp.log.start;
 
 	short islot = -1;
 	short itr = -1;
 
 	/* If the list is empty */
-	if(input.log.num == 0) {	
+	if(g_inp.log.num == 0) {	
 		islot = 0;
 		itr = 0;
 
-		input.log.num = 1;
+		g_inp.log.num = 1;
 		goto insert;
 	}
 
@@ -225,17 +225,17 @@ extern short inp_log_push(uint32_t id, uint8_t mask, uint32_t ts, float *mov,
 	 * Check if an input for an object with the same timestamp and type has
 	 * already been made and overwrite it.
 	 */
-	for(i = 0; i < input.log.num; i++) {
-		tmp = (input.log.start + i) % INP_LOG_LIM;
+	for(i = 0; i < g_inp.log.num; i++) {
+		tmp = (g_inp.log.start + i) % INP_LOG_LIM;
 
-		if(input.log.ts[tmp] == ts && input.log.obj_id[tmp] == id) {
+		if(g_inp.log.ts[tmp] == ts && g_inp.log.obj_id[tmp] == id) {
 			if(mask & INP_M_MOV && mov != NULL) { 
-				vec2_cpy(input.log.mov[tmp], mov);
-				input.log.mask[tmp] |= INP_M_MOV;
+				vec2_cpy(g_inp.log.mov[tmp], mov);
+				g_inp.log.mask[tmp] |= INP_M_MOV;
 			}
 			if(mask & INP_M_DIR && dir != NULL) {
-				vec3_cpy(input.log.dir[tmp], dir);
-				input.log.mask[tmp] |= INP_M_DIR;
+				vec3_cpy(g_inp.log.dir[tmp], dir);
+				g_inp.log.mask[tmp] |= INP_M_DIR;
 			}
 				
 			islot = tmp;
@@ -245,50 +245,50 @@ extern short inp_log_push(uint32_t id, uint8_t mask, uint32_t ts, float *mov,
 	}
 
 	/* Attach entry to the end if possible */
-	tmp = (input.log.start + input.log.num - 1) % INP_LOG_LIM;
-	if(ts > input.log.ts[tmp]) {
-		if(input.log.num + 1 > INP_LOG_LIM)
-			input.log.start = (input.log.start + 1) % INP_LOG_LIM;
+	tmp = (g_inp.log.start + g_inp.log.num - 1) % INP_LOG_LIM;
+	if(ts > g_inp.log.ts[tmp]) {
+		if(g_inp.log.num + 1 > INP_LOG_LIM)
+			g_inp.log.start = (g_inp.log.start + 1) % INP_LOG_LIM;
 		else
-			input.log.num += 1;
+			g_inp.log.num += 1;
 
 		islot = (tmp + 1) % INP_LOG_LIM;
-		itr = input.log.num;
+		itr = g_inp.log.num;
 		goto insert;
 	}
 
 	/* Insert entry into the middle of the list */
-	for(i = input.log.num - 1; i >= 0; i--) {
-		tmp = (input.log.start + i) % INP_LOG_LIM;
+	for(i = g_inp.log.num - 1; i >= 0; i--) {
+		tmp = (g_inp.log.start + i) % INP_LOG_LIM;
 
-		if(input.log.ts[tmp] <= ts) {
+		if(g_inp.log.ts[tmp] <= ts) {
 			ins = 0;
 
-			if(input.log.num + 1 >= INP_LOG_LIM)
+			if(g_inp.log.num + 1 >= INP_LOG_LIM)
 				ins = 1;
 
 			/* Move all entries down one step */
 			for(k = ins; k <= i; k++) {
-				from = (input.log.start + k) % INP_LOG_LIM;
+				from = (g_inp.log.start + k) % INP_LOG_LIM;
 
 				to = from - 1;
 				if(to < 0) to = INP_LOG_LIM + to;
 
-				input.log.ts[to] = input.log.ts[from];
-				input.log.mask[to] = input.log.mask[from];
-				input.log.obj_id[to] = input.log.obj_id[from];
+				g_inp.log.ts[to] = g_inp.log.ts[from];
+				g_inp.log.mask[to] = g_inp.log.mask[from];
+				g_inp.log.obj_id[to] = g_inp.log.obj_id[from];
 
-				vec2_cpy(input.log.mov[to], input.log.mov[from]);
-				vec3_cpy(input.log.dir[to], input.log.dir[from]);
+				vec2_cpy(g_inp.log.mov[to], g_inp.log.mov[from]);
+				vec3_cpy(g_inp.log.dir[to], g_inp.log.dir[from]);
 			}
 
-			if(input.log.num + 1 < INP_LOG_LIM) {
-				input.log.num += 1;
+			if(g_inp.log.num + 1 < INP_LOG_LIM) {
+				g_inp.log.num += 1;
 
-				input.log.start -= 1;
-				if(input.log.start < 0)
-					input.log.start = INP_LOG_LIM +
-						input.log.start;
+				g_inp.log.start -= 1;
+				if(g_inp.log.start < 0)
+					g_inp.log.start = INP_LOG_LIM +
+						g_inp.log.start;
 			}
 
 			islot = tmp;
@@ -301,30 +301,30 @@ extern short inp_log_push(uint32_t id, uint8_t mask, uint32_t ts, float *mov,
 
 
 insert:
-	input.log.obj_id[islot] = id;
-	input.log.ts[islot] = ts;
-	input.log.mask[islot] = INP_M_NONE;
+	g_inp.log.obj_id[islot] = id;
+	g_inp.log.ts[islot] = ts;
+	g_inp.log.mask[islot] = INP_M_NONE;
 
 	if(mask & INP_M_MOV && mov != NULL) {
-		vec2_cpy(input.log.mov[islot], mov);
-		input.log.mask[islot] |= INP_M_MOV;
+		vec2_cpy(g_inp.log.mov[islot], mov);
+		g_inp.log.mask[islot] |= INP_M_MOV;
 	}
 	if(mask & INP_M_DIR && dir != NULL) {
-		vec3_cpy(input.log.dir[islot], dir);
-		input.log.mask[islot] |= INP_M_DIR;
+		vec3_cpy(g_inp.log.dir[islot], dir);
+		g_inp.log.mask[islot] |= INP_M_DIR;
 	}
 
 latest_update:
-	if(input.log.latest_itr == -1) {
-		input.log.latest_slot = islot;
-		input.log.latest_itr = itr;
-		input.log.latest_ts = ts;
+	if(g_inp.log.latest_itr == -1) {
+		g_inp.log.latest_slot = islot;
+		g_inp.log.latest_itr = itr;
+		g_inp.log.latest_ts = ts;
 	}
 	else {
-		if(input.log.latest_ts > ts && input.log.latest_itr > itr) {
-			input.log.latest_slot = islot;
-			input.log.latest_itr = itr;
-			input.log.latest_ts = ts;
+		if(g_inp.log.latest_ts > ts && g_inp.log.latest_itr > itr) {
+			g_inp.log.latest_slot = islot;
+			g_inp.log.latest_itr = itr;
+			g_inp.log.latest_ts = ts;
 		}
 	}
 
@@ -334,7 +334,7 @@ latest_update:
 
 extern int inp_check_new(void)
 {
-	if(input.log.latest_slot > -1)
+	if(g_inp.log.latest_slot > -1)
 		return 1;
 
 	return 0;
@@ -345,30 +345,30 @@ extern void inp_log_print(void)
 {
 	short i;
 
-	printf("Num: %d, Start: %d\n", input.log.num, input.log.start);
+	printf("Num: %d, Start: %d\n", g_inp.log.num, g_inp.log.start);
 
-	for(i = 0; i < input.log.num; i++) {
-		short slot = (input.log.start + i) % INP_LOG_LIM;
+	for(i = 0; i < g_inp.log.num; i++) {
+		short slot = (g_inp.log.start + i) % INP_LOG_LIM;
 
 		printf("%2d(%2d): ", i, slot);
 
-		printf("%8x >> ", input.log.obj_id[slot]);
-		printf("mask: %4d - ", input.log.mask[slot]);
-		printf("ts: %6x", input.log.ts[slot]);
+		printf("%8x >> ", g_inp.log.obj_id[slot]);
+		printf("mask: %4d - ", g_inp.log.mask[slot]);
+		printf("ts: %6x", g_inp.log.ts[slot]);
 
-		if(input.log.mask[slot] & INP_M_MOV) {
+		if(g_inp.log.mask[slot] & INP_M_MOV) {
 			printf(" - mov: ");
-			vec2_print(input.log.mov[slot]);
+			vec2_print(g_inp.log.mov[slot]);
 		}
-		if(input.log.mask[slot] & INP_M_DIR) {
+		if(g_inp.log.mask[slot] & INP_M_DIR) {
 			printf(" - dir: ");
-			vec3_print(input.log.dir[slot]);
+			vec3_print(g_inp.log.dir[slot]);
 		}
 
-		if(slot == input.log.start)
+		if(slot == g_inp.log.start)
 			printf("  \t Start  ");
 
-		if(slot == input.log.latest_slot)
+		if(slot == g_inp.log.latest_slot)
 			printf("  \t  !!");
 
 		printf("\n");
@@ -378,32 +378,32 @@ extern void inp_log_print(void)
 
 extern void inp_begin(void)
 {
-	if(input.log.latest_slot < 0)
+	if(g_inp.log.latest_slot < 0)
 		return;
 
-	if(input.log.latest_slot >= input.log.start) {
-		input.log.itr = input.log.latest_slot - input.log.start;	
+	if(g_inp.log.latest_slot >= g_inp.log.start) {
+		g_inp.log.itr = g_inp.log.latest_slot - g_inp.log.start;	
 	}
 	else {
-		input.log.itr = INP_LOG_LIM - (input.log.start -
-				input.log.latest_slot);
+		g_inp.log.itr = INP_LOG_LIM - (g_inp.log.start -
+				g_inp.log.latest_slot);
 	}
 }
 
 
 extern int inp_next(void)
 {
-	if(input.log.itr + 1 > input.log.num)
+	if(g_inp.log.itr + 1 > g_inp.log.num)
 		return 0;
 
-	input.log.itr += 1;
+	g_inp.log.itr += 1;
 	return 1;
 }
 
 
 extern uint32_t inp_cur_ts(void)
 {
-	struct input_log *log = &input.log;
+	struct inp_log *log = &g_inp.log;
 
 	if(log->num > 0) {
 		short tmp = (log->start + log->itr) % INP_LOG_LIM;
@@ -415,7 +415,7 @@ extern uint32_t inp_cur_ts(void)
 
 extern uint32_t inp_next_ts(void)
 {
-	struct input_log *log = &input.log;
+	struct inp_log *log = &g_inp.log;
 
 	if(log->itr + 1 >= log->num)
 		return 0;
@@ -424,10 +424,10 @@ extern uint32_t inp_next_ts(void)
 }
 
 
-extern int inp_get(struct input_entry *ent)
+extern int inp_get(struct inp_entry *ent)
 {
 	int idx;
-	struct input_log *log = &input.log;
+	struct inp_log *log = &g_inp.log;
 
 	if(log->num < 1 || log->itr >= log->num)
 		return 0;
@@ -458,7 +458,7 @@ extern int inp_pack(char *out)
 	uint16_t del_ts;
 	uint32_t tmp_ts;
 
-	struct input_pipe *pipe = &input.pipe_out; 
+	struct inp_pipe *pipe = &g_inp.pipe_out; 
 
 	if((num = pipe->num) < 1) {
 		return 0;
@@ -574,18 +574,18 @@ extern int inp_unpack(char *in)
 }
 
 
-static void inp_pipe_sort(enum input_pipe_mode m)
+static void inp_pipe_sort(enum inp_pipe_mode m)
 {
 	int i;
-	struct input_pipe *pipe;
+	struct inp_pipe *pipe;
 	char found;
 	short a;
 	short b;
 
 	if(m == INP_PIPE_IN)
-		pipe = &input.pipe_in;
+		pipe = &g_inp.pipe_in;
 	else if(m == INP_PIPE_OUT)
-		pipe = &input.pipe_out;
+		pipe = &g_inp.pipe_out;
 
 
 	/* Reset order-list */
@@ -633,40 +633,40 @@ extern void inp_proc(void)
 	 */
 
 	/* Check if the value really has changed */
-	if((input.mask & INP_M_MOV) && !vec2_cmp(input.mov, input.mov_old)) {
+	if((g_inp.mask & INP_M_MOV) && !vec2_cmp(g_inp.mov, g_inp.mov_old)) {
 		/* If yes, then save value and mark change */
-		vec2_cpy(input.mov_old, input.mov);
+		vec2_cpy(g_inp.mov_old, g_inp.mov);
 
-		ts = ceil(input.mov_ts / TICK_TIME) * TICK_TIME;
+		ts = ceil(g_inp.mov_ts / TICK_TIME) * TICK_TIME;
 
 		/* Push new entries into the in- and out-pipe */
-		inp_push(INP_PIPE_IN, objects.id[core.obj],
-				INP_M_MOV, ts, input.mov, NULL);
-		inp_push(INP_PIPE_OUT, objects.id[core.obj],
-				INP_M_MOV, ts, input.mov, NULL);
+		inp_push(INP_PIPE_IN, g_obj.id[g_core.obj],
+				INP_M_MOV, ts, g_inp.mov, NULL);
+		inp_push(INP_PIPE_OUT, g_obj.id[g_core.obj],
+				INP_M_MOV, ts, g_inp.mov, NULL);
 	}
 
 
 	/* Check if the value really has changed */
-	if((input.mask & INP_M_DIR) && !vec3_cmp(input.dir, input.dir_old)) {
+	if((g_inp.mask & INP_M_DIR) && !vec3_cmp(g_inp.dir, g_inp.dir_old)) {
 		/* If yes, then save value and mark change */
-		vec3_cpy(input.dir_old, input.dir);
+		vec3_cpy(g_inp.dir_old, g_inp.dir);
 
-		ts = ceil(input.dir_ts / TICK_TIME) * TICK_TIME;
+		ts = ceil(g_inp.dir_ts / TICK_TIME) * TICK_TIME;
 
 		/* Push new entries into the in- and out-pipe */
-		inp_push(INP_PIPE_IN, objects.id[core.obj],
-				INP_M_DIR, ts, NULL, input.dir);
-		inp_push(INP_PIPE_OUT, objects.id[core.obj],
-				INP_M_DIR, ts, NULL, input.dir);
+		inp_push(INP_PIPE_IN, g_obj.id[g_core.obj],
+				INP_M_DIR, ts, NULL, g_inp.dir);
+		inp_push(INP_PIPE_OUT, g_obj.id[g_core.obj],
+				INP_M_DIR, ts, NULL, g_inp.dir);
 	}
 
-	input.mask = INP_M_NONE;
+	g_inp.mask = INP_M_NONE;
 }
 
 extern void inp_update(void)
 {
-	struct input_entry inp;
+	struct inp_entry inp;
 	short slot;
 
 	/* Sort the entries in both pipes from lowest to hights */
@@ -674,11 +674,11 @@ extern void inp_update(void)
 	inp_pipe_sort(INP_PIPE_OUT);
 
 	/*
-	 * TODO: Validate input.
+	 * TODO: Validate g_inp.
 	 */
 
 
-	input.log.latest_slot = -1;
+	g_inp.log.latest_slot = -1;
 
 	/* Push all new entries from the in-pipe into the input-log */
 	while(inp_pull(&inp)){
@@ -691,14 +691,14 @@ extern void inp_update(void)
 		 * Update latest inputs.
 		 */
 
-		if(input.log.latest_slot < 0) {
-			input.log.latest_slot = slot;
-			input.log.latest_ts = inp.ts;
+		if(g_inp.log.latest_slot < 0) {
+			g_inp.log.latest_slot = slot;
+			g_inp.log.latest_ts = inp.ts;
 		}
 		else {
-			if(inp.ts < input.log.latest_ts) {
-				input.log.latest_slot = slot;
-				input.log.latest_ts = inp.ts;
+			if(inp.ts < g_inp.log.latest_ts) {
+				g_inp.log.latest_slot = slot;
+				g_inp.log.latest_ts = inp.ts;
 			}
 		}
 	}

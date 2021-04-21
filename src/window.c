@@ -3,15 +3,15 @@
 #include <stdlib.h>
 
 /* Redefine global window-wrapper */
-struct window_wrapper window;
+struct win_wrapper g_win;
 
 static int win_setup_shader(void)
 {
 	char *vars[2] = {"pos", "tex"};
 
 	ren_create_shader("res/shaders/ui.vert", "res/shaders/ui.frag",
-				&window.shader, 
-				&window.pipeline,
+				&g_win.shader, 
+				&g_win.pipeline,
 				2, vars, 
 				MDL_TYPE_DEFAULT);
 
@@ -20,9 +20,9 @@ static int win_setup_shader(void)
 
 static int win_load_cursors(void)
 {
-	window.cursors[0] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
-	window.cursors[1] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
-	window.cursors[2] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
+	g_win.cursors[0] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
+	g_win.cursors[1] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
+	g_win.cursors[2] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
 	return 0;
 }
 
@@ -36,7 +36,7 @@ extern int win_init(void)
 	win_flgs = SDL_WINDOW_OPENGL;
 	mode = 1;
 
-	if(!(window.win = SDL_CreateWindow("Vasall",
+	if(!(g_win.win = SDL_CreateWindow("Vasall",
 					SDL_WINDOWPOS_UNDEFINED,
 					SDL_WINDOWPOS_UNDEFINED,
 					WIN_W, WIN_H, win_flgs)))
@@ -45,40 +45,40 @@ extern int win_init(void)
 	win_flgs = SDL_WINDOW_VULKAN;
 	mode = 0;
 
-	if(!(window.win = SDL_CreateWindow("Vasall",
+	if(!(g_win.win = SDL_CreateWindow("Vasall",
 					SDL_WINDOWPOS_UNDEFINED,
 					SDL_WINDOWPOS_UNDEFINED,
 					WIN_W, WIN_H, win_flgs)))
 		return -1;
 #endif
 
-	if(ren_init(window.win, mode) < 0) {
+	if(ren_init(g_win.win, mode) < 0) {
 		printf("Fallback to OpenGL\n");
 
-		SDL_DestroyWindow(window.win);
+		SDL_DestroyWindow(g_win.win);
 		win_flgs = SDL_WINDOW_OPENGL;
 		mode = 1;
 
-		if(!(window.win = SDL_CreateWindow("Vasall",
+		if(!(g_win.win = SDL_CreateWindow("Vasall",
 					SDL_WINDOWPOS_UNDEFINED,
 					SDL_WINDOWPOS_UNDEFINED,
 					WIN_W, WIN_H, win_flgs)))
 			return -1;
 		
-		if(ren_init(window.win, mode) < 0)
+		if(ren_init(g_win.win, mode) < 0)
 			goto err_close_window;
 	}
 
 	if(win_setup_shader() < 0)
 		goto err_destroy_render;
 
-	window.hover = NULL;
-	window.active = NULL;
+	g_win.hover = NULL;
+	g_win.active = NULL;
 
-	window.win_w = WIN_W;
-	window.win_h = WIN_H;
+	g_win.win_w = WIN_W;
+	g_win.win_h = WIN_H;
 
-	if(!(window.root = ui_add(UI_WRAPPER, NULL, NULL, "root")))
+	if(!(g_win.root = ui_add(UI_WRAPPER, NULL, NULL, "root")))
 		goto err_delete_shader;
 		
 	win_build_pipe();
@@ -92,30 +92,30 @@ err_delete_root:
 	ui_remv(root);
 
 err_delete_shader:
-	ren_destroy_shader(window.shader, window.pipeline);
+	ren_destroy_shader(g_win.shader, g_win.pipeline);
 
 err_destroy_render:
 	ren_destroy();
 
 err_close_window:
-	SDL_DestroyWindow(window.win);
-	window.win = NULL;
+	SDL_DestroyWindow(g_win.win);
+	g_win.win = NULL;
 	return -1;
 }
 
 extern void win_close(void)
 {
-	ui_remv(window.root);
-	ren_destroy_shader(window.shader, window.pipeline);
+	ui_remv(g_win.root);
+	ren_destroy_shader(g_win.shader, g_win.pipeline);
 	ren_destroy();
-	SDL_DestroyWindow(window.win);
+	SDL_DestroyWindow(g_win.win);
 }
 
 extern void win_update(void)
 {
-	if(window.active) {
-		if(window.active->events.onactive){
-			window.active->events.onactive(window.active, NULL);
+	if(g_win.active) {
+		if(g_win.active->events.onactive){
+			g_win.active->events.onactive(g_win.active, NULL);
 		}
 	}
 }
@@ -124,8 +124,8 @@ extern void win_render(void)
 {
 	short i;
 
-	for(i = 0; i < window.pipe_num; i++) {
-		ui_render(window.pipe[i]);
+	for(i = 0; i < g_win.pipe_num; i++) {
+		ui_render(g_win.pipe[i]);
 	}
 }
 
@@ -137,29 +137,29 @@ static int win_onmousemotion(event_t *evt)
 	if(evt){/*Prevent warning from unused variable <evt>*/}
 
 	SDL_GetMouseState(&pos[0], &pos[1]);
-	window.hover = win_check_hover(window.root, pos);
+	g_win.hover = win_check_hover(g_win.root, pos);
 
 	/* Hovering over element */
-	if(window.hover != NULL) {
-		struct ui_node *hovered = window.hover;
+	if(g_win.hover != NULL) {
+		struct ui_node *hovered = g_win.hover;
 
 		/* Use flag-cursor */
-		SDL_SetCursor(window.cursors[(int)hovered->flags.cur]);
+		SDL_SetCursor(g_win.cursors[(int)hovered->flags.cur]);
 
 		if((fnc = hovered->events.hover) != NULL)
-			fnc(window.hover, NULL);
+			fnc(g_win.hover, NULL);
 
 		return 1;
 	}
 
-	SDL_SetCursor(window.cursors[0]);
+	SDL_SetCursor(g_win.cursors[0]);
 	return -1;
 }
 
 static int win_onmousebuttondown(event_t *evt)
 {
-	ui_node *hov = window.hover;
-	ui_node *act = window.active;
+	ui_node *hov = g_win.hover;
+	ui_node *act = g_win.active;
 
 	switch(evt->button.button) {
 		case(1):
@@ -208,25 +208,25 @@ static int win_onwindowresize(event_t *evt)
 
 	if(evt){/* Prevent warning for not using parameter */}
 
-	SDL_GetWindowSize(window.win, &window.win_w, &window.win_h);
+	SDL_GetWindowSize(g_win.win, &g_win.win_w, &g_win.win_h);
 
-	ren_resize(window.win_w, window.win_h);
+	ren_resize(g_win.win_w, g_win.win_h);
 
-	ui_adjust(window.root);
+	ui_adjust(g_win.root);
 
-	for(i = 0; i < window.pipe_num; i++)
-		ui_update(window.pipe[i]);
+	for(i = 0; i < g_win.pipe_num; i++)
+		ui_update(g_win.pipe[i]);
 
 	return 1;
 }
 
 extern int win_proc_evt(event_t *evt)
 {
-	if(window.active != NULL) {
+	if(g_win.active != NULL) {
 		struct ui_node *act;
 		ui_node_fnc fnc;
 
-		act = window.active;
+		act = g_win.active;
 		fnc = NULL;
 
 		if(evt->type == SDL_KEYDOWN && evt->key.keysym.sym == 9) {
@@ -280,15 +280,15 @@ static void win_collect_nodes(ui_node *n, void *d)
 	short *idx = (short*)d;
 
 	if(n->surf != NULL) {
-		window.pipe[*idx] = n;
+		g_win.pipe[*idx] = n;
 		*idx += 1;
 	}
 }
 
 extern void win_build_pipe(void)
 {
-	window.pipe_num = 0;
-	ui_down(window.root, &win_collect_nodes, &window.pipe_num, 0);
+	g_win.pipe_num = 0;
+	ui_down(g_win.root, &win_collect_nodes, &g_win.pipe_num, 0);
 }
 
 extern void win_dump_pipe(void)
@@ -296,8 +296,8 @@ extern void win_dump_pipe(void)
 	int i;
 	ui_node *n;
 
-	for(i = 0; i < window.pipe_num; i++) {
-		n = window.pipe[i];
+	for(i = 0; i < g_win.pipe_num; i++) {
+		n = g_win.pipe[i];
 		printf("%s, vao %d, tex %d, Size(%d/%d)\n", n->id, n->vao, 
 				n->tex, n->surf->w, n->surf->h);
 	}
@@ -333,7 +333,7 @@ extern void win_focus_node(struct ui_node *n)
 {
 	ui_node *a = n;
 
-	window.active = n;
+	g_win.active = n;
 
 	if(a != NULL && a->events.focus != NULL)
 		a->events.focus(a, NULL);
@@ -341,10 +341,10 @@ extern void win_focus_node(struct ui_node *n)
 
 extern void win_unfocus_node(void)
 {
-	ui_node *n = window.active;
+	ui_node *n = g_win.active;
 
 	if(n != NULL && n->events.unfocus != NULL)
 		n->events.unfocus(n, NULL);
 
-	window.active = NULL;
+	g_win.active = NULL;
 }

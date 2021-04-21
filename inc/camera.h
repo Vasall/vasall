@@ -13,7 +13,7 @@ enum cam_mode {
 
 #define CAM_PITCH_LIM 50.0
 
-struct camera_wrapper {
+struct cam_wrapper {
 	enum cam_mode mode;
 
 	vec3_t pos;
@@ -38,7 +38,7 @@ struct camera_wrapper {
 
 
 /* The global camera-wrapper-instance */
-extern struct camera_wrapper camera;
+extern struct cam_wrapper g_cam;
 
 
 /*

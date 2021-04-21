@@ -12,7 +12,7 @@
 #define SHD_NAME_MAX_NT         (SHD_NAME_MAX+1)
 #define SHD_SLOTS               8
 
-struct shader_wrapper {
+struct shd_wrapper {
 	uint8_t              mask[SHD_SLOTS];
 	char                 name[SHD_SLOTS][SHD_NAME_MAX_NT];
 	uint32_t             prog[SHD_SLOTS];
@@ -24,7 +24,7 @@ struct shader_wrapper {
 #define TEX_NAME_MAX_NT         (TEX_NAME_MAX+1)
 #define TEX_SLOTS               8
 
-struct texture_wrapper {
+struct tex_wrapper {
 	uint8_t              mask[TEX_SLOTS];
 	char                 name[TEX_SLOTS][TEX_NAME_MAX_NT];
 	uint32_t             hdl[TEX_SLOTS];
@@ -54,22 +54,22 @@ struct texture_wrapper {
 #define TXT_ITALIC            0x20
 #define TXT_UNDERLINE         0x40
 
-struct text_wrapper {
+struct txt_wrapper {
 	short                font_num;
 	TTF_Font             *fonts[TXT_FONT_SLOTS];
 };
 
 
 
-struct asset_wrapper {
-	struct shader_wrapper   shd;
-	struct texture_wrapper  tex;
-	struct text_wrapper     txt;
+struct ast_wrapper {
+	struct shd_wrapper   shd;
+	struct tex_wrapper  tex;
+	struct txt_wrapper     txt;
 };
 
 
 /* The global asset-wrapper */
-extern struct asset_wrapper assets;
+extern struct ast_wrapper g_ast;
 
 
 /*

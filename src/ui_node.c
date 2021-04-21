@@ -356,7 +356,7 @@ extern void ui_render(ui_node *n)
 
 	if(n->vao != 0 && n->tex != 0 && n->surf != NULL) {
 		glBindVertexArray(n->vao);
-		glUseProgram(window.shader);
+		glUseProgram(g_win.shader);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, n->tex);
 
@@ -437,11 +437,11 @@ static void ui_adjust_pos(ui_cst_wrp *constr, rect_t *out_abs,
 				case UI_CST_WIN:
 					if(i == 0) {
 						tmp[0] = 0;
-						tmp[1] = window.win_w;
+						tmp[1] = g_win.win_w;
 					}
 					else {
 						tmp[0] = 0;
-						tmp[1] = window.win_h;
+						tmp[1] = g_win.win_h;
 					}
 					break;
 			}
@@ -524,8 +524,8 @@ static void ui_adjust_size(ui_cst_wrp *constr, rect_t *out_abs,
 	proc_rel->h = par->h;
 
 	if(par == NULL) {
-		out_abs->w = window.win_w;
-		out_abs->h = window.win_h;
+		out_abs->w = g_win.win_w;
+		out_abs->h = g_win.win_h;
 	}
 	else {
 		out_abs->w = par->w;
@@ -554,8 +554,8 @@ static void ui_adjust_size(ui_cst_wrp *constr, rect_t *out_abs,
 					break;
 
 				case UI_CST_WIN:
-					if(i == 0) tmp = window.win_w;
-					else tmp = window.win_h;
+					if(i == 0) tmp = g_win.win_w;
+					else tmp = g_win.win_h;
 					break;
 			}
 
@@ -646,8 +646,8 @@ static void ui_resize_tex(ui_node *n)
 
 	memset(vtx, 0, sizeof(float) * 18);
 
-	cw = (float)window.win_w / 2.0;
-	ch = (float)window.win_h / 2.0;
+	cw = (float)g_win.win_w / 2.0;
+	ch = (float)g_win.win_h / 2.0;
 
 	x = (float)n->body.x;
 	y = (float)n->body.y;
@@ -708,11 +708,11 @@ static void ui_adjust_node(ui_node *n, void *data)
 	par = n->parent;
 	rend = (ui_node *)data;
 
-	/* The window-size and default position */
+	/* The g_win.size and default position */
 	win.x = 0;
 	win.y = 0;
-	win.w = window.win_w;
-	win.h = window.win_h;
+	win.w = g_win.win_w;
+	win.h = g_win.win_h;
 
 	/* Calculate the size of the parent-node */
 	if(par == NULL) memcpy(&rel, &win, sizeof(rect_t));
@@ -925,17 +925,17 @@ extern int ui_chain(int num, ...)
 
 	va_start(args, num);
 	strcpy(tmp, va_arg(args, char *));
-	prev = ui_get(window.root, tmp);
+	prev = ui_get(g_win.root, tmp);
 
 	for(i = 1; i < num; i++) {
-		n = ui_get(window.root, va_arg(args, char *));
+		n = ui_get(g_win.root, va_arg(args, char *));
 
 		prev->next = n;
 		prev = n;
 
 	}
 
-	n = ui_get(window.root, tmp);
+	n = ui_get(g_win.root, tmp);
 	prev->next = n;
 
 	va_end(args);

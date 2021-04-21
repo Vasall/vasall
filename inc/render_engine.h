@@ -6,7 +6,7 @@
 #include "opengl.h"
 
 
-enum render_mode {
+enum ren_mode {
 	REN_MODE_OPENGL,
 	REN_MODE_VULKAN
 };
@@ -15,12 +15,12 @@ enum render_mode {
 /*
  * The render wrapper.
  */
-struct render_wrapper {
-	enum render_mode mode;
+struct ren_wrapper {
+	enum ren_mode mode;
 };
 
 /* Define the global render-wrapper */
-extern struct render_wrapper renderer;
+extern struct ren_wrapper g_ren;
 
 
 /*

@@ -3,8 +3,8 @@
 #include <stdlib.h>
 
 
-/* Redefine global controller struct */
-struct controller_wrapper controllers;
+/* Redefine global controller-wrapper */
+struct ctr_wrapper g_ctr;
 
 
 extern int ctr_init(void)
@@ -13,7 +13,7 @@ extern int ctr_init(void)
 
 	/* Clear the controller-list */
 	for(i = 0; i < CTR_DEVICE_LIM; i++) {
-		controllers.mask[i] = 0;
+		g_ctr.mask[i] = 0;
 	}
 
 	/* Load all available controllers-devices */
@@ -38,18 +38,18 @@ extern void ctr_close(void)
 	SDL_GameController *ctr;
 
 	for(i = 0; i < CTR_DEVICE_LIM; i++) {
-		if(controllers.mask[i] == 0) {
+		if(g_ctr.mask[i] == 0) {
 			continue;
 		}
 
 		/* Remove the controller using the ID */
-		id = controllers.id[i];
+		id = g_ctr.id[i];
 		if((ctr = SDL_GameControllerFromInstanceID(id))) {
 			SDL_GameControllerClose(ctr);
 		}
 
 		/* Reset mask */
-		controllers.mask[i] = 0;
+		g_ctr.mask[i] = 0;
 	}
 }
 
@@ -59,10 +59,10 @@ extern short ctr_get_id(int id)
 	short i;
 
 	for(i = 0; i < CTR_DEVICE_LIM; i++) {
-		if(controllers.mask[i] == 0)
+		if(g_ctr.mask[i] == 0)
 			continue;
 
-		if(controllers.id[i] == id)
+		if(g_ctr.id[i] == id)
 			return i;
 	}
 
@@ -75,7 +75,7 @@ static short ctr_get_slot(void)
 	short i;
 
 	for(i = 0; i < CTR_DEVICE_LIM; i++) {
-		if(controllers.mask[i] == 0)
+		if(g_ctr.mask[i] == 0)
 			return i;
 	}
 
@@ -101,11 +101,11 @@ extern int ctr_add_device(int idx)
 		joy = SDL_GameControllerGetJoystick(contr);
 		id = SDL_JoystickInstanceID(joy);
 
-		controllers.mask[slot] = 1;
-		controllers.id[slot] = id;
-		controllers.type[slot] = 0;
-		strcpy(controllers.name[slot], SDL_GameControllerName(contr));
-		controllers.ptr[slot] = contr;	
+		g_ctr.mask[slot] = 1;
+		g_ctr.id[slot] = id;
+		g_ctr.type[slot] = 0;
+		strcpy(g_ctr.name[slot], SDL_GameControllerName(contr));
+		g_ctr.ptr[slot] = contr;	
 		return 0;
 	}
 
@@ -120,6 +120,6 @@ extern void ctr_remv_device(int id)
 	if((slot = ctr_get_id(id)) < 0)
 		return;
 
-	SDL_GameControllerClose(controllers.ptr[slot]);
-	controllers.mask[slot] = 0;
+	SDL_GameControllerClose(g_ctr.ptr[slot]);
+	g_ctr.mask[slot] = 0;
 }

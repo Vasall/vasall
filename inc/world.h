@@ -26,12 +26,12 @@
  * @data: Containing the box owner id and the min-max-flag
  * @value: The min or max value
  */
-struct world_col_point {
+struct wld_col_point {
 	unsigned int    data;
 	float           value;
 };
 
-struct world_col_box {
+struct wld_col_box {
 	short    obj;
 
 	cube_t   box;
@@ -47,13 +47,13 @@ struct world_col_box {
  * The world-chunk-wrapper responsible for loading and managing the current
  * chunks.
  */
-struct world_wrapper {
+struct wld_wrapper {
 	vec2_t                  pos;
 	vec2_t                  size;
 
 	/* SAP-collision */
-	struct world_col_point  col_point[3][2*WLD_CHUNK_OBJ_LIM];
-	struct world_col_box    col_box[WLD_CHUNK_OBJ_LIM];
+	struct wld_col_point  col_point[3][2*WLD_CHUNK_OBJ_LIM];
+	struct wld_col_box    col_box[WLD_CHUNK_OBJ_LIM];
 
 	/* Temporary world-model TODO */
 	short mdl;
@@ -64,7 +64,7 @@ struct world_wrapper {
 
 
 /* Define the global world-wrapper instance */
-extern struct world_wrapper world;
+extern struct wld_wrapper g_wld;
 
 
 /*

@@ -46,7 +46,7 @@ struct core_wrapper {
 
 
 /* The global core-wrapper-instance */
-extern struct core_wrapper core;
+extern struct core_wrapper g_core;
 
 
 /*

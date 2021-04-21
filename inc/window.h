@@ -21,7 +21,7 @@ enum cursors {
 	CURSOR_HAND  = 2
 };
 
-struct window_wrapper {
+struct win_wrapper {
 	SDL_Window *win;
 	SDL_GLContext gl_ctx;
 
@@ -43,7 +43,7 @@ struct window_wrapper {
 };
 
 /* Define the global window-wrapper */
-extern struct window_wrapper window;
+extern struct win_wrapper g_win;
 
 
 extern int win_init(void);

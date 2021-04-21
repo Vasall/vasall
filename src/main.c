@@ -99,7 +99,7 @@ int main(void)
 	 */
 	net_insert("unrealguthrie\0", "CAT12345\0", &test1, &test2);
 
-	while(core.running) {
+	while(g_core.running) {
 		core_proc_evt();
 		
 		core_update();

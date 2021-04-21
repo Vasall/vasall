@@ -112,13 +112,13 @@ extern int vk_destroy_constant_data(VkDescriptorSet set);
  * 
  * @size: The size of the buffer
  * @usage: The type of the buffer
- * @staging: A boolean which enables memory mapping
+ * @staging: A charean which enables memory mapping
  * @buffer: A pointer to the buffer, which will be filled by the function
  * 
  * Returns: 0 on success or -1 if an error occured
  */
 extern int vk_create_buffer(VkDeviceSize size, VkBufferUsageFlags usage,
-                            uint8_t staging, struct vk_buffer *buffer);
+                            char staging, struct vk_buffer *buffer);
 
 
 /*

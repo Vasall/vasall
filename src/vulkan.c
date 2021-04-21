@@ -546,9 +546,10 @@ static uint32_t get_memory_type(uint32_t type_bits, VkMemoryPropertyFlags props)
  * Returns: 0 on success or -1 if an error occured
  */
 static int create_image(VkFormat format, uint32_t width, uint32_t height,
-			uint32_t mipLevels, uint32_t arrayLayers,
-			VkSampleCountFlags samples, VkImageUsageFlags usage,
-			VkImage *image, VkDeviceMemory *memory)
+			char changeable, uint32_t mipLevels,
+			uint32_t arrayLayers, VkSampleCountFlags samples,
+			VkImageUsageFlags usage, VkImage *image,
+			VkDeviceMemory *memory)
 {
 	VkResult res;
 	VkImageCreateInfo create_info;
@@ -585,8 +586,14 @@ static int create_image(VkFormat format, uint32_t width, uint32_t height,
 	alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	alloc_info.pNext = NULL;
 	alloc_info.allocationSize = req.size;
-	alloc_info.memoryTypeIndex = get_memory_type(req.memoryTypeBits,
+	if(changeable) {
+		alloc_info.memoryTypeIndex = get_memory_type(req.memoryTypeBits,
+					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT |
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+	} else {
+		alloc_info.memoryTypeIndex = get_memory_type(req.memoryTypeBits,
 					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	}
 
 	res = vkAllocateMemory(vk.device, &alloc_info, NULL, memory);
 	vk_assert(res);
@@ -611,10 +618,9 @@ static int create_image(VkFormat format, uint32_t width, uint32_t height,
  *
  * Returns: 0 on success or -1 if an error occured
  */
-static int create_image_view(VkImage image, VkImageViewType viewType,
-			VkFormat format, VkImageAspectFlags aspect,
-			uint32_t mipLevels, uint32_t arrayLayers,
-			VkImageView *imageView)
+static int create_image_view(VkImage image, VkFormat format,
+			VkImageAspectFlags aspect, uint32_t mipLevels,
+			uint32_t arrayLayers, VkImageView *imageView)
 {
 	VkResult res;
 	VkImageViewCreateInfo create_info;
@@ -623,7 +629,10 @@ static int create_image_view(VkImage image, VkImageViewType viewType,
 	create_info.pNext = NULL;
 	create_info.flags = 0;
 	create_info.image = image;
-	create_info.viewType = viewType;
+	if(arrayLayers > 1)
+		create_info.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+	else
+		create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
 	create_info.format = format;
 	create_info.components.r = VK_COMPONENT_SWIZZLE_R;
 	create_info.components.g = VK_COMPONENT_SWIZZLE_G;
@@ -636,6 +645,54 @@ static int create_image_view(VkImage image, VkImageViewType viewType,
 	create_info.subresourceRange.layerCount = arrayLayers;
 
 	res = vkCreateImageView(vk.device, &create_info, NULL, imageView);
+	vk_assert(res);
+
+	return 0;
+}
+
+static int create_sampler(char repeat, char anisotropy, float mip_levels,
+			  VkSampler *sampler)
+{
+	VkResult res;
+	VkSamplerCreateInfo create_info;
+
+	create_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	create_info.pNext = NULL;
+	create_info.flags = 0;
+	create_info.magFilter = VK_FILTER_LINEAR;
+	create_info.minFilter = VK_FILTER_LINEAR;
+	create_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	if(repeat) {
+		create_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		create_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		create_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	} else {
+		create_info.addressModeU =
+					VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		create_info.addressModeV = 
+					VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		create_info.addressModeW =
+					VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	}
+	create_info.mipLodBias = 0.0f;
+	if(anisotropy) {
+		VkPhysicalDeviceProperties props;
+		vkGetPhysicalDeviceProperties(vk.gpu, &props);
+
+		create_info.anisotropyEnable = VK_TRUE;
+		create_info.maxAnisotropy = props.limits.maxSamplerAnisotropy;
+	} else {
+		create_info.anisotropyEnable = VK_FALSE;
+		create_info.maxAnisotropy = 1.0f;
+	}
+	create_info.compareEnable = VK_FALSE;
+	create_info.compareOp = VK_COMPARE_OP_NEVER;
+	create_info.minLod = 0.0f;
+	create_info.maxLod = mip_levels;
+	create_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
+	create_info.unnormalizedCoordinates = VK_FALSE;
+
+	res = vkCreateSampler(vk.device, &create_info, NULL, sampler);
 	vk_assert(res);
 
 	return 0;
@@ -742,9 +799,9 @@ static int get_swapchain_images(void)
 	vk.image_views = malloc(sizeof(VkImageView)*vk.image_count);
 
 	for(i = 0; i < vk.image_count; i++) {
-		if(create_image_view(vk.images[i], VK_IMAGE_VIEW_TYPE_2D,
-				vk.format.format, VK_IMAGE_ASPECT_COLOR_BIT, 1,
-				1, &vk.image_views[i]) < 0) {
+		if(create_image_view(vk.images[i], vk.format.format,
+					VK_IMAGE_ASPECT_COLOR_BIT, 1, 1,
+					&vk.image_views[i]) < 0) {
 			return -1;
 		}
 	}
@@ -761,15 +818,15 @@ static int create_depth_buffer(void)
 {
 
 	if(create_image(vk.depth_format, vk.win_size.width, vk.win_size.height,
-			1, 1, VK_SAMPLE_COUNT_1_BIT,
+			0, 1, 1, VK_SAMPLE_COUNT_1_BIT,
 			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 			&vk.depth_image, &vk.depth_memory) < 0) {
 		return -1;
 	}
 
-	if(create_image_view(vk.depth_image, VK_IMAGE_VIEW_TYPE_2D,
-			vk.depth_format, VK_IMAGE_ASPECT_DEPTH_BIT, 1, 1,
-			&vk.depth_view) < 0) {
+	if(create_image_view(vk.depth_image, vk.depth_format,
+				VK_IMAGE_ASPECT_DEPTH_BIT, 1, 1,
+				&vk.depth_view) < 0) {
 		return -1;
 	}
 
@@ -1540,7 +1597,7 @@ extern int vk_destroy_constant_data(VkDescriptorSet set)
 
 
 extern int vk_create_buffer(VkDeviceSize size, VkBufferUsageFlags usage,
-                            uint8_t staging, struct vk_buffer *buffer)
+                            char staging, struct vk_buffer *buffer)
 {
 	VkResult res;
 	VkBufferCreateInfo create_info;
@@ -1616,8 +1673,6 @@ extern int vk_create_texture(char *pth, struct vk_texture *texture)
 	VkImageMemoryBarrier barrier;
 	VkBufferImageCopy copy;
 	VkSubmitInfo submit;
-	VkPhysicalDeviceProperties props;
-	VkSamplerCreateInfo sampler_info;
 
 	/* Load the png and load the data into a staging buffer */
 	if(fs_load_png(pth, &buf, &w, &h) < 0) {
@@ -1636,8 +1691,9 @@ extern int vk_create_texture(char *pth, struct vk_texture *texture)
 	vkUnmapMemory(vk.device, staging.memory);
 	free(buf);
 
-	if(create_image(VK_FORMAT_R8G8B8A8_SRGB, w, h, texture->mip_levels, 1,
-			VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+	if(create_image(VK_FORMAT_R8G8B8A8_SRGB, w, h, 0,
+			texture->mip_levels, 1, VK_SAMPLE_COUNT_1_BIT,
+			VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
 			VK_IMAGE_USAGE_TRANSFER_DST_BIT |
 			VK_IMAGE_USAGE_SAMPLED_BIT, &texture->image,
 			&texture->memory) < 0) {
@@ -1789,37 +1845,17 @@ extern int vk_create_texture(char *pth, struct vk_texture *texture)
 
 	vk_destroy_buffer(staging);
 
-	if(create_image_view(texture->image, VK_IMAGE_VIEW_TYPE_2D,
-			VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT,
-			texture->mip_levels, 1, &texture->image_view) < 0) {
+	if(create_image_view(texture->image, VK_FORMAT_R8G8B8A8_SRGB,
+			VK_IMAGE_ASPECT_COLOR_BIT, texture->mip_levels, 1,
+			&texture->image_view) < 0) {
 		return -1;
 	}
 
-	vkGetPhysicalDeviceProperties(vk.gpu, &props);
+	if(create_sampler(1, 1, texture->mip_levels, &texture->sampler)
+			< 0) {
+		return -1;
+	}
 
-	/* Create the sampler */
-	sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	sampler_info.pNext = NULL;
-	sampler_info.flags = 0;
-	sampler_info.magFilter = VK_FILTER_LINEAR;
-	sampler_info.minFilter = VK_FILTER_LINEAR;
-	sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	sampler_info.mipLodBias = 0.0f;
-	sampler_info.anisotropyEnable = VK_TRUE;
-	sampler_info.maxAnisotropy = props.limits.maxSamplerAnisotropy;
-	sampler_info.compareEnable = VK_FALSE;
-	sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
-	sampler_info.minLod = 0.0f;
-	sampler_info.maxLod = (float) texture->mip_levels;
-	sampler_info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-	sampler_info.unnormalizedCoordinates = VK_FALSE;
-
-	res = vkCreateSampler(vk.device, &sampler_info, NULL,
-	                      &texture->sampler);
-	vk_assert(res);
 	return 0;
 }
 
@@ -1845,8 +1881,6 @@ extern int vk_create_skybox(char *pths[6], struct vk_texture *skybox)
 	VkImageMemoryBarrier barrier;
 	VkBufferImageCopy copies[6];
 	VkSubmitInfo submit;
-	VkPhysicalDeviceProperties props;
-	VkSamplerCreateInfo sampler_info;
 
 	for(i = 0; i < 6; i++) {
 		if(fs_load_png(pths[i], &buf[i], &w, &h) < 0) {
@@ -1867,7 +1901,7 @@ extern int vk_create_skybox(char *pths[6], struct vk_texture *skybox)
 	}
 	vkUnmapMemory(vk.device, staging.memory);
 	
-	if(create_image(VK_FORMAT_R8G8B8A8_SRGB, w, h, 1, 6,
+	if(create_image(VK_FORMAT_R8G8B8A8_SRGB, w, h, 0, 1, 6,
 			VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_USAGE_TRANSFER_DST_BIT |
 			VK_IMAGE_USAGE_SAMPLED_BIT, &skybox->image,
 			&skybox->memory) < 0) {
@@ -1955,37 +1989,15 @@ extern int vk_create_skybox(char *pths[6], struct vk_texture *skybox)
 
 	vk_destroy_buffer(staging);
 
-	if(create_image_view(skybox->image, VK_IMAGE_VIEW_TYPE_CUBE,
-			VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, 1,
-			6, &skybox->image_view) < 0) {
+	if(create_image_view(skybox->image, VK_FORMAT_R8G8B8A8_SRGB,
+			VK_IMAGE_ASPECT_COLOR_BIT, 1, 6, &skybox->image_view)
+			 < 0) {
 		return -1;
 	}
 
-	vkGetPhysicalDeviceProperties(vk.gpu, &props);
-	
-	/* Create the sampler */
-	sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	sampler_info.pNext = NULL;
-	sampler_info.flags = 0;
-	sampler_info.magFilter = VK_FILTER_LINEAR;
-	sampler_info.minFilter = VK_FILTER_LINEAR;
-	sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	sampler_info.mipLodBias = 0.0f;
-	sampler_info.anisotropyEnable = VK_FALSE;
-	sampler_info.maxAnisotropy = 1.0f;
-	sampler_info.compareEnable = VK_FALSE;
-	sampler_info.compareOp = VK_COMPARE_OP_NEVER;
-	sampler_info.minLod = 0.0f;
-	sampler_info.maxLod = 1.0f;
-	sampler_info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-	sampler_info.unnormalizedCoordinates = VK_FALSE;
-
-	res = vkCreateSampler(vk.device, &sampler_info, NULL,
-	                      &skybox->sampler);
-	vk_assert(res);
+	if(create_sampler(0, 0, 1.0f, &skybox->sampler) < 0) {
+		return -1;
+	}
 
 	return 0;
 }
@@ -2262,18 +2274,18 @@ extern int vk_render_start(void)
 	/* Set the viewport and flip it for opengl compatibility */
 	height = vk.win_size.height;
 
-    viewport.x = 0;
-    viewport.y = vk.win_size.height;
-    viewport.width = vk.win_size.width;
-    viewport.height = -height;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
+	viewport.x = 0;
+	viewport.y = vk.win_size.height;
+	viewport.width = vk.win_size.width;
+	viewport.height = -height;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
 
 	vkCmdSetViewport(vk.command_buffer, 0, 1, &viewport);
 
-    scissor.offset.x = 0;
+	scissor.offset.x = 0;
 	scissor.offset.y = 0;
-    scissor.extent = vk.win_size;
+	scissor.extent = vk.win_size;
 
 	vkCmdSetScissor(vk.command_buffer, 0, 1, &scissor);
 

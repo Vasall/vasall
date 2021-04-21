@@ -1,6 +1,7 @@
 #ifndef _VK_H
 #define _VK_H
 
+#include <stdbool.h>
 #include <vulkan/vulkan.h>
 #include <SDL2/SDL_vulkan.h>
 
@@ -118,7 +119,7 @@ extern int vk_destroy_constant_data(VkDescriptorSet set);
  * Returns: 0 on success or -1 if an error occured
  */
 extern int vk_create_buffer(VkDeviceSize size, VkBufferUsageFlags usage,
-                            uint8_t staging, struct vk_buffer *buffer);
+                            bool staging, struct vk_buffer *buffer);
 
 
 /*

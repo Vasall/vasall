@@ -225,7 +225,7 @@ extern int ren_create_buffer(uint32_t vao, int type, size_t size, char *buf,
 	}
 
 	if(renderer.mode == REN_MODE_VULKAN) {
-		if(vk_create_buffer(size, usage, 1, buffer) < 0)
+		if(vk_create_buffer(size, usage, true, buffer) < 0)
 			return -1;
 		
 		if(buf) {

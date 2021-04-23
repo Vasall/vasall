@@ -68,7 +68,7 @@ int load_resources(void)
 	if(mdl_load("gun", "res/models/pistol.obj", tex_get("ba1"), shd_get("mdl"), MDL_TYPE_DEFAULT) < 0)
 			return -1;
 
-	if(mdl_load("sph", "res/models/sphere.obj", tex_get("ba0"), shd_get("mdl"), MDL_TYPE_DEFAULT) < 0)
+	if(mdl_load("sph", "res/models/sphere.obj", tex_get("ba2"), shd_get("mdl"), MDL_TYPE_DEFAULT) < 0)
 			return -1;
 
 
@@ -98,14 +98,14 @@ extern void test1(char *buf, int len)
 
 	vec3_t pos0 = {0.0, 0.0, 0.0};
 	vec3_t pos1 = {0.0, -12.0, 0.0};
-	vec3_t pos2 = {0, 15, 0};
+	vec3_t pos2 = {0.0, 15.0, 0.0};
 
 	if(buf || len) {/* Prevent warning for not using parameters */}
 
 	/* Place a slope */
 	obj_set(id, OBJ_M_STATIC, pos0, mdl_get("wld"), NULL, 0, 0);
-	obj_set(id + 100, OBJ_M_STATIC, pos0, mdl_get("slp"), NULL, 0, 0);
-	obj_set(id + 101, OBJ_M_STATIC, pos1, mdl_get("tst"), NULL, 0, 0);
+	obj_set(id + 101, OBJ_M_STATIC, pos1, mdl_get("slp"), NULL, 0, 0);
+	obj_set(id + 102, OBJ_M_STATIC, pos2, mdl_get("tst"), NULL, 0, 0);
 
 	/* Set the skybox */
 	wld_set_skybox(mdl_get("cube"));

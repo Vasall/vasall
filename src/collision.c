@@ -481,7 +481,7 @@ extern void col_r2b_check(struct col_pck_ray *pck, vec3_t min, vec3_t max)
 	if(tmin > tmax)
 		return;
 
-	if(pck->found == 0 || pck->col_t > tmin) {
+	if(pck->found == 0 || pck->col_t >= tmin) {
 		pck->col_t = tmin;
 		pck->found = 1;
 	}

@@ -484,6 +484,8 @@ static void checkCollision(struct col_pck_sphere *pck)
 
 				/* Copy vertex */
 				vec3_cpy(tmpv, mdl->col.cm_vtx[idx[k]]);
+
+				/* Move relative to object-position */
 				vec3_add(g_obj.pos[i], tmpv, vtx[k]);
 
 				/* Convert to eSpace */
@@ -671,6 +673,8 @@ extern void obj_calc_aim(short slot)
 
 	/* Go through all objects */
 	for(i = 0; i < OBJ_LIM; i++) {
+		char a = 0;
+
 		if(g_obj.mask[i] == OBJ_M_NONE)
 			continue;
 
@@ -688,6 +692,9 @@ extern void obj_calc_aim(short slot)
 		if((mdl->attr_m & MDL_M_CCM) == 0)
 			continue;
 
+		if(strcmp(models[g_obj.mdl[i]]->name, "tst") == 0)
+			a = 1;
+
 		/* Go through all triangles */
 		for(j = 0; j < mdl->col.cm_tri_c; j++) {
 			vec3_t vtx[3];
@@ -697,8 +704,13 @@ extern void obj_calc_aim(short slot)
 			memcpy(idx, mdl->col.cm_idx[j], INT3_SIZE);
 
 			/* Copy corner-points */
-			for(k = 0; k < 3; k++)
+			for(k = 0; k < 3; k++) {
+				/* Copy vertex */
 				vec3_cpy(vtx[k], mdl->col.cm_vtx[idx[k]]);
+
+				/* Move relative to object-position */
+				vec3_add(g_obj.pos[i], vtx[k], vtx[k]);
+			}
 
 			col_r2t_check(&pck, vtx[0], vtx[1], vtx[2]);
 		}
@@ -706,15 +718,9 @@ extern void obj_calc_aim(short slot)
 
 
 	/* Limit aiming-range */
-	if(pck.found) {
-		if(pck.col_t > 10) {
-			pck.col_t = 10;
-		}
-	}
-	else {
+	if(!pck.found) {
 		pck.col_t = 10;
 	}
-
 
 	/* Calculate the point the object is currently aiming at */
 	vec3_scl(dir, pck.col_t, dir);
@@ -1183,6 +1189,10 @@ extern void obj_sys_prerender(float interp)
 				obj_proc_rig_tpv(i, g_obj.ren_pos[i], g_obj.dir[i]);
 			}
 		}
+
+		if(g_obj.mask[i] & OBJ_M_MOVE) {
+			obj_calc_aim(i);
+		}
 	}
 }
 
@@ -1209,27 +1219,67 @@ extern void obj_sys_render(void)
 			mdl_render(g_obj.mdl[i], m, idt, g_obj.rig[i]);
 
 			if(g_obj.mask[i] & OBJ_M_MOVE) {
-				mat4_t mat;
 				vec3_t pos;
-				vec3_t dir;
-
-				vec3_cpy(pos, g_obj.aim_off[i]);
-				vec3_scl(g_obj.aim_dir[i], 4, dir);
-
-				vec3_add(pos, dir, pos);
+				mat4_t mat;
 
 				/*
 				 * Render a sphere at the aiming-point.
 				 */
 				mat4_idt(mat);
-				mat4_pfpos(mat, pos);
-				mdl_render(mdl_get("sph"), mat, m, NULL);
+				mat4_pfpos(mat, g_obj.aim_pos[i]);
+				mdl_render(mdl_get("sph"), mat, idt, NULL);
 			}
 
 			if(g_obj.mask[i] & OBJ_M_MOVE) {
 				mat4_t mat;
 				short hook;
 				short jnt;
+
+				vec3_t a;
+				vec3_t b;
+
+				float dot;
+				vec3_t cross;
+
+				vec3_t pos = {10, 10, 0};
+				
+
+				mat4_t v_mat;
+
+				obj_calc_aim(i);
+				obj_calc_aim_ray(i);
+
+				vec3_sub(g_obj.aim_pos[i], g_obj.aim_off[i], a);
+				vec3_cpy(b, g_obj.aim_dir[i]);
+
+
+				vec3_nrm(a, a);
+				vec3_nrm(b, b);
+
+				vec3_print(a);
+				printf(" - ");
+				vec3_print(b);
+				printf("\n");
+
+				dot = vec3_dot(a, b);
+				vec3_cross(a, b, cross);
+				vec3_nrm(cross, cross);
+				
+				mat4_idt(v_mat);
+				v_mat[0x0] = a[0];
+				v_mat[0x1] = a[1];
+				v_mat[0x2] = a[2];
+
+				v_mat[0x4] = cross[0];
+				v_mat[0x5] = cross[1];
+				v_mat[0x6] = cross[2];
+
+				vec3_cross(cross, a, cross);
+				vec3_nrm(cross, cross);
+
+				v_mat[0x8] = cross[0];
+				v_mat[0x9] = cross[1];
+				v_mat[0xa] = cross[2];
 
 				/* 
 				 * Render the weapon.
@@ -1238,10 +1288,10 @@ extern void obj_sys_render(void)
 				hook = g_hnd.par_hook[0];
 				jnt = models[g_obj.mdl[i]]->hok_buf[hook].par_jnt;
 
-				mat4_cpy(mat, g_obj.rig[i]->tran_mat[jnt]);	
-				mat4_idt(m);
+				mat4_idt(mat);
+				mat4_pfpos(mat, pos);
 
-				mdl_render(g_hnd.mdl[0], mat, m, NULL);
+				mdl_render(g_hnd.mdl[0], mat, v_mat, NULL);
 			}
 		}
 	}

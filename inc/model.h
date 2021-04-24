@@ -98,6 +98,7 @@ struct mdl_hook {
 	short idx;
 	short par_jnt;
 	vec3_t pos;
+	vec3_t dir;
 };
 
 #define MDL_M_NONE 0

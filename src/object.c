@@ -1253,34 +1253,6 @@ extern void obj_sys_render(void)
 				vec3_cpy(b, g_obj.aim_dir[i]);
 
 
-				vec3_nrm(a, a);
-				vec3_nrm(b, b);
-
-				vec3_print(a);
-				printf(" - ");
-				vec3_print(b);
-				printf("\n");
-
-				dot = vec3_dot(a, b);
-				vec3_cross(a, b, cross);
-				vec3_nrm(cross, cross);
-				
-				mat4_idt(v_mat);
-				v_mat[0x0] = a[0];
-				v_mat[0x1] = a[1];
-				v_mat[0x2] = a[2];
-
-				v_mat[0x4] = cross[0];
-				v_mat[0x5] = cross[1];
-				v_mat[0x6] = cross[2];
-
-				vec3_cross(cross, a, cross);
-				vec3_nrm(cross, cross);
-
-				v_mat[0x8] = cross[0];
-				v_mat[0x9] = cross[1];
-				v_mat[0xa] = cross[2];
-
 				/* 
 				 * Render the weapon.
 				 */

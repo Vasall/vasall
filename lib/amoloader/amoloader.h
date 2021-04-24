@@ -111,6 +111,7 @@ struct amo_hook {
 	short idx;
 	short par_jnt;
 	float pos[3];
+	float dir[3];
 };
 
 

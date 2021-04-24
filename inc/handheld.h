@@ -31,8 +31,7 @@ struct hnd_wrapper {
 	short     par_hook[HND_LIM];
 
 	/* 
-	 * The position relative to the object and the barrel-direction in the
-	 * resting-position.
+	 * The offset and direction of the barrel in the resting position.
 	 */
 	vec3_t    aim_pos[HND_LIM];
 	vec3_t    aim_dir[HND_LIM];

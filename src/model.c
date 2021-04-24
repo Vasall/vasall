@@ -672,6 +672,7 @@ extern short mdl_load_ffd(char *name, FILE *fd, short tex_slot, short shd_slot,
 			mdl->hok_buf[i].idx = data->hh_lst[i].idx;
 			mdl->hok_buf[i].par_jnt = data->hh_lst[i].par_jnt;
 			vec3_cpy(mdl->hok_buf[i].pos, data->hh_lst[i].pos);
+			vec3_cpy(mdl->hok_buf[i].dir, data->hh_lst[i].dir);
 		}
 	}
 

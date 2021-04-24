@@ -1,5 +1,7 @@
 #include "extmath.h"
 
+#include "vector.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -25,4 +27,27 @@ extern float round(float v)
 	v /= 10.0f;
 
 	return v;
+}
+
+static float lineSlope(vec2_t a)
+{ 
+	if(a[0] == 0)
+		return 0;
+
+	return a[1] / a[0]; 
+}
+
+extern int line_cross(vec2_t p0, vec2_t v0, vec2_t p1, vec2_t v1, vec2_t out)
+{
+	float slope_a = lineSlope(v0);
+	float slope_b = lineSlope(v1);
+	float del = slope_a - slope_b;
+
+	if(slope_a == slope_b)
+		return 0;
+
+	out[0] = (slope_a * p0[0] - slope_b * p1[0] + p1[1] - p0[1]) / del;
+	out[1] = slope_b * (out[0] - p1[0]) + p1[1];
+ 
+	return 1;
 }

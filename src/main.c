@@ -9,6 +9,7 @@
 #include "core.h"
 #include "setup.h"
 
+
 int main(void)
 {
 	/* Set seed */

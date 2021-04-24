@@ -118,6 +118,37 @@ extern int ren_create_skybox(char *pths[6], uint32_t *hdl,
 
 
 /*
+ * Create an ui texture.
+ * 
+ * @width: The width of the texture
+ * @height: The height of the texture
+ * @pixels: The pixel data of the texture. Can be NULL
+ * @data: A pointer to the mapped memory of the texture. Will be filled by the
+ *        function
+ * @hdl: A pointer to the handle of the opengl texture, which will be set by
+ *       the function
+ * @texture: A pointer to the vulkan texture, which will be filled by the
+ *           function
+ */
+extern int ren_create_ui(int width, int height, void *pixels, void **data,
+			 uint32_t *hdl, struct vk_texture *texture);
+
+
+/*
+ * Update a texture.
+ * 
+ * @width: The width of the texture
+ * @height: The height of the texture
+ * @pixels: The pixel data
+ * @data: The pointer from ren_create_ui
+ * @hdl: The opengl texture handle
+ * @texture: The vulkan texture
+ */
+extern void ren_update_texture(int width, int height, void *pixels, void *data,
+			       uint32_t hdl, struct vk_texture texture);
+
+
+/*
  * Create an opengl vertex array object or a vulkan decsriptor set and a vulkan
  * uniform buffer.
  * 
@@ -161,6 +192,19 @@ extern int ren_destroy_model_data(uint32_t vao, VkDescriptorSet set);
  */
 extern int ren_create_buffer(uint32_t vao, int type, size_t size, char *buf,
 			     uint32_t *bo, struct vk_buffer *buffer);
+
+
+/*
+ * Update an already existing buffer
+ * 
+ * @data: The new data of the buffer
+ * @size: The size of the data. Can only be same or less size than the size of
+ *        the buffer
+ * @buf: The opengl buffer
+ * @buffer: The vulkan buffer
+ */
+extern void ren_update_buffer(void *data, size_t size, uint32_t buf,
+			      struct vk_buffer buffer);
 
 
 /*

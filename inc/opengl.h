@@ -33,7 +33,7 @@ extern void gl_destroy(void);
  * Returns: 0 on success or -1 if an error occured
  */
 extern int gl_create_program(char *vs, char *fs, uint32_t *prog, int num,
-                             char **vars);
+			     char **vars);
 
 
 /*
@@ -77,6 +77,30 @@ extern int gl_create_skybox(char *pths[6], uint32_t *hdl);
 
 
 /*
+ * Create a ui texture.
+ * 
+ * @width: The width of the texture
+ * @height: The height of the texture
+ * @pixels: The pixel data of the texture. Can be NULL
+ * @hdl: A pointer to the handle of the texture, which will be set by the
+ *       function
+ */
+extern void gl_create_ui(int width, int height, void *pixels, uint32_t *hdl);
+
+
+/*
+ * Update a texture.
+ * 
+ * @width: The width of the texture
+ * @height: The height of the texture
+ * @pixels: The pixel data
+ * @hdl: The handle of the texture
+ */
+extern void gl_update_texture(int width, int height, void *pixels,
+			      uint32_t hdl);
+
+
+/*
  * Create a vertex array object.
  * 
  * @vao: A pointer to the handle of the vao, which will be set by the
@@ -107,7 +131,17 @@ extern void gl_destroy_vao(uint32_t vao);
  * Returns: 0 on success or -1 if an error occured
  */
 extern int gl_create_buffer(uint32_t vao, int type, size_t size, char *buf,
-                            uint32_t *bo);
+			    uint32_t *bo);
+
+
+/*
+ * Copy data to an already existing buffer
+ * 
+ * @data: The new data of the buffer
+ * @size: The size of the data
+ * @buf: The opengl handle of the buffer
+ */
+extern void gl_copy_data_to_buffer(void *data, int size, uint32_t buf);
 
 
 /*
@@ -179,7 +213,7 @@ extern void gl_render_set_texture(uint32_t hdl, enum mdl_type type);
  * @uni: The uniform buffer data
  */
 extern void gl_render_set_uniform_buffer(unsigned int buf,
-                                         struct uni_buffer uni);
+					 struct uni_buffer uni);
 
 
 /*

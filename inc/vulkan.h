@@ -118,7 +118,7 @@ extern int vk_destroy_constant_data(VkDescriptorSet set);
  * Returns: 0 on success or -1 if an error occured
  */
 extern int vk_create_buffer(VkDeviceSize size, VkBufferUsageFlags usage,
-                            char staging, struct vk_buffer *buffer);
+			    char staging, struct vk_buffer *buffer);
 
 
 /*
@@ -168,6 +168,35 @@ extern void vk_destroy_texture(struct vk_texture texture);
  * Returns: 0 on success or -1 if an error occured
  */
 extern int vk_create_skybox(char *pths[6], struct vk_texture *skybox);
+
+
+/*
+ * Create an ui texture.
+ *
+ * @width: The width of the texture
+ * @height: The height of the texture
+ * @pixels: The pixel data for the texture. Can be NULL
+ * @data: The pointer to the mapped texture memory. Will be filled in by the
+ *        function
+ * @texture: A pointer to the ui texture, which will be filled by the function
+ * 
+ * Returns: 0 on success or -1 if an error occured
+ */
+extern int vk_create_ui(int width, int height, void *pixels, void **data,
+			struct vk_texture *texture);
+
+
+/*
+ * Update an ui texture.
+ * 
+ * @width: The width of the texture
+ * @height: The height of the texture
+ * @pixels: The new pixel data
+ * @data: The pointer which came from vk_create_ui
+ * @texture: The texture
+ */
+extern int vk_update_texture(int width, int height, void *pixels, void *data,
+			     struct vk_texture texture);
 
 
 /*

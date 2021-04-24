@@ -306,6 +306,30 @@ extern int gl_create_skybox(char *pths[6], uint32_t *hdl)
 }
 
 
+extern void gl_create_ui(int width, int height, void *pixels, uint32_t *hdl)
+{
+	glGenTextures(1, hdl);
+	glBindTexture(GL_TEXTURE_2D, *hdl);
+
+	if(pixels)
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0,
+				GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+}
+
+
+extern void gl_update_texture(int width, int height, void *pixels, uint32_t hdl)
+{
+	glBindTexture(GL_TEXTURE_2D, hdl);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
+			GL_UNSIGNED_BYTE, pixels);
+}
+
+
 extern void gl_create_vao(uint32_t *vao)
 {
 	glGenVertexArrays(1, vao);
@@ -332,6 +356,13 @@ extern int gl_create_buffer(uint32_t vao, int type, size_t size, char *buf,
 	glBindVertexArray(0);
 
 	return 0;
+}
+
+
+extern void gl_copy_data_to_buffer(void *data, int size, uint32_t buf)
+{
+	glBindBuffer(GL_ARRAY_BUFFER, buf);
+	glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
 }
 
 

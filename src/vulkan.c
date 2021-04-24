@@ -571,7 +571,10 @@ static int create_image(VkFormat format, uint32_t width, uint32_t height,
 	create_info.mipLevels = mipLevels;
 	create_info.arrayLayers = arrayLayers;
 	create_info.samples = samples;
-	create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+	if(changeable)
+		create_info.tiling = VK_IMAGE_TILING_LINEAR;
+	else
+		create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
 	create_info.usage = usage;
 	create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	create_info.queueFamilyIndexCount = 0;
@@ -1651,7 +1654,8 @@ extern int vk_create_buffer(VkDeviceSize size, VkBufferUsageFlags usage,
 
 extern void vk_copy_data_to_buffer(void* data, struct vk_buffer buffer)
 {
-	memcpy(buffer.data, data, buffer.size);
+	if(buffer.buffer != VK_NULL_HANDLE)
+		memcpy(buffer.data, data, buffer.size);
 }
 
 
@@ -2003,6 +2007,180 @@ extern int vk_create_skybox(char *pths[6], struct vk_texture *skybox)
 }
 
 
+extern int vk_create_ui(int width, int height, void *pixels, void **data,
+			struct vk_texture *texture)
+{
+	VkResult res;
+	VkCommandBufferBeginInfo begin_info;
+	VkImageMemoryBarrier barrier;
+	VkSubmitInfo submit;
+
+	texture->mip_levels = 1;
+
+	if(create_image(VK_FORMAT_R8G8B8A8_UNORM, width, height, 1, 1, 1,
+			VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_USAGE_SAMPLED_BIT,
+			&texture->image, &texture->memory) < 0) {
+		return -1;
+	}
+
+	res = vkMapMemory(vk.device, texture->memory, 0, 4 * width * height, 0,
+				data);
+	vk_assert(res);
+
+	if(pixels) {
+		memcpy(*data, pixels, 4 * width * height);
+
+		begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		begin_info.pNext = NULL;
+		begin_info.flags = 0;
+		begin_info.pInheritanceInfo = NULL;
+
+		res = vkBeginCommandBuffer(vk.command_buffer, &begin_info);
+		vk_assert(res);
+
+		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		barrier.pNext = NULL;
+		barrier.srcAccessMask = 0;
+		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		barrier.srcQueueFamilyIndex = 0;
+		barrier.dstQueueFamilyIndex = 0;
+		barrier.image = texture->image;
+		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		barrier.subresourceRange.baseMipLevel = 0;
+		barrier.subresourceRange.levelCount = 1;
+		barrier.subresourceRange.baseArrayLayer = 0;
+		barrier.subresourceRange.layerCount = 1;
+
+		vkCmdPipelineBarrier(vk.command_buffer, VK_PIPELINE_STAGE_HOST_BIT,
+				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, NULL, 0,
+				NULL, 1, &barrier);
+
+		res = vkEndCommandBuffer(vk.command_buffer);
+		vk_assert(res);
+
+		submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submit.pNext = NULL;
+		submit.waitSemaphoreCount = 0;
+		submit.pWaitSemaphores = NULL;
+		submit.pWaitDstStageMask = NULL;
+		submit.commandBufferCount = 1;
+		submit.pCommandBuffers = &vk.command_buffer;
+		submit.signalSemaphoreCount = 0;
+		submit.pSignalSemaphores = NULL;
+
+		res = vkQueueSubmit(vk.queue, 1, &submit, VK_NULL_HANDLE);
+		vk_assert(res);
+
+		res = vkQueueWaitIdle(vk.queue);
+		vk_assert(res);
+
+		res = vkResetCommandBuffer(vk.command_buffer, 0);
+		vk_assert(res);
+	}
+
+	if(create_image_view(texture->image, VK_FORMAT_R8G8B8A8_UNORM,
+			VK_IMAGE_ASPECT_COLOR_BIT, 1, 1,
+			&texture->image_view) < 0) {
+		return -1;
+	}
+
+	if(create_sampler(1, 0, 1, &texture->sampler) < 0) {
+		return -1;
+	}
+
+	return 0;
+}
+
+
+extern int vk_update_texture(int width, int height, void *pixels, void *data,
+			     struct vk_texture texture)
+{
+	VkResult res;
+	VkCommandBufferBeginInfo begin_info;
+	VkImageMemoryBarrier barrier;
+	VkSubmitInfo submit;
+
+	begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	begin_info.pNext = NULL;
+	begin_info.flags = 0;
+	begin_info.pInheritanceInfo = NULL;
+
+	res = vkBeginCommandBuffer(vk.command_buffer, &begin_info);
+	vk_assert(res);
+
+	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	barrier.pNext = NULL;
+	barrier.srcAccessMask = 0;
+	barrier.dstAccessMask = 0;
+	barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	barrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
+	barrier.srcQueueFamilyIndex = 0;
+	barrier.dstQueueFamilyIndex = 0;
+	barrier.image = texture.image;
+	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	barrier.subresourceRange.baseMipLevel = 0;
+	barrier.subresourceRange.levelCount = 1;
+	barrier.subresourceRange.baseArrayLayer = 0;
+	barrier.subresourceRange.layerCount = 1;
+
+	vkCmdPipelineBarrier(vk.command_buffer, VK_PIPELINE_STAGE_HOST_BIT,
+			VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, NULL, 0,
+			NULL, 1, &barrier);
+
+	res = vkEndCommandBuffer(vk.command_buffer);
+	vk_assert(res);
+
+	submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submit.pNext = NULL;
+	submit.waitSemaphoreCount = 0;
+	submit.pWaitSemaphores = NULL;
+	submit.pWaitDstStageMask = NULL;
+	submit.commandBufferCount = 1;
+	submit.pCommandBuffers = &vk.command_buffer;
+	submit.signalSemaphoreCount = 0;
+	submit.pSignalSemaphores = NULL;
+
+	res = vkQueueSubmit(vk.queue, 1, &submit, VK_NULL_HANDLE);
+	vk_assert(res);
+
+	res = vkQueueWaitIdle(vk.queue);
+	vk_assert(res);
+
+	res = vkResetCommandBuffer(vk.command_buffer, 0);
+	vk_assert(res);
+
+	memcpy(data, pixels, width * height * 4);
+
+	res = vkBeginCommandBuffer(vk.command_buffer, &begin_info);
+	vk_assert(res);
+
+	barrier.srcAccessMask = 0;
+	barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	barrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
+	barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	vkCmdPipelineBarrier(vk.command_buffer, VK_PIPELINE_STAGE_HOST_BIT,
+			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, NULL, 0,
+			NULL, 1, &barrier);
+
+	res = vkEndCommandBuffer(vk.command_buffer);
+	vk_assert(res);
+
+	res = vkQueueSubmit(vk.queue, 1, &submit, VK_NULL_HANDLE);
+	vk_assert(res);
+
+	res = vkQueueWaitIdle(vk.queue);
+	vk_assert(res);
+
+	res = vkResetCommandBuffer(vk.command_buffer, 0);
+	vk_assert(res);
+
+	return 0;
+}
+
+
 extern int vk_init(SDL_Window* window)
 {
 	uint32_t i;
@@ -2172,6 +2350,9 @@ extern int vk_set_uniform_buffer(struct vk_buffer buffer, VkDescriptorSet set)
 {
 	VkDescriptorBufferInfo buffer_info;
 	VkWriteDescriptorSet write;
+
+	if(!buffer.buffer)
+		return 0;
 
 	buffer_info.buffer = buffer.buffer;
 	buffer_info.offset = 0;

@@ -50,6 +50,16 @@ const float STD_UV[12] = {
 	0.0, 1.0, 1.0, 1.0, 1.0, 0.0
 };
 
+const float STD_VTX[20] = {
+	-1.0, -1.0, 0.0,    0.0, 1.0,
+	-1.0,  1.0, 0.0,    0.0, 0.0,
+	 1.0,  1.0, 0.0,    1.0, 0.0,
+	 1.0, -1.0, 0.0,    1.0, 1.0
+};
+
+const int STD_IDX[6] = {
+	0, 1, 2, 0, 2, 3
+};
 
 
 extern ui_node *ui_add(ui_tag tag, ui_node *par, void *ele, char *id)
@@ -141,10 +151,11 @@ static void ui_del_node(ui_node *n, void *data)
 		n->del(n, NULL);
 
 	if(n->surf != NULL) {
-		SDL_FreeSurface(n->surf);		
-		glDeleteTextures(1, &n->tex);
-		glDeleteBuffers(2, n->bao);
-		glDeleteVertexArrays(1, &n->vao);
+		SDL_FreeSurface(n->surf);
+		ren_destroy_texture(n->tex, n->texture);
+		ren_destroy_buffer(n->bao[0], n->vtx);
+		ren_destroy_buffer(n->bao[1], n->idx);
+		ren_destroy_model_data(n->vao, n->set);
 	}
 
 	free(n);
@@ -344,9 +355,8 @@ extern void ui_update(ui_node *n)
 	ui_prerender_node(s, s, 0);
 
 	/* Update the texture of the node */
-	glBindTexture(GL_TEXTURE_2D, s->tex);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, s->surf->w, s->surf->h,
-			GL_RGBA, GL_UNSIGNED_BYTE, s->surf->pixels);
+	ren_update_texture(s->surf->w, s->surf->h, s->surf->pixels, s->data,
+			s->tex, s->texture);
 }
 
 
@@ -354,20 +364,18 @@ extern void ui_render(ui_node *n)
 {
 	GLenum err;
 
-	if(n->vao != 0 && n->tex != 0 && n->surf != NULL) {
-		glBindVertexArray(n->vao);
-		glUseProgram(g_win.shader);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, n->tex);
+	if(((n->vao != 0 && n->tex != 0) || (n->set != VK_NULL_HANDLE && n->texture.image != VK_NULL_HANDLE)) && n->surf != NULL) {
+		struct uni_buffer uni;
+		struct vk_buffer uni_buf;
 
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
+		uni_buf.buffer = VK_NULL_HANDLE;
 
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		ren_set_shader(g_win.shader, 2, g_win.pipeline);
+		ren_set_render_model_data(0, uni, n->tex, g_win.pipeline,
+					uni_buf, n->set, MDL_TYPE_DEFAULT);
+		ren_set_vertices(n->vao, n->vtx, n->idx);
 
-		glUseProgram(0);
-		glBindVertexArray(0);
-
+		ren_draw(6, MDL_TYPE_DEFAULT);
 	}
 }
 
@@ -635,7 +643,7 @@ static int ui_resize_surf(ui_node *n)
 
 static void ui_resize_tex(ui_node *n)
 {
-	float vtx[18];
+	float vtx[20];
 	float cw;
 	float ch;
 	float x;
@@ -643,8 +651,11 @@ static void ui_resize_tex(ui_node *n)
 	float w;
 	float h;
 	float z;
+	struct vk_buffer uni_buf;
 
-	memset(vtx, 0, sizeof(float) * 18);
+	uni_buf.buffer = VK_NULL_HANDLE;
+
+	memset(vtx, 0, sizeof(float) * 20);
 
 	cw = (float)g_win.win_w / 2.0;
 	ch = (float)g_win.win_h / 2.0;
@@ -655,45 +666,48 @@ static void ui_resize_tex(ui_node *n)
 	h = (float)n->body.h;
 
 	/* Update the layer of the texture */
-	z = -((float)n->layer / 100.0);
+	z = -((float)n->layer / 100.0)+1;
 
 	/* Top-Right */
 	vtx[0] = ((x + w) / cw) - 1.0;
 	vtx[1] = 1.0 - (y / ch);
 	vtx[2] = z;
+
+	vtx[3] = 1.0;
+	vtx[4] = 0.0;
+
 	/* Top-Left */
-	vtx[3] = (x / cw) - 1.0;
-	vtx[4] = 1.0 - (y / ch);
-	vtx[5] = z;
-	/* Bottom-Left */
-	vtx[6] = (x / cw) - 1.0;
-	vtx[7] = 1.0 - ((y + h) / ch);
-	vtx[8] = z;
+	vtx[5] = (x / cw) - 1.0;
+	vtx[6] = 1.0 - (y / ch);
+	vtx[7] = z;
+
+	vtx[8] = 0.0;
+	vtx[9] = 0.0;
 
 	/* Bottom-Left */
-	vtx[9] = (x / cw) - 1.0;
-	vtx[10] = 1.0 - ((y + h) / ch);
-	vtx[11] = z;
+	vtx[10] = (x / cw) - 1.0;
+	vtx[11] = 1.0 - ((y + h) / ch);
+	vtx[12] = z;
+
+	vtx[13] = 0.0;
+	vtx[14] = 1.0;
+
 	/* Bottom-Right */
-	vtx[12] = ((x + w) / cw) - 1.0;
-	vtx[13] = 1.0 - ((y + h) / ch);
-	vtx[14] = z;
-	/* Top-Right */
 	vtx[15] = ((x + w) / cw) - 1.0;
-	vtx[16] = 1.0 - (y / ch);
+	vtx[16] = 1.0 - ((y + h) / ch);
 	vtx[17] = z;
 
+	vtx[18] = 1.0;
+	vtx[19] = 1.0;
+
 	/* Resize the texture */
-	glBindTexture(GL_TEXTURE_2D, n->tex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, 
-			GL_UNSIGNED_BYTE, n->surf->pixels);
-	glGenerateMipmap(GL_TEXTURE_2D);
+	ren_destroy_texture(n->tex, n->texture);
+	ren_create_ui(w, h, n->surf->pixels, &n->data, &n->tex, &n->texture);
+	ren_set_model_data(n->vao, n->bao[0], 5 * sizeof(float), 0, n->set,
+			   uni_buf, n->texture);
 
 	/* Update buffers */
-	glBindVertexArray(n->vao);
-	glBindBuffer(GL_ARRAY_BUFFER, n->bao[0]);
-	glBufferData(GL_ARRAY_BUFFER, 18 * sizeof(float), vtx, GL_STATIC_DRAW);
-	glBindVertexArray(0);
+	ren_update_buffer(vtx, 20 * sizeof(float), n->bao[0], n->vtx);
 }
 
 static void ui_adjust_node(ui_node *n, void *data)
@@ -754,28 +768,13 @@ extern void ui_adjust(ui_node *n)
 static int ui_init_buffers(ui_node *n)
 {
 	/* Generate a new vao and bind it */
-	glGenVertexArrays(1, &n->vao);
-	glBindVertexArray(n->vao);
+	ren_create_model_data(g_win.pipeline, &n->vao, &n->set);
 
 	/* Create two buffers */
-	glGenBuffers(2, n->bao);
-
-	/* Register the vertex-positions */
-	glBindBuffer(GL_ARRAY_BUFFER, n->bao[0]);
-	glBufferData(GL_ARRAY_BUFFER, 18 * sizeof(float),
-			STD_CORNERS, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(0);
-
-	/* Register new texture-coordinates */
-	glBindBuffer(GL_ARRAY_BUFFER, n->bao[1]);
-	glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(float),
-			STD_UV, GL_STATIC_DRAW);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(1);
-
-	/* Unbind the vertex-array-object */
-	glBindVertexArray(0);
+	ren_create_buffer(n->vao, GL_ARRAY_BUFFER, 20 * sizeof(float),
+			(char *)STD_VTX, &n->bao[0], &n->vtx);
+	ren_create_buffer(n->vao, GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(int),
+			(char *)STD_IDX, &n->bao[1], &n->idx);
 	return 0;
 }
 
@@ -802,17 +801,8 @@ static int ui_init_tex(ui_node *n)
 	int h = n->body.h;
 
 	/* Create new texture */
-	glGenTextures(1, &n->tex);
-	glBindTexture(GL_TEXTURE_2D, n->tex);
+	ren_create_ui(w, h, n->surf->pixels, &n->data, &n->tex, &n->texture);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, 
-			GL_UNSIGNED_BYTE, n->surf->pixels);
-	glGenerateMipmap(GL_TEXTURE_2D);
 	return 0;
 }
 

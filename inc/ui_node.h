@@ -1,6 +1,7 @@
 #ifndef _UI_NODE_H
 #define _UI_NODE_H
 
+#include "render_engine.h"
 #include "sdl.h"
 
 #include <stdarg.h>
@@ -180,6 +181,11 @@ struct ui_node {
 	uint32_t vao;
 	uint32_t bao[2];
 	uint32_t tex;
+	struct vk_buffer vtx;
+	struct vk_buffer idx;
+	VkDescriptorSet set;
+	struct vk_texture texture;
+	void *data;
 
 	surf_t *surf;
 };

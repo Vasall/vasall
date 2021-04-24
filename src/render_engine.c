@@ -172,6 +172,35 @@ extern int ren_create_skybox(char *pths[6], uint32_t *hdl,
 }
 
 
+extern int ren_create_ui(int width, int height, void *pixels, void **data,
+			 uint32_t *hdl, struct vk_texture *texture)
+{
+	int res;
+
+	if(g_ren.mode == REN_MODE_VULKAN) {
+		res = vk_create_ui(width, height, pixels, data, texture);
+	}
+	else if(g_ren.mode == REN_MODE_OPENGL) {
+		gl_create_ui(width, height, pixels, hdl);
+		res = 0;
+	}
+
+	return res;
+}
+
+
+extern void ren_update_texture(int width, int height, void *pixels, void *data,
+			       uint32_t hdl, struct vk_texture texture)
+{
+	if(g_ren.mode == REN_MODE_VULKAN) {
+		vk_update_texture(width, height, pixels, data, texture);
+	}
+	else if(g_ren.mode == REN_MODE_OPENGL) {
+		gl_update_texture(width, height, pixels, hdl);
+	}
+}
+
+
 extern int ren_create_model_data(struct vk_pipeline pipeline, uint32_t *vao,
                                  VkDescriptorSet *set)
 {
@@ -238,6 +267,19 @@ extern int ren_create_buffer(uint32_t vao, int type, size_t size, char *buf,
 	}
 
 	return res;
+}
+
+
+extern void ren_update_buffer(void *data, size_t size, uint32_t buf,
+			      struct vk_buffer buffer)
+{
+	if(g_ren.mode == REN_MODE_VULKAN) {
+		if(size <= buffer.size)
+			vk_copy_data_to_buffer(data, buffer);
+	}
+	else if(g_ren.mode == REN_MODE_OPENGL) {
+		gl_copy_data_to_buffer(data, size, buf);
+	}
 }
 
 

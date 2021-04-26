@@ -833,27 +833,6 @@ extern void obj_print(short slot)
  * ============================================
  */
 
-static void obj_interp(short slot, float interp)
-{
-	vec3_t del;
-
-	/* Update render-position of the object */
-	vec3_sub(g_obj.pos[slot], g_obj.prev_pos[slot], del);
-	vec3_scl(del, interp, del);
-	vec3_add(g_obj.prev_pos[slot], del, g_obj.ren_pos[slot]);
-
-	/* Store last position */
-	vec3_cpy(g_obj.prev_pos[slot], g_obj.pos[slot]);
-
-	/* Update the direction of the object */
-	vec3_sub(g_obj.dir[slot], g_obj.prev_dir[slot], del);
-	vec3_scl(del, interp, del);
-	vec3_add(g_obj.prev_dir[slot], del, g_obj.ren_dir[slot]);
-
-	/* Store last direction */
-	vec3_cpy(g_obj.prev_dir[slot], g_obj.dir[slot]);
-}
-
 static void obj_proc_rig_fpv(short slot, vec3_t pos)
 {
 	vec3_t off_v = {0, 0, -1.6};
@@ -1177,21 +1156,58 @@ extern void obj_sys_prerender(float interp)
 	mat4_t trans_m;
 
 	for(i = 0; i < OBJ_LIM; i++) {
-		if(g_obj.mask[i] & OBJ_M_MODEL) {
-			obj_interp(i, interp);
+		if(g_obj.mask[i] & OBJ_M_MOVE) {
+			/* Calculate position the object is aiming at */
+			obj_calc_aim(i);
 		}
 
 		if(g_obj.mask[i] & OBJ_M_RIG) {
-			if(i == g_core.obj && g_cam.mode == CAM_MODE_FPV) {
-				obj_proc_rig_fpv(i, g_obj.ren_pos[i]);
-			}	
-			else {
-				obj_proc_rig_tpv(i, g_obj.ren_pos[i], g_obj.dir[i]);
-			}
+			float agl;
+			vec3_t up = {0, 0, 1};
+			mat4_t trans_m;
+
+			agl = vec3_angle(up, g_obj.dir[i]);
+			agl = 90.0 - RAD_TO_DEG(agl);
+
+			/* Calculate rig with aiming */
+			rig_update(g_obj.rig[i], agl);
 		}
 
+
+		/*
+		 * Calculate position and rotation-matrix.
+		 */
 		if(g_obj.mask[i] & OBJ_M_MOVE) {
-			obj_calc_aim(i);
+			vec3_t forw;
+			float rot;
+			mat4_t pos_m;
+			mat4_t rot_m;
+
+			vec2_set(forw, g_obj.dir[i][0], g_obj.dir[i][1]);
+			vec2_nrm(forw, forw);
+
+			/* Set the rotation of the model */
+			rot = RAD_TO_DEG(atan2(forw[0], forw[1]));
+
+			/* Calculate rotation-matrix */
+			mat4_idt(rot_m);
+			mat4_rfagl_s(rot_m, 0, 0, rot);
+
+			/* Calculate position-matrix */
+			mat4_idt(pos_m);
+			mat4_pfpos(pos_m, g_obj.pos[i]);
+
+			/* Copy matrices to object */
+			mat4_cpy(g_obj.pos_mat[i], pos_m);
+			mat4_cpy(g_obj.rot_mat[i], rot_m);
+		}
+		else {
+			/* Set position-matrix */
+			mat4_idt(g_obj.pos_mat[i]);
+			mat4_pfpos(g_obj.pos_mat[i], g_obj.pos[i]);
+
+			/* Set rotation-matrix */
+			mat4_idt(g_obj.rot_mat[i]);
 		}
 	}
 }
@@ -1202,52 +1218,75 @@ extern void obj_sys_render(void)
 	int i;
 
 	mat4_t idt;
-	mat4_t m;
+	mat4_t rot_m;
+	mat4_t pos_m;
 
 	mat4_idt(idt);
-	mat4_idt(m);
 
 	for(i = 0; i < OBJ_LIM; i++) {
 		if(g_obj.mask[i] & OBJ_M_MODEL) {
-			mat4_idt(m);
-
-			if((g_obj.mask[i] & OBJ_M_RIG) == 0) {
-				mat4_pfpos(m, g_obj.ren_pos[i]);
-			}
+			mat4_cpy(pos_m, g_obj.pos_mat[i]);
+			mat4_cpy(rot_m, g_obj.rot_mat[i]);
 
 			/* Render the model */
-			mdl_render(g_obj.mdl[i], m, idt, g_obj.rig[i]);
+			mdl_render(g_obj.mdl[i], pos_m, rot_m, g_obj.rig[i]);
 
 			if(g_obj.mask[i] & OBJ_M_MOVE) {
-				vec3_t pos;
+				struct model *mdl;
+
+				vec4_t calc;
+				vec3_t hook_pos;
+				vec3_t hook_dir;
+				vec3_t dir;
+
+				short jnt_idx;
+				mat4_t jnt_mat;
+
+				mat4_t hook_mat;
 				mat4_t mat;
 
-				/*
-				 * Render a sphere at the aiming-point.
-				 */
-				mat4_idt(mat);
-				mat4_pfpos(mat, g_obj.aim_pos[i]);
-				mdl_render(mdl_get("sph"), mat, idt, NULL);
-			}
+				vec3_t pos = {0, 0, 0};
 
-			if(g_obj.mask[i] & OBJ_M_MOVE) {
-				mat4_t mat;
-				short hook;
-				short jnt;
+				/* Get a pointer to the model */
+				mdl = models[g_obj.mdl[i]];
 
-				vec3_t a;
-				vec3_t b;
+				/* Get local position and direction of hook */
+				vec3_cpy(hook_pos, mdl->hok_buf[0].pos);
+				vec3_cpy(hook_dir, mdl->hok_buf[0].dir);
+				hook_pos[3] = 1;
+				hook_dir[3] = 0;
 
-				float dot;
-				vec3_t cross;
+				vec3_nrm(hook_dir, hook_dir);
 
-				vec3_t pos = {10, 10, 0};
+				/* Get the matrix of the parent-joint */
+				jnt_idx = mdl->hok_buf[0].par_jnt;
+				mat4_cpy(jnt_mat, g_obj.rig[i]->tran_mat[jnt_idx]);
+
+				/* Calculate hook-position */
+				vec3_cpy(calc, mdl->hok_buf[0].pos);
+				calc[3] = 1;
+				vec4_trans(calc, jnt_mat, calc);
+				vec4_trans(calc, g_obj.rot_mat[i], calc);
+				vec4_trans(calc, g_obj.pos_mat[i], calc);
+				vec3_cpy(hook_pos, calc);
+
+				/* Calculate hook-direction */
+				vec3_cpy(calc, mdl->hok_buf[0].dir);
+				calc[3] = 0;
+				vec4_trans(calc, jnt_mat, calc);
+				vec4_trans(calc, g_obj.rot_mat[i], calc);
+				vec3_cpy(hook_dir, calc);
+				vec3_nrm(hook_dir, hook_dir);
+
+				vec3_sub(g_obj.aim_pos[i], hook_pos, dir);
+				vec3_nrm(dir, dir);
 				
 
-				mat4_t v_mat;
+				
 
-				obj_calc_aim(i);
-				obj_calc_aim_ray(i);
+
+#if 0
+				/* obj_calc_aim_ray(i); */
 
 				vec3_sub(g_obj.aim_pos[i], g_obj.aim_off[i], a);
 				vec3_cpy(b, g_obj.aim_dir[i]);
@@ -1256,14 +1295,26 @@ extern void obj_sys_render(void)
 				/* 
 				 * Render the weapon.
 				 */
-			
+
 				hook = g_hnd.par_hook[0];
 				jnt = models[g_obj.mdl[i]]->hok_buf[hook].par_jnt;
-
+#endif
 				mat4_idt(mat);
 				mat4_pfpos(mat, pos);
 
-				mdl_render(g_hnd.mdl[0], mat, v_mat, NULL);
+				mdl_render(mdl_get("gun"), mat, idt, NULL);
+			}
+
+			if(g_obj.mask[i] & OBJ_M_MOVE) {
+				vec3_t pos;
+				mat4_t mat;
+
+				/*
+				 * Render a sphere at the aiming-point.
+				 */		
+				mat4_idt(mat);
+				mat4_pfpos(mat, g_obj.aim_pos[i]);
+				mdl_render(mdl_get("sph"), mat, idt, NULL);
 			}
 		}
 	}

@@ -356,7 +356,7 @@ extern void cam_update(void)
 			vec3_t pos;
 			vec3_t tmp;
 
-			vec3_cpy(pos, g_obj.ren_pos[g_cam.trg_obj]);
+			vec3_cpy(pos, g_obj.pos[g_cam.trg_obj]);
 			pos[2] += 1.8;
 
 			vec3_scl(g_cam.v_forward, -g_cam.dist, tmp);
@@ -365,7 +365,7 @@ extern void cam_update(void)
 		else if(g_cam.mode == CAM_MODE_FPV) {
 			vec3_t pos;
 
-			vec3_cpy(pos, g_obj.ren_pos[g_cam.trg_obj]);
+			vec3_cpy(pos, g_obj.pos[g_cam.trg_obj]);
 			pos[2] += 1.8;
 
 			vec3_cpy(g_cam.pos, pos);

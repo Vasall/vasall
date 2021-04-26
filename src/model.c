@@ -877,7 +877,7 @@ extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
 	ren_draw(mdl->idx_num, mdl->type);
 
 	/* Unuse the texture, shader and VAO */
-	/* tex_unuse();
+	tex_unuse();
 	shd_unuse();
-	glBindVertexArray(0); */
+	glBindVertexArray(0);
 }

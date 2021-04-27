@@ -1242,10 +1242,17 @@ extern void obj_sys_render(void)
 				short jnt_idx;
 				mat4_t jnt_mat;
 
-				mat4_t hook_mat;
+				mat4_t loc_mat;
 				mat4_t mat;
 
-				vec3_t pos = {0, 0, 0};
+				vec3_t tmp;
+				float dot;
+				float cross;
+
+				vec3_t pos = {0, 0, 1};
+
+				mat4_t rot_mat;
+				mat4_t pos_mat;
 
 				/* Get a pointer to the model */
 				mdl = models[g_obj.mdl[i]];
@@ -1281,28 +1288,41 @@ extern void obj_sys_render(void)
 				vec3_sub(g_obj.aim_pos[i], hook_pos, dir);
 				vec3_nrm(dir, dir);
 				
-
-				
-
-
-#if 0
-				/* obj_calc_aim_ray(i); */
-
-				vec3_sub(g_obj.aim_pos[i], g_obj.aim_off[i], a);
-				vec3_cpy(b, g_obj.aim_dir[i]);
-
-
-				/* 
-				 * Render the weapon.
-				 */
-
-				hook = g_hnd.par_hook[0];
-				jnt = models[g_obj.mdl[i]]->hok_buf[hook].par_jnt;
-#endif
+#if 0	
+				/* https://math.stackexchange.com/a/897677 */
 				mat4_idt(mat);
-				mat4_pfpos(mat, pos);
 
-				mdl_render(mdl_get("gun"), mat, idt, NULL);
+				dot = vec3_dot(dir, hook_dir);
+				vec3_cross(dir, hook_dir, tmp);
+				cross = vec3_len(tmp);
+
+				mat[0x0] =  dot;
+				mat[0x1] =  cross;
+				mat[0x4] = -cross;
+				mat[0x5] =  dot;
+
+				mat4_pfpos_s(loc_mat, -hook_pos[0],
+						-hook_pos[1], -hook_pos[2]);
+
+				mat4_mult(mat, loc_mat, mat);
+
+
+				mat4_pfpos(loc_mat, hook_pos);
+				mat4_mult(loc_mat, mat, mat);
+
+
+				mat4_cpy(rot_mat, mat);
+
+				/* Calculate final rotation-matrix */
+				mat4_mult(rot_mat, g_obj.rot_mat[i], rot_mat);
+#endif
+
+				mat4_idt(rot_mat);
+				mat4_idt(pos_mat);
+				mat4_pfpos(pos_mat, hook_pos);
+
+
+				mdl_render(mdl_get("sph"), pos_mat, rot_mat, NULL);
 			}
 
 			if(g_obj.mask[i] & OBJ_M_MOVE) {

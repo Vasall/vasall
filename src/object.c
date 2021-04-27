@@ -718,7 +718,7 @@ extern void obj_calc_aim(short slot)
 
 
 	/* Limit aiming-range */
-	if(!pck.found) {
+	if(!pck.found || pck.col_t > 10) {
 		pck.col_t = 10;
 	}
 

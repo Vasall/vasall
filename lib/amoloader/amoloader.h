@@ -112,6 +112,7 @@ struct amo_hook {
 	short par_jnt;
 	float pos[3];
 	float dir[3];
+	float mat[16];
 };
 
 
@@ -186,8 +187,8 @@ struct amo_model {
 	/*
 	 * Hooks
 	 */
-	int                 hh_c;
-	struct amo_hook     *hh_lst;
+	int                 hk_c;
+	struct amo_hook     *hk_lst;
 
 	/*
 	 * collision-buffers 

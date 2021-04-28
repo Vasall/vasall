@@ -13,7 +13,7 @@ struct uni_buffer {
 	mat4_t rot_mat;
 	mat4_t view;
 	mat4_t proj;
-	mat4_t tran_mat[JOINT_MAX_NUM];
+	mat4_t trans_mat[JOINT_MAX_NUM];
 };
 
 #endif

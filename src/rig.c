@@ -32,7 +32,54 @@ extern struct model_rig *rig_derive(short slot)
 	rig->ts = 0;
 	rig->jnt_num = mdl->jnt_num;
 
+	/* Set hook-arrays to NULL */
+	rig->hook_num = 0;
+	rig->hook_pos = NULL;
+	rig->hook_dir = NULL;
+	rig->hook_base_mat = NULL;
+	rig->hook_trans_mat = NULL;
+
+
+	/* Add hooks to rig */
+	if(mdl->hook_num > 0) {
+		int tmp;
+		short num;
+
+		num = rig->hook_num = mdl->hook_num;
+
+		/* Allocate memory for hook-positions */
+		tmp = num * VEC3_SIZE; 
+		if(!(rig->hook_pos = malloc(tmp)))
+			goto err_free_hooks;
+
+		/* Allocate memory for hook-forward-vectors */
+		tmp = num * VEC3_SIZE;
+		if(!(rig->hook_pos = malloc(tmp)))
+			goto err_free_hooks;
+
+		/* Allocate memory for hook-base-matrices */
+		tmp = num * MAT4_SIZE;
+		if(!(rig->hook_base_mat = malloc(tmp)))
+			goto err_free_hooks;
+
+		/* Allocate memory for hook-transformation-matrices */
+		tmp = num * MAT4_SIZE;
+		if(!(rig->hook_trans_mat = malloc(tmp)))
+			goto err_free_hooks;
+	}
+
 	return rig;
+
+
+err_free_hooks:
+	if(rig->hook_pos) free(rig->hook_pos);
+	if(rig->hook_dir) free(rig->hook_dir);
+	if(rig->hook_base_mat) free(rig->hook_base_mat);
+	if(rig->hook_trans_mat) free(rig->hook_trans_mat);
+
+err_free_rig:
+	free(rig);
+	return NULL;
 }
 
 
@@ -102,8 +149,8 @@ static void rig_calc_jnt(struct model_rig *rig, short anim, short *keyfr,
 	}
 }
 
-static void rig_calc_rec(struct model_rig *rig, int idx);
-static void rig_calc_rec(struct model_rig *rig, int idx)
+static void rig_update_joints(struct model_rig *rig, int idx);
+static void rig_update_joints(struct model_rig *rig, int idx)
 {	
 	struct model *mdl;
 	int i;
@@ -145,10 +192,43 @@ static void rig_calc_rec(struct model_rig *rig, int idx)
 	mat4_cpy(rig->base_mat[idx], mat);
 
 	/*
+	 * Calculate transformation-matrix.
+	 */
+	mat4_mult(mat, mdl->jnt_buf[i].inv_bind_mat, rig->trans_mat[i]);
+
+	/*
 	 * Call function recusivly for child-joints.
 	 */
 	for(i = 0; i < mdl->jnt_buf[idx].child_num; i++)
-		rig_calc_rec(rig, mdl->jnt_buf[idx].child_buf[i]);
+		rig_update_joints(rig, mdl->jnt_buf[idx].child_buf[i]);
+}
+
+static void rig_update_hooks(struct model_rig *rig)
+{
+	int i;
+	struct model *mdl = models[rig->model];
+	short par_jnt;
+	mat4_t jnt_mat;
+	mat4_t loc_mat;
+	mat4_t base_mat;
+
+	for(i = 0; i < rig->hook_num; i++) {
+		/* Get the index of the parent-joint */
+		par_jnt = mdl->hook_buf[i].par_jnt;
+
+		/* Get the joint-matrix */
+		mat4_cpy(jnt_mat, rig->base_mat[par_jnt]);
+
+		/* Get the local matrix */
+		mat4_cpy(loc_mat, mdl->hook_buf[i].base_mat);
+
+		/* Calculate the current base-matrix of the hook */
+		mat4_mult(jnt_mat, loc_mat, rig->hook_base_mat[i]);
+
+		/* Calculate the tranformation-matrix */
+		mat4_mult(rig->hook_base_mat[i], mdl->hook_buf[i].inv_base_mat,
+				rig->hook_trans_mat[i]);	
+	}
 }
 
 extern void rig_update(struct model_rig *rig, float p)
@@ -200,17 +280,15 @@ extern void rig_update(struct model_rig *rig, float p)
 	/* 
 	 * Calculate the base matrix for each joint recursivly.
 	 */
-	rig_calc_rec(rig, mdl->jnt_root);
+	rig_update_joints(rig, mdl->jnt_root);
 
 	/*
-	 * Subtract the base matrices of the current joint-matrices to get the 
-	 * local tranform matrix.
+	 * Update hooks, if necessary.
 	 */
-	for(i = 0; i < mdl->jnt_num; i++) {
-		mat4_mult(rig->base_mat[i], mdl->jnt_buf[i].inv_bind_mat,
-				rig->tran_mat[i]);
-	}
+	if(rig->hook_num > 0)
+		rig_update_hooks(rig);
 }
+
 
 extern void rig_mult_mat(struct model_rig *rig, mat4_t m)
 {
@@ -218,10 +296,10 @@ extern void rig_mult_mat(struct model_rig *rig, mat4_t m)
 	mat4_t conv_m;
 
 	for(i = 0; i < rig->jnt_num; i++) {
-		mat4_cpy(conv_m, rig->tran_mat[i]);
+		mat4_cpy(conv_m, rig->trans_mat[i]);
 
 		mat4_mult(m, conv_m, conv_m);
 
-		mat4_cpy(rig->tran_mat[i], conv_m);
+		mat4_cpy(rig->trans_mat[i], conv_m);
 	}
 }

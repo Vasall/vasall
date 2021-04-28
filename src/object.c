@@ -787,8 +787,8 @@ extern void obj_calc_aim_ray(short slot)
 	hook = g_hnd.par_hook[0];
 
 	/* Get the transformation matrix */
-	jnt = models[g_obj.mdl[slot]]->hok_buf[hook].par_jnt;
-	mat4_cpy(mat, g_obj.rig[slot]->tran_mat[jnt]);
+	jnt = models[g_obj.mdl[slot]]->hook_buf[hook].par_jnt;
+	mat4_cpy(mat, g_obj.rig[slot]->trans_mat[jnt]);
 
 	/* Transform both position and direction of handheld using the matrix */
 	vec4_clr(pos);
@@ -1258,19 +1258,20 @@ extern void obj_sys_render(void)
 				mdl = models[g_obj.mdl[i]];
 
 				/* Get local position and direction of hook */
-				vec3_cpy(hook_pos, mdl->hok_buf[0].pos);
-				vec3_cpy(hook_dir, mdl->hok_buf[0].dir);
+				vec3_cpy(hook_pos, mdl->hook_buf[0].pos);
+				vec3_cpy(hook_dir, mdl->hook_buf[0].dir);
 				hook_pos[3] = 1;
 				hook_dir[3] = 0;
 
 				vec3_nrm(hook_dir, hook_dir);
 
 				/* Get the matrix of the parent-joint */
-				jnt_idx = mdl->hok_buf[0].par_jnt;
-				mat4_cpy(jnt_mat, g_obj.rig[i]->tran_mat[jnt_idx]);
+				jnt_idx = mdl->hook_buf[0].par_jnt;
+				mat4_cpy(jnt_mat,
+						g_obj.rig[i]->trans_mat[jnt_idx]);
 
 				/* Calculate hook-position */
-				vec3_cpy(calc, mdl->hok_buf[0].pos);
+				vec3_cpy(calc, mdl->hook_buf[0].pos);
 				calc[3] = 1;
 				vec4_trans(calc, jnt_mat, calc);
 				vec4_trans(calc, g_obj.rot_mat[i], calc);
@@ -1278,7 +1279,7 @@ extern void obj_sys_render(void)
 				vec3_cpy(hook_pos, calc);
 
 				/* Calculate hook-direction */
-				vec3_cpy(calc, mdl->hok_buf[0].dir);
+				vec3_cpy(calc, mdl->hook_buf[0].dir);
 				calc[3] = 0;
 				vec4_trans(calc, jnt_mat, calc);
 				vec4_trans(calc, g_obj.rot_mat[i], calc);

@@ -183,7 +183,7 @@ static void rig_update_joints(struct model_rig *rig, int idx)
 	 * Multiply with parent matrix if joint has a parent, to convert it from
 	 * local space to model space.
 	 */
-	if((par = mdl->jnt_buf[idx].par) >= 0)
+	if((par = mdl->jnt_buf[idx].par) != -1)
 		mat4_mult(rig->base_mat[par], mat, mat);
 
 	/*
@@ -194,7 +194,7 @@ static void rig_update_joints(struct model_rig *rig, int idx)
 	/*
 	 * Calculate transformation-matrix.
 	 */
-	mat4_mult(mat, mdl->jnt_buf[i].inv_bind_mat, rig->trans_mat[i]);
+	mat4_mult(mat, mdl->jnt_buf[idx].inv_bind_mat, rig->trans_mat[idx]);
 
 	/*
 	 * Call function recusivly for child-joints.
@@ -282,11 +282,13 @@ extern void rig_update(struct model_rig *rig, float p)
 	 */
 	rig_update_joints(rig, mdl->jnt_root);
 
+#if 0
 	/*
 	 * Update hooks, if necessary.
 	 */
 	if(rig->hook_num > 0)
 		rig_update_hooks(rig);
+#endif
 }
 
 

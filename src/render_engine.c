@@ -89,8 +89,12 @@ extern int ren_create_shader(char *vs, char *fs, uint32_t *prog,
 
 	vs_len = strlen(vs);
 	fs_len = strlen(fs);
-	vk_vs = malloc(vs_len+5);
-	vk_fs = malloc(fs_len+5);
+	if(!(vk_vs = malloc(vs_len+5)))
+		return -1;
+
+	if(!(vk_fs = malloc(fs_len+5)))
+		return -1;
+
 	strncpy(vk_vs, vs, vs_len);
 	strncpy(vk_fs, fs, fs_len);
 	vk_vs[vs_len+0] = '.';

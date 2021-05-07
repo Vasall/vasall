@@ -352,8 +352,6 @@ extern void ui_update(ui_node *n)
 
 extern void ui_render(ui_node *n)
 {
-	GLenum err;
-
 	if(n->vao != 0 && n->tex != 0 && n->surf != NULL) {
 		glBindVertexArray(n->vao);
 		glUseProgram(g_win.shader);

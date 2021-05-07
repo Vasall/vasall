@@ -66,7 +66,7 @@ struct amo_joint;
 struct amo_joint {
 	char              name[100];
 	int               index;
-	struct amo_joint  *par;
+	short             par;
 	float             mat[16];
 };
 
@@ -74,16 +74,13 @@ struct amo_joint {
  * A struct representing a single keyframe of an animation.
  *
  * @prog: The progression at which the keyframe occurrs
- * @joints: An array containing pointers to the according joints
+ * @jnt: The joint-index
  * @pos: The position of a joint in this keyframe
  * @rot: The rotation of a joint in this keyframe
  */
 struct amo_keyfr {
 	float prog;
-
 	int jnt_num;
-
-	struct amo_joint **joints;
 
 	short             *jnt;
 	float             *pos;

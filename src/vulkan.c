@@ -194,7 +194,9 @@ static int create_instance(void)
 	 */
 	res = vkEnumerateInstanceLayerProperties(&layer_count, NULL);
 	vk_assert(res);
-	layers = malloc(sizeof(VkLayerProperties)*layer_count);
+	if(!(layers = malloc(sizeof(VkLayerProperties)*layer_count)))
+		return -1;
+
 	res = vkEnumerateInstanceLayerProperties(&layer_count, layers);
 	vk_assert(res);
 
@@ -218,7 +220,8 @@ static int create_instance(void)
 		return -1;
 #else
 	ext_count = 3;
-	ext = malloc(sizeof(char*) * ext_count);
+	if(!(ext = malloc(sizeof(char*) * ext_count)))
+		return -1;
 	ext[0] = "VK_KHR_surface";
 	ext[1] = "VK_KHR_xcb_surface";
 	ext[2] = "VK_KHR_xlib_surface";
@@ -268,7 +271,8 @@ static int get_gpu(void)
 	/* Get all available gpus */
 	res = vkEnumeratePhysicalDevices(vk.instance, &gpu_count, NULL);
 	vk_assert(res);
-	gpus = malloc(sizeof(VkPhysicalDevice) * gpu_count);
+	if(!(gpus = malloc(sizeof(VkPhysicalDevice) * gpu_count)))
+		return -1;
 	res = vkEnumeratePhysicalDevices(vk.instance, &gpu_count, gpus);
 	vk_assert(res);
 
@@ -314,7 +318,9 @@ static void get_family_index(void)
 
 	/* Get all available queue families */
 	vkGetPhysicalDeviceQueueFamilyProperties(vk.gpu, &family_count, NULL);
-	families = malloc(sizeof(VkQueueFamilyProperties) * family_count);
+	if(!(families = malloc(sizeof(VkQueueFamilyProperties) * family_count)))
+		return;
+
 	vkGetPhysicalDeviceQueueFamilyProperties(vk.gpu, &family_count,
 	                                         families);
 
@@ -456,7 +462,9 @@ static int get_format(void)
 	res = vkGetPhysicalDeviceSurfaceFormatsKHR(vk.gpu, vk.surface,
 	                                           &format_count, NULL);
 	vk_assert(res);
-	formats = malloc(sizeof(VkSurfaceFormatKHR) * format_count);
+	if(!(formats = malloc(sizeof(VkSurfaceFormatKHR) * format_count)))
+		return -1;
+
 	res = vkGetPhysicalDeviceSurfaceFormatsKHR(vk.gpu, vk.surface,
 	                                           &format_count, formats);
 	
@@ -745,7 +753,8 @@ static int create_swapchain(void)
 	res = vkGetPhysicalDeviceSurfacePresentModesKHR(vk.gpu, vk.surface,
 						&present_mode_count, NULL);
 	vk_assert(res);
-	present_modes = malloc(sizeof(VkPresentModeKHR)*present_mode_count);
+	if(!(present_modes = malloc(sizeof(VkPresentModeKHR)*present_mode_count)))
+		return -1;
 	res = vkGetPhysicalDeviceSurfacePresentModesKHR(vk.gpu, vk.surface,
 					&present_mode_count, present_modes);
 	free(present_modes);
@@ -790,13 +799,15 @@ static int get_swapchain_images(void)
 				      NULL);
 	vk_assert(res);
 
-	vk.images = malloc(sizeof(VkImage)*vk.image_count);
+	if(!(vk.images = malloc(sizeof(VkImage)*vk.image_count)))
+		return -1;
 
 	res = vkGetSwapchainImagesKHR(vk.device, vk.swapchain, &vk.image_count,
 				      vk.images);
 	vk_assert(res);
 
-	vk.image_views = malloc(sizeof(VkImageView)*vk.image_count);
+	if(!(vk.image_views = malloc(sizeof(VkImageView)*vk.image_count)))
+		return -1;
 
 	for(i = 0; i < vk.image_count; i++) {
 		if(create_image_view(vk.images[i], vk.format.format,
@@ -927,7 +938,8 @@ static int create_framebuffers(void)
 	VkImageView attachments[2];
 	VkFramebufferCreateInfo create_info;
 
-	vk.frame_buffers = malloc(sizeof(VkFramebuffer)*vk.image_count);
+	if(!(vk.frame_buffers = malloc(sizeof(VkFramebuffer)*vk.image_count)))
+		return -1;
 
 	attachments[1] = vk.depth_view;
 
@@ -1180,14 +1192,18 @@ static char *get_cache_file_name(char *vs)
 	char *dot;
 	char *res;
 
-	vs_copy = malloc(strlen(vs)+1);
+	if(!(vs_copy = malloc(strlen(vs)+1)))
+		return 0;
+
 	strcpy(vs_copy, vs);
 
 	pipeline_name = basename(vs_copy);
 	dot = strchr(pipeline_name, '.');
 	pipeline_name[dot-pipeline_name] = '\0';
 
-	res = malloc(strlen(pipeline_name)+12);
+	if(!(res = malloc(strlen(pipeline_name)+12)))
+		return 0;
+
 	memcpy(res, ".cache/", 8);
 	strcpy(res+7, pipeline_name);
 	memcpy(res+strlen(pipeline_name)+7, ".bin", 5);
@@ -1243,7 +1259,9 @@ static int save_cache(char *name, VkPipelineCache cache)
 
 	res = vkGetPipelineCacheData(vk.device, cache, &len, NULL);
 	vk_assert(res);
-	data = malloc(len);
+	if(!(data = malloc(len)))
+		return -1;
+
 	res = vkGetPipelineCacheData(vk.device, cache, &len, data);
 	vk_assert(res);
 
@@ -2404,7 +2422,8 @@ extern int vk_print_info(void)
 	res = vkEnumerateInstanceExtensionProperties(NULL, &inst_ext_count,
 	                                             NULL);
 	vk_assert(res);
-	inst_ext = malloc(sizeof(VkExtensionProperties)*inst_ext_count);
+	if(!(inst_ext = malloc(sizeof(VkExtensionProperties)*inst_ext_count)))
+		return -1;
 	res = vkEnumerateInstanceExtensionProperties(NULL, &inst_ext_count,
 	                                             inst_ext);
 
@@ -2417,7 +2436,8 @@ extern int vk_print_info(void)
 	res = vkEnumerateDeviceExtensionProperties(vk.gpu, NULL, &dev_ext_count,
 	                                           NULL);
 	vk_assert(res);
-	dev_ext = malloc(sizeof(VkExtensionProperties)*dev_ext_count);
+	if(!(dev_ext = malloc(sizeof(VkExtensionProperties)*dev_ext_count)))
+		return -1;
 	res = vkEnumerateDeviceExtensionProperties(vk.gpu, NULL, &dev_ext_count,
 	                                           dev_ext);
 

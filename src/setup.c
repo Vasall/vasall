@@ -65,10 +65,7 @@ int load_resources(void)
 	if(mdl_load("slp", "res/models/slope.amo", tex_get("ba1"), shd_get("mdl"), MDL_TYPE_DEFAULT) < 0)
 			return -1;
 
-	if(mdl_load("gun", "res/models/pistol.obj", tex_get("ba1"), shd_get("mdl"), MDL_TYPE_DEFAULT) < 0)
-			return -1;
-
-	if(mdl_load("sph", "res/models/sphere.obj", tex_get("ba2"), shd_get("mdl"), MDL_TYPE_DEFAULT) < 0)
+	if(mdl_load("sph", "res/models/sphere.amo", tex_get("ba2"), shd_get("mdl"), MDL_TYPE_DEFAULT) < 0)
 			return -1;
 
 
@@ -76,7 +73,7 @@ int load_resources(void)
 			return -1;
 
 
-	if(mdl_load("cube", "res/models/cube.obj", tex_get("skybox"), shd_get("skybox"), MDL_TYPE_SKYBOX) < 0)
+	if(mdl_load("cube", "res/models/cube.amo", tex_get("skybox"), shd_get("skybox"), MDL_TYPE_SKYBOX) < 0)
 		abort();
 
 	/* handhelds */
@@ -188,8 +185,15 @@ int load_ui(void)
 	short val;
 	void *ele;
 
+	printf("0\n");
+
 	tmp = ui_add(UI_WRAPPER, ui_get(root, "root"), NULL, "mns");
+	
+	printf("tmp: %p\n", tmp);
+	
 	ui_enable_tex(tmp);
+
+	printf("a\n");
 
 	tmp = ui_add(UI_WRAPPER, ui_get(root, "mns"), NULL, "mns_form");
 	ui_constr(tmp, UI_CST_SIZE, UI_CST_HORI, 0, 1, 400, UI_CST_PX, 0);
@@ -208,6 +212,7 @@ int load_ui(void)
 	tmp = ui_add(UI_TEXT, ui_get(root, "mns_form"), ele, "mns_title");
 	ui_constr(tmp, UI_CST_SIZE, UI_CST_VERT, 0, 1, 89, UI_CST_PX, 0);
 
+	printf("b\n");
 
 	ele = ui_new_text("USERNAME\0", sdl_color(255, 255, 255, 255), 2, TXT_LEFT);
 	tmp = ui_add(UI_TEXT, ui_get(root, "mns_form"), ele, "mns_user_lbl");
@@ -231,6 +236,7 @@ int load_ui(void)
 	memcpy(&((ui_input *)ele)->cur_col, sdl_color_s(255, 255, 255, 255), sizeof(color_t));
 	ui_enable_tex(tmp);
 
+	printf("c\n");
 
 	ele = ui_new_text("PASSWORD\0", sdl_color(255, 255, 255, 255), 2, TXT_LEFT);
 	tmp = ui_add(UI_TEXT, ui_get(root, "mns_form"), ele, "mns_user_lbl");
@@ -255,6 +261,8 @@ int load_ui(void)
 	ui_enable_tex(tmp);
 
 
+	printf("d\n");
+
 	ele = ui_new_button(&login);
 	tmp = ui_add(UI_BUTTON, ui_get(root, "mns_form"), ele, "mns_login_btn");
 	ui_constr(tmp, UI_CST_SIZE, UI_CST_HORI, 0, 1,           200, UI_CST_PX, 0);
@@ -270,6 +278,8 @@ int load_ui(void)
 
 	/* Chain elements so tab can be used to iterate throught elements */
 	ui_chain(3, "mns_user", "mns_pswd", "mns_login_btn");
+
+	printf("e\n");
 
 	win_build_pipe();
 

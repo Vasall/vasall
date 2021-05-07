@@ -66,13 +66,13 @@ extern short hnd_load(char *pth, short tex_slot, short shd_slot)
 					g_hnd.name[slot]);
 		}
 		/* phk <hook-index> */
-		if(strcmp(cmd_buf, "phk") == 0) {
+		else if(strcmp(cmd_buf, "phk") == 0) {
 			/* Read the hook the handheld is attached to */
 			fscanf(fd, "%hd",
 					&g_hnd.par_hook[slot]);
 		}
 		/* apo <x> <y> <z> */
-		if(strcmp(cmd_buf, "apo") == 0) {
+		else if(strcmp(cmd_buf, "apo") == 0) {
 			vec3_t tmp;
 
 			/* Read the barrel-position */
@@ -84,7 +84,7 @@ extern short hnd_load(char *pth, short tex_slot, short shd_slot)
 			vec3_cpy(g_hnd.aim_pos[slot], tmp);
 		}
 		/* adi <x> <y> <z> */
-		if(strcmp(cmd_buf, "adi") == 0) {
+		else if(strcmp(cmd_buf, "adi") == 0) {
 			vec3_t tmp;
 
 			/* Read the barrel-direction */
@@ -96,7 +96,7 @@ extern short hnd_load(char *pth, short tex_slot, short shd_slot)
 			vec3_cpy(g_hnd.aim_dir[slot], tmp);
 		}
 		/* hok <index> <x> <y> z<> */
-		if(strcmp(cmd_buf, "hok") == 0) {
+		else if(strcmp(cmd_buf, "hok") == 0) {
 			short tmp;
 
 			tmp = g_hnd.hook_c[slot];

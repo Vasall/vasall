@@ -410,15 +410,17 @@ static void mdl_calc_joints(struct model *mdl, short slot)
 	mat4_cpy(mat, jnt->loc_bind_mat);
 
 	/* Adjust absolute joint-matrix using parent-joint */
-	if(jnt->par >= 0)
+	if(jnt->par != -1)
 		mat4_mult(mdl->jnt_buf[jnt->par].bind_mat, mat, mat);
 
 	/* Attach base-matrix to joint */
 	mat4_cpy(jnt->bind_mat, mat);
 
+	printf("%s\n", jnt->name);
+	mat4_print(jnt->bind_mat);
+
 	/* Calculate the inverse to the base-matrix */
-	mat4_inv(mdl->jnt_buf[slot].inv_bind_mat,
-			mdl->jnt_buf[slot].bind_mat);
+	mat4_inv(jnt->inv_bind_mat, jnt->bind_mat);
 
 	/* Call function recursivly on child-joints */
 	for(i = 0; i < jnt->child_num; i++)
@@ -439,19 +441,6 @@ static void mdl_calc_hooks(struct model *mdl)
 		/* Multiply local-matrix with joint-matrix */
 		mat4_mult(jnt_mat, mdl->hook_buf[i].base_mat,
 				mdl->hook_buf[i].base_mat);
-
-		printf("Joint Matrix:\n");
-		mat4_print(jnt_mat);
-
-		printf("Local Matrix:\n");
-		mat4_print("")
-
-		printf(">> %d:\n", i);
-		printf("Matrix:\n");
-		mat4_print(mdl->hook_buf[i].base_mat);
-
-		printf("Inverse:\n");
-		mat4_print(mdl->hook_buf[i].inv_base_mat);
 	}
 }
 
@@ -559,18 +548,12 @@ extern short mdl_load_ffd(char *name, FILE *fd, short tex_slot, short shd_slot,
 			/* Copy joint-name */
 			strcpy(mdl->jnt_buf[i].name, data->jnt_lst[i].name);
 
-			/* Set parent-joint-index */
-			if(data->jnt_lst[i].par)
-				tmp = data->jnt_lst[i].par->index;
-			else 
-				tmp = -1;
-			mdl->jnt_buf[i].par = tmp;			
+			mdl->jnt_buf[i].par = data->jnt_lst[i].par;
 		}
 
 		/* Copy joint-matrices */
 		for(i = 0; i < mdl->jnt_num; i++) {
-			mat4_cpy(mdl->jnt_buf[i].loc_bind_mat,
-					data->jnt_lst[i].mat);
+			mat4_cpy(mdl->jnt_buf[i].loc_bind_mat, data->jnt_lst[i].mat);
 		}
 
 		/* Link the children to the parent-joints */
@@ -693,7 +676,7 @@ extern short mdl_load_ffd(char *name, FILE *fd, short tex_slot, short shd_slot,
 		if(mdl->hook_num > 0) {
 			printf("Load %d hooks\n", mdl->hook_num);
 
-			tmp = sizeof(struct amo_hook) * mdl->hook_num;
+			tmp = sizeof(struct mdl_hook) * mdl->hook_num;
 			if(!(mdl->hook_buf = malloc(tmp)))
 				goto err_free_data;
 

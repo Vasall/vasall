@@ -190,6 +190,10 @@ extern void obj_del(short slot)
 	if(obj_check_slot(slot))
 		return;
 
+	/* Delete rig */
+	if(g_obj.mask[slot] & OBJ_M_RIG)
+		rig_free(g_obj.rig[slot]);
+
 	g_obj.mask[slot] = OBJ_M_NONE;
 	g_obj.num--;
 }
@@ -673,8 +677,6 @@ extern void obj_calc_aim(short slot)
 
 	/* Go through all objects */
 	for(i = 0; i < OBJ_LIM; i++) {
-		char a = 0;
-
 		if(g_obj.mask[i] == OBJ_M_NONE)
 			continue;
 
@@ -691,9 +693,6 @@ extern void obj_calc_aim(short slot)
 		/* TODO: Check collision with other player-objects */
 		if((mdl->attr_m & MDL_M_CCM) == 0)
 			continue;
-
-		if(strcmp(models[g_obj.mdl[i]]->name, "tst") == 0)
-			a = 1;
 
 		/* Go through all triangles */
 		for(j = 0; j < mdl->col.cm_tri_c; j++) {
@@ -1152,8 +1151,6 @@ extern void obj_sys_update(uint32_t now)
 extern void obj_sys_prerender(float interp)
 {
 	int i;
-	vec3_t del;
-	mat4_t trans_m;
 
 	for(i = 0; i < OBJ_LIM; i++) {
 		if(g_obj.mask[i] & OBJ_M_MOVE) {
@@ -1164,7 +1161,6 @@ extern void obj_sys_prerender(float interp)
 		if(g_obj.mask[i] & OBJ_M_RIG) {
 			float agl;
 			vec3_t up = {0, 0, 1};
-			mat4_t trans_m;
 
 			agl = vec3_angle(up, g_obj.dir[i]);
 			agl = 90.0 - RAD_TO_DEG(agl);
@@ -1242,14 +1238,6 @@ extern void obj_sys_render(void)
 				short jnt_idx;
 				mat4_t jnt_mat;
 
-				mat4_t loc_mat;
-				mat4_t mat;
-
-				vec3_t tmp;
-				float dot;
-				float cross;
-
-				vec3_t pos = {0, 0, 1};
 
 				mat4_t rot_mat;
 				mat4_t pos_mat;
@@ -1327,7 +1315,6 @@ extern void obj_sys_render(void)
 			}
 
 			if(g_obj.mask[i] & OBJ_M_MOVE) {
-				vec3_t pos;
 				mat4_t mat;
 
 				/*

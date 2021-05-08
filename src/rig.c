@@ -219,8 +219,8 @@ static void rig_update_hooks(struct model_rig *rig)
 		/* Get the joint-matrix */
 		mat4_cpy(jnt_mat, rig->base_mat[par_jnt]);
 
-		/* Get the local matrix */
-		mat4_cpy(loc_mat, mdl->hook_buf[i].base_mat);
+		/* Get the local hook matrix */
+		mat4_cpy(loc_mat, mdl->hook_buf[i].loc_mat);
 
 		/* Calculate the current base-matrix of the hook */
 		mat4_mult(jnt_mat, loc_mat, rig->hook_base_mat[i]);
@@ -270,25 +270,25 @@ extern void rig_update(struct model_rig *rig, float p)
 		keyfr[1] = 0;
 	}
 
+#if 1
 	p = ABS(p / 90.0);
 	rig_calc_jnt(rig, 0, keyfr, p);
 
 	keyfr[0] = 0;
 	keyfr[1] = 1;
 	rig_calc_jnt(rig, 2, keyfr, 0);
+#endif
 
 	/* 
 	 * Calculate the base matrix for each joint recursivly.
 	 */
 	rig_update_joints(rig, mdl->jnt_root);
 
-#if 0
 	/*
 	 * Update hooks, if necessary.
 	 */
 	if(rig->hook_num > 0)
 		rig_update_hooks(rig);
-#endif
 }
 
 

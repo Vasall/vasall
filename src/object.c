@@ -1235,6 +1235,8 @@ extern void obj_sys_render(void)
 				vec3_t hook_dir;
 				vec3_t dir;
 
+				mat4_t hook_mat;
+
 				short jnt_idx;
 				mat4_t jnt_mat;
 
@@ -1253,15 +1255,28 @@ extern void obj_sys_render(void)
 
 				vec3_nrm(hook_dir, hook_dir);
 
-				/* Get the matrix of the parent-joint */
-				jnt_idx = mdl->hook_buf[0].par_jnt;
-				mat4_cpy(jnt_mat,
-						g_obj.rig[i]->trans_mat[jnt_idx]);
+				/* Get the matrix of the hook */
+				mat4_cpy(hook_mat, g_obj.rig[i]->hook_base_mat[0]);
 
+				/* Get the position of the hook */
+				vec3_cpy(calc, mdl->hook_buf[0].pos);
+				calc[3] = 1;
+
+				printf("Hook-Matrix:\n");
+				mat4_print(hook_mat);
+
+				/* Transform position */
+				vec4_trans(calc, jnt_mat, calc);
+
+				/* Copy hook-position */
+				vec3_cpy(hook_pos, calc);	
+
+				/* Calculate world-hook-position */
+				vec3_add(hook_pos, g_obj.pos[i], hook_pos);
+#if 0
 				/* Calculate hook-position */
 				vec3_cpy(calc, mdl->hook_buf[0].pos);
 				calc[3] = 1;
-				vec4_trans(calc, jnt_mat, calc);
 				vec4_trans(calc, g_obj.rot_mat[i], calc);
 				vec4_trans(calc, g_obj.pos_mat[i], calc);
 				vec3_cpy(hook_pos, calc);
@@ -1305,11 +1320,12 @@ extern void obj_sys_render(void)
 				/* Calculate final rotation-matrix */
 				mat4_mult(rot_mat, g_obj.rot_mat[i], rot_mat);
 #endif
+#endif
+				mat4_idt(pos_mat);
+				mat4_pfpos(pos_mat, g_obj.pos[i]);
 
 				mat4_idt(rot_mat);
-				mat4_idt(pos_mat);
-				mat4_pfpos(pos_mat, hook_pos);
-
+				mat4_cpy(rot_mat, hook_mat);
 
 				mdl_render(mdl_get("sph"), pos_mat, rot_mat, NULL);
 			}

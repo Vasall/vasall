@@ -95,11 +95,12 @@ struct mdl_anim {
 };
 
 struct mdl_hook {
-	mat4_t base_mat;
 	short idx;
 	short par_jnt;
 	vec3_t pos;
 	vec3_t dir;
+	mat4_t loc_mat;
+	mat4_t base_mat;
 	mat4_t inv_base_mat;
 };
 

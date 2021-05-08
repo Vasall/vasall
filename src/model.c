@@ -416,9 +416,6 @@ static void mdl_calc_joints(struct model *mdl, short slot)
 	/* Attach base-matrix to joint */
 	mat4_cpy(jnt->bind_mat, mat);
 
-	printf("%s\n", jnt->name);
-	mat4_print(jnt->bind_mat);
-
 	/* Calculate the inverse to the base-matrix */
 	mat4_inv(jnt->inv_bind_mat, jnt->bind_mat);
 
@@ -439,7 +436,11 @@ static void mdl_calc_hooks(struct model *mdl)
 		mat4_cpy(jnt_mat, mdl->jnt_buf[i].bind_mat);
 
 		/* Multiply local-matrix with joint-matrix */
-		mat4_mult(jnt_mat, mdl->hook_buf[i].base_mat,
+		mat4_mult(jnt_mat, mdl->hook_buf[i].loc_mat,
+				mdl->hook_buf[i].base_mat);
+
+		/* Calculate inverte-bind-matrix */
+		mat4_inv(mdl->hook_buf[i].inv_base_mat, 
 				mdl->hook_buf[i].base_mat);
 	}
 }
@@ -685,7 +686,7 @@ extern short mdl_load_ffd(char *name, FILE *fd, short tex_slot, short shd_slot,
 				mdl->hook_buf[i].par_jnt = data->hk_lst[i].par_jnt;
 				vec3_cpy(mdl->hook_buf[i].pos, data->hk_lst[i].pos);
 				vec3_cpy(mdl->hook_buf[i].dir, data->hk_lst[i].dir);
-				mat4_cpy(mdl->hook_buf[i].base_mat, data->hk_lst[i].mat);
+				mat4_cpy(mdl->hook_buf[i].loc_mat, data->hk_lst[i].mat);
 			}
 
 			/* Initialize the data for all hooks */

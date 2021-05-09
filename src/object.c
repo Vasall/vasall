@@ -929,7 +929,7 @@ extern void obj_sys_update(uint32_t now)
 	int o;
 
 	uint32_t lim_ts;
-	uint32_t run_ts;
+	uint32_t run_ts = 0;
 	uint32_t inp_ts;
 
 	char logi[OBJ_LIM];

@@ -57,10 +57,11 @@ extern int ren_create_shader(char *vs, char *fs, uint32_t *prog,
                              struct vk_pipeline *pipeline, int num, char **vars,
 							 enum mdl_type type)
 {
-	int i, res;
+	int i;
 	enum vk_in_attr in_attr = 0;
 	char *vk_vs, *vk_fs;
 	size_t vs_len, fs_len;
+	int res = -1;
 
 	for(i = 0; i < num; i++) {
 		if(strcmp(vars[i], "vtxPos") == 0 || strcmp(vars[i], "pos")
@@ -91,8 +92,14 @@ extern int ren_create_shader(char *vs, char *fs, uint32_t *prog,
 	fs_len = strlen(fs);
 	vk_vs = malloc(vs_len+5);
 	vk_fs = malloc(fs_len+5);
-	strncpy(vk_vs, vs, vs_len);
-	strncpy(vk_fs, fs, fs_len);
+	if(!vk_vs || !vk_fs) {
+		free(vk_vs);
+		free(vk_fs);
+		return -1;
+	}
+
+	strcpy(vk_vs, vs);
+	strcpy(vk_fs, fs);
 	vk_vs[vs_len+0] = '.';
 	vk_vs[vs_len+1] = 's';
 	vk_vs[vs_len+2] = 'p';
@@ -132,7 +139,7 @@ extern void ren_destroy_shader(uint32_t prog, struct vk_pipeline pipeline)
 extern int ren_create_texture(char *pth, uint32_t *hdl,
                               struct vk_texture *texture)
 {
-	int res;
+	int res = -1;
 
 	if(g_ren.mode == REN_MODE_VULKAN) {
 		res = vk_create_texture(pth, texture);
@@ -159,7 +166,7 @@ extern void ren_destroy_texture(uint32_t hdl, struct vk_texture texture)
 extern int ren_create_skybox(char *pths[6], uint32_t *hdl,
 			     struct vk_texture *skybox)
 {
-	int res;
+	int res = -1;
 
 	if(g_ren.mode == REN_MODE_VULKAN) {
 		res = vk_create_skybox(pths, skybox);
@@ -175,7 +182,7 @@ extern int ren_create_skybox(char *pths[6], uint32_t *hdl,
 extern int ren_create_model_data(struct vk_pipeline pipeline, uint32_t *vao,
                                  VkDescriptorSet *set)
 {
-	int res;
+	int res = -1;
 
 	if(g_ren.mode == REN_MODE_VULKAN) {
 		res = vk_create_constant_data(pipeline, set);

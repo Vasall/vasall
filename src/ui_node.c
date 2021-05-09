@@ -383,9 +383,9 @@ static void ui_adjust_pos(ui_cst_wrp *constr, rect_t *out_abs,
 	ui_cst_rel rel;
 
 	short size_val;
-	short cmp_val;
+	short cmp_val = 0;
 	short tmp[2] = {0, 0};
-	short pos;
+	short pos = 0;
 
 	proc_rel->x = 0;
 	proc_rel->y = 0;
@@ -516,9 +516,9 @@ static void ui_adjust_size(ui_cst_wrp *constr, rect_t *out_abs,
 	ui_cst_unit unit;
 	ui_cst_rel rel;
 
-	short cmp_val;
-	short tmp;
-	short size;
+	short cmp_val = 0;
+	short tmp = 0;
+	short size = 0;
 
 	proc_rel->w = par->w;
 	proc_rel->h = par->h;

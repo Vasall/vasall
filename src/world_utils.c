@@ -299,6 +299,7 @@ extern float **loadPPMHeightmap(char* fileName, int terrainSize)
 			heightmapImage[i][j] = img[subscript]/255.0;
 		}
 	}
+	free(img);
 
 	return heightmapImage;
 }
@@ -316,4 +317,6 @@ extern void loadPPMTexture(char* fileName, GLuint* textures)
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, img);
+
+	free(img);
 }

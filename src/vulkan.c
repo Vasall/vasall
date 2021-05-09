@@ -219,6 +219,9 @@ static int create_instance(void)
 #else
 	ext_count = 3;
 	ext = malloc(sizeof(char*) * ext_count);
+	if(!ext)
+		return -1;
+
 	ext[0] = "VK_KHR_surface";
 	ext[1] = "VK_KHR_xcb_surface";
 	ext[2] = "VK_KHR_xlib_surface";
@@ -276,7 +279,7 @@ static int get_gpu(void)
 	best_priority = 0;
 	vk.gpu = gpus[0];
 	for(i = 0; i < gpu_count; i++) {
-		int priority;
+		int priority = 0;
 		VkPhysicalDeviceProperties props;
 		VkPhysicalDeviceFeatures features;
 		vkGetPhysicalDeviceProperties(gpus[i], &props);
@@ -1181,6 +1184,9 @@ static char *get_cache_file_name(char *vs)
 	char *res;
 
 	vs_copy = malloc(strlen(vs)+1);
+	if(!vs_copy)
+		return 0;
+
 	strcpy(vs_copy, vs);
 
 	pipeline_name = basename(vs_copy);
@@ -1188,6 +1194,9 @@ static char *get_cache_file_name(char *vs)
 	pipeline_name[dot-pipeline_name] = '\0';
 
 	res = malloc(strlen(pipeline_name)+12);
+	if(!res)
+		return 0;
+
 	memcpy(res, ".cache/", 8);
 	strcpy(res+7, pipeline_name);
 	memcpy(res+strlen(pipeline_name)+7, ".bin", 5);

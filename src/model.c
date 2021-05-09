@@ -160,8 +160,10 @@ extern short mdl_set(char *name, short shd_slot)
 
 	/* Generate a new vao */
 	if(ren_create_model_data(g_ast.shd.pipeline[shd_slot], &mdl->vao,
-					&mdl->set) < 0)
+					&mdl->set) < 0) {
+		free(mdl);
 		return -1;
+	}
 
 	models[slot] = mdl;
 	return slot;

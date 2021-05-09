@@ -490,7 +490,7 @@ static int peer_hdl_exc(struct req_hdr *hdr, struct lcp_evt *evt,
 		char *in, int len)
 {
 	short num;
-	char *buf;
+	char *buf = NULL;
 	int written;
 	int tmp;
 	char pck[512];
@@ -519,7 +519,7 @@ static int peer_hdl_get(struct req_hdr *hdr, struct lcp_evt *evt,
 		char *in, int len)
 {
 	short num;
-	void *obj_lst;
+	void *obj_lst = NULL;
 	int written;
 	uint32_t ts;
 	int tmp;
@@ -906,8 +906,10 @@ extern int net_obj_insert(void *in, short in_num, uint32_t src, char **out,
 		/* An object with the id is not yet registered or cached */
 		if(obj_sel_id(id) < 0 && net_obj_find(id) == NULL) {
 			/* Allocate memory for the struct */
-			if(!(ent = malloc(sizeof(struct net_cache_entry))))
+			if(!(ent = malloc(sizeof(struct net_cache_entry)))) {
+				free(out_buf);
 				return -1;
+			}
 
 			/* Setup the struct */
 			ent->next = NULL;

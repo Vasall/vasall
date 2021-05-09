@@ -222,6 +222,7 @@ static int create_instance(void)
 	ext_count = 3;
 	if(!(ext = malloc(sizeof(char*) * ext_count)))
 		return -1;
+
 	ext[0] = "VK_KHR_surface";
 	ext[1] = "VK_KHR_xcb_surface";
 	ext[2] = "VK_KHR_xlib_surface";

@@ -79,4 +79,12 @@ extern short hnd_load(char *pth, short tex_slot, short shd_slot);
 extern void hnd_remv(short slot);
 
 
+/*
+ * Update all handhelds in the list.
+ *
+ * Returns: 0 on success or -1 if an error occurred
+ */
+extern int hnd_update(void);
+
+
 #endif /* _HANDHELD_H */

@@ -1270,60 +1270,15 @@ extern void obj_sys_render(void)
 
 				/* Calculate world-hook-position */
 				vec3_add(hook_pos, g_obj.pos[i], hook_pos);
-#if 0
-				/* Calculate hook-position */
-				vec3_cpy(calc, mdl->hook_buf[0].pos);
-				calc[3] = 1;
-				vec4_trans(calc, g_obj.rot_mat[i], calc);
-				vec4_trans(calc, g_obj.pos_mat[i], calc);
-				vec3_cpy(hook_pos, calc);
 
-				/* Calculate hook-direction */
-				vec3_cpy(calc, mdl->hook_buf[0].dir);
-				calc[3] = 0;
-				vec4_trans(calc, jnt_mat, calc);
-				vec4_trans(calc, g_obj.rot_mat[i], calc);
-				vec3_cpy(hook_dir, calc);
-				vec3_nrm(hook_dir, hook_dir);
-
-				vec3_sub(g_obj.aim_pos[i], hook_pos, dir);
-				vec3_nrm(dir, dir);
-				
-#if 0	
-				/* https://math.stackexchange.com/a/897677 */
-				mat4_idt(mat);
-
-				dot = vec3_dot(dir, hook_dir);
-				vec3_cross(dir, hook_dir, tmp);
-				cross = vec3_len(tmp);
-
-				mat[0x0] =  dot;
-				mat[0x1] =  cross;
-				mat[0x4] = -cross;
-				mat[0x5] =  dot;
-
-				mat4_pfpos_s(loc_mat, -hook_pos[0],
-						-hook_pos[1], -hook_pos[2]);
-
-				mat4_mult(mat, loc_mat, mat);
-
-
-				mat4_pfpos(loc_mat, hook_pos);
-				mat4_mult(loc_mat, mat, mat);
-
-
-				mat4_cpy(rot_mat, mat);
-
-				/* Calculate final rotation-matrix */
-				mat4_mult(rot_mat, g_obj.rot_mat[i], rot_mat);
-#endif
-#endif
 				/* Calculate position-matrix of hook */
 				mat4_idt(pos_mat);
 				mat4_pfpos(pos_mat, g_obj.pos[i]);
 
 				/* Calculate rotation-matrix of hook */
-				mat4_mult(g_obj.rot_mat[i], hook_mat, rot_mat);
+				mat4_idt(rot_mat);
+				mat4_pfpos(rot_mat, g_obj.rig[i]->hook_pos[0]);
+				mat4_mult(g_obj.rot_mat[i], rot_mat, rot_mat);
 
 				mdl_render(mdl_get("sph"), pos_mat, rot_mat, NULL);
 			}

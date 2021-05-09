@@ -238,7 +238,7 @@ static void rig_update_hooks(struct model_rig *rig)
 
 		/* Calculate the forward-direction of the hook */
 		vec3_cpy(calc, mdl->hook_buf[i].dir);
-		calc[3] = 1;
+		calc[3] = 0;
 		vec4_trans(calc, rig->hook_trans_mat[i], calc);
 		vec3_cpy(rig->hook_dir[i], calc);
 		vec3_nrm(rig->hook_dir[i], rig->hook_dir[i]);

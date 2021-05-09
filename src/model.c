@@ -404,6 +404,7 @@ static void mdl_calc_joints(struct model *mdl, short slot)
 	int i;
 	struct mdl_joint *jnt;	
 	mat4_t mat;
+	static int c = 0;
 
 	jnt = &mdl->jnt_buf[slot];
 
@@ -433,7 +434,7 @@ static void mdl_calc_hooks(struct model *mdl)
 	for(i = 0; i < mdl->hook_num; i++) {
 		/* Get the base matrix of the parent-joint */
 		par_jnt = mdl->hook_buf[i].par_jnt;
-		mat4_cpy(jnt_mat, mdl->jnt_buf[i].bind_mat);
+		mat4_cpy(jnt_mat, mdl->jnt_buf[par_jnt].bind_mat);
 
 		/* Multiply local-matrix with joint-matrix */
 		mat4_mult(jnt_mat, mdl->hook_buf[i].loc_mat,

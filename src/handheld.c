@@ -148,3 +148,15 @@ extern void hnd_remv(short slot)
 	/* Reset the mask */
 	g_hnd.mask[slot] = HND_M_NONE;
 }
+
+
+extern int hnd_update(void)
+{
+	int i;
+
+	for(i = 0; i < g_hnd.num; i++) {
+
+	}
+
+	return 0;
+}

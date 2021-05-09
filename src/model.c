@@ -437,11 +437,11 @@ static void mdl_calc_hooks(struct model *mdl)
 
 		/* Multiply local-matrix with joint-matrix */
 		mat4_mult(jnt_mat, mdl->hook_buf[i].loc_mat,
-				mdl->hook_buf[i].base_mat);
+				mdl->hook_buf[i].bind_mat);
 
 		/* Calculate inverte-bind-matrix */
-		mat4_inv(mdl->hook_buf[i].inv_base_mat, 
-				mdl->hook_buf[i].base_mat);
+		mat4_inv(mdl->hook_buf[i].inv_bind_mat, 
+				mdl->hook_buf[i].bind_mat);
 	}
 }
 
@@ -687,6 +687,10 @@ extern short mdl_load_ffd(char *name, FILE *fd, short tex_slot, short shd_slot,
 				vec3_cpy(mdl->hook_buf[i].pos, data->hk_lst[i].pos);
 				vec3_cpy(mdl->hook_buf[i].dir, data->hk_lst[i].dir);
 				mat4_cpy(mdl->hook_buf[i].loc_mat, data->hk_lst[i].mat);
+
+				printf("Hook Direction %d: ", i);
+				vec3_print(mdl->hook_buf[i].dir);
+				printf("\n");
 			}
 
 			/* Initialize the data for all hooks */

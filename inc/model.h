@@ -100,8 +100,8 @@ struct mdl_hook {
 	vec3_t pos;
 	vec3_t dir;
 	mat4_t loc_mat;
-	mat4_t base_mat;
-	mat4_t inv_base_mat;
+	mat4_t bind_mat;
+	mat4_t inv_bind_mat;
 };
 
 #define MDL_M_NONE 0

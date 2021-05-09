@@ -1262,9 +1262,6 @@ extern void obj_sys_render(void)
 				vec3_cpy(calc, mdl->hook_buf[0].pos);
 				calc[3] = 1;
 
-				printf("Hook-Matrix:\n");
-				mat4_print(hook_mat);
-
 				/* Transform position */
 				vec4_trans(calc, jnt_mat, calc);
 
@@ -1321,11 +1318,12 @@ extern void obj_sys_render(void)
 				mat4_mult(rot_mat, g_obj.rot_mat[i], rot_mat);
 #endif
 #endif
+				/* Calculate position-matrix of hook */
 				mat4_idt(pos_mat);
 				mat4_pfpos(pos_mat, g_obj.pos[i]);
 
-				mat4_idt(rot_mat);
-				mat4_cpy(rot_mat, hook_mat);
+				/* Calculate rotation-matrix of hook */
+				mat4_mult(g_obj.rot_mat[i], hook_mat, rot_mat);
 
 				mdl_render(mdl_get("sph"), pos_mat, rot_mat, NULL);
 			}

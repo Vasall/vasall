@@ -54,7 +54,7 @@ extern struct model_rig *rig_derive(short slot)
 
 		/* Allocate memory for hook-forward-vectors */
 		tmp = num * VEC3_SIZE;
-		if(!(rig->hook_pos = malloc(tmp)))
+		if(!(rig->hook_dir = malloc(tmp)))
 			goto err_free_hooks;
 
 		/* Allocate memory for hook-base-matrices */
@@ -211,6 +211,7 @@ static void rig_update_hooks(struct model_rig *rig)
 	mat4_t jnt_mat;
 	mat4_t loc_mat;
 	mat4_t base_mat;
+	vec4_t calc;
 
 	for(i = 0; i < rig->hook_num; i++) {
 		/* Get the index of the parent-joint */
@@ -226,8 +227,21 @@ static void rig_update_hooks(struct model_rig *rig)
 		mat4_mult(jnt_mat, loc_mat, rig->hook_base_mat[i]);
 
 		/* Calculate the tranformation-matrix */
-		mat4_mult(rig->hook_base_mat[i], mdl->hook_buf[i].inv_base_mat,
-				rig->hook_trans_mat[i]);	
+		mat4_mult(rig->hook_base_mat[i], mdl->hook_buf[i].inv_bind_mat,
+				rig->hook_trans_mat[i]);
+
+		/* Calculate the position of the hook */
+		vec3_cpy(calc, mdl->hook_buf[i].pos);
+		calc[3] = 1;
+		vec4_trans(calc, rig->hook_trans_mat[i], calc);
+		vec3_cpy(rig->hook_pos[i], calc);
+
+		/* Calculate the forward-direction of the hook */
+		vec3_cpy(calc, mdl->hook_buf[i].dir);
+		calc[3] = 1;
+		vec4_trans(calc, rig->hook_trans_mat[i], calc);
+		vec3_cpy(rig->hook_dir[i], calc);
+		vec3_nrm(rig->hook_dir[i], rig->hook_dir[i]);
 	}
 }
 
@@ -270,14 +284,12 @@ extern void rig_update(struct model_rig *rig, float p)
 		keyfr[1] = 0;
 	}
 
-#if 1
 	p = ABS(p / 90.0);
 	rig_calc_jnt(rig, 0, keyfr, p);
 
 	keyfr[0] = 0;
 	keyfr[1] = 1;
 	rig_calc_jnt(rig, 2, keyfr, 0);
-#endif
 
 	/* 
 	 * Calculate the base matrix for each joint recursivly.

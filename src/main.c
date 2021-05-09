@@ -97,7 +97,7 @@ int main(void)
 	/*
 	 * TODO: Automatically login
 	 */
-	/* net_insert("unrealguthrie\0", "CAT12345\0", &test1, &test2); */
+	net_insert("unrealguthrie\0", "CAT12345\0", &test1, &test2);
 
 	while(g_core.running) {
 		core_proc_evt();

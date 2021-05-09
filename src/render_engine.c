@@ -372,7 +372,8 @@ extern void ren_set_render_model_data(unsigned int uni_buf,
 		vk_render_set_constant_data(pipeline, set);
 	}
 	else if(g_ren.mode == REN_MODE_OPENGL) {
-		gl_render_set_uniform_buffer(uni_buf, uni);
+		if(uni_buf)
+			gl_render_set_uniform_buffer(uni_buf, uni);
 		gl_render_set_texture(hdl, type);
 	}
 }

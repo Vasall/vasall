@@ -2017,7 +2017,7 @@ extern int vk_create_ui(int width, int height, void *pixels, void **data,
 
 	texture->mip_levels = 1;
 
-	if(create_image(VK_FORMAT_R8G8B8A8_UNORM, width, height, 1, 1, 1,
+	if(create_image(VK_FORMAT_R8G8B8A8_SRGB, width, height, 1, 1, 1,
 			VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_USAGE_SAMPLED_BIT,
 			&texture->image, &texture->memory) < 0) {
 		return -1;
@@ -2080,7 +2080,7 @@ extern int vk_create_ui(int width, int height, void *pixels, void **data,
 		vk_assert(res);
 	}
 
-	if(create_image_view(texture->image, VK_FORMAT_R8G8B8A8_UNORM,
+	if(create_image_view(texture->image, VK_FORMAT_R8G8B8A8_SRGB,
 			VK_IMAGE_ASPECT_COLOR_BIT, 1, 1,
 			&texture->image_view) < 0) {
 		return -1;

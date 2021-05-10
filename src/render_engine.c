@@ -59,7 +59,8 @@ extern int ren_create_shader(char *vs, char *fs, uint32_t *prog,
 {
 	int i;
 	enum vk_in_attr in_attr = 0;
-	char *vk_vs, *vk_fs;
+	char *vk_vs = NULL;
+	char *vk_fs = NULL;
 	size_t vs_len, fs_len;
 	int res = -1;
 
@@ -90,27 +91,16 @@ extern int ren_create_shader(char *vs, char *fs, uint32_t *prog,
 
 	vs_len = strlen(vs);
 	fs_len = strlen(fs);
-<<<<<<< HEAD
-	vk_vs = malloc(vs_len+5);
-	vk_fs = malloc(fs_len+5);
-	if(!vk_vs || !vk_fs) {
-		free(vk_vs);
-		free(vk_fs);
-		return -1;
-	}
+	
+	if(!(vk_vs = malloc(vs_len+5)))
+		goto err_free_shaders;
+
+	if(!(vk_fs = malloc(fs_len+5)))
+		goto err_free_shaders;
 
 	strcpy(vk_vs, vs);
 	strcpy(vk_fs, fs);
-=======
-	if(!(vk_vs = malloc(vs_len+5)))
-		return -1;
 
-	if(!(vk_fs = malloc(fs_len+5)))
-		return -1;
-
-	strncpy(vk_vs, vs, vs_len);
-	strncpy(vk_fs, fs, fs_len);
->>>>>>> working_on_inverse_kinematics
 	vk_vs[vs_len+0] = '.';
 	vk_vs[vs_len+1] = 's';
 	vk_vs[vs_len+2] = 'p';
@@ -133,6 +123,11 @@ extern int ren_create_shader(char *vs, char *fs, uint32_t *prog,
 	free(vk_fs);
 
 	return res;
+
+err_free_shaders:
+	if(vk_vs) free(vk_vs);
+	if(vk_fs) free(vk_fs);
+	return -1;
 }
 
 

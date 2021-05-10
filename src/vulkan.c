@@ -220,12 +220,7 @@ static int create_instance(void)
 		return -1;
 #else
 	ext_count = 3;
-<<<<<<< HEAD
-	ext = malloc(sizeof(char*) * ext_count);
-	if(!ext)
-=======
 	if(!(ext = malloc(sizeof(char*) * ext_count)))
->>>>>>> working_on_inverse_kinematics
 		return -1;
 
 	ext[0] = "VK_KHR_surface";
@@ -1198,12 +1193,7 @@ static char *get_cache_file_name(char *vs)
 	char *dot;
 	char *res;
 
-<<<<<<< HEAD
-	vs_copy = malloc(strlen(vs)+1);
-	if(!vs_copy)
-=======
 	if(!(vs_copy = malloc(strlen(vs)+1)))
->>>>>>> working_on_inverse_kinematics
 		return 0;
 
 	strcpy(vs_copy, vs);
@@ -1212,12 +1202,7 @@ static char *get_cache_file_name(char *vs)
 	dot = strchr(pipeline_name, '.');
 	pipeline_name[dot-pipeline_name] = '\0';
 
-<<<<<<< HEAD
-	res = malloc(strlen(pipeline_name)+12);
-	if(!res)
-=======
 	if(!(res = malloc(strlen(pipeline_name)+12)))
->>>>>>> working_on_inverse_kinematics
 		return 0;
 
 	memcpy(res, ".cache/", 8);

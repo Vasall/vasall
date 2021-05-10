@@ -98,6 +98,10 @@ struct mdl_hook {
 	short idx;
 	short par_jnt;
 	vec3_t pos;
+	vec3_t dir;
+	mat4_t loc_mat;
+	mat4_t bind_mat;
+	mat4_t inv_bind_mat;
 };
 
 #define MDL_M_NONE 0
@@ -143,8 +147,8 @@ struct model {
 	int               anim_num;
 	struct mdl_anim   *anim_buf;
 
-	int               hok_num;
-	struct mdl_hook   *hok_buf;
+	int               hook_num;
+	struct mdl_hook   *hook_buf;
 
 	struct mdl_col    col;
 

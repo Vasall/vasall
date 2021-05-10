@@ -121,10 +121,6 @@ struct obj_wrapper {
 	/* Buffer containing the runtime-log */
 	struct obj_log           log[OBJ_LIM];
 
-	/* Variables used for rendering and animation */
-	vec3_t                   ren_pos[OBJ_LIM];
-	vec3_t                   ren_dir[OBJ_LIM];
-
 	/* The point the object is currently aiming at in world-space */
 	vec3_t                   aim_origin[OBJ_LIM];
 	vec3_t                   aim_pos[OBJ_LIM];
@@ -149,6 +145,13 @@ struct obj_wrapper {
 	/* Object/Player-Data like Health and Mana */
 	int                      len[OBJ_LIM];
 	char                     data[OBJ_LIM][OBJ_DATA_MAX];
+
+	/* Precalculated matrices */
+	mat4_t                   pos_mat[OBJ_LIM];
+	mat4_t                   rot_mat[OBJ_LIM];
+
+	mat4_t                   ren_pos_mat[OBJ_LIM];
+	mat4_t                   ren_rot_mat[OBJ_LIM];
 };
 
 

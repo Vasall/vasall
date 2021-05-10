@@ -90,6 +90,7 @@ extern int ren_create_shader(char *vs, char *fs, uint32_t *prog,
 
 	vs_len = strlen(vs);
 	fs_len = strlen(fs);
+<<<<<<< HEAD
 	vk_vs = malloc(vs_len+5);
 	vk_fs = malloc(fs_len+5);
 	if(!vk_vs || !vk_fs) {
@@ -100,6 +101,16 @@ extern int ren_create_shader(char *vs, char *fs, uint32_t *prog,
 
 	strcpy(vk_vs, vs);
 	strcpy(vk_fs, fs);
+=======
+	if(!(vk_vs = malloc(vs_len+5)))
+		return -1;
+
+	if(!(vk_fs = malloc(fs_len+5)))
+		return -1;
+
+	strncpy(vk_vs, vs, vs_len);
+	strncpy(vk_fs, fs, fs_len);
+>>>>>>> working_on_inverse_kinematics
 	vk_vs[vs_len+0] = '.';
 	vk_vs[vs_len+1] = 's';
 	vk_vs[vs_len+2] = 'p';

@@ -1,6 +1,8 @@
 #ifndef _EXTMATH_H
 #define _EXTMATH_H
 
+#include "vector.h"
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -19,5 +21,8 @@
 extern float clamp(float v);
 extern float dist(float x, float y, float xp, float yp);
 extern float round(float v);
+
+
+extern int line_cross(vec2_t p0, vec2_t v0, vec2_t p1, vec2_t v1, vec2_t out);
 
 #endif

@@ -1,8 +1,6 @@
 #ifndef _VECTOR_H
 #define _VECTOR_H
 
-#include "extmath.h"
-
 #define VEC2_SIZE (sizeof(float)*2)
 typedef float vec2_t[2];
 
@@ -24,6 +22,7 @@ typedef int int4_t[4];
 #define SHORT2_SIZE (sizeof(short)*2)
 typedef short short2_t[2];
 
+#include "extmath.h"
 #include "matrix.h"
 
 extern void   vec2_set(vec2_t out, float x, float y);

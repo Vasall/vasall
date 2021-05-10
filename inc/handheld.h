@@ -31,8 +31,7 @@ struct hnd_wrapper {
 	short     par_hook[HND_LIM];
 
 	/* 
-	 * The position relative to the object and the barrel-direction in the
-	 * resting-position.
+	 * The offset and direction of the barrel in the resting position.
 	 */
 	vec3_t    aim_pos[HND_LIM];
 	vec3_t    aim_dir[HND_LIM];
@@ -78,6 +77,14 @@ extern short hnd_load(char *pth, short tex_slot, short shd_slot);
  * @slot: The slot of the handheld in the table
  */
 extern void hnd_remv(short slot);
+
+
+/*
+ * Update all handhelds in the list.
+ *
+ * Returns: 0 on success or -1 if an error occurred
+ */
+extern int hnd_update(void);
 
 
 #endif /* _HANDHELD_H */

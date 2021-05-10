@@ -11,13 +11,6 @@
 /*
  * A simple rig-struct containing the necessary data for the
  * animation of an object.
- *
- * @model: The slot of the model in the model-array
- * @anim: The index of the current animation
- * @prog: The current progress in rendering the animation
- * @ts: The timestamp of the last update of the animation
- * @jnt_num: The number of joints
- * @jnt_buf: The matrices for each joint
  */
 struct model_rig {
 	short     model;
@@ -33,7 +26,16 @@ struct model_rig {
 	vec4_t    loc_rot[JOINT_MAX_NUM];
 
 	mat4_t    base_mat[JOINT_MAX_NUM];
-	mat4_t    tran_mat[JOINT_MAX_NUM];
+	mat4_t    trans_mat[JOINT_MAX_NUM];
+
+	/*
+	 * Hooks
+	 */
+	short     hook_num;
+	vec3_t    *hook_pos;
+	vec3_t    *hook_dir;
+	mat4_t    *hook_base_mat;
+	mat4_t    *hook_trans_mat;
 };
 
 

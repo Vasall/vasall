@@ -65,10 +65,7 @@ int load_resources(void)
 	if(mdl_load("slp", "res/models/slope.amo", tex_get("ba1"), shd_get("mdl"), MDL_TYPE_DEFAULT) < 0)
 			return -1;
 
-	if(mdl_load("gun", "res/models/pistol.obj", tex_get("ba1"), shd_get("mdl"), MDL_TYPE_DEFAULT) < 0)
-			return -1;
-
-	if(mdl_load("sph", "res/models/sphere.obj", tex_get("ba0"), shd_get("mdl"), MDL_TYPE_DEFAULT) < 0)
+	if(mdl_load("sph", "res/models/sphere.amo", tex_get("ba2"), shd_get("mdl"), MDL_TYPE_DEFAULT) < 0)
 			return -1;
 
 
@@ -76,7 +73,7 @@ int load_resources(void)
 			return -1;
 
 
-	if(mdl_load("cube", "res/models/cube.obj", tex_get("skybox"), shd_get("skybox"), MDL_TYPE_SKYBOX) < 0)
+	if(mdl_load("cube", "res/models/cube.amo", tex_get("skybox"), shd_get("skybox"), MDL_TYPE_SKYBOX) < 0)
 		abort();
 
 	/* handhelds */
@@ -98,14 +95,14 @@ extern void test1(char *buf, int len)
 
 	vec3_t pos0 = {0.0, 0.0, 0.0};
 	vec3_t pos1 = {0.0, -12.0, 0.0};
-	vec3_t pos2 = {0, 15, 0};
+	vec3_t pos2 = {0.0, 15.0, 0.0};
 
 	if(buf || len) {/* Prevent warning for not using parameters */}
 
 	/* Place a slope */
 	obj_set(id, OBJ_M_STATIC, pos0, mdl_get("wld"), NULL, 0, 0);
-	obj_set(id + 100, OBJ_M_STATIC, pos0, mdl_get("slp"), NULL, 0, 0);
-	obj_set(id + 101, OBJ_M_STATIC, pos1, mdl_get("tst"), NULL, 0, 0);
+	obj_set(id + 101, OBJ_M_STATIC, pos1, mdl_get("slp"), NULL, 0, 0);
+	obj_set(id + 102, OBJ_M_STATIC, pos2, mdl_get("tst"), NULL, 0, 0);
 
 	/* Set the skybox */
 	wld_set_skybox(mdl_get("cube"));
@@ -188,7 +185,7 @@ int load_ui(void)
 	short val;
 	void *ele;
 
-	tmp = ui_add(UI_WRAPPER, ui_get(root, "root"), NULL, "mns");
+	tmp = ui_add(UI_WRAPPER, ui_get(root, "root"), NULL, "mns");	
 	ui_enable_tex(tmp);
 
 	tmp = ui_add(UI_WRAPPER, ui_get(root, "mns"), NULL, "mns_form");
@@ -207,7 +204,6 @@ int load_ui(void)
 	ele = ui_new_text("VASALL\0", sdl_color(255, 255, 255, 255), 3, 0);
 	tmp = ui_add(UI_TEXT, ui_get(root, "mns_form"), ele, "mns_title");
 	ui_constr(tmp, UI_CST_SIZE, UI_CST_VERT, 0, 1, 89, UI_CST_PX, 0);
-
 
 	ele = ui_new_text("USERNAME\0", sdl_color(255, 255, 255, 255), 2, TXT_LEFT);
 	tmp = ui_add(UI_TEXT, ui_get(root, "mns_form"), ele, "mns_user_lbl");
@@ -231,7 +227,6 @@ int load_ui(void)
 	memcpy(&((ui_input *)ele)->cur_col, sdl_color_s(255, 255, 255, 255), sizeof(color_t));
 	ui_enable_tex(tmp);
 
-
 	ele = ui_new_text("PASSWORD\0", sdl_color(255, 255, 255, 255), 2, TXT_LEFT);
 	tmp = ui_add(UI_TEXT, ui_get(root, "mns_form"), ele, "mns_user_lbl");
 	ui_constr(tmp, UI_CST_SIZE, UI_CST_HORI, 0, 1,           350, UI_CST_PX, 0);
@@ -253,7 +248,6 @@ int load_ui(void)
 	ui_style(tmp, UI_STY_CRNRAD, short4(2, 2, 2, 2));
 	memcpy(&((ui_input *)ele)->cur_col, sdl_color_s(255, 255, 255, 255), sizeof(color_t));
 	ui_enable_tex(tmp);
-
 
 	ele = ui_new_button(&login);
 	tmp = ui_add(UI_BUTTON, ui_get(root, "mns_form"), ele, "mns_login_btn");

@@ -400,29 +400,53 @@ static void mdl_order_joints(short slot)
 	}
 }
 
-static void mdl_calc_joint(struct model *mdl, short slot);
-static void mdl_calc_joint(struct model *mdl, short slot)
+static void mdl_calc_joints(struct model *mdl, short slot);
+static void mdl_calc_joints(struct model *mdl, short slot)
 {
 	int i;
 	struct mdl_joint *jnt;	
 	mat4_t mat;
+	static int c = 0;
 
 	jnt = &mdl->jnt_buf[slot];
 
 	mat4_cpy(mat, jnt->loc_bind_mat);
 
 	/* Adjust absolute joint-matrix using parent-joint */
-	if(jnt->par >= 0)
+	if(jnt->par != -1)
 		mat4_mult(mdl->jnt_buf[jnt->par].bind_mat, mat, mat);
 
 	/* Attach base-matrix to joint */
 	mat4_cpy(jnt->bind_mat, mat);
 
+	/* Calculate the inverse to the base-matrix */
+	mat4_inv(jnt->inv_bind_mat, jnt->bind_mat);
+
 	/* Call function recursivly on child-joints */
 	for(i = 0; i < jnt->child_num; i++)
-		mdl_calc_joint(mdl, jnt->child_buf[i]);
+		mdl_calc_joints(mdl, jnt->child_buf[i]);
 }
 
+static void mdl_calc_hooks(struct model *mdl)
+{
+	int i;
+	short par_jnt;
+	mat4_t jnt_mat;
+
+	for(i = 0; i < mdl->hook_num; i++) {
+		/* Get the base matrix of the parent-joint */
+		par_jnt = mdl->hook_buf[i].par_jnt;
+		mat4_cpy(jnt_mat, mdl->jnt_buf[par_jnt].bind_mat);
+
+		/* Multiply local-matrix with joint-matrix */
+		mat4_mult(jnt_mat, mdl->hook_buf[i].loc_mat,
+				mdl->hook_buf[i].bind_mat);
+
+		/* Calculate inverte-bind-matrix */
+		mat4_inv(mdl->hook_buf[i].inv_bind_mat, 
+				mdl->hook_buf[i].bind_mat);
+	}
+}
 
 extern short mdl_load(char *name, char *pth, short tex_slot, short shd_slot,
 			enum mdl_type type)
@@ -528,33 +552,19 @@ extern short mdl_load_ffd(char *name, FILE *fd, short tex_slot, short shd_slot,
 			/* Copy joint-name */
 			strcpy(mdl->jnt_buf[i].name, data->jnt_lst[i].name);
 
-			/* Set parent-joint-index */
-			if(data->jnt_lst[i].par)
-				tmp = data->jnt_lst[i].par->index;
-			else 
-				tmp = -1;
-			mdl->jnt_buf[i].par = tmp;			
+			mdl->jnt_buf[i].par = data->jnt_lst[i].par;
 		}
 
 		/* Copy joint-matrices */
 		for(i = 0; i < mdl->jnt_num; i++) {
-			mat4_cpy(mdl->jnt_buf[i].loc_bind_mat,
-					data->jnt_lst[i].mat);
+			mat4_cpy(mdl->jnt_buf[i].loc_bind_mat, data->jnt_lst[i].mat);
 		}
 
 		/* Link the children to the parent-joints */
 		mdl_order_joints(slot);
 
 		/* Calculate the base matrices of the joints */
-		mdl_calc_joint(mdl, mdl->jnt_root);
-
-		/* Inverse the matrices of the joints */
-		for(i = 0; i < mdl->jnt_num; i++) {
-			mat4_std(mdl->jnt_buf[i].bind_mat);
-
-			mat4_inv(mdl->jnt_buf[i].inv_bind_mat,
-					mdl->jnt_buf[i].bind_mat);
-		}
+		mdl_calc_joints(mdl, mdl->jnt_root);
 	}
 
 	/* Copy animations */
@@ -664,16 +674,30 @@ extern short mdl_load_ffd(char *name, FILE *fd, short tex_slot, short shd_slot,
 	 * If handheld-hooks are defined.
 	 */
 	if(data->attr_m & AMO_M_HOK) {
-		mdl->hok_num = data->hh_c;
+		mdl->hook_num = data->hk_c;
 
-		tmp = sizeof(struct amo_hook) * mdl->hok_num;
-		if(!(mdl->hok_buf = malloc(tmp)))
-			goto err_free_data;
 
-		for(i = 0; i < mdl->hok_num; i++) {
-			mdl->hok_buf[i].idx = data->hh_lst[i].idx;
-			mdl->hok_buf[i].par_jnt = data->hh_lst[i].par_jnt;
-			vec3_cpy(mdl->hok_buf[i].pos, data->hh_lst[i].pos);
+		if(mdl->hook_num > 0) {
+			printf("Load %d hooks\n", mdl->hook_num);
+
+			tmp = sizeof(struct mdl_hook) * mdl->hook_num;
+			if(!(mdl->hook_buf = malloc(tmp)))
+				goto err_free_data;
+
+			for(i = 0; i < mdl->hook_num; i++) {
+				mdl->hook_buf[i].idx = data->hk_lst[i].idx;
+				mdl->hook_buf[i].par_jnt = data->hk_lst[i].par_jnt;
+				vec3_cpy(mdl->hook_buf[i].pos, data->hk_lst[i].pos);
+				vec3_cpy(mdl->hook_buf[i].dir, data->hk_lst[i].dir);
+				mat4_cpy(mdl->hook_buf[i].loc_mat, data->hk_lst[i].mat);
+
+				printf("Hook Direction %d: ", i);
+				vec3_print(mdl->hook_buf[i].dir);
+				printf("\n");
+			}
+
+			/* Initialize the data for all hooks */
+			mdl_calc_hooks(mdl);
 		}
 	}
 
@@ -867,7 +891,7 @@ extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
 	mat4_cpy(uni.view, view);
 	mat4_cpy(uni.proj, proj);
 	if(rig != NULL)
-		memcpy(uni.tran_mat, rig->tran_mat, mdl->jnt_num * MAT4_SIZE);
+		memcpy(uni.trans_mat, rig->trans_mat, mdl->jnt_num * MAT4_SIZE);
 	
 	/* Set uniform buffer and textures */
 	ren_set_render_model_data(mdl->uni_buf, uni,
@@ -878,7 +902,7 @@ extern void mdl_render(short slot, mat4_t pos_mat, mat4_t rot_mat,
 	ren_draw(mdl->idx_num, mdl->type);
 
 	/* Unuse the texture, shader and VAO */
-	/* tex_unuse();
+	tex_unuse();
 	shd_unuse();
-	glBindVertexArray(0); */
+	glBindVertexArray(0);
 }

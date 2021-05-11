@@ -33,12 +33,12 @@ extern void obj_log_cpy(short slot, short i, uint32_t *ts, vec3_t pos, vec3_t ve
 
 
 /*
- * Calculate the point the object is currently aiming at both in world-space and
- * model-space and write it to the object.
+ * Calculate the point the object is currently looking at both in world-space
+ * and model-space and write it to the object.
  *
  * @slot: The object-slot
  */
-extern void obj_calc_aim(short slot);
+extern void obj_calc_view(short slot);
 
 /*
  * Update the handheld-data based on the current animation.

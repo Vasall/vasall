@@ -124,7 +124,7 @@ extern void obj_log_cpy(short slot, short i, uint32_t *ts, vec3_t pos, vec3_t ve
 }
 
 
-extern void obj_calc_aim(short slot)
+extern void obj_calc_view(short slot)
 {
 	int i;
 	int j;
@@ -139,11 +139,14 @@ extern void obj_calc_aim(short slot)
 	vec4_t calc;
 	mat4_t mat;
 
-	/* Calculate the origin of the aiming-ray */
+	/* Calculate the origin of the view-ray */
 	vec3_cpy(pos, g_obj.pos[slot]);
 	vec3_add(pos, off, pos);
 
-	/* Calculate the direction of the aiming-ray */
+	/* Set the objects view-offset */
+	vec3_cpy(g_obj.view_origin[slot], pos);	
+
+	/* Calculate the direction of the view-ray */
 	vec3_cpy(dir, g_obj.dir[slot]);
 	vec3_nrm(dir, dir);
 
@@ -191,18 +194,18 @@ extern void obj_calc_aim(short slot)
 	}
 
 
-	/* Limit aiming-range */
+	/* Limit view-range */
 	if(!pck.found || pck.col_t > 10) {
 		pck.col_t = 10;
 	}
 
 	/* 
-	 * Calculate the point the object is currently aiming at in
+	 * Calculate the point the object is currently looking at in
 	 * world-space.
 	 */
 	vec3_scl(dir, pck.col_t, dir);
 	vec3_add(pos, dir, pos);
-	vec3_cpy(g_obj.aim_pos[slot], pos);
+	vec3_cpy(g_obj.view_pos[slot], pos);
 
 	/*
 	 * Calculate the aim-point relative to the object.
@@ -211,7 +214,7 @@ extern void obj_calc_aim(short slot)
 	calc[3] = 1;
 	mat4_inv(mat, g_obj.rot_mat[slot]);
 	vec4_trans(calc, mat, calc);
-	vec3_cpy(g_obj.aim_pos_rel[slot], calc);
+	vec3_cpy(g_obj.view_pos_rel[slot], calc);
 }
 
 

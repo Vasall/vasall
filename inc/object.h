@@ -134,12 +134,12 @@ struct obj_wrapper {
 	struct obj_log           log[OBJ_LIM];
 
 	/* 
-	 * The point the object is currently aiming at in world and
+	 * The point the object is currently looking at in world and
 	 * model-space
 	 */
-	vec3_t                   aim_origin[OBJ_LIM];
-	vec3_t                   aim_pos[OBJ_LIM];
-	vec3_t                   aim_pos_rel[OBJ_LIM];
+	vec3_t                   view_origin[OBJ_LIM];
+	vec3_t                   view_pos[OBJ_LIM];
+	vec3_t                   view_pos_rel[OBJ_LIM];
 
 	/* The model and the rig */
 	short                    mdl[OBJ_LIM];

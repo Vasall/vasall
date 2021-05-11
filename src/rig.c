@@ -37,6 +37,7 @@ extern struct model_rig *rig_derive(short slot)
 	rig->hook_pos = NULL;
 	rig->hook_dir = NULL;
 	rig->hook_base_mat = NULL;
+	rig->hook_loc_mat = NULL;
 	rig->hook_trans_mat = NULL;
 
 
@@ -62,6 +63,11 @@ extern struct model_rig *rig_derive(short slot)
 		if(!(rig->hook_base_mat = malloc(tmp)))
 			goto err_free_hooks;
 
+		/* Allocate memory for hook-local-transformation-matrices */
+		tmp = num * MAT4_SIZE;
+		if(!(rig->hook_loc_mat = malloc(tmp)))
+			goto err_free_hooks;
+
 		/* Allocate memory for hook-transformation-matrices */
 		tmp = num * MAT4_SIZE;
 		if(!(rig->hook_trans_mat = malloc(tmp)))
@@ -75,6 +81,7 @@ err_free_hooks:
 	if(rig->hook_pos) free(rig->hook_pos);
 	if(rig->hook_dir) free(rig->hook_dir);
 	if(rig->hook_base_mat) free(rig->hook_base_mat);
+	if(rig->hook_loc_mat) free(rig->hook_loc_mat);
 	if(rig->hook_trans_mat) free(rig->hook_trans_mat);
 
 err_free_rig:
@@ -87,6 +94,12 @@ extern void rig_free(struct model_rig *rig)
 {
 	if(!rig)
 		return;
+
+	if(rig->hook_pos) free(rig->hook_pos);
+	if(rig->hook_dir) free(rig->hook_dir);
+	if(rig->hook_base_mat) free(rig->hook_base_mat);
+	if(rig->hook_loc_mat) free(rig->hook_loc_mat);
+	if(rig->hook_trans_mat) free(rig->hook_trans_mat);
 
 	free(rig);
 }
@@ -242,6 +255,9 @@ static void rig_update_hooks(struct model_rig *rig)
 		vec4_trans(calc, rig->hook_trans_mat[i], calc);
 		vec3_cpy(rig->hook_dir[i], calc);
 		vec3_nrm(rig->hook_dir[i], rig->hook_dir[i]);
+
+		/* Reset the local transformation-matrix */
+		mat4_idt(rig->hook_loc_mat[i]);
 	}
 }
 
@@ -316,4 +332,40 @@ extern void rig_mult_mat(struct model_rig *rig, mat4_t m)
 
 		mat4_cpy(rig->trans_mat[i], conv_m);
 	}
+}
+
+
+extern int rig_hk_lookat(struct model_rig *rig, short hk, vec3_t pos)
+{
+	vec3_t v1;
+	vec3_t v2;
+
+	vec3_t tmp;
+	float dot;
+	float cross;
+	mat4_t mat;
+
+	if(rig == NULL)
+		return -1;
+
+	vec3_cpy(v2, rig->hook_dir[hk]);
+
+	vec3_sub(pos, rig->hook_pos[hk], v1);
+	vec3_nrm(v1, v1);
+
+	
+	dot = vec3_dot(v1, v2);
+	vec3_cross(v1, v2, tmp);
+	cross = vec3_len(tmp);
+
+	mat4_idt(mat);
+
+	mat[0x5] = dot;
+	mat[0x6] = cross;
+	mat[0x9] = -cross;
+	mat[0xa] = dot;
+
+	mat4_cpy(rig->hook_loc_mat[hk], mat);
+
+	return 0;
 }

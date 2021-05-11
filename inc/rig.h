@@ -35,6 +35,7 @@ struct model_rig {
 	vec3_t    *hook_pos;
 	vec3_t    *hook_dir;
 	mat4_t    *hook_base_mat;
+	mat4_t    *hook_loc_mat;
 	mat4_t    *hook_trans_mat;
 };
 
@@ -72,5 +73,20 @@ extern void rig_update(struct model_rig *rig, float p);
  * @m: The transformation-matrix
  */
 extern void rig_mult_mat(struct model_rig *rig, mat4_t m);
+
+
+/*
+ * Update the rotation of the hook, so the forward-vector will point to the
+ * specified position in model-space, and use inverse-kinematics to move the
+ * joints accordingly.
+ *
+ * @rig: Pointer to a rig containing the hooks and joints
+ * @hk: The index of the hook
+ * @pos: The position to point the forward-vector to
+ *
+ * Returns: 0 on success or -1 if an error occurred
+ */
+extern int rig_hk_lookat(struct model_rig *rig, short hk, vec3_t pos);
+
 
 #endif

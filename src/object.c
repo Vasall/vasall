@@ -1036,8 +1036,8 @@ extern void obj_sys_prerender(float interp)
 
 	for(i = 0; i < OBJ_LIM; i++) {
 		if(g_obj.mask[i] & OBJ_M_MOVE) {
-			/* Calculate position the object is aiming at */
-			obj_calc_aim(i);
+			/* Calculate position the object is looking at */
+			obj_calc_view(i);
 		}
 
 		if(g_obj.mask[i] & OBJ_M_RIG) {
@@ -1049,6 +1049,16 @@ extern void obj_sys_prerender(float interp)
 
 			/* Calculate rig with aiming */
 			rig_update(g_obj.rig[i], agl);
+		}
+
+		if(g_obj.hnd[i].idx > -1) {
+			vec3_t pos;
+
+			/* Adjust the rotation of the handheld */
+			vec3_sub(g_obj.view_pos_rel[i], g_hnd.brl_off[0], pos);
+
+			/* Adjust the rotation of the hook */
+			rig_hk_lookat(g_obj.rig[i], 0, pos);
 		}
 
 
@@ -1099,6 +1109,9 @@ extern void obj_sys_render(void)
 	mat4_t rot_m;
 	mat4_t pos_m;
 
+	vec4_t calc;
+	mat4_t mat;
+
 	mat4_idt(idt);
 
 	for(i = 0; i < OBJ_LIM; i++) {
@@ -1110,56 +1123,16 @@ extern void obj_sys_render(void)
 			mdl_render(g_obj.mdl[i], pos_m, rot_m, g_obj.rig[i]);
 
 			if(g_obj.mask[i] & OBJ_M_MOVE) {
-				struct model *mdl;
-
-				vec4_t calc;
-				vec3_t hook_pos;
-				vec3_t hook_dir;
-				vec3_t dir;
-
-				mat4_t hook_mat;
-
-				short jnt_idx;
-				mat4_t jnt_mat;
-
-
-				/* Get a pointer to the model */
-				mdl = models[g_obj.mdl[i]];
-
-				/* Get local position and direction of hook */
-				vec3_cpy(hook_pos, mdl->hook_buf[0].pos);
-				vec3_cpy(hook_dir, mdl->hook_buf[0].dir);
-				hook_pos[3] = 1;
-				hook_dir[3] = 0;
-
-				vec3_nrm(hook_dir, hook_dir);
-
-				/* Get the matrix of the hook */
-				mat4_cpy(hook_mat, g_obj.rig[i]->hook_base_mat[0]);
-
-				/* Get the position of the hook */
-				vec3_cpy(calc, mdl->hook_buf[0].pos);
-				calc[3] = 1;
-
-				/* Transform position */
-				vec4_trans(calc, jnt_mat, calc);
-
-				/* Copy hook-position */
-				vec3_cpy(hook_pos, calc);	
-
-				/* Calculate world-hook-position */
-				vec3_add(hook_pos, g_obj.pos[i], hook_pos);
-
 				/* Calculate position-matrix of hook */
 				mat4_idt(pos_m);
 				mat4_pfpos(pos_m, g_obj.pos[i]);
 
 				/* Calculate rotation-matrix of hook */
-				mat4_idt(rot_m);
-				mat4_pfpos(rot_m, g_obj.rig[i]->hook_pos[0]);
-				mat4_mult(g_obj.rot_mat[i], rot_m, rot_m);
+				mat4_mult(g_obj.rig[i]->hook_loc_mat[0], g_hnd.hook_mat[0][0], mat);
+				mat4_mult(g_obj.rig[i]->hook_base_mat[0], mat, mat);
+				mat4_mult(g_obj.rot_mat[i], mat, rot_m);
 
-				mdl_render(mdl_get("sph"), pos_m, rot_m, NULL);
+				mdl_render(mdl_get("pistol"), pos_m, rot_m, NULL);
 			}
 
 			if(g_obj.mask[i] & OBJ_M_MOVE) {
@@ -1167,7 +1140,7 @@ extern void obj_sys_render(void)
 				 * Render a sphere at the aiming-point.
 				 */		
 				mat4_idt(pos_m);
-				mat4_pfpos(pos_m, g_obj.aim_pos[i]);
+				mat4_pfpos(pos_m, g_obj.view_pos[i]);
 				mdl_render(mdl_get("sph"), pos_m, idt, NULL);
 			}
 		}

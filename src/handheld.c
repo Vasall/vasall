@@ -103,8 +103,10 @@ extern short hnd_load(char *pth, short tex_slot, short shd_slot)
 	 * Go through the list of hooks and calculate the matrices from the
 	 * vectors.
 	 */
-	for(i = 0; i < g_hnd.hook_c[slot]; i++)
+	for(i = 0; i < g_hnd.hook_c[slot]; i++) {
+		mat4_idt(g_hnd.hook_mat[slot][i]);
 		mat4_pfpos(g_hnd.hook_mat[slot][i], g_hnd.hook_vec[slot][i]);
+	}
 
 	fclose(fd);
 	return slot;

@@ -12,12 +12,6 @@
 #define HND_HOOK_LIM      5
 
 
-/* TODO */
-struct hnd_handle {
-	int i;
-};
-
-
 #define HND_M_NONE 0
 
 struct hnd_wrapper {
@@ -30,18 +24,14 @@ struct hnd_wrapper {
 	/* The index of the parent-hook */
 	short     par_hook[HND_LIM];
 
-	/* 
-	 * The offset and direction of the barrel in the resting position.
-	 */
-	vec3_t    aim_pos[HND_LIM];
-	vec3_t    aim_dir[HND_LIM];
-
-	/* The vector and the matrix from the hook to the handheld */
+	/* The  position of the handheld relative to the hooks */
 	short     hook_c[HND_LIM];
 	short     hook_idx[HND_LIM][HND_HOOK_LIM];
 	vec3_t    hook_vec[HND_LIM][HND_HOOK_LIM];
 	mat4_t    hook_mat[HND_LIM][HND_HOOK_LIM];
-	mat4_t    hook_mat_inv[HND_LIM][HND_HOOK_LIM];
+
+	/* The offset of the barrel relative to the parent-hook */
+	vec3_t    brl_off[HND_LIM];
 };
 
 
@@ -80,11 +70,12 @@ extern void hnd_remv(short slot);
 
 
 /*
- * Update all handhelds in the list.
+ * Get the slot of a handheld via the name.
+ *
+ * @name: The name of the handheld
  *
  * Returns: 0 on success or -1 if an error occurred
  */
-extern int hnd_update(void);
-
+extern short hnd_get(char *name);
 
 #endif /* _HANDHELD_H */

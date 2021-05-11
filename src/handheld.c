@@ -71,30 +71,6 @@ extern short hnd_load(char *pth, short tex_slot, short shd_slot)
 			fscanf(fd, "%hd",
 					&g_hnd.par_hook[slot]);
 		}
-		/* apo <x> <y> <z> */
-		else if(strcmp(cmd_buf, "apo") == 0) {
-			vec3_t tmp;
-
-			/* Read the barrel-position */
-			fscanf(fd, "%f %f %f",
-					&tmp[0],
-					&tmp[1],
-					&tmp[2]);
-
-			vec3_cpy(g_hnd.aim_pos[slot], tmp);
-		}
-		/* adi <x> <y> <z> */
-		else if(strcmp(cmd_buf, "adi") == 0) {
-			vec3_t tmp;
-
-			/* Read the barrel-direction */
-			fscanf(fd, "%f %f %f",
-					&tmp[0],
-					&tmp[1],
-					&tmp[2]);
-
-			vec3_cpy(g_hnd.aim_dir[slot], tmp);
-		}
 		/* hok <index> <x> <y> z<> */
 		else if(strcmp(cmd_buf, "hok") == 0) {
 			short tmp;
@@ -119,18 +95,16 @@ extern short hnd_load(char *pth, short tex_slot, short shd_slot)
 	/*
 	 * Read the model-data and add it to the model-table.
 	 */
-	if((g_hnd.mdl[slot] = mdl_load_ffd(g_hnd.name[slot], fd,
-					tex_slot, shd_slot, MDL_TYPE_DEFAULT)) < 0)
+	if((g_hnd.mdl[slot] = mdl_load_ffd(g_hnd.name[slot], fd, tex_slot,
+					shd_slot, MDL_TYPE_DEFAULT)) < 0)
 		goto err_remv_hnd;
 
 	/*
 	 * Go through the list of hooks and calculate the matrices from the
 	 * vectors.
 	 */
-	for(i = 0; i < g_hnd.hook_c[slot]; i++) {
+	for(i = 0; i < g_hnd.hook_c[slot]; i++)
 		mat4_pfpos(g_hnd.hook_mat[slot][i], g_hnd.hook_vec[slot][i]);
-		mat4_inv(g_hnd.hook_mat_inv[slot][i], g_hnd.hook_mat[slot][i]);
-	}
 
 	fclose(fd);
 	return slot;
@@ -147,16 +121,4 @@ extern void hnd_remv(short slot)
 {
 	/* Reset the mask */
 	g_hnd.mask[slot] = HND_M_NONE;
-}
-
-
-extern int hnd_update(void)
-{
-	int i;
-
-	for(i = 0; i < g_hnd.num; i++) {
-
-	}
-
-	return 0;
 }

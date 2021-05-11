@@ -1,5 +1,7 @@
 #include "object_utils.h"
 
+#include "collision.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -119,4 +121,132 @@ extern void obj_log_cpy(short slot, short i, uint32_t *ts, vec3_t pos, vec3_t ve
 
 	vec2_cpy(mov, log->mov[i]);
 	vec3_cpy(dir, log->dir[i]);
+}
+
+
+extern void obj_calc_aim(short slot)
+{
+	int i;
+	int j;
+	int k;
+
+	vec3_t pos;
+	vec3_t dir;
+	vec3_t off = {0, 0, 1.8};
+	struct col_pck_ray pck;	
+
+	struct model *mdl;
+	vec4_t calc;
+	mat4_t mat;
+
+	/* Calculate the origin of the aiming-ray */
+	vec3_cpy(pos, g_obj.pos[slot]);
+	vec3_add(pos, off, pos);
+
+	/* Calculate the direction of the aiming-ray */
+	vec3_cpy(dir, g_obj.dir[slot]);
+	vec3_nrm(dir, dir);
+
+	/* Initialize the collision-package */
+	col_init_pck_ray(&pck, pos, dir);
+
+	/* Go through all objects */
+	for(i = 0; i < OBJ_LIM; i++) {
+		if(g_obj.mask[i] == OBJ_M_NONE)
+			continue;
+
+		/* Don't check collision with the same object */
+		if(i == slot)
+			continue;
+
+		if((g_obj.mask[i] & OBJ_M_SOLID) == 0)
+			continue;
+
+		/* Get pointer to the model */
+		mdl = models[g_obj.mdl[i]];
+
+		/* TODO: Check collision with other player-objects */
+		if((mdl->attr_m & MDL_M_CCM) == 0)
+			continue;
+
+		/* Go through all triangles */
+		for(j = 0; j < mdl->col.cm_tri_c; j++) {
+			vec3_t vtx[3];
+			int3_t idx;
+
+			/* Get indices of triangles */
+			memcpy(idx, mdl->col.cm_idx[j], INT3_SIZE);
+
+			/* Copy corner-points */
+			for(k = 0; k < 3; k++) {
+				/* Copy vertex */
+				vec3_cpy(vtx[k], mdl->col.cm_vtx[idx[k]]);
+
+				/* Move relative to object-position */
+				vec3_add(g_obj.pos[i], vtx[k], vtx[k]);
+			}
+
+			col_r2t_check(&pck, vtx[0], vtx[1], vtx[2]);
+		}
+	}
+
+
+	/* Limit aiming-range */
+	if(!pck.found || pck.col_t > 10) {
+		pck.col_t = 10;
+	}
+
+	/* 
+	 * Calculate the point the object is currently aiming at in
+	 * world-space.
+	 */
+	vec3_scl(dir, pck.col_t, dir);
+	vec3_add(pos, dir, pos);
+	vec3_cpy(g_obj.aim_pos[slot], pos);
+
+	/*
+	 * Calculate the aim-point relative to the object.
+	 */
+	vec3_sub(pos, g_obj.pos[slot], calc);
+	calc[3] = 1;
+	mat4_inv(mat, g_obj.rot_mat[slot]);
+	vec4_trans(calc, mat, calc);
+	vec3_cpy(g_obj.aim_pos_rel[slot], calc);
+}
+
+
+extern void obj_hnd_update(short slot)
+{
+	vec4_t calc;
+	mat4_t mat;
+
+	short hnd_idx;
+	short par_hook;
+	mat4_t hook_mat;
+
+	/* Get the index of the handheld */
+	if((hnd_idx = g_obj.hnd[slot].idx) < 0)
+		return;
+
+	/* Get the slot of the parent-hook */
+	par_hook = g_hnd.par_hook[hnd_idx];	
+	
+	/* Get the current matrix of the parent-hook */
+	mat4_cpy(hook_mat, g_obj.rig[slot]->hook_base_mat[par_hook]);
+
+	/* Calculate the position-vector of the handheld */
+	vec3_cpy(calc, g_hnd.hook_vec[hnd_idx][par_hook]);
+	calc[3] = 1.0;
+	vec4_trans(calc, hook_mat, calc);
+	vec3_cpy(g_obj.hnd[slot].pos, calc);
+
+	/* Calculate the position-matrix of the handheld */
+	mat4_mult(hook_mat, g_hnd.hook_mat[hnd_idx][par_hook], mat);
+	mat4_cpy(g_obj.hnd[slot].pos_mat, mat);
+
+	/* Calculate the barrel-position */
+	vec3_cpy(calc, g_hnd.brl_off[hnd_idx]);
+	calc[3] = 1;
+	vec4_trans(calc, hook_mat, calc);
+	vec3_cpy(g_obj.hnd[slot].brl_pos, calc);
 }

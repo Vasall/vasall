@@ -170,6 +170,12 @@ extern short obj_set(uint32_t id, uint32_t mask, vec3_t pos, short model,
 		}
 	}
 
+	/* Initialize the handheld-handle */
+	g_obj.hnd[slot].idx = -1;
+	if(mask & OBJ_M_MOVE) {
+		g_obj.hnd[slot].idx = 0;
+	}
+
 	/* Increment number of objects in the object-table */
 	g_obj.num++;
 
@@ -651,83 +657,6 @@ static int collideAndSlide(short slot, vec3_t pos, vec3_t del, vec3_t opos)
 }
 
 
-extern void obj_calc_aim(short slot)
-{
-	int i;
-	int j;
-	int k;
-
-	vec3_t pos;
-	vec3_t dir;
-	vec3_t off = {0, 0, 1.8};
-	struct col_pck_ray pck;	
-
-	struct model *mdl;
-
-	/* Calculate the origin of the aiming-ray */
-	vec3_cpy(pos, g_obj.pos[slot]);
-	vec3_add(pos, off, pos);
-
-	/* Calculate the direction of the aiming-ray */
-	vec3_cpy(dir, g_obj.dir[slot]);
-	vec3_nrm(dir, dir);
-
-	/* Initialize the collision-package */
-	col_init_pck_ray(&pck, pos, dir);
-
-	/* Go through all objects */
-	for(i = 0; i < OBJ_LIM; i++) {
-		if(g_obj.mask[i] == OBJ_M_NONE)
-			continue;
-
-		/* Don't check collision with the same object */
-		if(i == slot)
-			continue;
-
-		if((g_obj.mask[i] & OBJ_M_SOLID) == 0)
-			continue;
-
-		/* Get pointer to the model */
-		mdl = models[g_obj.mdl[i]];
-
-		/* TODO: Check collision with other player-objects */
-		if((mdl->attr_m & MDL_M_CCM) == 0)
-			continue;
-
-		/* Go through all triangles */
-		for(j = 0; j < mdl->col.cm_tri_c; j++) {
-			vec3_t vtx[3];
-			int3_t idx;
-
-			/* Get indices of triangles */
-			memcpy(idx, mdl->col.cm_idx[j], INT3_SIZE);
-
-			/* Copy corner-points */
-			for(k = 0; k < 3; k++) {
-				/* Copy vertex */
-				vec3_cpy(vtx[k], mdl->col.cm_vtx[idx[k]]);
-
-				/* Move relative to object-position */
-				vec3_add(g_obj.pos[i], vtx[k], vtx[k]);
-			}
-
-			col_r2t_check(&pck, vtx[0], vtx[1], vtx[2]);
-		}
-	}
-
-
-	/* Limit aiming-range */
-	if(!pck.found || pck.col_t > 10) {
-		pck.col_t = 10;
-	}
-
-	/* Calculate the point the object is currently aiming at */
-	vec3_scl(dir, pck.col_t, dir);
-	vec3_add(pos, dir, pos);
-	vec3_cpy(g_obj.aim_pos[slot], pos);
-}
-
-
 static void obj_calc_rig(short slot, vec3_t pos, vec3_t dir)
 {
 	float agl;
@@ -764,53 +693,6 @@ static void obj_calc_rig(short slot, vec3_t pos, vec3_t dir)
 
 	/* Apply transformation-matrix */
 	rig_mult_mat(g_obj.rig[slot], trans_m);
-}
-
-extern void obj_calc_aim_ray(short slot)
-{
-	mat4_t mat;
-	short hook;
-	short jnt;
-	vec4_t pos;
-	vec4_t dir;
-
-	vec3_t off_to_pos;
-	float otp_len;
-
-	vec3_t inv_dir;
-
-	/* Calculate the current joint-matrices */
-	obj_calc_rig(slot, g_obj.pos[slot], g_obj.dir[slot]);
-
-	/* Get the hook the handheld is attached to */
-	hook = g_hnd.par_hook[0];
-
-	/* Get the transformation matrix */
-	jnt = models[g_obj.mdl[slot]]->hook_buf[hook].par_jnt;
-	mat4_cpy(mat, g_obj.rig[slot]->trans_mat[jnt]);
-
-	/* Transform both position and direction of handheld using the matrix */
-	vec4_clr(pos);
-	pos[3] = 1.0;
-	vec3_cpy(pos, g_hnd.aim_pos[0]);
-	vec4_trans(pos, mat, pos);
-
-	vec4_clr(dir);
-	vec3_cpy(dir, g_hnd.aim_dir[0]);
-	vec4_trans(dir, mat, dir);
-	vec3_nrm(dir, dir);
-
-	vec3_flip(dir, inv_dir);
-
-	vec3_sub(g_obj.aim_pos[slot], pos, off_to_pos);
-	otp_len = vec3_len(off_to_pos);
-
-	vec3_scl(inv_dir, otp_len, inv_dir);
-	vec3_add(g_obj.aim_pos[slot], inv_dir, pos);
-
-	/* Copy the new position */
-	vec3_cpy(g_obj.aim_off[slot], pos);
-	vec3_cpy(g_obj.aim_dir[slot], dir);
 }
 
 
@@ -913,7 +795,7 @@ extern void obj_sys_update(uint32_t now)
 	int o;
 
 	uint32_t lim_ts;
-	uint32_t run_ts = 0;
+	uint32_t run_ts;
 	uint32_t inp_ts;
 
 	char logi[OBJ_LIM];
@@ -1241,9 +1123,6 @@ extern void obj_sys_render(void)
 				mat4_t jnt_mat;
 
 
-				mat4_t rot_mat;
-				mat4_t pos_mat;
-
 				/* Get a pointer to the model */
 				mdl = models[g_obj.mdl[i]];
 
@@ -1272,26 +1151,24 @@ extern void obj_sys_render(void)
 				vec3_add(hook_pos, g_obj.pos[i], hook_pos);
 
 				/* Calculate position-matrix of hook */
-				mat4_idt(pos_mat);
-				mat4_pfpos(pos_mat, g_obj.pos[i]);
+				mat4_idt(pos_m);
+				mat4_pfpos(pos_m, g_obj.pos[i]);
 
 				/* Calculate rotation-matrix of hook */
-				mat4_idt(rot_mat);
-				mat4_pfpos(rot_mat, g_obj.rig[i]->hook_pos[0]);
-				mat4_mult(g_obj.rot_mat[i], rot_mat, rot_mat);
+				mat4_idt(rot_m);
+				mat4_pfpos(rot_m, g_obj.rig[i]->hook_pos[0]);
+				mat4_mult(g_obj.rot_mat[i], rot_m, rot_m);
 
-				mdl_render(mdl_get("sph"), pos_mat, rot_mat, NULL);
+				mdl_render(mdl_get("sph"), pos_m, rot_m, NULL);
 			}
 
 			if(g_obj.mask[i] & OBJ_M_MOVE) {
-				mat4_t mat;
-
 				/*
 				 * Render a sphere at the aiming-point.
 				 */		
-				mat4_idt(mat);
-				mat4_pfpos(mat, g_obj.aim_pos[i]);
-				mdl_render(mdl_get("sph"), mat, idt, NULL);
+				mat4_idt(pos_m);
+				mat4_pfpos(pos_m, g_obj.aim_pos[i]);
+				mdl_render(mdl_get("sph"), pos_m, idt, NULL);
 			}
 		}
 	}

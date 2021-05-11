@@ -95,6 +95,18 @@ struct obj_collision {
 	vec3_t max;
 };
 
+struct obj_handheld {
+	/* The index of the handheld */
+	short idx;
+
+	/* The weapon-position both as matrix and vector in model-space */
+	vec3_t pos;
+	mat4_t pos_mat;
+
+	/* The barrel-position */
+	vec3_t brl_pos;
+};
+
 struct obj_wrapper {
 	short                    num;
 	short                    order[OBJ_LIM];
@@ -121,14 +133,13 @@ struct obj_wrapper {
 	/* Buffer containing the runtime-log */
 	struct obj_log           log[OBJ_LIM];
 
-	/* The point the object is currently aiming at in world-space */
+	/* 
+	 * The point the object is currently aiming at in world and
+	 * model-space
+	 */
 	vec3_t                   aim_origin[OBJ_LIM];
 	vec3_t                   aim_pos[OBJ_LIM];
-
-	/* The position and direction of the barrelt in world-space */
-	vec3_t                   aim_off[OBJ_LIM];
-	vec3_t                   aim_dir[OBJ_LIM];
-
+	vec3_t                   aim_pos_rel[OBJ_LIM];
 
 	/* The model and the rig */
 	short                    mdl[OBJ_LIM];
@@ -141,6 +152,9 @@ struct obj_wrapper {
 
 	/* Collision */
 	struct obj_collision     col[OBJ_LIM]; 
+
+	/* Handheld */
+	struct obj_handheld      hnd[OBJ_LIM];
 
 	/* Object/Player-Data like Health and Mana */
 	int                      len[OBJ_LIM];

@@ -90,6 +90,13 @@ extern short hnd_load(char *pth, short tex_slot, short shd_slot)
 			/* Increment the number of hooks */
 			g_hnd.hook_c[slot] += 1;
 		}
+		/* bof <x> <y> <z>*/
+		else if(strcmp(cmd_buf, "bof") == 0) {
+			fscanf(fd, "%f %f %f",
+					&g_hnd.brl_off[slot][0],
+					&g_hnd.brl_off[slot][1],
+					&g_hnd.brl_off[slot][2]);
+		}
 	}
 
 	/*

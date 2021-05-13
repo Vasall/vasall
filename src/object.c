@@ -1120,7 +1120,8 @@ extern void obj_sys_render(void)
 			mat4_cpy(rot_m, g_obj.rot_mat[i]);
 
 			/* Render the model */
-			mdl_render(g_obj.mdl[i], pos_m, rot_m, g_obj.rig[i]);
+			if((g_obj.mask[i] & OBJ_M_MOVE) == 0 || 1)
+				mdl_render(g_obj.mdl[i], pos_m, rot_m, g_obj.rig[i]);
 
 			if(g_obj.mask[i] & OBJ_M_MOVE) {
 				/* Calculate position-matrix of hook */
@@ -1128,11 +1129,27 @@ extern void obj_sys_render(void)
 				mat4_pfpos(pos_m, g_obj.pos[i]);
 
 				/* Calculate rotation-matrix of hook */
-				mat4_mult(g_obj.rig[i]->hook_loc_mat[0], g_hnd.hook_mat[0][0], mat);
+				mat4_cpy(mat, g_hnd.hook_mat[0][0]);
 				mat4_mult(g_obj.rig[i]->hook_base_mat[0], mat, mat);
 				mat4_mult(g_obj.rot_mat[i], mat, rot_m);
 
 				mdl_render(mdl_get("pistol"), pos_m, rot_m, NULL);
+			}
+
+			if(g_obj.mask[i] & OBJ_M_MOVE) {
+				vec3_t pos;
+
+				/* Adjust the rotation of the handheld */
+				vec3_sub(g_obj.view_pos_rel[i], g_hnd.brl_off[0], pos);
+
+				mat4_idt(pos_m);
+				mat4_pfpos(pos_m, g_obj.pos[i]);
+
+				mat4_idt(rot_m);
+				mat4_pfpos(rot_m, pos);
+				mat4_mult(g_obj.rot_mat[i], rot_m, rot_m);
+
+				mdl_render(mdl_get("sph2"), pos_m, rot_m, NULL);
 			}
 
 			if(g_obj.mask[i] & OBJ_M_MOVE) {
@@ -1141,7 +1158,7 @@ extern void obj_sys_render(void)
 				 */		
 				mat4_idt(pos_m);
 				mat4_pfpos(pos_m, g_obj.view_pos[i]);
-				mdl_render(mdl_get("sph"), pos_m, idt, NULL);
+				mdl_render(mdl_get("sph1"), pos_m, idt, NULL);
 			}
 		}
 	}

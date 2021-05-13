@@ -65,7 +65,10 @@ int load_resources(void)
 	if(mdl_load("slp", "res/models/slope.amo", tex_get("ba1"), shd_get("mdl"), MDL_TYPE_DEFAULT) < 0)
 			return -1;
 
-	if(mdl_load("sph", "res/models/sphere.amo", tex_get("ba2"), shd_get("mdl"), MDL_TYPE_DEFAULT) < 0)
+	if(mdl_load("sph1", "res/models/sphere.amo", tex_get("ba1"), shd_get("mdl"), MDL_TYPE_DEFAULT) < 0)
+			return -1;
+
+	if(mdl_load("sph2", "res/models/sphere.amo", tex_get("ba2"), shd_get("mdl"), MDL_TYPE_DEFAULT) < 0)
 			return -1;
 
 

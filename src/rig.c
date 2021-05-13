@@ -337,6 +337,7 @@ extern void rig_mult_mat(struct model_rig *rig, mat4_t m)
 
 extern int rig_hk_lookat(struct model_rig *rig, short hk, vec3_t pos)
 {
+	int i;
 	vec3_t v1;
 	vec3_t v2;
 
@@ -344,6 +345,8 @@ extern int rig_hk_lookat(struct model_rig *rig, short hk, vec3_t pos)
 	float dot;
 	float cross;
 	mat4_t mat;
+
+	short jnt;
 
 	if(rig == NULL)
 		return -1;
@@ -366,6 +369,17 @@ extern int rig_hk_lookat(struct model_rig *rig, short hk, vec3_t pos)
 	mat[0xa] = dot;
 
 	mat4_cpy(rig->hook_loc_mat[hk], mat);
+
+
+	jnt = models[rig->model]->hook_buf[0].par_jnt; 
+	mat4_mult(rig->base_mat[jnt], mat, rig->base_mat[jnt]);	
+	mat4_mult(rig->base_mat[jnt], models[rig->model]->jnt_buf[jnt].inv_bind_mat,
+			rig->trans_mat[jnt]);
+
+#if 0
+	for(i = 0; i < models[rig->model]->jnt_buf[jnt].child_num; i++)
+		rig_update_joints(rig, models[rig->model]->jnt_buf[jnt].child_buf[i]);
+#endif
 
 	return 0;
 }

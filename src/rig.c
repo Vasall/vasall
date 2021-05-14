@@ -370,7 +370,6 @@ extern int rig_hk_lookat(struct model_rig *rig, short hk, vec3_t pos)
 
 	mat4_cpy(rig->hook_loc_mat[hk], mat);
 
-
 	jnt = models[rig->model]->hook_buf[0].par_jnt; 
 	mat4_mult(rig->base_mat[jnt], mat, rig->base_mat[jnt]);	
 	mat4_mult(rig->base_mat[jnt], models[rig->model]->jnt_buf[jnt].inv_bind_mat,

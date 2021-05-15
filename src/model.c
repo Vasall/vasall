@@ -678,8 +678,6 @@ extern short mdl_load_ffd(char *name, FILE *fd, short tex_slot, short shd_slot,
 
 
 		if(mdl->hook_num > 0) {
-			printf("Load %d hooks\n", mdl->hook_num);
-
 			tmp = sizeof(struct mdl_hook) * mdl->hook_num;
 			if(!(mdl->hook_buf = malloc(tmp)))
 				goto err_free_data;
@@ -690,10 +688,6 @@ extern short mdl_load_ffd(char *name, FILE *fd, short tex_slot, short shd_slot,
 				vec3_cpy(mdl->hook_buf[i].pos, data->hk_lst[i].pos);
 				vec3_cpy(mdl->hook_buf[i].dir, data->hk_lst[i].dir);
 				mat4_cpy(mdl->hook_buf[i].loc_mat, data->hk_lst[i].mat);
-
-				printf("Hook Direction %d: ", i);
-				vec3_print(mdl->hook_buf[i].dir);
-				printf("\n");
 			}
 
 			/* Initialize the data for all hooks */

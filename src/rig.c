@@ -305,7 +305,7 @@ extern void rig_update(struct model_rig *rig, float p)
 
 	keyfr[0] = 0;
 	keyfr[1] = 1;
-	rig_calc_jnt(rig, 2, keyfr, 0);
+	rig_calc_jnt(rig, 1, keyfr, 0);
 
 	/* 
 	 * Calculate the base matrix for each joint recursivly.

@@ -492,6 +492,8 @@ extern short mdl_load_ffd(char *name, FILE *fd, short tex_slot, short shd_slot,
 	struct mdl_keyfr *keyfr;
 	struct amo_keyfr *amo_keyfr;
 
+	printf("Load %s\n", name);
+
 	/* Allocate memory for the model-struct */
 	if((slot = mdl_set(name, shd_slot)) < 0)
 		return -1;
@@ -838,6 +840,8 @@ extern short mdl_load_ffd(char *name, FILE *fd, short tex_slot, short shd_slot,
 
 	/* Return the returned data-struct */
 	amo_destroy(data);
+
+	printf("done\n");
 
 	/* Return the slot the model is on */
 	return slot;

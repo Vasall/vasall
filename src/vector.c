@@ -425,16 +425,6 @@ extern void vec4_scl(vec4_t in, float f, vec4_t out)
 	out[3] = in[3] * f;
 }
 
-extern void vec4_mul(vec4_t q1, vec4_t q2, vec4_t out)
-{
-	vec4_t c;
-	c[0] = -q1[1] * q2[1] - q1[2] * q2[2] - q1[3] * q2[3] + q1[0] * q2[0];
-	c[1] =  q1[1] * q2[0] + q1[2] * q2[3] - q1[3] * q2[2] + q1[0] * q2[1];
-	c[2] = -q1[1] * q2[3] + q1[2] * q2[0] + q1[3] * q2[1] + q1[0] * q2[2];
-	c[3] =  q1[1] * q2[2] - q1[2] * q2[1] + q1[3] * q2[0] + q1[0] * q2[3];
-	vec4_cpy(out, c);
-}
-
 extern float vec4_len(vec4_t in)
 {
 	double l;

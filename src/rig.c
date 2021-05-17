@@ -110,6 +110,7 @@ static void rig_reset_loc(struct model_rig *rig)
 	int i;
 
 	for(i = 0; i < rig->jnt_num; i++) {
+		rig->jnt_m[i] = 1;
 		vec3_set(rig->loc_pos[i], 0, 0, 0);
 		vec4_set(rig->loc_rot[i], 1, 0, 0, 0);
 	}
@@ -132,6 +133,7 @@ static void rig_calc_jnt(struct model_rig *rig, short anim, short *keyfr,
 	keyfr0 = &animp->keyfr_buf[keyfr[0]];
 	keyfr1 = &animp->keyfr_buf[keyfr[1]];
 
+	/* Reset values */
 	for(i = 0; i < mdl->jnt_num; i++) {
 		if(keyfr0->mask[i] < 0 && keyfr1->mask[i] < 0)
 			continue;
@@ -156,9 +158,9 @@ static void rig_calc_jnt(struct model_rig *rig, short anim, short *keyfr,
 
 		vec3_interp(p0, p1, prog, p);
 		qat_interp(r0, r1, prog, r);
-
-		vec3_cpy(rig->loc_pos[i], p1);
-		vec4_cpy(rig->loc_rot[i], r);
+	
+		vec3_add(rig->loc_pos[i], p, rig->loc_pos[i]);
+		qat_add(rig->loc_rot[i], r, rig->loc_rot[i]);
 	}
 }
 
@@ -291,17 +293,16 @@ extern void rig_update(struct model_rig *rig, float p)
 	 * Calculate both the local position and rotation for each joint at
 	 * current time.
 	 */
-	if(p < 0) {
+	if(0) {
 		keyfr[0] = 1;
 		keyfr[1] = 2;
 	}
 	else {
-		keyfr[0] = 1;
-		keyfr[1] = 0;
+		keyfr[0] = 0;
+		keyfr[1] = 1;
 	}
 
-	p = ABS(p / 90.0);
-	rig_calc_jnt(rig, 0, keyfr, p);
+	rig_calc_jnt(rig, 0, keyfr, 0);
 
 	keyfr[0] = 0;
 	keyfr[1] = 1;

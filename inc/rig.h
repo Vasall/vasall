@@ -20,8 +20,8 @@ struct model_rig {
 	short     keyfr;
 	uint32_t  ts;
 
+	char      jnt_m[JOINT_MAX_NUM];
 	int       jnt_num;
-	
 	vec3_t    loc_pos[JOINT_MAX_NUM];
 	vec4_t    loc_rot[JOINT_MAX_NUM];
 

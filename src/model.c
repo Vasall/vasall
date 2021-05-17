@@ -492,11 +492,11 @@ extern short mdl_load_ffd(char *name, FILE *fd, short tex_slot, short shd_slot,
 	struct mdl_keyfr *keyfr;
 	struct amo_keyfr *amo_keyfr;
 
-	printf("Load %s\n", name);
+	printf("Load %s...", name);
 
 	/* Allocate memory for the model-struct */
 	if((slot = mdl_set(name, shd_slot)) < 0)
-		return -1;
+		goto err_return;
 
 	/* Get pointer to model */
 	mdl = models[slot]; 
@@ -851,6 +851,9 @@ err_free_data:
 
 err_del_mdl:
 	mdl_del(slot);
+
+err_return:
+	printf("failed\n");
 	return -1;
 }
 

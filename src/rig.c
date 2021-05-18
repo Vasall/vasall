@@ -293,7 +293,7 @@ extern void rig_update(struct model_rig *rig, float p)
 	 * Calculate both the local position and rotation for each joint at
 	 * current time.
 	 */
-	if(0) {
+	if(1) {
 		keyfr[0] = 1;
 		keyfr[1] = 2;
 	}
@@ -302,7 +302,7 @@ extern void rig_update(struct model_rig *rig, float p)
 		keyfr[1] = 1;
 	}
 
-	rig_calc_jnt(rig, 0, keyfr, 0);
+	rig_calc_jnt(rig, 0, keyfr, 1);
 
 	keyfr[0] = 0;
 	keyfr[1] = 1;

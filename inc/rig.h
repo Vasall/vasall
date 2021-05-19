@@ -62,8 +62,9 @@ extern void rig_free(struct model_rig *rig);
  * Update the rig according to the current animation.
  *
  * @rig: Pointer to the rig to update
+ * @viewp: The position to look at relative to the model
  */
-extern void rig_update(struct model_rig *rig, float p);
+extern void rig_update(struct model_rig *rig, vec3_t viewp);
 
 
 /*

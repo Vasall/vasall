@@ -263,7 +263,7 @@ static void rig_update_hooks(struct model_rig *rig)
 	}
 }
 
-extern void rig_update(struct model_rig *rig, float p)
+extern void rig_update(struct model_rig *rig, vec3_t viewp)
 {
 	struct model *mdl;
 	struct mdl_anim *anim;

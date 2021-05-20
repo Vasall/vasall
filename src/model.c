@@ -256,7 +256,6 @@ extern void mdl_set_data(short slot, int vtxnum, float *vtx, float *tex,
 	if(!mdl || mdl->status != MDL_OK)
 		goto err_set_failed;
 
-
 	/* Calculate the size of a single vertex in bytes */
 	if(jnt && wgt) {
 		/* With joints and weights */

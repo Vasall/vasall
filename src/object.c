@@ -657,45 +657,6 @@ static int collideAndSlide(short slot, vec3_t pos, vec3_t del, vec3_t opos)
 }
 
 
-static void obj_calc_rig(short slot, vec3_t pos, vec3_t dir)
-{
-	float agl;
-	vec3_t up = {0, 0, 1};
-	vec3_t forw;
-	float rot;
-	mat4_t rot_m;
-	mat4_t pos_m;
-	mat4_t trans_m;
-
-
-	agl = vec3_angle(up, dir);
-	agl = 90.0 - RAD_TO_DEG(agl);
-
-	/* Calculate rig with aiming */
-	rig_update(g_obj.rig[slot], agl);
-
-	vec2_set(forw, g_obj.dir[slot][0], g_obj.dir[slot][1]);
-	vec2_nrm(forw, forw);
-
-	/* Set the rotation of the model */
-	rot = RAD_TO_DEG(atan2(forw[0], forw[1]));
-
-	/* Calculate rotation-matrix */
-	mat4_idt(rot_m);
-	mat4_rfagl_s(rot_m, 0, 0, rot);
-
-	/* Calculate position-matrix */
-	mat4_idt(pos_m);
-	mat4_pfpos(pos_m, pos);
-
-	/* Calculate transformation-matrix */
-	mat4_mult(pos_m, rot_m, trans_m);
-
-	/* Apply transformation-matrix */
-	rig_mult_mat(g_obj.rig[slot], trans_m);
-}
-
-
 extern void obj_print(short slot)
 {
 	if(obj_check_slot(slot))
@@ -714,6 +675,7 @@ extern void obj_print(short slot)
  * ============================================
  */
 
+#if 0
 static void obj_proc_rig_fpv(short slot, vec3_t pos)
 {
 	vec3_t off_v = {0, 0, -1.6};
@@ -788,6 +750,7 @@ static void obj_proc_rig_tpv(short slot, vec3_t pos, vec3_t dir)
 
 	rig_mult_mat(g_obj.rig[slot], trans_m);
 }
+#endif
 
 extern void obj_sys_update(uint32_t now)
 {
@@ -1041,14 +1004,8 @@ extern void obj_sys_prerender(float interp)
 		}
 
 		if(g_obj.mask[i] & OBJ_M_RIG) {
-			float agl;
-			vec3_t up = {0, 0, 1};
-
-			agl = vec3_angle(up, g_obj.dir[i]);
-			agl = 90.0 - RAD_TO_DEG(agl);
-
 			/* Calculate rig with aiming */
-			rig_update(g_obj.rig[i], agl);
+			rig_update(g_obj.rig[i], g_obj.view_pos_rel[i]);
 		}
 
 		if(g_obj.hnd[i].idx > -1) {

@@ -270,6 +270,14 @@ extern void rig_update(struct model_rig *rig, vec3_t viewp)
 	int i;
 	short keyfr[2];
 
+	vec3_t del;
+	vec2_t calc2;
+
+	float alpha;
+	float beta;
+
+	float p;
+
 	mdl = models[rig->model];
 	anim = &mdl->anim_buf[rig->anim];
 
@@ -289,35 +297,49 @@ extern void rig_update(struct model_rig *rig, vec3_t viewp)
 	 */
 	rig_reset_loc(rig);
 
-	/* 
-	 * Calculate both the local position and rotation for each joint at
-	 * current time.
-	 */
-	if(1) {
-		keyfr[0] = 1;
-		keyfr[1] = 2;
-	}
-	else {
-		keyfr[0] = 0;
-		keyfr[1] = 1;
-	}
-
-	rig_calc_jnt(rig, 0, keyfr, 1);
-
+	/* Calculate the rig at the current animation-point */
 	keyfr[0] = 0;
 	keyfr[1] = 1;
 	rig_calc_jnt(rig, 1, keyfr, 0);
+	rig_update_joints(rig, mdl->jnt_root);
+	if(rig->hook_num > 0) rig_update_hooks(rig);
+
+	/* Calculate the direction-vector from the hook to the view-point */
+	vec3_sub(viewp, rig->hook_pos[0], del);
+	vec3_nrm(del, del);
+	
+	/* Calculate alpha aka height */
+	vec2_set(calc2, del[1], del[2]);
+	vec2_nrm(calc2, calc2);
+	alpha = RAD_TO_DEG(asin(calc2[1]));
+
+	printf("%f\n", alpha);
+
+	if(alpha > 0) {
+		keyfr[0] = 1;
+		keyfr[1] = 0;
+		p = alpha / 80.0;
+	}
+	else if(alpha <= 0) {
+		keyfr[0] = 1;
+		keyfr[1] = 2;
+		p = -alpha / 70.0;
+	}
+
+	rig_calc_jnt(rig, 0, keyfr, p);
+	rig_update_joints(rig, mdl->jnt_root);
+	if(rig->hook_num > 0) rig_update_hooks(rig);
+
+#if 0
+	/* Calculate beta aka horizontal correction */
+	vec2_set(calc2, del[0], del[1]);
+	vec2_nrm(calc2, calc2);
+#endif
+
 
 	/* 
 	 * Calculate the base matrix for each joint recursivly.
 	 */
-	rig_update_joints(rig, mdl->jnt_root);
-
-	/*
-	 * Update hooks, if necessary.
-	 */
-	if(rig->hook_num > 0)
-		rig_update_hooks(rig);
 }
 
 

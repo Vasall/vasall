@@ -326,6 +326,7 @@ extern void rig_update(struct model_rig *rig, vec3_t viewp)
 		p = -alpha / 70.0;
 	}
 
+
 	rig_calc_jnt(rig, 0, keyfr, p);
 	rig_update_joints(rig, mdl->jnt_root);
 	if(rig->hook_num > 0) rig_update_hooks(rig);

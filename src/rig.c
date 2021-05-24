@@ -313,8 +313,6 @@ extern void rig_update(struct model_rig *rig, vec3_t viewp)
 	vec2_nrm(calc2, calc2);
 	alpha = RAD_TO_DEG(asin(calc2[1]));
 
-	printf("%f\n", alpha);
-
 	if(alpha > 0) {
 		keyfr[0] = 1;
 		keyfr[1] = 0;

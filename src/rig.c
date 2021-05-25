@@ -328,6 +328,7 @@ extern void rig_update(struct model_rig *rig, vec3_t viewp)
 	rig_update_joints(rig, mdl->jnt_root);
 	if(rig->hook_num > 0) rig_update_hooks(rig);
 
+
 #if 0
 	/* Calculate beta aka horizontal correction */
 	vec2_set(calc2, del[0], del[1]);

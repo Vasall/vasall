@@ -1,0 +1,16 @@
+>> Aiming Up:
+
+
+
+>> Aiming Down: 
+
+spine.H.001              -10
+spine.H.002              -25
+spine.H.003              -10
+upper_arm.L/upper_arm.R  -25
+----------------------------
+                         -70
+
+Adjusting Head:
+spine.H.005              -25
+head_bone                -5

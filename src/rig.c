@@ -301,8 +301,6 @@ extern void rig_update(struct model_rig *rig, vec3_t viewp)
 	keyfr[0] = 0;
 	keyfr[1] = 1;
 	rig_calc_jnt(rig, 1, keyfr, 0);
-	rig_update_joints(rig, mdl->jnt_root);
-	if(rig->hook_num > 0) rig_update_hooks(rig);
 
 	/* Calculate the direction-vector from the hook to the view-point */
 	vec3_sub(viewp, rig->hook_pos[0], del);
@@ -312,21 +310,32 @@ extern void rig_update(struct model_rig *rig, vec3_t viewp)
 	vec2_set(calc2, del[1], del[2]);
 	vec2_nrm(calc2, calc2);
 	alpha = RAD_TO_DEG(asin(calc2[1]));
+	if(alpha > 70) alpha = 70;
 
+#if 0
 	if(alpha > 0) {
 		keyfr[0] = 1;
 		keyfr[1] = 0;
-		p = alpha / 80.0;
+		p = alpha / 70.0;
 	}
 	else if(alpha <= 0) {
 		keyfr[0] = 1;
 		keyfr[1] = 2;
 		p = -alpha / 70.0;
 	}
+#else
+	if(1) {
+		keyfr[0] = 1;
+		keyfr[1] = 0;
+	}
+	else {
+		keyfr[0] = 1;
+		keyfr[1] = 2;
+	}
+	p = 1;
+#endif
 
 	rig_calc_jnt(rig, 0, keyfr, p);
-	rig_update_joints(rig, mdl->jnt_root);
-	if(rig->hook_num > 0) rig_update_hooks(rig);
 
 
 #if 0
@@ -339,6 +348,8 @@ extern void rig_update(struct model_rig *rig, vec3_t viewp)
 	/* 
 	 * Calculate the base matrix for each joint recursivly.
 	 */
+	rig_update_joints(rig, mdl->jnt_root);
+	if(rig->hook_num > 0) rig_update_hooks(rig);
 }
 
 

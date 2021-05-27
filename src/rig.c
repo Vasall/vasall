@@ -159,8 +159,8 @@ static void rig_calc_jnt(struct model_rig *rig, short anim, short *keyfr,
 		vec3_interp(p0, p1, prog, p);
 		qat_interp(r0, r1, prog, r);
 	
-		vec3_add(rig->loc_pos[i], p, rig->loc_pos[i]);
-		qat_add(rig->loc_rot[i], r, rig->loc_rot[i]);
+		vec3_add(p, rig->loc_pos[i], rig->loc_pos[i]);
+		qat_add(r, rig->loc_rot[i], rig->loc_rot[i]);
 	}
 }
 
@@ -272,6 +272,10 @@ extern void rig_update(struct model_rig *rig, vec3_t viewp)
 
 	vec3_t del;
 	vec2_t calc2;
+	
+	vec2_t ap;
+	vec2_t bp;
+	vec2_t del2;
 
 	float alpha;
 	float beta;
@@ -301,18 +305,20 @@ extern void rig_update(struct model_rig *rig, vec3_t viewp)
 	keyfr[0] = 0;
 	keyfr[1] = 1;
 	rig_calc_jnt(rig, 1, keyfr, 0);
+	rig_update_joints(rig, mdl->jnt_root);
+	if(rig->hook_num > 0) rig_update_hooks(rig);
 
 	/* Calculate the direction-vector from the hook to the view-point */
-	vec3_sub(viewp, rig->hook_pos[0], del);
-	vec3_nrm(del, del);
+	vec2_set(ap, viewp[1], viewp[2]);
+	vec2_set(bp, rig->hook_pos[0][1], rig->hook_pos[0][2]);
+	vec2_sub(ap, bp, del2);
+	vec2_nrm(del2, del2);
 	
 	/* Calculate alpha aka height */
-	vec2_set(calc2, del[1], del[2]);
-	vec2_nrm(calc2, calc2);
-	alpha = RAD_TO_DEG(asin(calc2[1]));
+	alpha = RAD_TO_DEG(asin(del2[1]));
 	if(alpha > 70) alpha = 70;
 
-#if 0
+
 	if(alpha > 0) {
 		keyfr[0] = 1;
 		keyfr[1] = 0;
@@ -323,20 +329,9 @@ extern void rig_update(struct model_rig *rig, vec3_t viewp)
 		keyfr[1] = 2;
 		p = -alpha / 70.0;
 	}
-#else
-	if(1) {
-		keyfr[0] = 1;
-		keyfr[1] = 0;
-	}
-	else {
-		keyfr[0] = 1;
-		keyfr[1] = 2;
-	}
-	p = 1;
-#endif
+
 
 	rig_calc_jnt(rig, 0, keyfr, p);
-
 
 #if 0
 	/* Calculate beta aka horizontal correction */

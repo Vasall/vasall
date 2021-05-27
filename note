@@ -4,11 +4,13 @@
 
 >> Aiming Down: 
 
-spine.H.001              -10
-spine.H.002              -25
-spine.H.003              -10
-upper_arm.L/upper_arm.R  -25
-----------------------------
+Bone Name       Index   Value
+spine.H.001     1       -10
+spine.H.002     2       -25
+spine.H.003     3       -10
+upper_arm.L     8       -25 
+upper_arm.R     31      -25
+-----------------------------
                          -70
 
 Adjusting Head:

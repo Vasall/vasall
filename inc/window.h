@@ -10,8 +10,8 @@
 
 #define PIPE_LEN 32
 
-#define WIN_W 800
-#define WIN_H 600
+#define WIN_W 1200
+#define WIN_H 900
 
 #define USE_OPENGL 1
 

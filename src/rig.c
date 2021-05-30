@@ -301,23 +301,15 @@ extern void rig_update(struct model_rig *rig, vec3_t viewp)
 	 */
 	rig_reset_loc(rig);
 
-	/* Calculate the rig at the current animation-point */
-	keyfr[0] = 0;
-	keyfr[1] = 1;
-	rig_calc_jnt(rig, 1, keyfr, 0);
-	rig_update_joints(rig, mdl->jnt_root);
-	if(rig->hook_num > 0) rig_update_hooks(rig);
-
 	/* Calculate the direction-vector from the hook to the view-point */
 	vec2_set(ap, viewp[1], viewp[2]);
-	vec2_set(bp, rig->hook_pos[0][1], rig->hook_pos[0][2]);
+	vec2_set(bp, 0, rig->hook_pos[0][2]);
 	vec2_sub(ap, bp, del2);
 	vec2_nrm(del2, del2);
 	
 	/* Calculate alpha aka height */
 	alpha = RAD_TO_DEG(asin(del2[1]));
 	if(alpha > 70) alpha = 70;
-
 
 	if(alpha > 0) {
 		keyfr[0] = 1;

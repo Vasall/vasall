@@ -105,7 +105,7 @@ extern void rig_free(struct model_rig *rig)
 }
 
 
-static void rig_reset_loc(struct model_rig *rig)
+extern void rig_prepare(struct model_rig *rig)
 {
 	int i;
 
@@ -115,6 +115,7 @@ static void rig_reset_loc(struct model_rig *rig)
 		vec4_set(rig->loc_rot[i], 1, 0, 0, 0);
 	}
 }
+
 
 static void rig_calc_jnt(struct model_rig *rig, short anim, short *keyfr,
 		float prog)
@@ -263,7 +264,7 @@ static void rig_update_hooks(struct model_rig *rig)
 	}
 }
 
-extern void rig_update(struct model_rig *rig, vec3_t viewp)
+extern void rig_update(struct model_rig *rig)
 {
 	struct model *mdl;
 	struct mdl_anim *anim;
@@ -296,10 +297,43 @@ extern void rig_update(struct model_rig *rig, vec3_t viewp)
 		}
 	}
 
-	/* 
-	 * Reset local position and rotation of each joint.
-	 */
-	rig_reset_loc(rig);
+	keyfr[0] = 0;
+	keyfr[1] = 1;
+	rig_calc_jnt(rig, 0, keyfr, 1);
+}
+
+extern void rig_update_aim(struct model_rig *rig, vec3_t viewp)
+{
+	struct model *mdl;
+	struct mdl_anim *anim;
+	int i;
+	short keyfr[2];
+
+	vec3_t del;
+	vec2_t calc2;
+	
+	vec2_t ap;
+	vec2_t bp;
+	vec2_t del2;
+
+	float alpha;
+	float beta;
+
+	float p;
+
+	mdl = models[rig->model];
+	anim = &mdl->anim_buf[rig->anim];
+
+	/* Update the progress */
+	rig->prog += 0.05;
+	if(rig->prog >= 1.0) {
+		rig->prog -= 1.0;
+		rig->keyfr = (rig->keyfr + 1);
+
+		if(rig->keyfr >= anim->keyfr_num - 1) {
+			rig->keyfr = 0;
+		}
+	}
 
 	/* Calculate the direction-vector from the hook to the view-point */
 	vec2_set(ap, viewp[1], viewp[2]);
@@ -352,6 +386,18 @@ extern void rig_mult_mat(struct model_rig *rig, mat4_t m)
 
 		mat4_cpy(rig->trans_mat[i], conv_m);
 	}
+}
+
+
+extern void rig_finish(struct model_rig *rig)
+{
+	struct model *mdl = models[rig->model];
+
+	/* 
+	 * Calculate the base matrix for each joint recursivly.
+	 */
+	rig_update_joints(rig, mdl->jnt_root);
+	if(rig->hook_num > 0) rig_update_hooks(rig);	
 }
 
 

@@ -675,46 +675,13 @@ extern void obj_print(short slot)
  * ============================================
  */
 
-#if 0
-static void obj_proc_rig_fpv(short slot, vec3_t pos)
+static void obj_proc_rig_fpv(short slot)
 {
-	vec3_t off_v = {0, 0, -1.6};
-	vec3_t rev_v = {0, 0, 1.8};
-
-	mat4_t off_m;
-	mat4_t rev_m;
-	mat4_t pos_m;
-	mat4_t rot_m;
-	mat4_t trans_m;
-
 	/* Calculate rig without aiming */
-	rig_update(g_obj.rig[slot], 0);
-
-	/* 
-	 * Calculate transformation-matrix for
-	 * first-person-view.
-	 */
-	mat4_idt(off_m);
-	mat4_idt(rev_m);
-	mat4_pfpos(off_m, off_v);
-	mat4_pfpos(rev_m, rev_v);
-
-	/* Calculate rotation-matrix */
-	mat4_cpy(rot_m, g_cam.forw_m);
-	mat4_mult(rot_m, off_m, rot_m);
-	mat4_mult(rev_m, rot_m, rot_m);
-
-	/* Calculate position-matrix */
-	mat4_idt(pos_m);
-	mat4_pfpos(pos_m, pos);
-
-	/* Calculate transformation-matrix */
-	mat4_mult(pos_m, rot_m, trans_m);
-
-	/* Apply transformation-matrix */
-	rig_mult_mat(g_obj.rig[slot], trans_m);
+	rig_update(g_obj.rig[slot]);
 }
 
+#if 0
 static void obj_proc_rig_tpv(short slot, vec3_t pos, vec3_t dir)
 {
 	float agl;
@@ -1004,19 +971,37 @@ extern void obj_sys_prerender(float interp)
 		}
 
 		if(g_obj.mask[i] & OBJ_M_RIG) {
-			/* Calculate rig with aiming */
-			rig_update(g_obj.rig[i], g_obj.view_pos_rel[i]);
+			rig_prepare(g_obj.rig[i]);
+
+			if(i == g_core.obj && g_cam.mode == CAM_MODE_FPV) {
+				obj_proc_rig_fpv(i);
+			}
+			else {
+				vec3_t off = {0, 0, 1.8};
+				vec3_t pos;
+				vec3_t tmp;
+
+				vec4_t calc;
+				mat4_t mat;
+
+				/*
+				 * Calculate the aim-point relative to the object.
+				 */
+				vec3_cpy(calc, g_obj.dir[i]);
+				calc[3] = 1;
+				mat4_inv(mat, g_obj.rot_mat[i]);
+				vec4_trans(calc, mat, calc);
+
+				vec3_scl(calc, 10, tmp);
+				vec3_add(off, tmp, pos);
+
+				/* Calculate rig with aiming */
+				rig_update_aim(g_obj.rig[i], pos);
+			}
+
+			rig_finish(g_obj.rig[i]);
 		}
 
-		if(g_obj.hnd[i].idx > -1) {
-			vec3_t pos;
-
-			/* Adjust the rotation of the handheld */
-			vec3_sub(g_obj.view_pos_rel[i], g_hnd.brl_off[0], pos);
-
-			/* Adjust the rotation of the hook */
-			rig_hk_lookat(g_obj.rig[i], 0, pos);
-		}
 
 
 		/*
@@ -1036,7 +1021,32 @@ extern void obj_sys_prerender(float interp)
 
 			/* Calculate rotation-matrix */
 			mat4_idt(rot_m);
-			mat4_rfagl_s(rot_m, 0, 0, rot);
+			if(i != g_core.obj || g_cam.mode != CAM_MODE_FPV) {
+				mat4_rfagl_s(rot_m, 0, 0, rot);
+			}
+			else {
+				vec3_t off_v = {0, 0, -1.7};
+				vec3_t rev_v = {0, 0, 1.8};
+
+				mat4_t off_m;
+				mat4_t rev_m;
+				mat4_t pos_m;
+				mat4_t trans_m;
+
+				/* 
+	 			 * Calculate transformation-matrix for
+	 			 * first-person-view.
+				 */
+				mat4_idt(off_m);
+				mat4_idt(rev_m);
+				mat4_pfpos(off_m, off_v);
+				mat4_pfpos(rev_m, rev_v);
+
+				/* Calculate rotation-matrix */
+				mat4_cpy(rot_m, g_cam.forw_m);
+				mat4_mult(rot_m, off_m, rot_m);
+				mat4_mult(rev_m, rot_m, rot_m);
+			}
 
 			/* Calculate position-matrix */
 			mat4_idt(pos_m);

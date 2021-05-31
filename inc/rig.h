@@ -59,12 +59,24 @@ extern void rig_free(struct model_rig *rig);
 
 
 /*
+ * 
+ */
+extern void rig_prepare(struct model_rig *rig);
+
+
+/*
+ * 
+ */
+extern void rig_update(struct model_rig *rig);
+
+
+/*
  * Update the rig according to the current animation.
  *
  * @rig: Pointer to the rig to update
  * @viewp: The position to look at relative to the model
  */
-extern void rig_update(struct model_rig *rig, vec3_t viewp);
+extern void rig_update_aim(struct model_rig *rig, vec3_t viewp);
 
 
 /*
@@ -74,6 +86,12 @@ extern void rig_update(struct model_rig *rig, vec3_t viewp);
  * @m: The transformation-matrix
  */
 extern void rig_mult_mat(struct model_rig *rig, mat4_t m);
+
+
+/*
+ * 
+ */
+extern void rig_finish(struct model_rig *rig);
 
 
 /*

@@ -1025,7 +1025,7 @@ extern void obj_sys_prerender(float interp)
 				mat4_rfagl_s(rot_m, 0, 0, rot);
 			}
 			else {
-				vec3_t off_v = {0, 0, -1.7};
+				vec3_t off_v = {0, 0, -1.75};
 				vec3_t rev_v = {0, 0, 1.8};
 
 				mat4_t off_m;

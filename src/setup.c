@@ -116,7 +116,7 @@ extern void test1(char *buf, int len)
 
 	/* Update projection-matrix */
 	asp = (float)g_win.win_w / (float)g_win.win_h;
-	cam_proj_mat(45.0, asp, 0.1, 1000.0);
+	cam_proj_mat(45.0, asp, 0.2, 1000.0);
 
 	/* Switch from menuscreen to gamescreen */
 	node = ui_get(g_win.root, "mns");

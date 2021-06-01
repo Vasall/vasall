@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# git config --local core.hooksPath .githooks
+
+if [ "$(grep -i regup $1)" != "" ]; then
+	echo "\033[31mDon't use regup. Describe your changes\033[0m" 1>&2
+	exit 1
+fi

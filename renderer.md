@@ -41,10 +41,19 @@ struct material {
 };
 ```
 ```c
+struct mem_block {
+	uint32_t mem_type;
+	VkDeviceMemory memory;
+	uint32_t offset;
+	size_t size;
+};
+```
+```c
 union ren_buf {
 	struct {
 		VkBuffer buf;
 		struct mem_block mem;
+		void *data;
 	} vk;
 	GLuint gl;
 };
@@ -86,10 +95,10 @@ int ren_destroy_pipeline(union ren_pipeline pipeline);
 ```
 ### mesh
 ```c
-int ren_create_mesh(struct ren_mesh *mesh);
+int ren_create_mesh(size_t vertices_size, void *vertices, size_t indices_size, void *indices, struct ren_mesh *mesh);
 ```
 ```c
-int ren_update_mesh(struct ren_mesh *mesh);
+int ren_update_mesh(void *vertices, void *indices, struct ren_mesh *mesh);
 ```
 ```c
 int ren_destroy_mesh(struct ren_mesh mesh);
@@ -108,19 +117,14 @@ int ren_destroy_texture(union ren_texture texture);
 ```c
 int ren_set_global(void *data, size_t size);
 ```
-
+### Descriptor Set
+```c
+int ren_set_object(union ren_pipeline pipeline, union ren_mesh mesh, union ren_texture texture, VkDescriptorSet *set);
+```
 ## GPU memory managment (Vulkan only?)
 Big buffers for vertices, indices, textures, model matrices  
 The `ren_create_*` and `ren_destroy_*` functions actually don't upload to GPU memory directly, but rather queue for upload, which happens in `ren_prepare()`. This means, the data can't be freed immediatly after calling the `ren_create_*` function, but after `ren_prepare()`. Memory Managment will be a bit like malloc(). Specifically, it will allocate a larger block of memoy than needed and store the offset and the size for one mesh in a data structure. When creating a new mesh, the data will be put anywhere, where there is available memory, if there's space for it. When destroying a mesh, the data doesn't vanish from the gpu memory. It will just be marked as available. More details below. To minimize the data transfer, only the data that changed will be uploaded to GPU.
 ### Memory Allocation
-```c
-struct mem_block {
-	uint32_t mem_type;
-	VkDeviceMemory memory;
-	uint32_t offset;
-	size_t size;
-};
-```
 ```c
 enum mem_type {
 	MEM_TYPE_CPU,
@@ -167,4 +171,8 @@ enum image_flags {
 - `IMAGE_SAMPLES` for framebuffer images, when there is multisampling
 ```c
 static int create_image(VkFormat format, uint32_t width, uint32_t height, VkImageUsageFlags usage, enum image_flags flags, VkImage *image, struct mem_block *mem);
+```
+### Upload to gpu memory
+```c
+static int queue_upload(struct mem_block mem, void *data);
 ```
